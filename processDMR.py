@@ -15,10 +15,10 @@ print("Column names:", df.columns)
 
 # Extract specific columns from the DataFrame using the correct column names
 dmr_id = df["DMR1"]  # Column for DMR ID
-closest_gene = df["Rgs20"]  # Column for the closest gene
-area = df[179.10177964248]  # Column for the area statistic
+closest_gene = df["Gene_Symbol_Nearby"]  # Column for the closest gene
+area = df["Area"]  # Column for the area statistic
 additional_genes = df["Additional Genes"]  # Column for additional genes
-enhancer_info = df["Enhancer Info"]  # Column for enhancer information
+enhancer_info = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"]  # Column for enhancer information
 
 # Print the extracted data
 print("DMR IDs:")
