@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+%\usepackage{fontspec} % for XeLaTeX/LuaLaTeX
+% or
+\usepackage{lmodern} % for pdfLaTeX
+\usepackage{xcolor}
+\definecolor{iris}{rgb}{0.35, 0.31, 0.81}
+\definecolor{ivory}{rgb}{1.0, 1.0, 0.94}
+\definecolor{jonquil}{rgb}{0.98, 0.85, 0.37}
+\definecolor{Jade}{rgb}{0.0, 0.66, 0.42}
+\definecolor{lavender}{rgb}{0.84, 0.79, 0.87}
+
+\title{Biological Data Summary}
+\author{Peter Shaw}
+\date{August 2024}
+
+\begin{document}
+\lstset{
+    language=Python,
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false
+}
+
+\maketitle
+
+\section{Eye data}
+\subsection{background}
+
+\textbf{
+Q? From a genetics perspective, please briefly describe what a DMR is?\\
+}
+\textbf{
+Q? ok expand this definition to explain why you want 3D genetic data to find genes enanced by a DMR?\\
+}
+{\color{iris} LLM generated
+
+A Differentially Methylated Region (DMR) is a genomic region where DNA methylation levels differ significantly between two or more groups, such as different cell types, tissues, or disease states. DNA methylation typically acts to repress gene expression by preventing transcription factors from binding to the promoter regions of genes.
+
+When we identify DMRs, it's often because we want to understand which genes are regulated by these epigenetic changes. However, DMRs can be located far away from the genes they regulate, and traditional 2D genomics approaches (e.g., ChIP-seq, bisulfite sequencing) may not provide enough information to connect a DMR to its target gene(s).
+
+This is where 3D genetic data comes in!
+
+Chromatin conformation capture techniques like Hi-C, Micro-C, or 4C allow us to study the three-dimensional organization of chromatin and identify long-range interactions between different genomic regions. These interactions can bring together distant regulatory elements (e.g., enhancers) with their target genes.
+
+By integrating DMRs with 3D genetic data, we can:
+
+Link DMRs to potential target genes : By identifying which genes are in close proximity to a DMR in the 3D space of chromatin, we can infer which genes might be regulated by that DMR.
+Prioritize candidate regulatory elements : Hi-C and other 3D genomics data help identify topologically associating domains (TADs), which are self-interacting regions of chromatin that often harbor enhancer-promoter interactions. By finding DMRs within these TADs, we can focus on the most likely regulatory elements.
+Enhance interpretation of GWAS results : Genome-wide association studies (GWAS) often identify variants associated with disease risk, but it's challenging to determine which genes are actually responsible for the observed associations. Integrating GWAS signals with DMRs and 3D genetic data can provide a more comprehensive understanding of how these variants affect gene regulation.
+By leveraging 3D genetic data, we can gain insights into the complex relationships between epigenetic modifications (like DNA methylation), chromatin organization, and gene expression. This integrated approach helps us better understand the mechanisms underlying cellular behavior and disease pathogenesis.
+}
+\subsection{Tables}
+
+We have two types of DRM data. One is computed using glm analysis (DSS1) and one using HOM1 neural networks. But both are essentially the same. The DSS spread sheet is likely more reliable. The main difference between the to tables is column Q. In the DSS data this is an AREA statistic. Which is proportional to the length of each DRM. In the Home data this is a confidence score. both relate to the confidence of edges for that DRM.
+
+Either of these tables can be used to produce a bipartite graph between DMRs and genes.
+The DRM ID is in colmn D/E is the DMR ID. Each DMR connects to its closest gene (Column) M (in HOME1 and DSS1) and additional genes (which are obtained using 3D gene mapping and so further away > 2,5K) are in listed in column R in DSS1 and column S in Home1. e.g. Rgs20/e5;Oprk1/e4. Importantly, note that e4 means enhancer e4. For example, when creating the bipartite network graph, DMR3 would only connect to RGs20 $\cap$ Rgs20 and Oprk1. i.e. ignore the part after the / e4. When there is no enhancer data available a period "." is placed in column S, and just the details in column M can be used.
+
+We have no exact data for the enhancers in eyes yet. So the data in column 4 are taken from embryonic stem cell data.
+
+In addition, column O contains some functional description. Potentially we could create a column for each functional description and match DMR to this column too.
+
+\begin{table*}[h]
+\centering
+\sffamily
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}
+{@{}p{0.6cm}p{3.0cm}p{7.5cm}@{}}
+\toprule
+& \bf{Column Label} & \bf{Description} \\
+\midrule
+D & DMR ID & Unique identifier for each differentially methylated region (DMR) \\
+M & Closest Gene & The gene closest to each DMR \\
+Q & Area & Measure of the reliability of associations between DMRs and genes in DSS1 dataset \\
+R & Additional Genes & Additional genes associated with each DMR, obtained through 3D gene mapping \\
+S & ENCODE Promoter Interaction (BingRen Lab) & Enhancer information from ENCODE promoter interaction data \\
+\bottomrule
+\end{tabular}
+\caption{Description of columns in the DSS1 dataset}
+\label{table:dss1_columns}
+\end{table*}
+
+\end{document}
