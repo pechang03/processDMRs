@@ -1,21 +1,25 @@
 import pandas as pd
 
 # Read the Excel file into a Pandas DataFrame
-df = pd.read_excel("./data/DSS1.xlsx", header=1)  # Adjust the header parameter as needed
+df = pd.read_excel("./data/DSS1.xlsx", header=None)  # Start with no header to inspect the data
 
-# Print the first few rows of the DataFrame to verify the data was loaded correctly
-print(df.head())
+# Print the first few rows to understand the structure
+print(df.head(10))
+
+# Based on the output, determine the correct header row and adjust the header parameter
+# For example, if the actual headers are in the second row, use header=1
+df = pd.read_excel("./data/DSS1.xlsx", header=1)  # Adjust this based on your inspection
 
 # Print the column names to verify they match your expectations
 print("Column names:", df.columns)
 
-# Extract specific columns from the DataFrame (e.g., DMR ID, Closest Gene, etc.)
+# Extract specific columns from the DataFrame
 # Ensure the column names match exactly with those in the DataFrame
-dmr_id = df["DMR ID"]  # Use the exact column name as printed
-closest_gene = df["Closest Gene"]
-area = df["Area"]
-additional_genes = df["Additional Genes"]
-enhancer_info = df["ENCODE Promoter Interaction (BingRen Lab)"]
+dmr_id = df["DMR1"]  # Use the exact column name as printed
+closest_gene = df["Rgs20"]  # Adjust based on actual column names
+area = df[179.10177964248]  # Adjust based on actual column names
+additional_genes = df["Oprk1/e4"]  # Adjust based on actual column names
+enhancer_info = df["."]  # Adjust based on actual column names
 
 # Print the extracted data
 print(dmr_id)
@@ -25,5 +29,5 @@ print(additional_genes)
 print(enhancer_info)
 
 # Example usage: filter rows where Area is greater than 0.5
-filtered_df = df[df["Q"] > 0.5]
+filtered_df = df[df[179.10177964248] > 0.5]  # Adjust based on actual column names
 print(filtered_df)
