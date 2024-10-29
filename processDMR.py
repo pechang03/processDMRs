@@ -68,9 +68,20 @@ def create_bipartite_graph(df):
 
 # Create the bipartite graph
 bipartite_graph = create_bipartite_graph(df)
-print("Bipartite graph created with nodes and edges:")
-print("Nodes:", bipartite_graph.nodes())
-print("Edges:", bipartite_graph.edges())
-filtered_df = df[df["Area_Stat"] > 0.5]
-print("Filtered DataFrame:")
-print(filtered_df)
+# Calculate the number of unique DMRs
+unique_dmrs = dmr_id.nunique()
+
+# Calculate the number of unique genes
+all_genes = df['Processed_Enhancer_Info'].explode().dropna().unique().tolist() + closest_gene.dropna().unique().tolist()
+unique_genes = len(set(all_genes))
+
+# Open an output file to write the bipartite graph
+with open("bipartite_graph_output.txt", "w") as file:
+    # Write the number of DMRs and genes on the first line
+    file.write(f"{unique_dmrs} {unique_genes}\n")
+    
+    # Write the edges of the bipartite graph
+    for edge in bipartite_graph.edges():
+        file.write(f"{edge[0]} {edge[1]}\n")
+
+print("Bipartite graph written to bipartite_graph_output.txt")
