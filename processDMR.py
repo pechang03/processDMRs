@@ -1,4 +1,5 @@
 import pandas as pd
+import networkx as nx
 
 # Read the Excel file into a Pandas DataFrame
 # df = pd.read_excel("./data/DSS1.xlsx", header=None)  # Start with no header to inspect the data
@@ -50,7 +51,26 @@ print("Additional Genes:")
 print("Processed Enhancer Info:")
 print(df["Processed_Enhancer_Info"])
 
-# Example usage: filter rows where Area is greater than 0.5
+# Function to create a bipartite graph
+def create_bipartite_graph(df):
+    B = nx.Graph()
+    # Add nodes with the node attribute "bipartite"
+    B.add_nodes_from(df["DMR_No."], bipartite=0)  # DMRs
+    for index, row in df.iterrows():
+        # Add closest gene
+        B.add_node(row["Gene_Symbol_Nearby"], bipartite=1)
+        B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
+        # Add additional genes
+        for gene in row["Processed_Enhancer_Info"]:
+            B.add_node(gene, bipartite=1)
+            B.add_edge(row["DMR_No."], gene)
+    return B
+
+# Create the bipartite graph
+bipartite_graph = create_bipartite_graph(df)
+print("Bipartite graph created with nodes and edges:")
+print("Nodes:", bipartite_graph.nodes())
+print("Edges:", bipartite_graph.edges())
 filtered_df = df[df["Area_Stat"] > 0.5]
 print("Filtered DataFrame:")
 print(filtered_df)
