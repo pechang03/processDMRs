@@ -16,7 +16,7 @@ print("Column names:", df.columns)
 # Extract specific columns from the DataFrame using the correct column names
 dmr_id = df["DMR1"]  # Column for DMR ID
 closest_gene = df["Rgs20"]  # Column for the closest gene
-area = df["Area"]  # Column for the area statistic
+area = df[179.10177964248]  # Column for the area statistic
 additional_genes = df["Additional Genes"]  # Column for additional genes
 enhancer_info = df["Enhancer Info"]  # Column for enhancer information
 
@@ -33,6 +33,6 @@ print("Enhancer Info:")
 print(enhancer_info)
 
 # Example usage: filter rows where Area is greater than 0.5
-filtered_df = df[df["Area"] > 0.5]
+filtered_df = df[df[179.10177964248] > 0.5]
 print("Filtered DataFrame:")
 print(filtered_df)
