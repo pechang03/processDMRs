@@ -111,6 +111,20 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     
     return B
 
+def preprocess_graph(graph):
+    # Remove redundant edges
+    redundant = []
+    for node in graph.nodes():
+        if graph.nodes[node]['bipartite'] == 0:  # DMR nodes
+            neighbors = set(graph.neighbors(node))
+            for other in graph.nodes():
+                if (other != node and 
+                    graph.nodes[other]['bipartite'] == 0 and
+                    set(graph.neighbors(other)).issubset(neighbors)):
+                    redundant.append(other)
+    graph.remove_nodes_from(redundant)
+    return graph
+
 # Preprocess the bipartite graph for DSS1
 bipartite_graph = preprocess_graph(create_bipartite_graph(df))
 
@@ -124,6 +138,15 @@ num_connected_components = nx.number_connected_components(bipartite_graph)
 
 import time
 import psutil
+
+def process_components(graph):
+    components = list(nx.connected_components(graph))
+    dominating_sets = []
+    for component in components:
+        subgraph = graph.subgraph(component)
+        dom_set = greedy_rb_domination(subgraph, df)
+        dominating_sets.extend(dom_set)
+    return dominating_sets
 
 # Calculate a greedy R-B dominating set for DSS1
 start_time = time.time()
