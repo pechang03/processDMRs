@@ -56,6 +56,8 @@ def greedy_rb_domination(graph, df, area_col=None):
 try:
     df = pd.read_excel("./data/DSS1.xlsx", header=0)  # Adjust this based on your inspection
     print("Column names:", df.columns.tolist())  # Print the column names for verification
+    print("\nSample of input data:")
+    print(df[['DMR_No.', 'Gene_Symbol_Nearby', 'ENCODE_Enhancer_Interaction(BingRen_Lab)']].head(10))
 except Exception as e:
     print(f"Error reading DSS1.xlsx: {e}")
     raise  # Re-raise the exception after logging
