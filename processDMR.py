@@ -18,34 +18,28 @@ def greedy_rb_domination(graph, df, area_col=None):
     
     # Keep track of uncovered genes
     uncovered_genes = gene_nodes.copy()
-    remaining_dmrs = dmr_nodes.copy()
+    remaining_dmrs = list(dmr_nodes)  # Convert to list for sorting
 
+    # Sort DMRs by degree initially
+    remaining_dmrs.sort(key=lambda x: len(list(graph.neighbors(x))), reverse=True)
+    
     while uncovered_genes and remaining_dmrs:
-        # Find the DMR that covers the most uncovered genes
-        best_dmr = None
-        max_coverage = 0
+        # Take the highest degree DMR
+        best_dmr = remaining_dmrs[0]
+        remaining_dmrs.pop(0)
         
-        for dmr in remaining_dmrs:
-            coverage = len(set(graph.neighbors(dmr)) & uncovered_genes)
-            if coverage > max_coverage:
-                if not area_col:
-                    max_coverage = coverage
-                    best_dmr = dmr
-                else:
-                    area_value = df.loc[df["DMR_No."] == dmr + 1, area_col].values[0]
-                    if best_dmr is None or coverage > max_coverage or (coverage == max_coverage and area_value > df.loc[df["DMR_No."] == best_dmr + 1, area_col].values[0]):
-                        max_coverage = coverage
-                        best_dmr = dmr
-        
-        if best_dmr is None or max_coverage == 0:
-            break
+        # Add it to dominating set if it covers any uncovered genes
+        neighbors = set(graph.neighbors(best_dmr))
+        if neighbors & uncovered_genes:
+            dominating_set.add(best_dmr)
+            uncovered_genes -= neighbors
             
-        # Add the best DMR to the dominating set
-        dominating_set.add(best_dmr)
-        remaining_dmrs.remove(best_dmr)
-        
-        # Update uncovered genes
-        uncovered_genes -= set(graph.neighbors(best_dmr))
+            # Resort remaining DMRs by number of uncovered genes they would cover
+            if remaining_dmrs:
+                remaining_dmrs.sort(
+                    key=lambda x: len(set(graph.neighbors(x)) & uncovered_genes),
+                    reverse=True
+                )
 
     return dominating_set
 
