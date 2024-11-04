@@ -59,3 +59,28 @@ class TestBipartiteGraph(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+import unittest
+import pandas as pd
+from processDMR import create_bipartite_graph, gene_id_mapping
+
+class TestBipartiteGraph(unittest.TestCase):
+
+    def setUp(self):
+        # Sample data to simulate the HOME1 dataset
+        self.df_home1 = pd.DataFrame({
+            "DMR_No.": [1, 2, 3, 4, 5, 6],
+            "Gene_Symbol": ["3090", "3025", "Sulf1", "Sulf1", "4332", "Sulf1"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."]
+        })
+
+    def test_no_unknown_gene_ids(self):
+        # Create the bipartite graph
+        bipartite_graph_home1 = create_bipartite_graph(self.df_home1, closest_gene_col="Gene_Symbol")
+
+        # Check that all gene IDs in the graph are valid numbers
+        for edge in bipartite_graph_home1.edges():
+            dmr, gene = edge
+            self.assertIn(gene, gene_id_mapping, f"Gene {gene} is not in gene_id_mapping")
+
+if __name__ == '__main__':
+    unittest.main()
