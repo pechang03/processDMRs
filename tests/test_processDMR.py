@@ -117,18 +117,27 @@ class TestBipartiteGraph(unittest.TestCase):
         df_k23 = pd.DataFrame(data_k23)
         df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
 
-        # Create a bipartite graph for K_{2,3}
-        graph_k23 = create_bipartite_graph(df_k23)
+        # Test K_{3,7}
+        genes_k37 = [f"Gene{i}" for i in range(7)]  # Create 7 unique gene names
+        data_k37 = {
+            "DMR_No.": [1, 2, 3] * 7,  # Each DMR connected to all seven genes
+            "Gene_Symbol_Nearby": genes_k37 * 3,  # Each gene connected to all three DMRs
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None] * 21
+        }
+        df_k37 = pd.DataFrame(data_k37)
+        df_k37["Processed_Enhancer_Info"] = df_k37["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
 
-        # Test the graph structure
-        self.assertEqual(len(graph_k23.nodes()), 5, "K_{2,3} should have 5 nodes (2 DMRs + 3 genes).")
-        self.assertEqual(len(graph_k23.edges()), 6, "K_{2,3} should have 6 edges (each DMR connected to each gene).")
+        # Create a bipartite graph for K_{3,7}
+        graph_k37 = create_bipartite_graph(df_k37)
 
+        # Test K_{3,7} structure
+        self.assertEqual(len(graph_k37.nodes()), 10, "K_{3,7} should have 10 nodes (3 DMRs + 7 genes).")
+        self.assertEqual(len(graph_k37.edges()), 21, "K_{3,7} should have 21 edges (3 * 7 connections).")
 
-        # Verify the connections
-        for dmr in range(2):  # DMR nodes are 0 and 1
-            for gene in ["GeneA", "GeneB", "GeneC"]:
-                self.assertTrue(graph_k23.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
+        # Verify all connections in K_{3,7}
+        for dmr in range(3):  # DMR nodes are 0, 1, 2
+            for gene in genes_k37:
+                self.assertTrue(graph_k37.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
 
         # Test dominating sets for both graphs
         dom_set_k23 = greedy_rb_domination(graph_k23, df_k23)
