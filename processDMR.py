@@ -38,9 +38,16 @@ def greedy_rb_domination(graph, df, area_col=None):
                     if remaining_graph.nodes[node]['bipartite'] == 0]
         
         if dmr_nodes:  # If there are DMR nodes in this component
-            # Choose the DMR with highest degree
+            # Add weight-based selection
+            def get_node_weight(node):
+                degree = len(set(graph.neighbors(node)))
+                area = df.loc[node, area_col] if area_col else 1.0
+                return degree * area
+
+            # Modify selection strategy
             best_dmr = max(dmr_nodes, 
-                          key=lambda x: len(set(remaining_graph.neighbors(x))))
+                           key=lambda x: (len(set(remaining_graph.neighbors(x))), 
+                                        get_node_weight(x)))
             dominating_set.add(best_dmr)
 
     return dominating_set
@@ -104,8 +111,8 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     
     return B
 
-# Create the bipartite graph for DSS1
-bipartite_graph = create_bipartite_graph(df)
+# Preprocess the bipartite graph for DSS1
+bipartite_graph = preprocess_graph(create_bipartite_graph(df))
 
 # Calculate min and max degrees for DSS1
 degrees = dict(bipartite_graph.degree())
@@ -120,7 +127,7 @@ import psutil
 
 # Calculate a greedy R-B dominating set for DSS1
 start_time = time.time()
-dominating_set = greedy_rb_domination(bipartite_graph, df)
+dominating_set = process_components(bipartite_graph)
 end_time = time.time()
 
 # Print the calculated features for DSS1
@@ -264,3 +271,24 @@ memory_info = process.memory_info()
 print(f"Execution Time for HOME1: {end_time - start_time} seconds")
 print(f"Memory Usage for HOME1: {memory_info.rss} bytes")
 print(f"Memory Usage per Node (HOME1): {memory_info.rss / len(bipartite_graph_home1.nodes())} bytes")
+def preprocess_graph(graph):
+    # Remove redundant edges
+    redundant = []
+    for node in graph.nodes():
+        if graph.nodes[node]['bipartite'] == 0:  # DMR nodes
+            neighbors = set(graph.neighbors(node))
+            for other in graph.nodes():
+                if (other != node and 
+                    graph.nodes[other]['bipartite'] == 0 and
+                    set(graph.neighbors(other)).issubset(neighbors)):
+                    redundant.append(other)
+    graph.remove_nodes_from(redundant)
+    return graph
+def process_components(graph):
+    components = list(nx.connected_components(graph))
+    dominating_sets = []
+    for component in components:
+        subgraph = graph.subgraph(component)
+        dom_set = greedy_rb_domination(subgraph, df)
+        dominating_sets.extend(dom_set)
+    return dominating_sets
