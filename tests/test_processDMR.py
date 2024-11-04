@@ -78,7 +78,9 @@ class TestBipartiteGraph(unittest.TestCase):
         df_dss1["Processed_Enhancer_Info"] = df_dss1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         bipartite_graph_dss1 = create_bipartite_graph(df_dss1)
 
-        # Adjust the expected dominating set indices
+        # Test for DSS1 using Area_Stat
+        area_col_dss1 = "Area_Stat"
+        dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
         expected_dominating_set_dss1 = {0, 1, 2}  # Example adjustment
         self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
 
