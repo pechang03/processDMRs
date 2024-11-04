@@ -52,11 +52,19 @@ def create_bipartite_graph(df):
         if row["Gene_Symbol_Nearby"] is not None:
             B.add_node(row["Gene_Symbol_Nearby"], bipartite=1)
             B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
-        # Add additional genes
+        
+        # Add additional genes from Processed_Enhancer_Info
         for gene in row["Processed_Enhancer_Info"]:
             if gene:  # Check if gene is not empty
                 B.add_node(gene, bipartite=1)
                 B.add_edge(row["DMR_No."], gene)
+
+        # If the enhancer information is just a dot or empty, ensure the closest gene is still connected
+        if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
+            # Ensure the closest gene is connected even if no enhancer genes are present
+            if row["Gene_Symbol_Nearby"] is not None:
+                B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
+    
     return B
 
 
