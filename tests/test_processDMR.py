@@ -95,7 +95,7 @@ class TestBipartiteGraph(unittest.TestCase):
                             f"Node {node} is not adjacent to any node in the dominating set for HOME1.")
 
         # Test using only the degree of the vertex
-        dominating_set_degree = greedy_rb_domination(self.bipartite_graph, self.df_home1)
+        dominating_set_degree = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
         for node in self.bipartite_graph.nodes():
             neighbors = set(self.bipartite_graph.neighbors(node))
             self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
