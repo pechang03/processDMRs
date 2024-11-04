@@ -139,16 +139,6 @@ class TestBipartiteGraph(unittest.TestCase):
             for gene in genes_k37:
                 self.assertTrue(graph_k37.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
 
-        # Create a bipartite graph for K_{2,3}
-        data_k23 = {
-            "DMR_No.": [1, 1, 1, 2, 2, 2],  # Each DMR connected to all three genes
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC", "GeneA", "GeneB", "GeneC"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None, None, None, None]
-        }
-        df_k23 = pd.DataFrame(data_k23)
-        df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
-        graph_k23 = create_bipartite_graph(df_k23)
-
         # Test dominating sets for both graphs
         dom_set_k23 = greedy_rb_domination(graph_k23, df_k23)
         dom_set_k37 = greedy_rb_domination(graph_k37, df_k37)
