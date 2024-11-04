@@ -47,7 +47,7 @@ def create_bipartite_graph(df):
             B.add_node(gene, bipartite=1)
             B.add_edge(row["DMR_No."], gene)
 
-        # Check if enhancer information is missing (i.e., a period or NaN)
+        # Check if enhancer information is missing
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
             if row["Gene_Symbol_Nearby"] is not None:
                 B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
