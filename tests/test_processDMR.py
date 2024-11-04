@@ -1,4 +1,5 @@
 import unittest
+import random
 import pandas as pd
 import networkx as nx
 from processDMR import create_bipartite_graph, process_enhancer_info, greedy_rb_domination
