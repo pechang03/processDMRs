@@ -113,7 +113,7 @@ class TestBipartiteGraph(unittest.TestCase):
         graph_k23 = create_bipartite_graph(df_k23)
 
         # Test the graph structure
-        self.assertEqual(len(graph_k23.nodes()), 6, "K_{2,3} should have 6 nodes (2 DMRs + 4 genes).")
+        self.assertEqual(len(graph_k23.nodes()), 5, "K_{2,3} should have 5 nodes (2 DMRs + 3 genes).")
         self.assertEqual(len(graph_k23.edges()), 6, "K_{2,3} should have 6 edges (each DMR connected to each gene).")
 
         # Verify the connections
