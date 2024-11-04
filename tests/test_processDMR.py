@@ -22,7 +22,8 @@ class TestBipartiteGraph(unittest.TestCase):
         self.df_home1 = pd.DataFrame({
             "DMR_No.": [1, 2, 3, 4, 5, 6],
             "Gene_Symbol": ["Sulf1", "Rgs20", "Pabpc1l2a", "Vmn2r121", "Mid1", "Amer1"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."]
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."],
+            "Confidence_Scores": [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # Add this line
         })
 
         # Process the enhancer information for HOME1
