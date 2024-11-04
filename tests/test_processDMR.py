@@ -21,7 +21,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_dmr_has_edges(self):
         for dmr in self.bipartite_graph.nodes():
             if self.bipartite_graph.nodes[dmr].get('bipartite') == 0:  # Check if it's a DMR
-                self.assertGreater(len(list(self.bipartite_graph.adjacency()[dmr])), 0, f"{dmr} has no adjacent edges.")
+                self.assertGreater(len(list(self.bipartite_graph.adjacency[dmr])), 0, f"{dmr} has no adjacent edges.")
 
     def test_empty_dataframe(self):
         empty_df = pd.DataFrame(columns=["DMR_No.", "Gene_Symbol_Nearby", "ENCODE_Enhancer_Interaction(BingRen_Lab)"])
