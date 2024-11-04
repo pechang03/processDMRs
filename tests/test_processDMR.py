@@ -67,7 +67,11 @@ class TestBipartiteGraph(unittest.TestCase):
 
     def test_dominating_set(self):
         # Calculate the dominating set for the test bipartite graph using the custom function
-        dominating_set = greedy_rb_domination(self.bipartite_graph, self.df_home1)
+        # Use the appropriate column for the dataset
+        if "Confidence_Scores" in self.df_home1.columns:
+            dominating_set = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col="Confidence_Scores")
+        else:
+            dominating_set = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col="Area_Stat")
 
         # Check that every node is adjacent to at least one node in the dominating set
         for node in self.bipartite_graph.nodes():
