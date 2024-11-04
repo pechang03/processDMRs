@@ -83,8 +83,8 @@ all_genes = (
 unique_genes_list = list(set(all_genes))
 unique_genes = len(unique_genes_list)
 
-# Assign unique vertex IDs to each gene starting from 2110
-gene_id_start = 2110
+# Assign unique vertex IDs to each gene starting from one more than the maximum ID based on unique DMRs
+gene_id_start = (unique_dmrs - 1) + 1
 gene_id_mapping = {
     gene: idx for idx, gene in enumerate(unique_genes_list, start=gene_id_start)
 }
