@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import networkx as nx
-from processDMR import create_bipartite_graph, process_enhancer_info, nx
+from processDMR import create_bipartite_graph, process_enhancer_info
 
 class TestGraphStatistics(unittest.TestCase):
     def setUp(self):
