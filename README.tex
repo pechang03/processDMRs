@@ -40,7 +40,7 @@
 Q? From a genetics perspective, please briefly describe what a DMR is?\\
 }
 \textbf{
-Q? ok expand this definition to explain why you want 3D genetic data to find genes enanced by a DMR?\\
+Q? ok expand this definition to explain why you want 3D genetic data to find genes enhanced by a DMR?\\
 }
 {\color{iris} LLM generated
 
@@ -61,10 +61,10 @@ By leveraging 3D genetic data, we can gain insights into the complex relationshi
 }
 \subsection{Tables}
 
-We have two types of DRM data. One is computed using glm analysis (DSS1) and one using HOM1 neural networks. But both are essentially the same. The DSS spread sheet is likely more reliable. The main difference between the to tables is column Q. In the DSS data this is an AREA statistic. Which is proportional to the length of each DRM. In the Home data this is a confidence score. both relate to the confidence of edges for that DRM.
+We have two types of DRM data. One is computed using glm analysis (DSS1) and one using HOM1 neural networks. But both are essentially the same. The DSS spread sheet is likely more reliable. The main difference between the two tables is column Q. In the DSS data this is an AREA statistic, which is proportional to the length of each DRM. In the Home data, this is a confidence score. Both relate to the confidence of edges for that DRM.
 
 Either of these tables can be used to produce a bipartite graph between DMRs and genes.
-The DRM ID is in colmn D/E is the DMR ID. Each DMR connects to its closest gene (Column) M (in HOME1 and DSS1) and additional genes (which are obtained using 3D gene mapping and so further away > 2,5K) are in listed in column R in DSS1 and column S in Home1. e.g. Rgs20/e5;Oprk1/e4. Importantly, note that e4 means enhancer e4. For example, when creating the bipartite network graph, DMR3 would only connect to RGs20 $\cap$ Rgs20 and Oprk1. i.e. ignore the part after the / e4. When there is no enhancer data available a period "." is placed in column S, and just the details in column M can be used.
+The DRM ID is in column D/E is the DMR ID. Each DMR connects to its closest gene (Column M in HOME1 and DSS1) and additional genes (which are obtained using 3D gene mapping and so further away > 2.5K) are listed in column R in DSS1 and column S in Home1. e.g. Rgs20/e5;Oprk1/e4. Importantly, note that e4 means enhancer e4. For example, when creating the bipartite network graph, DMR3 would only connect to Rgs20 $\cap$ Rgs20 and Oprk1. i.e. ignore the part after the / e4. When there is no enhancer data available, a period "." is placed in column S, and just the details in column M can be used.
 
 We have no exact data for the enhancers in eyes yet. So the data in column 4 are taken from embryonic stem cell data.
 
@@ -89,5 +89,13 @@ S & ENCODE Promoter Interaction (BingRen Lab) & Enhancer information from ENCODE
 \caption{Description of columns in the DSS1 dataset}
 \label{table:dss1_columns}
 \end{table*}
+
+\section{Output Files}
+The output files generated from the processing include:
+
+\begin{itemize}
+    \item \textbf{bipartite_graph_output.txt}: This file contains the edges of the bipartite graph, with the first line indicating the number of unique DMRs and genes. Each subsequent line represents a connection between a DMR and a gene, with the gene represented by its unique ID.
+    \item \textbf{gene_ids.csv}: This CSV file contains a mapping of gene names to their unique IDs, allowing for easy reference and analysis of the genes associated with the DMRs.
+\end{itemize}
 
 \end{document}
