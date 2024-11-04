@@ -126,12 +126,14 @@ end_time = time.time()
 # Print the calculated features for DSS1
 print(f"Min Degree: {min_degree}")
 print(f"Max Degree: {max_degree}")
+print(f"Average Degree: {sum(degrees.values()) / len(degrees)}")
 print(f"Number of Connected Components: {num_connected_components}")
 print(f"Size of Greedy R-B Dominating Set: {len(dominating_set)}")
 process = psutil.Process()
 memory_info = process.memory_info()
 print(f"Execution Time for DSS1: {end_time - start_time} seconds")
 print(f"Memory Usage for DSS1: {memory_info.rss} bytes")
+print(f"Memory Usage per Node: {memory_info.rss / len(bipartite_graph.nodes())} bytes")
 try:
     df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 except Exception as e:
@@ -254,9 +256,11 @@ end_time = time.time()
 # Print the calculated features for HOME1
 print(f"Min Degree (HOME1): {min_degree_home1}")
 print(f"Max Degree (HOME1): {max_degree_home1}")
+print(f"Average Degree (HOME1): {sum(degrees_home1.values()) / len(degrees_home1)}")
 print(f"Number of Connected Components (HOME1): {num_connected_components_home1}")
 print(f"Size of Greedy R-B Dominating Set (HOME1): {len(dominating_set_home1)}")
 process = psutil.Process()
 memory_info = process.memory_info()
 print(f"Execution Time for HOME1: {end_time - start_time} seconds")
 print(f"Memory Usage for HOME1: {memory_info.rss} bytes")
+print(f"Memory Usage per Node (HOME1): {memory_info.rss / len(bipartite_graph_home1.nodes())} bytes")
