@@ -25,7 +25,8 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."]
         })
 
-    def test_dmr_has_edges(self):
+        # Process the enhancer information for HOME1
+        self.df_home1["Processed_Enhancer_Info"] = self.df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         # Check if the node is a DMR and assert it has adjacent edges
         for dmr in self.bipartite_graph.nodes():
             if self.bipartite_graph.nodes[dmr].get('bipartite') == 0:  # Check if it's a DMR
