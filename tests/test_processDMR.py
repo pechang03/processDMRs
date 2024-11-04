@@ -39,6 +39,17 @@ class TestBipartiteGraph(unittest.TestCase):
         empty_graph = create_bipartite_graph(empty_df)
         self.assertEqual(len(empty_graph.nodes()), 0, "Graph should have no nodes for an empty DataFrame.")
 
+    def test_single_node_graph(self):
+        # Assert that the graph has one node when provided with a single-node DataFrame
+        single_node_df = pd.DataFrame({
+            "DMR_No.": [1],
+            "Gene_Symbol_Nearby": [None],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None]
+        })
+        single_node_df["Processed_Enhancer_Info"] = single_node_df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        single_node_graph = create_bipartite_graph(single_node_df)
+        self.assertEqual(len(single_node_graph.nodes()), 1, "Graph should have one node for a single-node DataFrame.")
+
     def test_dmr_without_genes(self):
         # Assert that the graph has 2 DMR nodes without any associated genes or edges
         data = {
@@ -67,6 +78,19 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn(1, graph.nodes(), "1 should be a node in the graph.")
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
+
+    def test_fully_connected_graph(self):
+        # Assert that the graph is fully connected
+        data = {
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        graph = create_bipartite_graph(df)
+        self.assertEqual(len(graph.nodes()), 6, "Graph should have 6 nodes (3 DMRs + 3 genes).")
+        self.assertEqual(len(graph.edges()), 9, "Graph should have 9 edges (3 DMRs * 3 genes).")
 
     def test_degree_one_genes(self):
         # Create a test case with degree-1 genes

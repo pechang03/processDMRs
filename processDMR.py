@@ -115,14 +115,23 @@ max_degree = max(degrees.values())
 # Calculate the number of connected components for DSS1
 num_connected_components = nx.number_connected_components(bipartite_graph)
 
+import time
+import psutil
+
 # Calculate a greedy R-B dominating set for DSS1
+start_time = time.time()
 dominating_set = greedy_rb_domination(bipartite_graph, df)
+end_time = time.time()
 
 # Print the calculated features for DSS1
 print(f"Min Degree: {min_degree}")
 print(f"Max Degree: {max_degree}")
 print(f"Number of Connected Components: {num_connected_components}")
 print(f"Size of Greedy R-B Dominating Set: {len(dominating_set)}")
+process = psutil.Process()
+memory_info = process.memory_info()
+print(f"Execution Time for DSS1: {end_time - start_time} seconds")
+print(f"Memory Usage for DSS1: {memory_info.rss} bytes")
 try:
     df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 except Exception as e:
@@ -238,10 +247,16 @@ max_degree_home1 = max(degrees_home1.values())
 num_connected_components_home1 = nx.number_connected_components(bipartite_graph_home1)
 
 # Calculate a greedy R-B dominating set for HOME1
+start_time = time.time()
 dominating_set_home1 = greedy_rb_domination(bipartite_graph_home1, df_home1, area_col="Confidence_Scores")
+end_time = time.time()
 
 # Print the calculated features for HOME1
 print(f"Min Degree (HOME1): {min_degree_home1}")
 print(f"Max Degree (HOME1): {max_degree_home1}")
 print(f"Number of Connected Components (HOME1): {num_connected_components_home1}")
 print(f"Size of Greedy R-B Dominating Set (HOME1): {len(dominating_set_home1)}")
+process = psutil.Process()
+memory_info = process.memory_info()
+print(f"Execution Time for HOME1: {end_time - start_time} seconds")
+print(f"Memory Usage for HOME1: {memory_info.rss} bytes")
