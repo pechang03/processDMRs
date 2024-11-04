@@ -107,7 +107,7 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
         }
         df_k23 = pd.DataFrame(data_k23)
-        df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
+        df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
 
         # Create a bipartite graph for K_{2,3}
         graph_k23 = create_bipartite_graph(df_k23)
