@@ -65,7 +65,17 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
-if __name__ == '__main__':
+    def test_dominating_set(self):
+        # Calculate the dominating set for the test bipartite graph
+        dominating_set = nx.algorithms.dominating.min_weighted_dominating_set(self.bipartite_graph)
+
+        # Check that every node is adjacent to at least one node in the dominating set
+        for node in self.bipartite_graph.nodes():
+            # Get neighbors of the node
+            neighbors = set(self.bipartite_graph.neighbors(node))
+            # Check if any neighbor is in the dominating set
+            self.assertTrue(any(neighbor in dominating_set for neighbor in neighbors),
+                            f"Node {node} is not adjacent to any node in the dominating set.")
     unittest.main()
 import unittest
 import pandas as pd
