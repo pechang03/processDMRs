@@ -247,6 +247,9 @@ except Exception as e:
 
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
 
+# Preprocess the bipartite graph for HOME1
+bipartite_graph_home1 = preprocess_graph(create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol"))
+
 # Calculate min and max degrees for HOME1
 degrees_home1 = dict(bipartite_graph_home1.degree())
 min_degree_home1 = min(degrees_home1.values())
@@ -257,7 +260,7 @@ num_connected_components_home1 = nx.number_connected_components(bipartite_graph_
 
 # Calculate a greedy R-B dominating set for HOME1
 start_time = time.time()
-dominating_set_home1 = greedy_rb_domination(bipartite_graph_home1, df_home1, area_col="Confidence_Scores")
+dominating_set_home1 = process_components(bipartite_graph_home1)
 end_time = time.time()
 
 # Print the calculated features for HOME1
