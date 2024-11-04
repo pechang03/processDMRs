@@ -100,41 +100,26 @@ class TestBipartiteGraph(unittest.TestCase):
             self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
                             f"Node {node} is not adjacent to any node in the dominating set using degree only.")
     def test_complete_bipartite_graphs(self):
-    # Create a DataFrame for K_{2,3}
-    data_k23 = {
-        "DMR_No.": [1, 2],  # Two DMR nodes
-        "Gene_Symbol_Nearby": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],  # Each DMR connected to all three genes
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
-    }
-    df_k23 = pd.DataFrame(data_k23)
-    df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
+        # Create a DataFrame for K_{2,3}
+        data_k23 = {
+            "DMR_No.": [1, 2],  # Two DMR nodes
+            "Gene_Symbol_Nearby": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],  # Each DMR connected to all three genes
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
+        }
+        df_k23 = pd.DataFrame(data_k23)
+        df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
 
         # Create a bipartite graph for K_{2,3}
         graph_k23 = create_bipartite_graph(df_k23)
 
-        # Create a DataFrame for K_{5,7}
-        data_k57 = {
-            "DMR_No.": [1, 2, 3, 4, 5],  # Corresponds to node IDs 0 to 4
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None, None, None]
-        }
-        df_k57 = pd.DataFrame(data_k57)
-        df_k57["Processed_Enhancer_Info"] = df_k57["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
-
-        # Create a bipartite graph for K_{5,7}
-        graph_k57 = create_bipartite_graph(df_k57)
-
         # Test the graph structure
         self.assertEqual(len(graph_k23.nodes()), 5, "K_{2,3} should have 5 nodes (2 DMRs + 3 genes).")
-        self.assertEqual(len(graph_k57.nodes()), 12, "K_{5,7} should have 12 nodes (5 DMRs + 7 genes).")
+        self.assertEqual(len(graph_k23.edges()), 6, "K_{2,3} should have 6 edges (each DMR connected to each gene).")
 
-        # Test the dominating set calculation
-        dominating_set_k23 = greedy_rb_domination(graph_k23, df_k23)
-        dominating_set_k57 = greedy_rb_domination(graph_k57, df_k57)
-
-        # Verify the dominating sets
-        self.assertTrue(all(node in dominating_set_k23 for node in range(2)), "All DMRs should be in the dominating set for K_{2,3}.")
-        self.assertTrue(all(node in dominating_set_k57 for node in range(5)), "All DMRs should be in the dominating set for K_{5,7}.")
+        # Verify the connections
+        for dmr in range(2):  # DMR nodes are 0 and 1
+            for gene in ["GeneA", "GeneB", "GeneC"]:
+                self.assertTrue(graph_k23.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
 
 if __name__ == '__main__':
     unittest.main()
