@@ -4,47 +4,43 @@ import csv
 from graph_utils import process_enhancer_info
 
 def greedy_rb_domination(graph, df, area_col=None):
-    # Ensure all nodes have 'bipartite' attribute
-    for node in graph.nodes():
-        if 'bipartite' not in graph.nodes[node]:
-            raise KeyError(f"Node {node} is missing the 'bipartite' attribute")
-
     # Initialize the dominating set
     dominating_set = set()
     
     # Get all gene nodes (bipartite=1)
     gene_nodes = set(node for node, data in graph.nodes(data=True) if data['bipartite'] == 1)
     
-    # First, handle degree-1 genes
+    # Keep track of dominated genes
+    dominated_genes = set()
+    
+    # First, handle degree-1 genes that aren't already dominated
     for gene in gene_nodes:
-        if graph.degree(gene) == 1:
+        if graph.degree(gene) == 1 and gene not in dominated_genes:
             # Get the single neighbor (DMR) of this gene
             dmr = list(graph.neighbors(gene))[0]
             dominating_set.add(dmr)
+            # Update dominated genes
+            dominated_genes.update(graph.neighbors(dmr))
     
-    # Then handle remaining components
-    # Get subgraph of remaining nodes not dominated
-    dominated_genes = set()
-    for dmr in dominating_set:
-        dominated_genes.update(n for n in graph.neighbors(dmr) if graph.nodes[n]['bipartite'] == 1)
-    
+    # Get remaining undominated subgraph
     remaining_graph = graph.copy()
     remaining_graph.remove_nodes_from(dominating_set)
     remaining_graph.remove_nodes_from(dominated_genes)
     
-    # Get connected components of remaining graph
-    components = list(nx.connected_components(remaining_graph))
-    
-    # For each remaining component, add one DMR node to the dominating set
-    for component in components:
+    # Handle remaining components
+    for component in nx.connected_components(remaining_graph):
+        # Skip if component has no genes to dominate
+        if not any(remaining_graph.nodes[n]['bipartite'] == 1 for n in component):
+            continue
+            
         # Get DMR nodes in this component
         dmr_nodes = [node for node in component 
-                    if graph.nodes[node]['bipartite'] == 0]
+                    if remaining_graph.nodes[node]['bipartite'] == 0]
         
         if dmr_nodes:  # If there are DMR nodes in this component
-            # Choose the DMR with highest degree in the component
+            # Choose the DMR with highest degree
             best_dmr = max(dmr_nodes, 
-                          key=lambda x: len(set(graph.neighbors(x))))
+                          key=lambda x: len(set(remaining_graph.neighbors(x))))
             dominating_set.add(best_dmr)
 
     return dominating_set
