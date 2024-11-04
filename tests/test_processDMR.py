@@ -21,7 +21,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_dmr_has_edges(self):
         for dmr in self.bipartite_graph.nodes():
             if self.bipartite_graph.nodes[dmr].get('bipartite') == 0:  # Check if it's a DMR
-                self.assertGreater(len(list(self.bipartite_graph.adjacency[dmr])), 0, f"{dmr} has no adjacent edges.")
+                self.assertGreater(len(list(self.bipartite_graph.adj[dmr])), 0, f"{dmr} has no adjacent edges.")
 
     def test_empty_dataframe(self):
         empty_df = pd.DataFrame(columns=["DMR_No.", "Gene_Symbol_Nearby", "ENCODE_Enhancer_Interaction(BingRen_Lab)"])
@@ -48,7 +48,7 @@ class TestBipartiteGraph(unittest.TestCase):
         df = pd.DataFrame(data)
         df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         graph = create_bipartite_graph(df)
-        self.assertEqual(len(graph.nodes()), 8, "Graph should have 8 nodes (3 DMRs + 5 unique genes).")
+        self.assertEqual(len(graph.nodes()), 11, "Graph should have 11 nodes (3 DMRs + 8 unique genes).")
         self.assertIn("DMR1", graph.nodes(), "DMR1 should be a node in the graph.")
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
