@@ -7,7 +7,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
         # Sample DataFrame setup for testing the bipartite graph creation
         data = {
-            "DMR_No.": ["DMR1", "DMR2", "DMR3"],
+            "DMR_No.": [1, 2, 3],  # Updated DMR_No. to be numeric
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
         }
@@ -33,7 +33,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_dmr_without_genes(self):
         # Assert that the graph has 2 DMR nodes without any associated genes or edges
         data = {
-            "DMR_No.": ["DMR1", "DMR2"],
+            "DMR_No.": [1, 2],  # Updated DMR_No. to be numeric
             "Gene_Symbol_Nearby": [None, None],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
         }
@@ -45,7 +45,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_multiple_dmrs(self):
         # Assert that the graph has the correct number of nodes based on DMRs and unique genes
         data = {
-            "DMR_No.": ["DMR1", "DMR2", "DMR3"],
+            "DMR_No.": [1, 2, 3],  # Updated DMR_No. to be numeric
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF;GeneG", "GeneH"]
         }
@@ -53,7 +53,7 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         graph = create_bipartite_graph(df)
         self.assertEqual(len(graph.nodes()), 11, "Graph should have 11 nodes (3 DMRs + 8 unique genes).")
-        self.assertIn("DMR1", graph.nodes(), "DMR1 should be a node in the graph.")
+        self.assertIn(1, graph.nodes(), "1 should be a node in the graph.")
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
