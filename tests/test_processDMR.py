@@ -87,7 +87,15 @@ class TestBipartiteGraph(unittest.TestCase):
 
         self.bipartite_graph = create_bipartite_graph(df)
 
-    def test_dmr_has_edges(self):
+        # Sample data to simulate the HOME1 dataset
+        self.df_home1 = pd.DataFrame({
+            "DMR_No.": [1, 2, 3, 4, 5, 6],
+            "Gene_Symbol": ["Sulf1", "Rgs20", "Pabpc1l2a", "Vmn2r121", "Mid1", "Amer1"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."]
+        })
+
+        # Process the enhancer information for HOME1
+        self.df_home1["Processed_Enhancer_Info"] = self.df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         # Check if the node is a DMR and assert it has adjacent edges
         for dmr in self.bipartite_graph.nodes():
             if self.bipartite_graph.nodes[dmr].get('bipartite') == 0:  # Check if it's a DMR
