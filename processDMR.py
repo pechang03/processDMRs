@@ -21,7 +21,7 @@ def greedy_rb_domination(graph, df, area_col=None):
     remaining_dmrs = list(dmr_nodes)  # Convert to list for sorting
 
     # Sort DMRs by degree initially
-    remaining_dmrs.sort(key=lambda x: len(list(graph.neighbors(x))), reverse=True)
+    remaining_dmrs.sort(key=lambda x: len(set(graph.neighbors(x)) & uncovered_genes), reverse=True)
     
     while uncovered_genes and remaining_dmrs:
         # Take the highest degree DMR
