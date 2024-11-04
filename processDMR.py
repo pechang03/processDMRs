@@ -4,7 +4,10 @@ import csv
 from graph_utils import process_enhancer_info
 
 def greedy_rb_domination(graph, df, area_col="Area_Stat"):
-    # Initialize the set of covered genes
+    # Ensure all nodes have 'bipartite' attribute
+    for node in graph.nodes():
+        if 'bipartite' not in graph.nodes[node]:
+            raise KeyError(f"Node {node} is missing the 'bipartite' attribute")
     covered_genes = set()
     # Initialize the dominating set
     dominating_set = set()
@@ -58,7 +61,7 @@ print(df["Processed_Enhancer_Info"])
 # Function to create a bipartite graph connecting DMRs to their associated genes
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
-    B.add_nodes_from(df["DMR_No."], bipartite=0)  # Use DMR_No. directly
+    B.add_nodes_from(df["DMR_No."], bipartite=0)  # Add DMR nodes with the 'bipartite' attribute set to 0
     for index, row in df.iterrows():
         associated_genes = set()
 
