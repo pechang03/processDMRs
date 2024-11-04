@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import networkx as nx
-from processDMR import create_bipartite_graph  # Adjust the import based on your project structure
+from processDMR import create_bipartite_graph, process_enhancer_info  # Adjust the import based on your project structure
 
 class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
@@ -12,6 +12,10 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
         }
         df = pd.DataFrame(data)
+
+        # Process the enhancer information to create the 'Processed_Enhancer_Info' column
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+
         self.bipartite_graph = create_bipartite_graph(df)
 
     def test_dmr_has_edges(self):
@@ -31,6 +35,7 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
         }
         df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         graph = create_bipartite_graph(df)
         self.assertEqual(len(graph.nodes()), 2, "Graph should have 2 DMR nodes without any edges.")
 
@@ -41,6 +46,7 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF;GeneG", "GeneH"]
         }
         df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         graph = create_bipartite_graph(df)
         self.assertEqual(len(graph.nodes()), 8, "Graph should have 8 nodes (3 DMRs + 5 unique genes).")
         self.assertIn("DMR1", graph.nodes(), "DMR1 should be a node in the graph.")
