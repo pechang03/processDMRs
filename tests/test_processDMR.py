@@ -7,7 +7,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
         # Sample DataFrame setup for testing the bipartite graph creation
         data = {
-            "DMR_No.": [0, 1, 2],  # Use numeric values for DMR_No.
+            "DMR_No.": [0, 1, 2],  # Adjusted indices
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
         }
@@ -62,13 +62,15 @@ class TestBipartiteGraph(unittest.TestCase):
         graph = create_bipartite_graph(df)
         self.assertEqual(len(graph.nodes()), 11, "Graph should have 11 nodes (3 DMRs + 8 unique genes).")
         self.assertIn(0, graph.nodes(), "0 should be a node in the graph.")
+        self.assertIn(1, graph.nodes(), "1 should be a node in the graph.")
+        self.assertIn(2, graph.nodes(), "2 should be a node in the graph.")
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
     def test_dominating_set(self):
         # Sample data to simulate the DSS1 dataset
         df_dss1 = pd.DataFrame({
-            "DMR_No.": [1, 2, 3],
+            "DMR_No.": [0, 1, 2],  # Adjusted indices
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "Area_Stat": [10.5, 20.3, 15.2],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
