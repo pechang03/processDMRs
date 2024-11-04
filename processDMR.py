@@ -28,12 +28,22 @@ def greedy_rb_domination(graph, df, area_col=None):
             reverse=True
         )
 
-    # Greedily select DMRs until all genes are covered
-    for dmr in dmr_nodes:
-        if covered_genes.issuperset(set(graph.neighbors(dmr))):  # Check if all neighbors are already covered
-            continue
-        dominating_set.add(dmr)
-        covered_genes.update(graph.neighbors(dmr))
+    # Keep adding DMRs until all genes are covered
+    genes_to_cover = set(n for n, d in graph.nodes(data=True) if d['bipartite'] == 1)
+    
+    while genes_to_cover:
+        # Find the DMR that covers the most uncovered genes
+        best_dmr = max(
+            (d for d in dmr_nodes if d not in dominating_set),
+            key=lambda d: len(set(graph.neighbors(d)) & genes_to_cover),
+            default=None
+        )
+        
+        if best_dmr is None or not set(graph.neighbors(best_dmr)) & genes_to_cover:
+            break
+            
+        dominating_set.add(best_dmr)
+        genes_to_cover -= set(graph.neighbors(best_dmr))
 
     return dominating_set
 
