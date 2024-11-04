@@ -84,6 +84,9 @@ class TestBipartiteGraph(unittest.TestCase):
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
         expected_dominating_set_dss1 = {0, 1, 2}  # Adjust to match the correct node IDs
 
+        # Ensure node 0 is covered by the dominating set
+        self.assertIn(0, dominating_set_dss1, "Node 0 should be in the dominating set for DSS1.")
+
         # Test for HOME1 using Confidence_Scores
         area_col_home1 = "Confidence_Scores"
         dominating_set_home1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
@@ -92,12 +95,18 @@ class TestBipartiteGraph(unittest.TestCase):
             self.assertTrue(any(neighbor in dominating_set_home1 for neighbor in neighbors) or node in dominating_set_home1,
                             f"Node {node} is not adjacent to any node in the dominating set for HOME1.")
 
+        # Ensure node 0 is covered by the dominating set for HOME1
+        self.assertIn(0, dominating_set_home1, "Node 0 should be in the dominating set for HOME1.")
+
         # Test using only the degree of the vertex
         dominating_set_degree = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
         for node in self.bipartite_graph.nodes():
             neighbors = set(self.bipartite_graph.neighbors(node))
             self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
                             f"Node {node} is not adjacent to any node in the dominating set using degree only.")
+
+        # Ensure node 0 is covered by the dominating set using degree only
+        self.assertIn(0, dominating_set_degree, "Node 0 should be in the dominating set using degree only.")
     def test_complete_bipartite_graphs(self):
         # Create a DataFrame for K_{2,3}
         data_k23 = {
