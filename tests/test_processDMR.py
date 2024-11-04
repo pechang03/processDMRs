@@ -79,11 +79,11 @@ class TestBipartiteGraph(unittest.TestCase):
         # Test for DSS1 using Area_Stat
         area_col_dss1 = "Area_Stat"
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
+        # Debugging output
         print("Dominating Set DSS1:", dominating_set_dss1)
         for node in bipartite_graph_dss1.nodes():
             neighbors = set(bipartite_graph_dss1.neighbors(node))
             print(f"Node {node} neighbors: {neighbors}")
-            neighbors = set(bipartite_graph_dss1.neighbors(node))
             self.assertTrue(any(neighbor in dominating_set_dss1 for neighbor in neighbors),
                             f"Node {node} is not adjacent to any node in the dominating set for DSS1.")
 
