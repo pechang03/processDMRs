@@ -5,7 +5,7 @@ from processDMR import create_bipartite_graph, process_enhancer_info  # Adjust t
 
 class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
-        # Sample DataFrame setup for testing
+        # Sample DataFrame setup for testing the bipartite graph creation
         data = {
             "DMR_No.": ["DMR1", "DMR2", "DMR3"],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
@@ -19,16 +19,19 @@ class TestBipartiteGraph(unittest.TestCase):
         self.bipartite_graph = create_bipartite_graph(df)
 
     def test_dmr_has_edges(self):
+        # Check if the node is a DMR and assert it has adjacent edges
         for dmr in self.bipartite_graph.nodes():
             if self.bipartite_graph.nodes[dmr].get('bipartite') == 0:  # Check if it's a DMR
                 self.assertGreater(len(list(self.bipartite_graph.adj[dmr])), 0, f"{dmr} has no adjacent edges.")
 
     def test_empty_dataframe(self):
+        # Assert that the graph has no nodes when provided with an empty DataFrame
         empty_df = pd.DataFrame(columns=["DMR_No.", "Gene_Symbol_Nearby", "ENCODE_Enhancer_Interaction(BingRen_Lab)"])
         empty_graph = create_bipartite_graph(empty_df)
         self.assertEqual(len(empty_graph.nodes()), 0, "Graph should have no nodes for an empty DataFrame.")
 
     def test_dmr_without_genes(self):
+        # Assert that the graph has 2 DMR nodes without any associated genes or edges
         data = {
             "DMR_No.": ["DMR1", "DMR2"],
             "Gene_Symbol_Nearby": [None, None],
@@ -40,6 +43,7 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertEqual(len(graph.nodes()), 2, "Graph should have 2 DMR nodes without any edges.")
 
     def test_multiple_dmrs(self):
+        # Assert that the graph has the correct number of nodes based on DMRs and unique genes
         data = {
             "DMR_No.": ["DMR1", "DMR2", "DMR3"],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
