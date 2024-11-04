@@ -1,4 +1,3 @@
-from hello import hello
 import pandas as pd
 import networkx as nx
 import csv
