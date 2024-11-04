@@ -7,7 +7,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
         # Sample DataFrame setup for testing the bipartite graph creation
         data = {
-            "DMR_No.": [0, 1, 2],  # Adjusted indices
+            "DMR_No.": [1, 2, 3],  # Original DMR_No.
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
         }
@@ -62,9 +62,9 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         graph = create_bipartite_graph(df)
         self.assertEqual(len(graph.nodes()), 11, "Graph should have 11 nodes (3 DMRs + 8 unique genes).")
-        self.assertIn(3, graph.nodes(), "3 should be a node in the graph.")
-        self.assertIn(1, graph.nodes(), "1 should be a node in the graph.")
         self.assertIn(2, graph.nodes(), "2 should be a node in the graph.")
+        self.assertIn(0, graph.nodes(), "0 should be a node in the graph.")
+        self.assertIn(1, graph.nodes(), "1 should be a node in the graph.")
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
