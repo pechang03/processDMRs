@@ -73,7 +73,8 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
 
         # Add gene nodes with the 'bipartite' attribute set to 1
         for gene in associated_genes:
-            B.add_node(gene, bipartite=1)
+            if not B.has_node(gene):
+                B.add_node(gene, bipartite=1)
             B.add_edge(row["DMR_No."] - 1, gene)
 
         # Check if enhancer information is missing

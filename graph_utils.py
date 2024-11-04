@@ -44,7 +44,8 @@ def create_bipartite_graph(df):
 
         # Add edges between the DMR and all associated genes
         for gene in associated_genes:
-            B.add_node(gene, bipartite=1)
+            if not B.has_node(gene):
+                B.add_node(gene, bipartite=1)
             B.add_edge(row["DMR_No."] - 1, gene)
 
         # Check if enhancer information is missing
