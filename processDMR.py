@@ -95,29 +95,6 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
                 B.add_edge(row["DMR_No."] - 1, row[closest_gene_col])
     
     return B
-    for index, row in df.iterrows():
-        associated_genes = set()
-
-        # Add closest gene if it's not None
-        if row[closest_gene_col] is not None:
-            associated_genes.add(row[closest_gene_col])
-
-        # Add additional genes from Processed_Enhancer_Info
-        for gene in row["Processed_Enhancer_Info"]:
-            if gene:  # Check if gene is not empty
-                associated_genes.add(gene)
-
-        # Add edges between the DMR and all associated genes
-        for gene in associated_genes:
-            B.add_node(gene, bipartite=1)
-            B.add_edge(row["DMR_No."] - 1, gene)
-
-        # Check if enhancer information is missing
-        if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
-            if row[closest_gene_col] is not None:
-                B.add_edge(row["DMR_No."] - 1, row[closest_gene_col])
-    
-    return B
 
 # Create the bipartite graph for DSS1
 bipartite_graph = create_bipartite_graph(df)
