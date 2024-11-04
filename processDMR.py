@@ -48,16 +48,21 @@ def create_bipartite_graph(df):
     # Add nodes with the node attribute "bipartite"
     B.add_nodes_from(df["DMR_No."], bipartite=0)  # DMRs
     for index, row in df.iterrows():
+        associated_genes = set()
+
         # Add closest gene if it's not None
         if row["Gene_Symbol_Nearby"] is not None:
-            B.add_node(row["Gene_Symbol_Nearby"], bipartite=1)
-            B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
-        
+            associated_genes.add(row["Gene_Symbol_Nearby"])
+
         # Add additional genes from Processed_Enhancer_Info
         for gene in row["Processed_Enhancer_Info"]:
             if gene:  # Check if gene is not empty
-                B.add_node(gene, bipartite=1)
-                B.add_edge(row["DMR_No."], gene)
+                associated_genes.add(gene)
+
+        # Add edges for all associated genes
+        for gene in associated_genes:
+            B.add_node(gene, bipartite=1)
+            B.add_edge(row["DMR_No."], gene)
 
         # If the enhancer information is just a dot or empty, ensure the closest gene is still connected
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
