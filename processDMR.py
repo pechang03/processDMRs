@@ -11,22 +11,31 @@ def greedy_rb_domination(graph, df, area_col=None):
 
     # Initialize the dominating set
     dominating_set = set()
-
-    # Get all DMR nodes (bipartite=0) and gene nodes (bipartite=1)
-    dmr_nodes = set(node for node, data in graph.nodes(data=True) if data['bipartite'] == 0)
+    
+    # Get all gene nodes (bipartite=1)
     gene_nodes = set(node for node, data in graph.nodes(data=True) if data['bipartite'] == 1)
     
-    # Keep track of uncovered genes
-    uncovered_genes = gene_nodes.copy()
-    remaining_dmrs = list(dmr_nodes)  # Convert to list for sorting
-
-    # Sort DMRs by degree initially
-    remaining_dmrs.sort(key=lambda x: len(set(graph.neighbors(x)) & uncovered_genes), reverse=True)
+    # First, handle degree-1 genes
+    for gene in gene_nodes:
+        if graph.degree(gene) == 1:
+            # Get the single neighbor (DMR) of this gene
+            dmr = list(graph.neighbors(gene))[0]
+            dominating_set.add(dmr)
     
-    # Get connected components
-    components = list(nx.connected_components(graph))
+    # Then handle remaining components
+    # Get subgraph of remaining nodes not dominated
+    dominated_genes = set()
+    for dmr in dominating_set:
+        dominated_genes.update(n for n in graph.neighbors(dmr) if graph.nodes[n]['bipartite'] == 1)
     
-    # For each component, add one DMR node to the dominating set
+    remaining_graph = graph.copy()
+    remaining_graph.remove_nodes_from(dominating_set)
+    remaining_graph.remove_nodes_from(dominated_genes)
+    
+    # Get connected components of remaining graph
+    components = list(nx.connected_components(remaining_graph))
+    
+    # For each remaining component, add one DMR node to the dominating set
     for component in components:
         # Get DMR nodes in this component
         dmr_nodes = [node for node in component 
