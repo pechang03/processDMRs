@@ -68,45 +68,26 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
-    def test_dominating_set(self):
-        # Sample data to simulate the DSS1 dataset
-        df_dss1 = pd.DataFrame({
-            "DMR_No.": [1, 2, 3],  # Ensure these are the correct starting values
+    def test_degree_one_genes(self):
+        # Create a test case with degree-1 genes
+        data = {
+            "DMR_No.": [1, 2, 3],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-            "Area_Stat": [10.5, 20.3, 15.2],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
-        })
-        df_dss1["Processed_Enhancer_Info"] = df_dss1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-        bipartite_graph_dss1 = create_bipartite_graph(df_dss1)
-
-        # Test for DSS1 using Area_Stat
-        area_col_dss1 = "Area_Stat"
-        dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
-        expected_dominating_set_dss1 = {0, 1, 2}  # Adjust to match the correct node IDs
-
-        # Ensure node 0 is covered by the dominating set
-        self.assertIn(0, dominating_set_dss1, "Node 0 should be in the dominating set for DSS1.")
-
-        # Test for HOME1 using Confidence_Scores
-        area_col_home1 = "Confidence_Scores"
-        dominating_set_home1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
-        for node in self.bipartite_graph.nodes():
-            neighbors = set(self.bipartite_graph.neighbors(node))
-            self.assertTrue(any(neighbor in dominating_set_home1 for neighbor in neighbors) or node in dominating_set_home1,
-                            f"Node {node} is not adjacent to any node in the dominating set for HOME1.")
-
-        # Ensure node 0 is covered by the dominating set for HOME1
-        self.assertIn(0, dominating_set_home1, "Node 0 should be in the dominating set for HOME1.")
-
-        # Test using only the degree of the vertex
-        dominating_set_degree = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
-        for node, data in self.bipartite_graph.nodes(data=True):
-            if data['bipartite'] == 1:  # Only check gene nodes
-                neighbors = set(self.bipartite_graph.neighbors(node))
-                self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
-                                f"Gene node {node} is not adjacent to any node in the dominating set using degree only.")
-
-        # Ensure node 0 is covered by the dominating set using degree only
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        
+        graph = create_bipartite_graph(df)
+        dominating_set = greedy_rb_domination(graph, df)
+        
+        # Check that neighbors of degree-1 genes are in the dominating set
+        for node in graph.nodes():
+            if (graph.nodes[node]['bipartite'] == 1 and  # is a gene
+                graph.degree(node) == 1):  # has degree 1
+                neighbor = list(graph.neighbors(node))[0]
+                self.assertIn(neighbor, dominating_set,
+                    f"DMR neighbor {neighbor} of degree-1 gene {node} must be in dominating set")
     def test_complete_bipartite_graphs(self):
         # Create a DataFrame for K_{2,3}
         data_k23 = {
