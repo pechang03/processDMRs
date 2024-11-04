@@ -66,11 +66,21 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
     def test_dominating_set(self):
+        # Sample data to simulate the DSS1 dataset
+        df_dss1 = pd.DataFrame({
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "Area_Stat": [10.5, 20.3, 15.2],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
+        })
+        df_dss1["Processed_Enhancer_Info"] = df_dss1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        bipartite_graph_dss1 = create_bipartite_graph(df_dss1)
+
         # Test for DSS1 using Area_Stat
         area_col_dss1 = "Area_Stat"
-        dominating_set_dss1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_dss1)
-        for node in self.bipartite_graph.nodes():
-            neighbors = set(self.bipartite_graph.neighbors(node))
+        dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
+        for node in bipartite_graph_dss1.nodes():
+            neighbors = set(bipartite_graph_dss1.neighbors(node))
             self.assertTrue(any(neighbor in dominating_set_dss1 for neighbor in neighbors),
                             f"Node {node} is not adjacent to any node in the dominating set for DSS1.")
 
