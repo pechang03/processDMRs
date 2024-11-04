@@ -71,7 +71,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_dominating_set(self):
         # Sample data to simulate the DSS1 dataset
         df_dss1 = pd.DataFrame({
-            "DMR_No.": [0, 1, 2],  # Adjusted indices
+            "DMR_No.": [1, 2, 3],  # Ensure these are the correct starting values
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "Area_Stat": [10.5, 20.3, 15.2],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
@@ -82,7 +82,7 @@ class TestBipartiteGraph(unittest.TestCase):
         # Test for DSS1 using Area_Stat
         area_col_dss1 = "Area_Stat"
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
-        expected_dominating_set_dss1 = {0, 1, 2}  # Example adjustment
+        expected_dominating_set_dss1 = {1, 2, 3}  # Adjust to match the correct node IDs
         self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
 
         # Test for HOME1 using Confidence_Scores
