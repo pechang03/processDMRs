@@ -3,7 +3,11 @@ import networkx as nx
 import csv
 
 # Read the Excel file into a Pandas DataFrame
-df = pd.read_excel("./data/DSS1.xlsx", header=0)  # Adjust this based on your inspection
+try:
+    df = pd.read_excel("./data/DSS1.xlsx", header=0)  # Adjust this based on your inspection
+except Exception as e:
+    print(f"Error reading DSS1.xlsx: {e}")
+    raise  # Re-raise the exception after logging
 
 # Print the column names to verify they match your expectations
 print("Column names:", df.columns)
@@ -15,11 +19,18 @@ area = df["Area_Stat"]  # Column for the area statistic
 enhancer_info = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"]  # Column for enhancer information
 
 # Function to process enhancer information from the ENCODE data
-# Splits the enhancer string by ';' and removes any suffix after '/e?'
 def process_enhancer_info(enhancer_str):
+    """
+    Process the enhancer information from the ENCODE data.
+
+    Parameters:
+    enhancer_str (str): A string containing enhancer information, separated by ';'.
+
+    Returns:
+    list: A list of processed gene names, with any suffixes removed.
+    """
     if pd.isna(enhancer_str) or enhancer_str == ".":
         return []
-    # Split the string by ';' and remove '/e?' from each part
     genes = enhancer_str.split(";")
     processed_genes = [gene.split("/")[0] for gene in genes]
     return processed_genes
@@ -38,8 +49,16 @@ print("Processed Enhancer Info:")
 print(df["Processed_Enhancer_Info"])
 
 # Function to create a bipartite graph connecting DMRs to their associated genes
-# Each DMR connects to its closest gene (Column M) and additional genes (Column S)
 def create_bipartite_graph(df):
+    """
+    Create a bipartite graph connecting DMRs to their associated genes.
+
+    Parameters:
+    df (DataFrame): A Pandas DataFrame containing DMR and gene information.
+
+    Returns:
+    Graph: A NetworkX bipartite graph with DMRs and genes as nodes.
+    """
     B = nx.Graph()
     # Add nodes with the node attribute "bipartite"
     B.add_nodes_from(df["DMR_No."], bipartite=0)  # DMRs
@@ -56,15 +75,12 @@ def create_bipartite_graph(df):
                 associated_genes.add(gene)
 
         # Add edges between the DMR and all associated genes
-        # Ensure that the closest gene is connected even if no enhancer genes are present
         for gene in associated_genes:
             B.add_node(gene, bipartite=1)
             B.add_edge(row["DMR_No."], gene)
 
         # Check if enhancer information is missing (i.e., a period or NaN)
-        # If so, ensure the closest gene is still connected to the DMR
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
-            # Ensure the closest gene is connected even if no enhancer genes are present
             if row["Gene_Symbol_Nearby"] is not None:
                 B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
     
@@ -74,7 +90,11 @@ def create_bipartite_graph(df):
 bipartite_graph = create_bipartite_graph(df)
 
 # Read the HOME1 Excel file into a Pandas DataFrame
-df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
+try:
+    df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
+except Exception as e:
+    print(f"Error reading HOME1.xlsx: {e}")
+    raise  # Re-raise the exception after logging
 
 # Extract specific columns from the HOME1 DataFrame
 dmr_id_home1 = df_home1["DMR_No."]
@@ -106,25 +126,33 @@ gene_id_mapping = {
 }
 
 # Open an output file to write the bipartite graph edges and gene ID mapping for DSS1
-with open("bipartite_graph_output.txt", "w") as file:
-    # Write the number of DMRs and genes on the first line
-    file.write(f"{unique_dmrs} {unique_genes}\n")
+try:
+    with open("bipartite_graph_output.txt", "w") as file:
+        # Write the number of DMRs and genes on the first line
+        file.write(f"{unique_dmrs} {unique_genes}\n")
 
-    # Write the edges of the bipartite graph with gene IDs for DSS1
-    for edge in bipartite_graph.edges():
-        dmr = edge[0]
-        gene = edge[1]
-        gene_id = gene_id_mapping[gene]
-        file.write(f"{dmr} {gene_id}\n")
+        # Write the edges of the bipartite graph with gene IDs for DSS1
+        for edge in bipartite_graph.edges():
+            dmr = edge[0]
+            gene = edge[1]
+            gene_id = gene_id_mapping[gene]
+            file.write(f"{dmr} {gene_id}\n")
+except Exception as e:
+    print(f"Error writing bipartite_graph_output.txt: {e}")
+    raise  # Re-raise the exception after logging
 
 print("Bipartite graph written to bipartite_graph_output.txt")
 
 # Write the gene ID mapping to a CSV file for DSS1
-with open("gene_ids.csv", "w", newline="") as csvfile:
-    csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(["Gene", "ID"])
-    for gene, gene_id in gene_id_mapping.items():
-        csvwriter.writerow([gene, gene_id])
+try:
+    with open("gene_ids.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["Gene", "ID"])
+        for gene, gene_id in gene_id_mapping.items():
+            csvwriter.writerow([gene, gene_id])
+except Exception as e:
+    print(f"Error writing gene_ids.csv: {e}")
+    raise  # Re-raise the exception after logging
 
 print("Gene IDs written to gene_ids.csv")
 
@@ -140,15 +168,19 @@ unique_genes_home1_list = list(set(all_genes_home1))
 unique_genes_home1 = len(unique_genes_home1_list)
 
 # Open an output file to write the bipartite graph edges for HOME1
-with open("bipartite_graph_home1_output.txt", "w") as file_home1:
-    # Write the number of unique DMRs and genes on the first line
-    file_home1.write(f"{unique_dmrs_home1} {unique_genes_home1}\n")
+try:
+    with open("bipartite_graph_home1_output.txt", "w") as file_home1:
+        # Write the number of unique DMRs and genes on the first line
+        file_home1.write(f"{unique_dmrs_home1} {unique_genes_home1}\n")
 
-    # Write the edges of the bipartite graph for HOME1
-    for edge in bipartite_graph_home1.edges():
-        dmr = edge[0]
-        gene = edge[1]
-        gene_id = gene_id_mapping.get(gene, "Unknown")  # Handle unknown genes
-        file_home1.write(f"{dmr} {gene_id}\n")
+        # Write the edges of the bipartite graph for HOME1
+        for edge in bipartite_graph_home1.edges():
+            dmr = edge[0]
+            gene = edge[1]
+            gene_id = gene_id_mapping.get(gene, "Unknown")  # Handle unknown genes
+            file_home1.write(f"{dmr} {gene_id}\n")
+except Exception as e:
+    print(f"Error writing bipartite_graph_home1_output.txt: {e}")
+    raise  # Re-raise the exception after logging
 
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
