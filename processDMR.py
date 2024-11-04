@@ -88,45 +88,52 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     dmr_nodes = df["DMR_No."].apply(lambda x: x - 1).values
     B.add_nodes_from(dmr_nodes, bipartite=0)
     
-    # Track nodes that need to be connected
-    unconnected_dmrs = set(dmr_nodes)
+    # Add debugging
+    print(f"\nDebugging create_bipartite_graph:")
+    print(f"Number of DMR nodes added: {len(dmr_nodes)}")
     
     batch_size = 1000
+    total_edges = 0
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i+batch_size]
         for _, row in batch.iterrows():
             dmr = row["DMR_No."] - 1
             associated_genes = set()
             
-            # Ensure closest gene is properly handled
+            # Debug closest gene handling
             if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
                 associated_genes.add(row[closest_gene_col])
+            else:
+                print(f"Warning: DMR {dmr} has no closest gene")
             
-            # Add enhancer genes if they exist
+            # Debug enhancer genes handling
             if isinstance(row["Processed_Enhancer_Info"], (list, set)):
-                associated_genes.update(
+                enhancer_genes = set(
                     gene for gene in row["Processed_Enhancer_Info"] 
                     if pd.notna(gene) and gene
                 )
+                if enhancer_genes:
+                    associated_genes.update(enhancer_genes)
             
-            # Only add edges if we have associated genes
+            # Add edges and track them
             if associated_genes:
-                unconnected_dmrs.discard(dmr)
                 for gene in associated_genes:
                     if not B.has_node(gene):
                         B.add_node(gene, bipartite=1)
                     B.add_edge(dmr, gene)
+                    total_edges += 1
+            else:
+                print(f"Warning: DMR {dmr} has no associated genes")
     
-    # Remove any DMRs that didn't get connected
-    if unconnected_dmrs:
-        print(f"Warning: Removing {len(unconnected_dmrs)} DMRs with no gene associations")
-        B.remove_nodes_from(unconnected_dmrs)
+    # Final debug info
+    print(f"Total edges added: {total_edges}")
+    print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
     
-    # Validate the graph
-    degrees = dict(B.degree())
-    if min(degrees.values()) == 0:
-        raise ValueError("Invalid graph: contains isolated nodes")
-        
+    # Check for isolated nodes
+    isolated = list(nx.isolates(B))
+    if isolated:
+        print(f"Found {len(isolated)} isolated nodes: {isolated[:5]}...")
+    
     return B
 
 def preprocess_graph(graph):
