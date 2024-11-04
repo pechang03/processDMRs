@@ -153,9 +153,14 @@ class TestBipartiteGraph(unittest.TestCase):
         dom_set_k23 = greedy_rb_domination(graph_k23, df_k23)
         dom_set_k37 = greedy_rb_domination(graph_k37, df_k37)
 
-        # Verify dominating set sizes
-        self.assertLessEqual(len(dom_set_k23), 2, "K_{2,3} should have a dominating set of size at most 2")
-        self.assertLessEqual(len(dom_set_k37), 3, "K_{3,7} should have a dominating set of size at most 3")
+        # Verify that dominating set size is at most the number of connected components
+        components = nx.number_connected_components(graph_k23)
+        self.assertLessEqual(len(dom_set_k23), components, 
+            "Dominating set size should not exceed number of connected components")
+
+        components = nx.number_connected_components(graph_k37)
+        self.assertLessEqual(len(dom_set_k37), components,
+            "Dominating set size should not exceed number of connected components")
 
 if __name__ == '__main__':
     unittest.main()
