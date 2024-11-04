@@ -8,6 +8,8 @@ def greedy_rb_domination(graph, df, area_col="Area_Stat"):
     for node in graph.nodes():
         if 'bipartite' not in graph.nodes[node]:
             raise KeyError(f"Node {node} is missing the 'bipartite' attribute")
+
+    # Initialize the set of covered genes
     covered_genes = set()
     # Initialize the dominating set
     dominating_set = set()
