@@ -29,7 +29,7 @@ def create_bipartite_graph(df):
     """
     B = nx.Graph()
     # Add nodes with the node attribute "bipartite"
-    B.add_nodes_from(df["DMR_No."].apply(lambda x: x - 1), bipartite=0)  # Adjust DMR IDs if needed
+    B.add_nodes_from(df["DMR_No."].apply(lambda x: x - 1), bipartite=0)
     for index, row in df.iterrows():
         associated_genes = set()
 
