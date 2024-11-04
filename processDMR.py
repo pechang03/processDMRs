@@ -156,7 +156,7 @@ try:
 
         # Write the edges of the bipartite graph with gene IDs for DSS1
         for edge in bipartite_graph.edges():
-            dmr = edge[0]
+            dmr = edge[0] - 1  # Subtract 1 from the DMR number
             gene = edge[1]
             gene_id = gene_id_mapping[gene]
             file.write(f"{dmr} {gene_id}\n")
@@ -198,7 +198,7 @@ try:
 
         # Write the edges of the bipartite graph for HOME1
         for edge in bipartite_graph_home1.edges():
-            dmr = edge[0]
+            dmr = edge[0] - 1  # Subtract 1 from the DMR number
             gene = edge[1]
             gene_id = gene_id_mapping[gene]  # Ensure gene_id is always found
             file_home1.write(f"{dmr} {gene_id}\n")
