@@ -7,7 +7,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
         # Sample DataFrame setup for testing the bipartite graph creation
         data = {
-            "DMR_No.": [1, 2, 3],  # Updated DMR_No. to be numeric
+            "DMR_No.": [1, 2, 3],  # Use numeric values for DMR_No.
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None]
         }
@@ -33,7 +33,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_dmr_without_genes(self):
         # Assert that the graph has 2 DMR nodes without any associated genes or edges
         data = {
-            "DMR_No.": [1, 2],  # Updated DMR_No. to be numeric
+            "DMR_No.": [1, 2],  # Use numeric values for DMR_No.
             "Gene_Symbol_Nearby": [None, None],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
         }
@@ -45,7 +45,7 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_multiple_dmrs(self):
         # Assert that the graph has the correct number of nodes based on DMRs and unique genes
         data = {
-            "DMR_No.": [1, 2, 3],  # Updated DMR_No. to be numeric
+            "DMR_No.": [1, 2, 3],  # Use numeric values for DMR_No.
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF;GeneG", "GeneH"]
         }
