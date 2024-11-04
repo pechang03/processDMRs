@@ -23,23 +23,20 @@ def greedy_rb_domination(graph, df, area_col=None):
     # Sort DMRs by degree initially
     remaining_dmrs.sort(key=lambda x: len(set(graph.neighbors(x)) & uncovered_genes), reverse=True)
     
-    while uncovered_genes and remaining_dmrs:
-        # Take the highest degree DMR
-        best_dmr = remaining_dmrs[0]
-        remaining_dmrs.pop(0)
+    # Get connected components
+    components = list(nx.connected_components(graph))
+    
+    # For each component, add one DMR node to the dominating set
+    for component in components:
+        # Get DMR nodes in this component
+        dmr_nodes = [node for node in component 
+                    if graph.nodes[node]['bipartite'] == 0]
         
-        # Add it to dominating set if it covers any uncovered genes
-        neighbors = set(graph.neighbors(best_dmr))
-        if neighbors & uncovered_genes:
+        if dmr_nodes:  # If there are DMR nodes in this component
+            # Choose the DMR with highest degree in the component
+            best_dmr = max(dmr_nodes, 
+                          key=lambda x: len(set(graph.neighbors(x))))
             dominating_set.add(best_dmr)
-            uncovered_genes -= neighbors
-            
-            # Resort remaining DMRs by number of uncovered genes they would cover
-            if remaining_dmrs:
-                remaining_dmrs.sort(
-                    key=lambda x: len(set(graph.neighbors(x)) & uncovered_genes),
-                    reverse=True
-                )
 
     return dominating_set
 
