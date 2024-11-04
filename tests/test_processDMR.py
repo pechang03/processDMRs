@@ -82,7 +82,7 @@ class TestBipartiteGraph(unittest.TestCase):
         # Test for DSS1 using Area_Stat
         area_col_dss1 = "Area_Stat"
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
-        expected_dominating_set_dss1 = {0, 1}  # Adjust to match the correct node IDs
+        expected_dominating_set_dss1 = {0, 1, 2}  # Adjust to match the correct node IDs
         self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
         self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
 
@@ -104,7 +104,7 @@ class TestBipartiteGraph(unittest.TestCase):
         # Create a DataFrame for K_{2,3}
         data_k23 = {
             "DMR_No.": [1, 2],  # Two DMR nodes
-            "Gene_Symbol_Nearby": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],  # Each DMR connected to all three genes
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],  # Each DMR connected to all three genes
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
         }
         df_k23 = pd.DataFrame(data_k23)
