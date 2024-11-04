@@ -3,7 +3,7 @@ import networkx as nx
 import csv
 from graph_utils import process_enhancer_info
 
-def greedy_rb_domination(graph, df, area_col="Area_Stat"):
+def greedy_rb_domination(graph, df, area_col=None):
     # Ensure all nodes have 'bipartite' attribute
     for node in graph.nodes():
         if 'bipartite' not in graph.nodes[node]:
@@ -15,11 +15,18 @@ def greedy_rb_domination(graph, df, area_col="Area_Stat"):
     dominating_set = set()
 
     # Sort DMRs by degree or area/confidence interval
-    dmr_nodes = sorted(
-        (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
-        key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node + 1, area_col].values[0]),
-        reverse=True
-    )
+    if area_col:
+        dmr_nodes = sorted(
+            (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
+            key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node + 1, area_col].values[0]),
+            reverse=True
+        )
+    else:
+        dmr_nodes = sorted(
+            (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
+            key=lambda node: graph.degree(node),
+            reverse=True
+        )
 
     # Greedily select DMRs until all genes are covered
     for dmr in dmr_nodes:
