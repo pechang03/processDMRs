@@ -29,7 +29,7 @@ def create_bipartite_graph(df):
     """
     B = nx.Graph()
     # Add nodes with the node attribute "bipartite"
-    B.add_nodes_from(df["DMR_No."], bipartite=0)  # DMRs
+    B.add_nodes_from(df["DMR_No."] - 1, bipartite=0)  # Adjusted DMRs
     for index, row in df.iterrows():
         associated_genes = set()
 
@@ -45,11 +45,11 @@ def create_bipartite_graph(df):
         # Add edges between the DMR and all associated genes
         for gene in associated_genes:
             B.add_node(gene, bipartite=1)
-            B.add_edge(row["DMR_No."], gene)
+            B.add_edge(row["DMR_No."] - 1, gene)
 
         # Check if enhancer information is missing
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
             if row["Gene_Symbol_Nearby"] is not None:
-                B.add_edge(row["DMR_No."], row["Gene_Symbol_Nearby"])
+                B.add_edge(row["DMR_No."] - 1, row["Gene_Symbol_Nearby"])
     
     return B

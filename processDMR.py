@@ -58,7 +58,7 @@ print(df["Processed_Enhancer_Info"])
 # Function to create a bipartite graph connecting DMRs to their associated genes
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
-    B.add_nodes_from(df["DMR_No."], bipartite=0)  # DMRs
+    B.add_nodes_from(df["DMR_No."] - 1, bipartite=0)  # Adjusted DMRs
     for index, row in df.iterrows():
         associated_genes = set()
 
@@ -74,12 +74,12 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
         # Add edges between the DMR and all associated genes
         for gene in associated_genes:
             B.add_node(gene, bipartite=1)
-            B.add_edge(row["DMR_No."], gene)
+            B.add_edge(row["DMR_No."] - 1, gene)
 
         # Check if enhancer information is missing
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
             if row[closest_gene_col] is not None:
-                B.add_edge(row["DMR_No."], row[closest_gene_col])
+                B.add_edge(row["DMR_No."] - 1, row[closest_gene_col])
     
     return B
 
