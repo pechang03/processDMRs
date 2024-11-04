@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import networkx as nx
-from processDMR import create_bipartite_graph, process_enhancer_info
+from processDMR import create_bipartite_graph, process_enhancer_info, greedy_rb_domination
 
 class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
@@ -66,8 +66,8 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
     def test_dominating_set(self):
-        # Calculate the dominating set for the test bipartite graph
-        dominating_set = nx.algorithms.dominating.min_weighted_dominating_set(self.bipartite_graph)
+        # Calculate the dominating set for the test bipartite graph using the custom function
+        dominating_set = greedy_rb_domination(self.bipartite_graph, self.df_home1)
 
         # Check that every node is adjacent to at least one node in the dominating set
         for node in self.bipartite_graph.nodes():
