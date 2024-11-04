@@ -2,10 +2,28 @@ import pandas as pd
 import networkx as nx
 import csv
 from graph_utils import process_enhancer_info
-try:
-    from networkx.algorithms.dominating import min_weighted_dominating_set
-except ImportError:
-    min_weighted_dominating_set = None
+
+def greedy_rb_domination(graph, df, area_col="Area_Stat"):
+    # Initialize the set of covered genes
+    covered_genes = set()
+    # Initialize the dominating set
+    dominating_set = set()
+
+    # Sort DMRs by degree or area/confidence interval
+    dmr_nodes = sorted(
+        (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
+        key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node, area_col].values[0]),
+        reverse=True
+    )
+
+    # Greedily select DMRs until all genes are covered
+    for dmr in dmr_nodes:
+        if covered_genes >= set(graph.neighbors(dmr)):
+            continue
+        dominating_set.add(dmr)
+        covered_genes.update(graph.neighbors(dmr))
+
+    return dominating_set
 
 # Read the Excel file into a Pandas DataFrame
 try:
@@ -76,12 +94,8 @@ max_degree = max(degrees.values())
 # Calculate the number of connected components for DSS1
 num_connected_components = nx.number_connected_components(bipartite_graph)
 
-# Calculate a greedy R-B dominating set for DSS1 if the function is available
-if min_weighted_dominating_set:
-    dominating_set = min_weighted_dominating_set(bipartite_graph)
-else:
-    dominating_set = None
-    print("min_weighted_dominating_set function is not available in this version of NetworkX.")
+# Calculate a greedy R-B dominating set for DSS1
+dominating_set = greedy_rb_domination(bipartite_graph, df)
 
 # Print the calculated features for DSS1
 print(f"Min Degree: {min_degree}")
@@ -202,12 +216,8 @@ max_degree_home1 = max(degrees_home1.values())
 # Calculate the number of connected components for HOME1
 num_connected_components_home1 = nx.number_connected_components(bipartite_graph_home1)
 
-# Calculate a greedy R-B dominating set for HOME1 if the function is available
-if min_weighted_dominating_set:
-    dominating_set_home1 = min_weighted_dominating_set(bipartite_graph_home1)
-else:
-    dominating_set_home1 = None
-    print("min_weighted_dominating_set function is not available in this version of NetworkX.")
+# Calculate a greedy R-B dominating set for HOME1
+dominating_set_home1 = greedy_rb_domination(bipartite_graph_home1, df_home1, area_col="Confidence_Scores")
 
 # Print the calculated features for HOME1
 print(f"Min Degree (HOME1): {min_degree_home1}")
