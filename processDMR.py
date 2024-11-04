@@ -79,7 +79,7 @@ df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 # Extract specific columns from the HOME1 DataFrame
 dmr_id_home1 = df_home1["DMR_No."]
 closest_gene_home1 = df_home1["Gene_Symbol"]  # Updated to match HOME1 column name
-area_home1 = df_home1["Area_Stat"]
+area_home1 = df_home1["Confidence_Scores"]  # Updated to match HOME1 column name
 enhancer_info_home1 = df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
 
 # Process the enhancer information for HOME1
