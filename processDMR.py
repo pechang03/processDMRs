@@ -58,7 +58,7 @@ print(df["Processed_Enhancer_Info"])
 # Function to create a bipartite graph connecting DMRs to their associated genes
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
-    B.add_nodes_from(df["DMR_No."] - 1, bipartite=0)  # Adjusted DMRs
+    B.add_nodes_from(df["DMR_No."], bipartite=0)  # Use DMR_No. directly
     for index, row in df.iterrows():
         associated_genes = set()
 
