@@ -18,10 +18,10 @@ class TestBipartiteGraph(unittest.TestCase):
 
         self.bipartite_graph = create_bipartite_graph(df)
 
-        # Sample data to simulate the HOME1 dataset
+        # Sample data to simulate the HOME1 dataset with realistic gene names
         self.df_home1 = pd.DataFrame({
             "DMR_No.": [1, 2, 3, 4, 5, 6],
-            "Gene_Symbol": ["3090", "3025", "Sulf1", "Sulf1", "4332", "Sulf1"],
+            "Gene_Symbol": ["Sulf1", "Rgs20", "Pabpc1l2a", "Vmn2r121", "Mid1", "Amer1"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [".", ".", ".", ".", ".", "."]
         })
 
