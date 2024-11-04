@@ -52,5 +52,10 @@ def create_bipartite_graph(df):
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
             if row["Gene_Symbol_Nearby"] is not None:
                 B.add_edge(row["DMR_No."] - 1, row["Gene_Symbol_Nearby"])
+
+        # Check if enhancer information is missing
+        if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
+            if row["Gene_Symbol_Nearby"] is not None:
+                B.add_edge(row["DMR_No."] - 1, row["Gene_Symbol_Nearby"])
     
     return B

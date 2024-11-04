@@ -23,7 +23,7 @@ def greedy_rb_domination(graph, df, area_col="Area_Stat"):
 
     # Greedily select DMRs until all genes are covered
     for dmr in dmr_nodes:
-        if covered_genes >= set(graph.neighbors(dmr)):
+        if covered_genes >= set(graph.neighbors(dmr)):  # Check if all neighbors are already covered
             continue
         dominating_set.add(dmr)
         covered_genes.update(graph.neighbors(dmr))
