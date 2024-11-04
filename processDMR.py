@@ -101,10 +101,12 @@ all_genes = (
 unique_genes_list = list(set(all_genes))
 unique_genes = len(unique_genes_list)
 
-# Assign unique vertex IDs to each gene starting from one more than the maximum ID based on unique DMRs
-gene_id_start = (unique_dmrs - 1) + 1
+# Combine unique genes from both DSS1 and HOME1
+all_unique_genes = list(set(unique_genes_list + unique_genes_home1_list))
+
+# Update gene_id_mapping to include all unique genes
 gene_id_mapping = {
-    gene: idx for idx, gene in enumerate(unique_genes_list, start=gene_id_start)
+    gene: idx for idx, gene in enumerate(all_unique_genes, start=gene_id_start)
 }
 
 # Open an output file to write the bipartite graph edges and gene ID mapping for DSS1
@@ -159,7 +161,7 @@ try:
         for edge in bipartite_graph_home1.edges():
             dmr = edge[0]
             gene = edge[1]
-            gene_id = gene_id_mapping.get(gene, "Unknown")  # Handle unknown genes
+            gene_id = gene_id_mapping[gene]  # Ensure gene_id is always found
             file_home1.write(f"{dmr} {gene_id}\n")
 except Exception as e:
     print(f"Error writing bipartite_graph_home1_output.txt: {e}")
