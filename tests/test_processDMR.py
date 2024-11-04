@@ -84,6 +84,7 @@ class TestBipartiteGraph(unittest.TestCase):
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
         expected_dominating_set_dss1 = {0, 1, 2}  # Adjust to match the correct node IDs
         self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
+        self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
 
         # Test for HOME1 using Confidence_Scores
         area_col_home1 = "Confidence_Scores"
@@ -115,6 +116,11 @@ class TestBipartiteGraph(unittest.TestCase):
         # Test the graph structure
         self.assertEqual(len(graph_k23.nodes()), 5, "K_{2,3} should have 5 nodes (2 DMRs + 3 genes).")
         self.assertEqual(len(graph_k23.edges()), 6, "K_{2,3} should have 6 edges (each DMR connected to each gene).")
+
+        # Verify the connections
+        for dmr in range(2):  # DMR nodes are 0 and 1
+            for gene in ["GeneA", "GeneB", "GeneC"]:
+                self.assertTrue(graph_k23.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
 
         # Verify the connections
         for dmr in range(2):  # DMR nodes are 0 and 1
