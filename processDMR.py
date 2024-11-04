@@ -51,6 +51,7 @@ print("Additional Genes:")
 print("Processed Enhancer Info:")
 print(df["Processed_Enhancer_Info"])
 
+
 # Function to create a bipartite graph
 def create_bipartite_graph(df):
     B = nx.Graph()
@@ -66,6 +67,7 @@ def create_bipartite_graph(df):
             B.add_edge(row["DMR_No."], gene)
     return B
 
+
 # Create the bipartite graph
 bipartite_graph = create_bipartite_graph(df)
 import csv
@@ -74,13 +76,18 @@ import csv
 unique_dmrs = dmr_id.nunique()
 
 # Calculate the number of unique genes
-all_genes = df['Processed_Enhancer_Info'].explode().dropna().unique().tolist() + closest_gene.dropna().unique().tolist()
+all_genes = (
+    df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
+    + closest_gene.dropna().unique().tolist()
+)
 unique_genes_list = list(set(all_genes))
 unique_genes = len(unique_genes_list)
 
 # Assign unique vertex IDs to each gene starting from 2110
 gene_id_start = 2110
-gene_id_mapping = {gene: idx for idx, gene in enumerate(unique_genes_list, start=gene_id_start)}
+gene_id_mapping = {
+    gene: idx for idx, gene in enumerate(unique_genes_list, start=gene_id_start)
+}
 
 # Create the bipartite graph
 bipartite_graph = create_bipartite_graph(df)
@@ -89,7 +96,7 @@ bipartite_graph = create_bipartite_graph(df)
 with open("bipartite_graph_output.txt", "w") as file:
     # Write the number of DMRs and genes on the first line
     file.write(f"{unique_dmrs} {unique_genes}\n")
-    
+
     # Write the edges of the bipartite graph with gene IDs
     for edge in bipartite_graph.edges():
         dmr = edge[0]
@@ -100,7 +107,7 @@ with open("bipartite_graph_output.txt", "w") as file:
 print("Bipartite graph written to bipartite_graph_output.txt")
 
 # Write the gene ID mapping to a CSV file
-with open("gene_ids.csv", "w", newline='') as csvfile:
+with open("gene_ids.csv", "w", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
     csvwriter.writerow(["Gene", "ID"])
     for gene, gene_id in gene_id_mapping.items():
