@@ -130,5 +130,13 @@ class TestBipartiteGraph(unittest.TestCase):
             for gene in ["GeneA", "GeneB", "GeneC"]:
                 self.assertTrue(graph_k23.has_edge(dmr, gene), f"DMR {dmr} should be connected to {gene}.")
 
+        # Test dominating sets for both graphs
+        dom_set_k23 = greedy_rb_domination(graph_k23, df_k23)
+        dom_set_k37 = greedy_rb_domination(graph_k37, df_k37)
+
+        # Verify dominating set sizes
+        self.assertLessEqual(len(dom_set_k23), 2, "K_{2,3} should have a dominating set of size at most 2")
+        self.assertLessEqual(len(dom_set_k37), 3, "K_{3,7} should have a dominating set of size at most 3")
+
 if __name__ == '__main__':
     unittest.main()
