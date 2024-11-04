@@ -66,17 +66,27 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
     def test_dominating_set(self):
-        # Calculate the dominating set for the test bipartite graph using the custom function
-        # Use the correct column name for the HOME1 dataset
-        area_col = "Confidence_Scores"  # Update this if the column name is different
-        dominating_set = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col)
-
-        # Check that every node is adjacent to at least one node in the dominating set
+        # Test for DSS1 using Area_Stat
+        area_col_dss1 = "Area_Stat"
+        dominating_set_dss1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_dss1)
         for node in self.bipartite_graph.nodes():
-            # Get neighbors of the node
             neighbors = set(self.bipartite_graph.neighbors(node))
-            # Check if any neighbor is in the dominating set
-            self.assertTrue(any(neighbor in dominating_set for neighbor in neighbors),
-                            f"Node {node} is not adjacent to any node in the dominating set.")
+            self.assertTrue(any(neighbor in dominating_set_dss1 for neighbor in neighbors),
+                            f"Node {node} is not adjacent to any node in the dominating set for DSS1.")
+
+        # Test for HOME1 using Confidence_Scores
+        area_col_home1 = "Confidence_Scores"
+        dominating_set_home1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
+        for node in self.bipartite_graph.nodes():
+            neighbors = set(self.bipartite_graph.neighbors(node))
+            self.assertTrue(any(neighbor in dominating_set_home1 for neighbor in neighbors),
+                            f"Node {node} is not adjacent to any node in the dominating set for HOME1.")
+
+        # Test using only the degree of the vertex
+        dominating_set_degree = greedy_rb_domination(self.bipartite_graph, self.df_home1)
+        for node in self.bipartite_graph.nodes():
+            neighbors = set(self.bipartite_graph.neighbors(node))
+            self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
+                            f"Node {node} is not adjacent to any node in the dominating set using degree only.")
 if __name__ == '__main__':
     unittest.main()
