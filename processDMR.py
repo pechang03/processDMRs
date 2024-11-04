@@ -16,7 +16,8 @@ enhancer_info = df[
 ]  # Column for enhancer information
 
 
-# Function to process enhancer information
+# Function to process enhancer information from the ENCODE data
+# Splits the enhancer string by ';' and removes any suffix after '/e?'
 def process_enhancer_info(enhancer_str):
     if pd.isna(enhancer_str) or enhancer_str == ".":
         return []
@@ -42,7 +43,8 @@ print("Processed Enhancer Info:")
 print(df["Processed_Enhancer_Info"])
 
 
-# Function to create a bipartite graph
+# Function to create a bipartite graph connecting DMRs to their associated genes
+# Each DMR connects to its closest gene (Column M) and additional genes (Column S)
 def create_bipartite_graph(df):
     B = nx.Graph()
     # Add nodes with the node attribute "bipartite"
@@ -59,12 +61,14 @@ def create_bipartite_graph(df):
             if gene:  # Check if gene is not empty
                 associated_genes.add(gene)
 
-        # Add edges for all associated genes
+        # Add edges between the DMR and all associated genes
+        # Ensure that the closest gene is connected even if no enhancer genes are present
         for gene in associated_genes:
             B.add_node(gene, bipartite=1)
             B.add_edge(row["DMR_No."], gene)
 
-        # If the enhancer information is just a dot or empty, ensure the closest gene is still connected
+        # Check if enhancer information is missing (i.e., a period or NaN)
+        # If so, ensure the closest gene is still connected to the DMR
         if pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]) or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == ".":
             # Ensure the closest gene is connected even if no enhancer genes are present
             if row["Gene_Symbol_Nearby"] is not None:
@@ -94,7 +98,8 @@ gene_id_mapping = {
     gene: idx for idx, gene in enumerate(unique_genes_list, start=gene_id_start)
 }
 
-# Open an output file to write the bipartite graph
+# Open an output file to write the bipartite graph edges and gene ID mapping
+# The first line contains the number of unique DMRs and genes
 with open("bipartite_graph_output.txt", "w") as file:
     # Write the number of DMRs and genes on the first line
     file.write(f"{unique_dmrs} {unique_genes}\n")
