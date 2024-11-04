@@ -5,6 +5,7 @@ import csv
 # Read the Excel file into a Pandas DataFrame
 try:
     df = pd.read_excel("./data/DSS1.xlsx", header=0)  # Adjust this based on your inspection
+    print("Column names:", df.columns.tolist())  # Print the column names for verification
 except Exception as e:
     print(f"Error reading DSS1.xlsx: {e}")
     raise  # Re-raise the exception after logging
