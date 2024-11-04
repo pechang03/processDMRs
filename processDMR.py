@@ -9,41 +9,63 @@ def greedy_rb_domination(graph, df, area_col=None):
         if 'bipartite' not in graph.nodes[node]:
             raise KeyError(f"Node {node} is missing the 'bipartite' attribute")
 
-    # Initialize the set of covered genes
-    covered_genes = set()
     # Initialize the dominating set
     dominating_set = set()
 
-    # Sort DMRs by degree or area/confidence interval
+    # Get all DMR nodes (bipartite=0) and gene nodes (bipartite=1)
+    dmr_nodes = [node for node, data in graph.nodes(data=True) if data['bipartite'] == 0]
+    gene_nodes = set(node for node, data in graph.nodes(data=True) if data['bipartite'] == 1)
+    
+    # Sort DMRs by degree and optionally by area
     if area_col:
-        dmr_nodes = sorted(
-            (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
-            key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node + 1, area_col].values[0]),
+        dmr_nodes.sort(
+            key=lambda node: (
+                len(set(graph.neighbors(node)) - set().union(*(set(graph.neighbors(d)) for d in dominating_set))),
+                df.loc[df["DMR_No."] == node + 1, area_col].values[0]
+            ),
             reverse=True
         )
     else:
-        dmr_nodes = sorted(
-            (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
-            key=lambda node: graph.degree(node),
+        dmr_nodes.sort(
+            key=lambda node: len(set(graph.neighbors(node)) - set().union(*(set(graph.neighbors(d)) for d in dominating_set))),
             reverse=True
         )
 
     # Keep adding DMRs until all genes are covered
-    genes_to_cover = set(n for n, d in graph.nodes(data=True) if d['bipartite'] == 1)
+    uncovered_genes = gene_nodes.copy()
     
-    while genes_to_cover:
+    while uncovered_genes and dmr_nodes:
         # Find the DMR that covers the most uncovered genes
-        best_dmr = max(
-            (d for d in dmr_nodes if d not in dominating_set),
-            key=lambda d: len(set(graph.neighbors(d)) & genes_to_cover),
-            default=None
-        )
+        best_dmr = None
+        max_coverage = 0
         
-        if best_dmr is None or not set(graph.neighbors(best_dmr)) & genes_to_cover:
+        for dmr in dmr_nodes:
+            if dmr not in dominating_set:
+                coverage = len(set(graph.neighbors(dmr)) & uncovered_genes)
+                if coverage > max_coverage:
+                    max_coverage = coverage
+                    best_dmr = dmr
+        
+        if best_dmr is None or max_coverage == 0:
             break
             
         dominating_set.add(best_dmr)
-        genes_to_cover -= set(graph.neighbors(best_dmr))
+        uncovered_genes -= set(graph.neighbors(best_dmr))
+        
+        # Re-sort remaining DMRs based on uncovered genes
+        if area_col:
+            dmr_nodes.sort(
+                key=lambda node: (
+                    len(set(graph.neighbors(node)) & uncovered_genes),
+                    df.loc[df["DMR_No."] == node + 1, area_col].values[0]
+                ),
+                reverse=True
+            )
+        else:
+            dmr_nodes.sort(
+                key=lambda node: len(set(graph.neighbors(node)) & uncovered_genes),
+                reverse=True
+            )
 
     return dominating_set
 
