@@ -1,6 +1,7 @@
 import pandas as pd
 import networkx as nx
 import csv
+from graph_utils import process_enhancer_info
 
 # Read the Excel file into a Pandas DataFrame
 try:
