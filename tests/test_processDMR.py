@@ -100,14 +100,14 @@ class TestBipartiteGraph(unittest.TestCase):
             self.assertTrue(any(neighbor in dominating_set_degree for neighbor in neighbors),
                             f"Node {node} is not adjacent to any node in the dominating set using degree only.")
     def test_complete_bipartite_graphs(self):
-        # Create a DataFrame for K_{2,3}
-        data_k23 = {
-            "DMR_No.": [1, 2],  # Corresponds to node IDs 0 and 1
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
-        }
-        df_k23 = pd.DataFrame(data_k23)
-        df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
+    # Create a DataFrame for K_{2,3}
+    data_k23 = {
+        "DMR_No.": [1, 2],  # Two DMR nodes
+        "Gene_Symbol_Nearby": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],  # Each DMR connected to all three genes
+        "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
+    }
+    df_k23 = pd.DataFrame(data_k23)
+    df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: x.split(";") if x else [])
 
         # Create a bipartite graph for K_{2,3}
         graph_k23 = create_bipartite_graph(df_k23)
