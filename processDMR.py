@@ -96,6 +96,8 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     
     batch_size = 1000
     total_edges = 0
+    dmrs_without_edges = set(dmr_nodes)  # Track DMRs that haven't received any edges
+    
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i+batch_size]
         for _, row in batch.iterrows():
@@ -105,6 +107,7 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
             # Debug closest gene handling
             if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
                 associated_genes.add(row[closest_gene_col])
+                print(f"DMR {dmr} has closest gene: {row[closest_gene_col]}")
             else:
                 print(f"Warning: DMR {dmr} has no closest gene")
             
@@ -116,6 +119,7 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
                 )
                 if enhancer_genes:
                     associated_genes.update(enhancer_genes)
+                    print(f"DMR {dmr} has enhancer genes: {enhancer_genes}")
             
             # Add edges and track them
             if associated_genes:
@@ -124,17 +128,23 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
                         B.add_node(gene, bipartite=1)
                     B.add_edge(dmr, gene)
                     total_edges += 1
+                dmrs_without_edges.discard(dmr)  # Remove DMR from tracking set
             else:
                 print(f"Warning: DMR {dmr} has no associated genes")
     
-    # Final debug info
     print(f"Total edges added: {total_edges}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
     
-    # Check for isolated nodes
-    isolated = list(nx.isolates(B))
-    if isolated:
-        print(f"Found {len(isolated)} isolated nodes: {isolated[:5]}...")
+    # Check for nodes with degree 0
+    zero_degree_nodes = [node for node in B.nodes() if B.degree(node) == 0]
+    if zero_degree_nodes:
+        print(f"Found {len(zero_degree_nodes)} nodes with degree 0:")
+        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
+        print(f"Node types of zero-degree nodes: {[B.nodes[node].get('bipartite') for node in zero_degree_nodes[:5]]}")
+    
+    if dmrs_without_edges:
+        print(f"Found {len(dmrs_without_edges)} DMRs without any edges:")
+        print(f"First 5 DMRs without edges: {list(dmrs_without_edges)[:5]}")
     
     return B
 
