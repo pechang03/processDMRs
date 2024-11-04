@@ -13,21 +13,13 @@ except Exception as e:
 # Print the column names to verify they match your expectations
 print("Column names:", df.columns)
 
-# Extract specific columns from the DataFrame using the correct column names
-dmr_id = df["DMR_No."]  # Column for DMR ID
-closest_gene = df["Gene_Symbol_Nearby"]  # Column for the closest gene
-area = df["Area_Stat"]  # Column for the area statistic
-enhancer_info = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"]  # Column for enhancer information
+# Extract specific columns from the DataFrame
+dmr_id = df["DMR_No."]
+closest_gene = df["Gene_Symbol_Nearby"]
+area = df["Area_Stat"]
+enhancer_info = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
 
-# Function to process enhancer information from the ENCODE data
-def process_enhancer_info(enhancer_str):
-    if pd.isna(enhancer_str) or enhancer_str == ".":
-        return []
-    genes = enhancer_str.split(";")
-    processed_genes = [gene.split("/")[0] for gene in genes]
-    return processed_genes
-
-# Apply the function to the enhancer_info column
+# Apply the function to the correct column
 df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
 
 # Print the extracted data
