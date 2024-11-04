@@ -101,7 +101,16 @@ all_genes = (
 unique_genes_list = list(set(all_genes))
 unique_genes = len(unique_genes_list)
 
-# Combine unique genes from both DSS1 and HOME1
+# Calculate the number of unique genes for HOME1
+all_genes_home1 = (
+    df_home1["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
+    + closest_gene_home1.dropna().unique().tolist()
+)
+unique_genes_home1_list = list(set(all_genes_home1))
+unique_genes_home1 = len(unique_genes_home1_list)
+
+# Assign unique vertex IDs to each gene starting from one more than the maximum ID based on unique DMRs
+gene_id_start = unique_dmrs + 1
 all_unique_genes = list(set(unique_genes_list + unique_genes_home1_list))
 
 # Update gene_id_mapping to include all unique genes
