@@ -91,7 +91,7 @@ class TestBipartiteGraph(unittest.TestCase):
         dominating_set_home1 = greedy_rb_domination(self.bipartite_graph, self.df_home1, area_col=area_col_home1)
         for node in self.bipartite_graph.nodes():
             neighbors = set(self.bipartite_graph.neighbors(node))
-            self.assertTrue(any(neighbor in dominating_set_home1 for neighbor in neighbors),
+            self.assertTrue(any(neighbor in dominating_set_home1 for neighbor in neighbors) or node in dominating_set_home1,
                             f"Node {node} is not adjacent to any node in the dominating set for HOME1.")
 
         # Test using only the degree of the vertex
@@ -103,9 +103,9 @@ class TestBipartiteGraph(unittest.TestCase):
     def test_complete_bipartite_graphs(self):
         # Create a DataFrame for K_{2,3}
         data_k23 = {
-            "DMR_No.": [1, 2],  # Two DMR nodes
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],  # Each DMR connected to all three genes
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None]
+            "DMR_No.": [1, 1, 1, 2, 2, 2],  # Each DMR connected to all three genes
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC", "GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None, None, None, None]
         }
         df_k23 = pd.DataFrame(data_k23)
         df_k23["Processed_Enhancer_Info"] = df_k23["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
@@ -114,7 +114,7 @@ class TestBipartiteGraph(unittest.TestCase):
         graph_k23 = create_bipartite_graph(df_k23)
 
         # Test the graph structure
-        self.assertEqual(len(graph_k23.nodes()), 6, "K_{2,3} should have 6 nodes (2 DMRs + 3 genes).")
+        self.assertEqual(len(graph_k23.nodes()), 5, "K_{2,3} should have 5 nodes (2 DMRs + 3 genes).")
         self.assertEqual(len(graph_k23.edges()), 6, "K_{2,3} should have 6 edges (each DMR connected to each gene).")
 
 
