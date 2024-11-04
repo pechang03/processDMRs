@@ -120,7 +120,7 @@ dominating_set = greedy_rb_domination(bipartite_graph, df)
 print(f"Min Degree: {min_degree}")
 print(f"Max Degree: {max_degree}")
 print(f"Number of Connected Components: {num_connected_components}")
-print(f"Greedy R-B Dominating Set: {dominating_set}")
+print(f"Size of Greedy R-B Dominating Set: {len(dominating_set)}")
 try:
     df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 except Exception as e:
@@ -242,4 +242,4 @@ dominating_set_home1 = greedy_rb_domination(bipartite_graph_home1, df_home1, are
 print(f"Min Degree (HOME1): {min_degree_home1}")
 print(f"Max Degree (HOME1): {max_degree_home1}")
 print(f"Number of Connected Components (HOME1): {num_connected_components_home1}")
-print(f"Greedy R-B Dominating Set (HOME1): {dominating_set_home1}")
+print(f"Size of Greedy R-B Dominating Set (HOME1): {len(dominating_set_home1)}")
