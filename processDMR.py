@@ -12,7 +12,7 @@ def greedy_rb_domination(graph, df, area_col="Area_Stat"):
     # Sort DMRs by degree or area/confidence interval
     dmr_nodes = sorted(
         (node for node, data in graph.nodes(data=True) if data['bipartite'] == 0),
-        key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node, area_col].values[0]),
+        key=lambda node: (graph.degree(node), df.loc[df["DMR_No."] == node + 1, area_col].values[0]),
         reverse=True
     )
 
