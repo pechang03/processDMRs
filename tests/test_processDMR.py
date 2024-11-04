@@ -79,18 +79,45 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertIn("GeneD", graph.nodes(), "GeneD should be a node in the graph.")
         self.assertIn("GeneE", graph.nodes(), "GeneE should be a node in the graph.")
 
-    def test_fully_connected_graph(self):
-        # Assert that the graph is fully connected
-        data = {
+    def test_random_bipartite_graphs(self):
+        # Test with random bipartite graphs
+        for _ in range(10):
+            num_dmrs = random.randint(1, 100)
+            num_genes = random.randint(1, 100)
+            data = {
+                "DMR_No.": [i for i in range(1, num_dmrs + 1) for _ in range(num_genes)],
+                "Gene_Symbol_Nearby": [f"Gene{j}" for _ in range(num_dmrs) for j in range(num_genes)],
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None] * (num_dmrs * num_genes)
+            }
+            df = pd.DataFrame(data)
+            df["Processed_Enhancer_Info"] = df["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
+            graph = create_bipartite_graph(df)
+            self.assertEqual(len(graph.nodes()), num_dmrs + num_genes, f"Graph should have {num_dmrs + num_genes} nodes.")
+            self.assertEqual(len(graph.edges()), num_dmrs * num_genes, f"Graph should have {num_dmrs * num_genes} edges.")
+
+    def test_sparse_and_dense_graphs(self):
+        # Test with sparse and dense graphs
+        sparse_data = {
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None]
+        }
+        sparse_df = pd.DataFrame(sparse_data)
+        sparse_df["Processed_Enhancer_Info"] = sparse_df["Gene_Symbol_Nearby"].apply(lambda x: list(set(x.split(";"))) if x else [])
+        sparse_graph = create_bipartite_graph(sparse_df)
+        self.assertEqual(len(sparse_graph.nodes()), 6, "Sparse graph should have 6 nodes (3 DMRs + 3 genes).")
+        self.assertEqual(len(sparse_graph.edges()), 3, "Sparse graph should have 3 edges.")
+
+        dense_data = {
             "DMR_No.": [1, 2, 3],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"]
         }
-        df = pd.DataFrame(data)
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-        graph = create_bipartite_graph(df)
-        self.assertEqual(len(graph.nodes()), 6, "Graph should have 6 nodes (3 DMRs + 3 genes).")
-        self.assertEqual(len(graph.edges()), 9, "Graph should have 9 edges (3 DMRs * 3 genes).")
+        dense_df = pd.DataFrame(dense_data)
+        dense_df["Processed_Enhancer_Info"] = dense_df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        dense_graph = create_bipartite_graph(dense_df)
+        self.assertEqual(len(dense_graph.nodes()), 6, "Dense graph should have 6 nodes (3 DMRs + 3 genes).")
+        self.assertEqual(len(dense_graph.edges()), 9, "Dense graph should have 9 edges (3 DMRs * 3 genes).")
 
     def test_degree_one_genes(self):
         # Create a test case with degree-1 genes
