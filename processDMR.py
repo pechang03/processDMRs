@@ -2,6 +2,7 @@ import pandas as pd
 import networkx as nx
 import csv
 from graph_utils import process_enhancer_info
+from networkx.algorithms.dominating import min_weighted_dominating_set
 
 # Read the Excel file into a Pandas DataFrame
 try:
@@ -64,7 +65,22 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
 # Create the bipartite graph for DSS1
 bipartite_graph = create_bipartite_graph(df)
 
-# Read the HOME1 Excel file into a Pandas DataFrame
+# Calculate min and max degrees for DSS1
+degrees = dict(bipartite_graph.degree())
+min_degree = min(degrees.values())
+max_degree = max(degrees.values())
+
+# Calculate the number of connected components for DSS1
+num_connected_components = nx.number_connected_components(bipartite_graph)
+
+# Calculate a greedy R-B dominating set for DSS1
+dominating_set = min_weighted_dominating_set(bipartite_graph)
+
+# Print the calculated features for DSS1
+print(f"Min Degree: {min_degree}")
+print(f"Max Degree: {max_degree}")
+print(f"Number of Connected Components: {num_connected_components}")
+print(f"Greedy R-B Dominating Set: {dominating_set}")
 try:
     df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 except Exception as e:
@@ -170,3 +186,20 @@ except Exception as e:
     raise  # Re-raise the exception after logging
 
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
+
+# Calculate min and max degrees for HOME1
+degrees_home1 = dict(bipartite_graph_home1.degree())
+min_degree_home1 = min(degrees_home1.values())
+max_degree_home1 = max(degrees_home1.values())
+
+# Calculate the number of connected components for HOME1
+num_connected_components_home1 = nx.number_connected_components(bipartite_graph_home1)
+
+# Calculate a greedy R-B dominating set for HOME1
+dominating_set_home1 = min_weighted_dominating_set(bipartite_graph_home1)
+
+# Print the calculated features for HOME1
+print(f"Min Degree (HOME1): {min_degree_home1}")
+print(f"Max Degree (HOME1): {max_degree_home1}")
+print(f"Number of Connected Components (HOME1): {num_connected_components_home1}")
+print(f"Greedy R-B Dominating Set (HOME1): {dominating_set_home1}")
