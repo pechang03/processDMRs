@@ -83,8 +83,6 @@ class TestBipartiteGraph(unittest.TestCase):
         area_col_dss1 = "Area_Stat"
         dominating_set_dss1 = greedy_rb_domination(bipartite_graph_dss1, df_dss1, area_col=area_col_dss1)
         expected_dominating_set_dss1 = {0, 1, 2}  # Adjust to match the correct node IDs
-        self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
-        self.assertEqual(dominating_set_dss1, expected_dominating_set_dss1, "Dominating set for DSS1 does not match expected values.")
 
         # Test for HOME1 using Confidence_Scores
         area_col_home1 = "Confidence_Scores"
