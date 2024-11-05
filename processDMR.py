@@ -168,6 +168,14 @@ def main():
     }
 
 
+    # Create bipartite graphs
+    bipartite_graph = create_bipartite_graph(df)
+    bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
+
+    # Validate graphs
+    validate_bipartite_graph(bipartite_graph)
+    validate_bipartite_graph(bipartite_graph_home1)
+
     # Write output files
     write_bipartite_graph(bipartite_graph, "bipartite_graph_output.txt", df, gene_id_mapping)
     write_bipartite_graph(bipartite_graph_home1, "bipartite_graph_home1_output.txt", df_home1, gene_id_mapping)
