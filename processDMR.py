@@ -250,33 +250,34 @@ all_genes_home1 = (
 unique_genes_home1_list = list(set(all_genes_home1))
 unique_genes_home1 = len(unique_genes_home1_list)
 
-# Assign unique vertex IDs to each gene starting from one more than the maximum ID based on unique DMRs
-gene_id_start = unique_dmrs + 1
-all_unique_genes = list(set(unique_genes_list + unique_genes_home1_list))
-
-# Update gene_id_mapping to include all unique genes
+# First, create the gene ID mapping starting after the highest DMR number
+gene_id_start = len(dmr_nodes)  # This will be the number of DMR vertices
 gene_id_mapping = {
-    gene: idx for idx, gene in enumerate(all_unique_genes, start=gene_id_start)
+    gene: idx + gene_id_start for idx, gene in enumerate(all_unique_genes)
 }
 
-# Open an output file to write the bipartite graph edges and gene ID mapping for DSS1
+# Open an output file to write the bipartite graph edges
 try:
     with open("bipartite_graph_output.txt", "w") as file:
         # Write the number of DMRs and genes on the first line
         file.write(f"{unique_dmrs} {unique_genes}\n")
 
-        # Sort edges by DMR index first, then by gene ID
-        sorted_edges = sorted(bipartite_graph.edges(), 
-                            key=lambda x: (x[0] if isinstance(x[0], int) else float('inf'), 
-                                         gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1]))
-        
-        # Write the edges of the bipartite graph with gene IDs for DSS1
-        for dmr, gene in sorted_edges:
-            if isinstance(gene, str):  # If gene is a string (gene name)
+        # Get all edges and convert gene names to IDs
+        edges = []
+        for dmr, gene in bipartite_graph.edges():
+            if isinstance(gene, str):
                 gene_id = gene_id_mapping[gene]
-                file.write(f"{dmr} {gene_id}\n")
-            else:  # If gene is already an ID
-                file.write(f"{dmr} {gene}\n")
+                edges.append((dmr, gene_id))
+            else:
+                edges.append((dmr, gene))
+
+        # Sort edges by DMR index first, then by gene ID
+        sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
+        
+        # Write the edges
+        for dmr, gene_id in sorted_edges:
+            file.write(f"{dmr} {gene_id}\n")
+
 except Exception as e:
     print(f"Error writing bipartite_graph_output.txt: {e}")
     raise
