@@ -201,7 +201,7 @@ def preprocess_graph(graph):
 # First create the raw bipartite graph
 bipartite_graph = create_bipartite_graph(df)
 import networkx as nx
-from domination import validate_bipartite_graph
+from rb_domination import validate_bipartite_graph, greedy_rb_domination, process_components
 validate_bipartite_graph(bipartite_graph)
 
 # Write the graph files immediately after creation and validation
