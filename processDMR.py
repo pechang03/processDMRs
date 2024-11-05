@@ -200,6 +200,7 @@ def preprocess_graph(graph):
 # Preprocess the bipartite graph for DSS1
 # First create the raw bipartite graph
 bipartite_graph = create_bipartite_graph(df)
+import networkx as nx
 from domination import validate_bipartite_graph
 validate_bipartite_graph(bipartite_graph)
 
