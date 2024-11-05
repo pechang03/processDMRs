@@ -162,7 +162,37 @@ def preprocess_graph(graph):
     return graph
 
 # Preprocess the bipartite graph for DSS1
-bipartite_graph = preprocess_graph(create_bipartite_graph(df))
+# First create the raw bipartite graph
+raw_bipartite_graph = create_bipartite_graph(df)
+
+# Write the raw graph to file before preprocessing
+try:
+    with open("bipartite_graph_output.txt", "w") as file:
+        # Write the number of DMRs and genes on the first line
+        file.write(f"{unique_dmrs} {unique_genes}\n")
+
+        # Get all edges and convert gene names to IDs
+        edges = []
+        for dmr, gene in raw_bipartite_graph.edges():
+            if isinstance(gene, str):
+                gene_id = gene_id_mapping[gene]
+                edges.append((dmr, gene_id))
+            else:
+                edges.append((dmr, gene))
+
+        # Sort edges by DMR index first, then by gene ID
+        sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
+        
+        # Write the edges
+        for dmr, gene_id in sorted_edges:
+            file.write(f"{dmr} {gene_id}\n")
+
+except Exception as e:
+    print(f"Error writing bipartite_graph_output.txt: {e}")
+    raise
+
+# Now preprocess the graph for the rest of the analysis
+bipartite_graph = preprocess_graph(raw_bipartite_graph)
 
 # Calculate min and max degrees for DSS1
 degrees = dict(bipartite_graph.degree())
