@@ -199,59 +199,37 @@ def preprocess_graph(graph):
 
 # Preprocess the bipartite graph for DSS1
 # First create the raw bipartite graph
-raw_bipartite_graph = create_bipartite_graph(df)
+bipartite_graph = create_bipartite_graph(df)
+validate_bipartite_graph(bipartite_graph)
 
-# Calculate the number of unique DMRs and genes
-unique_dmrs = df["DMR_No."].nunique()
-all_genes = (
-    df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
-    + df["Gene_Symbol_Nearby"].dropna().unique().tolist()
-)
-unique_genes_list = list(set(all_genes))
-unique_genes = len(unique_genes_list)
-
-# Create the gene ID mapping
-gene_id_start = len(df["DMR_No."].values)
-gene_id_mapping = {
-    gene: idx + gene_id_start for idx, gene in enumerate(unique_genes_list)
-}
-
-# Write the raw graph to file before preprocessing
+# Write the graph files immediately after creation and validation
 try:
     with open("bipartite_graph_output.txt", "w") as file:
-        # Write the number of DMRs and genes on the first line
         file.write(f"{unique_dmrs} {unique_genes}\n")
-
-        # Get all edges and convert gene names to IDs
         edges = []
-        for dmr, gene in raw_bipartite_graph.edges():
+        for dmr, gene in bipartite_graph.edges():
             if isinstance(gene, str):
                 gene_id = gene_id_mapping[gene]
                 edges.append((dmr, gene_id))
             else:
                 edges.append((dmr, gene))
-
-        # Sort edges by DMR index first, then by gene ID
         sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-
-        # Write the edges
         for dmr, gene_id in sorted_edges:
             file.write(f"{dmr} {gene_id}\n")
-
 except Exception as e:
     print(f"Error writing bipartite_graph_output.txt: {e}")
     raise
 
-# Now preprocess the graph for the rest of the analysis
-bipartite_graph = preprocess_graph(raw_bipartite_graph)
-
-# Calculate min and max degrees for DSS1
-degrees = dict(bipartite_graph.degree())
-min_degree = min(degrees.values())
-max_degree = max(degrees.values())
-
-# Calculate the number of connected components for DSS1
-num_connected_components = nx.number_connected_components(bipartite_graph)
+# Write gene mappings
+try:
+    with open("gene_ids.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(["Gene", "ID"])
+        for gene, gene_id in gene_id_mapping.items():
+            csvwriter.writerow([gene, gene_id])
+except Exception as e:
+    print(f"Error writing gene_ids.csv: {e}")
+    raise
 
 import time
 import psutil
@@ -271,22 +249,6 @@ def process_components(graph):
     return dominating_sets
 
 
-# Calculate a greedy R-B dominating set for DSS1
-start_time = time.time()
-dominating_set = process_components(bipartite_graph)
-end_time = time.time()
-
-# Print the calculated features for DSS1
-print(f"Min Degree: {min_degree}")
-print(f"Max Degree: {max_degree}")
-print(f"Average Degree: {sum(degrees.values()) / len(degrees)}")
-print(f"Number of Connected Components: {num_connected_components}")
-print(f"Size of Greedy R-B Dominating Set: {len(dominating_set)}")
-process = psutil.Process()
-memory_info = process.memory_info()
-print(f"Execution Time for DSS1: {end_time - start_time} seconds")
-print(f"Memory Usage for DSS1: {memory_info.rss} bytes")
-print(f"Memory Usage per Node: {memory_info.rss / len(bipartite_graph.nodes())} bytes")
 try:
     df_home1 = pd.read_excel("./data/HOME1.xlsx", header=0)  # Read HOME1.xlsx
 except Exception as e:
@@ -414,37 +376,31 @@ except Exception as e:
 
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
 
-# Preprocess the bipartite graph for HOME1
-bipartite_graph_home1 = preprocess_graph(
-    create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
-)
+# Create and validate HOME1 graph
+bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
+validate_bipartite_graph(bipartite_graph_home1)
 
-# Calculate min and max degrees for HOME1
-degrees_home1 = dict(bipartite_graph_home1.degree())
-min_degree_home1 = min(degrees_home1.values())
-max_degree_home1 = max(degrees_home1.values())
+# Write HOME1 graph immediately after creation and validation
+try:
+    with open("bipartite_graph_home1_output.txt", "w") as file_home1:
+        file_home1.write(f"{unique_dmrs_home1} {unique_genes_home1}\n")
+        sorted_edges_home1 = sorted(
+            bipartite_graph_home1.edges(),
+            key=lambda x: (
+                x[0] if isinstance(x[0], int) else float("inf"),
+                gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1],
+            ),
+        )
+        for dmr, gene in sorted_edges_home1:
+            if isinstance(gene, str):
+                gene_id = gene_id_mapping[gene]
+                file_home1.write(f"{dmr} {gene_id}\n")
+            else:
+                file_home1.write(f"{dmr} {gene}\n")
+except Exception as e:
+    print(f"Error writing bipartite_graph_home1_output.txt: {e}")
+    raise
 
-# Calculate the number of connected components for HOME1
-num_connected_components_home1 = nx.number_connected_components(bipartite_graph_home1)
-
-# Calculate a greedy R-B dominating set for HOME1
-start_time = time.time()
-dominating_set_home1 = process_components(bipartite_graph_home1)
-end_time = time.time()
-
-# Print the calculated features for HOME1
-print(f"Min Degree (HOME1): {min_degree_home1}")
-print(f"Max Degree (HOME1): {max_degree_home1}")
-print(f"Average Degree (HOME1): {sum(degrees_home1.values()) / len(degrees_home1)}")
-print(f"Number of Connected Components (HOME1): {num_connected_components_home1}")
-print(f"Size of Greedy R-B Dominating Set (HOME1): {len(dominating_set_home1)}")
-process = psutil.Process()
-memory_info = process.memory_info()
-print(f"Execution Time for HOME1: {end_time - start_time} seconds")
-print(f"Memory Usage for HOME1: {memory_info.rss} bytes")
-print(
-    f"Memory Usage per Node (HOME1): {memory_info.rss / len(bipartite_graph_home1.nodes())} bytes"
-)
 
 
 def preprocess_graph(graph):
@@ -472,3 +428,20 @@ def process_components(graph):
         dom_set = greedy_rb_domination(subgraph, df)
         dominating_sets.extend(dom_set)
     return dominating_sets
+def validate_bipartite_graph(B):
+    """Validate the bipartite graph properties"""
+    # Check for isolated nodes
+    isolated = list(nx.isolates(B))
+    if isolated:
+        print(f"Warning: Found {len(isolated)} isolated nodes: {isolated[:5]}")
+        
+    # Check node degrees
+    degrees = dict(B.degree())
+    if min(degrees.values()) == 0:
+        zero_degree_nodes = [n for n, d in degrees.items() if d == 0]
+        print(f"Warning: Graph contains {len(zero_degree_nodes)} nodes with degree 0")
+        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
+
+    # Verify bipartite property
+    if not nx.is_bipartite(B):
+        print("Warning: Graph is not bipartite")

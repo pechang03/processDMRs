@@ -45,3 +45,6 @@ class TestGraphStatistics(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+import networkx as nx
+import pandas as pd
+
