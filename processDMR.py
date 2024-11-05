@@ -5,7 +5,7 @@ import time
 import psutil
 
 from graph_utils import process_enhancer_info, validate_bipartite_graph
-from rb_domination import greedy_rb_domination, validate_bipartite_graph, process_components
+from rb_domination import greedy_rb_domination, process_components
 
 
 def read_excel_file(filepath):

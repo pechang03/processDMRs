@@ -4,23 +4,6 @@ from networkx import bipartite
 import networkx as nx
 
 
-def validate_bipartite_graph(B):
-    """Validate the bipartite graph properties"""
-    # Check for isolated nodes
-    isolated = list(nx.isolates(B))
-    if isolated:
-        print(f"Warning: Found {len(isolated)} isolated nodes: {isolated[:5]}")
-
-    # Check node degrees
-    degrees = dict(B.degree())
-    if min(degrees.values()) == 0:
-        zero_degree_nodes = [n for n, d in degrees.items() if d == 0]
-        print(f"Warning: Graph contains {len(zero_degree_nodes)} nodes with degree 0")
-        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
-
-    # Verify bipartite property
-    if not nx.is_bipartite(B):
-        print("Warning: Graph is not bipartite")
 
 
 def greedy_rb_domination(graph, df, area_col=None):
