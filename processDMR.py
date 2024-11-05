@@ -37,7 +37,7 @@ def read_excel_file(filepath):
         raise
 
 
-def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
+def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Nearby"):
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
     dmr_nodes = df["DMR_No."].values
