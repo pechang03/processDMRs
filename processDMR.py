@@ -200,15 +200,27 @@ def preprocess_graph(graph):
 # Preprocess the bipartite graph for DSS1
 # First create the raw bipartite graph
 bipartite_graph = create_bipartite_graph(df)
+from domination import validate_bipartite_graph
 validate_bipartite_graph(bipartite_graph)
 
 # Write the graph files immediately after creation and validation
 try:
     with open("bipartite_graph_output.txt", "w") as file:
+        unique_dmrs = df["DMR_No."].nunique()
+        all_genes = (
+            df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
+            + df["Gene_Symbol_Nearby"].dropna().unique().tolist()
+        )
+        unique_genes_list = list(set(all_genes))
+        unique_genes = len(unique_genes_list)
         file.write(f"{unique_dmrs} {unique_genes}\n")
         edges = []
         for dmr, gene in bipartite_graph.edges():
             if isinstance(gene, str):
+                gene_id_start = len(df["DMR_No."].values)
+                gene_id_mapping = {
+                    gene: idx + gene_id_start for idx, gene in enumerate(unique_genes_list)
+                }
                 gene_id = gene_id_mapping[gene]
                 edges.append((dmr, gene_id))
             else:
@@ -225,6 +237,10 @@ try:
     with open("gene_ids.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Gene", "ID"])
+        gene_id_start = len(df["DMR_No."].values)
+        gene_id_mapping = {
+            gene: idx + gene_id_start for idx, gene in enumerate(unique_genes_list)
+        }
         for gene, gene_id in gene_id_mapping.items():
             csvwriter.writerow([gene, gene_id])
 except Exception as e:
