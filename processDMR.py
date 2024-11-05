@@ -89,11 +89,18 @@ def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
     try:
         with open(output_file, "w") as file:
             unique_dmrs = df["DMR_No."].nunique()
-            all_genes = (
-                df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
-                + df["Gene_Symbol_Nearby"].dropna().unique().tolist()
-            )
-            unique_genes = len(set(all_genes))
+            all_genes = set()
+            
+            # Add genes from enhancer info
+            enhancer_genes = df["Processed_Enhancer_Info"].explode().dropna().unique()
+            all_genes.update(enhancer_genes)
+            
+            # Add genes from gene symbol column (using the correct column name)
+            gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+            symbol_genes = df[gene_col].dropna().unique()
+            all_genes.update(symbol_genes)
+            
+            unique_genes = len(all_genes)
             
             file.write(f"{unique_dmrs} {unique_genes}\n")
             
@@ -149,19 +156,24 @@ def main():
 
     # Create gene ID mapping
     dmr_nodes = df["DMR_No."].values
-    all_genes = (
-        df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
-        + df["Gene_Symbol_Nearby"].dropna().unique().tolist()
-    )
-    all_genes_home1 = (
-        df_home1["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
-        + df_home1["Gene_Symbol"].dropna().unique().tolist()
-    )
     
-    all_unique_genes = list(set(all_genes + all_genes_home1))
+    # Get all unique genes from both datasets
+    all_genes = set()
+    
+    # Add genes from DSS1
+    dss1_gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+    all_genes.update(df["Processed_Enhancer_Info"].explode().dropna())
+    all_genes.update(df[dss1_gene_col].dropna())
+    
+    # Add genes from HOME1
+    home1_gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df_home1.columns else "Gene_Symbol"
+    all_genes.update(df_home1["Processed_Enhancer_Info"].explode().dropna())
+    all_genes.update(df_home1[home1_gene_col].dropna())
+    
+    # Create gene ID mapping
     gene_id_start = len(dmr_nodes)
     gene_id_mapping = {
-        gene: idx + gene_id_start for idx, gene in enumerate(all_unique_genes)
+        gene: idx + gene_id_start for idx, gene in enumerate(sorted(all_genes))
     }
 
     # Write output files
