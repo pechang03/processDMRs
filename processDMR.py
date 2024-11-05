@@ -87,7 +87,7 @@ print(df["Processed_Enhancer_Info"])
 # Function to create a bipartite graph connecting DMRs to their associated genes
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
-    dmr_nodes = df["DMR_No."].apply(lambda x: x - 1).values
+    dmr_nodes = df["DMR_No."].values
     B.add_nodes_from(dmr_nodes, bipartite=0)
     
     # Add debugging
@@ -264,7 +264,7 @@ try:
 
         # Write the edges of the bipartite graph with gene IDs for DSS1
         for edge in bipartite_graph.edges():
-            dmr = edge[0] - 1  # Subtract 1 from the DMR number
+            dmr = edge[0]  # No need to subtract 1 here
             gene = edge[1]
             gene_id = gene_id_mapping[gene]
             file.write(f"{dmr} {gene_id}\n")
