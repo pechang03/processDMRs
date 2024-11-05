@@ -3,16 +3,19 @@ import networkx as nx
 import csv
 from graph_utils import process_enhancer_info
 
+
 def greedy_rb_domination(graph, df, area_col=None):
     # Initialize the dominating set
     dominating_set = set()
-    
+
     # Get all gene nodes (bipartite=1)
-    gene_nodes = set(node for node, data in graph.nodes(data=True) if data['bipartite'] == 1)
-    
+    gene_nodes = set(
+        node for node, data in graph.nodes(data=True) if data["bipartite"] == 1
+    )
+
     # Keep track of dominated genes
     dominated_genes = set()
-    
+
     # First, handle degree-1 genes that aren't already dominated
     for gene in gene_nodes:
         if graph.degree(gene) == 1 and gene not in dominated_genes:
@@ -21,22 +24,23 @@ def greedy_rb_domination(graph, df, area_col=None):
             dominating_set.add(dmr)
             # Update dominated genes
             dominated_genes.update(graph.neighbors(dmr))
-    
+
     # Get remaining undominated subgraph
     remaining_graph = graph.copy()
     remaining_graph.remove_nodes_from(dominating_set)
     remaining_graph.remove_nodes_from(dominated_genes)
-    
+
     # Handle remaining components
     for component in nx.connected_components(remaining_graph):
         # Skip if component has no genes to dominate
-        if not any(remaining_graph.nodes[n]['bipartite'] == 1 for n in component):
+        if not any(remaining_graph.nodes[n]["bipartite"] == 1 for n in component):
             continue
-            
+
         # Get DMR nodes in this component
-        dmr_nodes = [node for node in component 
-                    if remaining_graph.nodes[node]['bipartite'] == 0]
-        
+        dmr_nodes = [
+            node for node in component if remaining_graph.nodes[node]["bipartite"] == 0
+        ]
+
         if dmr_nodes:  # If there are DMR nodes in this component
             # Add weight-based selection
             def get_node_weight(node):
@@ -45,19 +49,36 @@ def greedy_rb_domination(graph, df, area_col=None):
                 return degree * area
 
             # Modify selection strategy
-            best_dmr = max(dmr_nodes, 
-                           key=lambda x: (len(set(remaining_graph.neighbors(x))), 
-                                        get_node_weight(x)))
+            best_dmr = max(
+                dmr_nodes,
+                key=lambda x: (
+                    len(set(remaining_graph.neighbors(x))),
+                    get_node_weight(x),
+                ),
+            )
             dominating_set.add(best_dmr)
 
     return dominating_set
 
+
 # Read the Excel file into a Pandas DataFrame
 try:
-    df = pd.read_excel("./data/DSS1.xlsx", header=0)  # Adjust this based on your inspection
-    print("Column names:", df.columns.tolist())  # Print the column names for verification
+    df = pd.read_excel(
+        "./data/DSS1.xlsx", header=0
+    )  # Adjust this based on your inspection
+    print(
+        "Column names:", df.columns.tolist()
+    )  # Print the column names for verification
     print("\nSample of input data:")
-    print(df[['DMR_No.', 'Gene_Symbol_Nearby', 'ENCODE_Enhancer_Interaction(BingRen_Lab)']].head(10))
+    print(
+        df[
+            [
+                "DMR_No.",
+                "Gene_Symbol_Nearby",
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)",
+            ]
+        ].head(10)
+    )
 except Exception as e:
     print(f"Error reading DSS1.xlsx: {e}")
     raise  # Re-raise the exception after logging
@@ -72,7 +93,9 @@ area = df["Area_Stat"]
 enhancer_info = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
 
 # Apply the function to the correct column
-df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
+    process_enhancer_info
+)
 
 # Print the extracted data
 print("DMR IDs:")
@@ -84,43 +107,47 @@ print(area)
 print("Processed Enhancer Info:")
 print(df["Processed_Enhancer_Info"])
 
+
 # Function to create a bipartite graph connecting DMRs to their associated genes
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
     dmr_nodes = df["DMR_No."].values
-    
+
     # Add DMR nodes with explicit bipartite attribute (0-based indexing)
     for dmr in dmr_nodes:
         B.add_node(dmr - 1, bipartite=0)  # Subtract 1 to convert to 0-based indexing
-    
+
     print(f"\nDebugging create_bipartite_graph:")
     print(f"Number of DMR nodes added: {len(dmr_nodes)}")
-    
+
     batch_size = 1000
     total_edges = 0
     dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)  # Track DMRs without edges
-    
+
     for i in range(0, len(df), batch_size):
-        batch = df.iloc[i:i+batch_size]
+        batch = df.iloc[i : i + batch_size]
         for _, row in batch.iterrows():
             dmr = row["DMR_No."] - 1  # Convert to 0-based indexing
             associated_genes = set()
-            
+
             # Add closest gene if it exists
             if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
-                associated_genes.add(str(row[closest_gene_col]))  # Ensure gene names are strings
-                print(f"DMR {dmr} has closest gene: {row[closest_gene_col]}")
-            
+                associated_genes.add(
+                    str(row[closest_gene_col])
+                )  # Ensure gene names are strings
+                # print(f"DMR {dmr} has closest gene: {row[closest_gene_col]}")
+
             # Add enhancer genes if they exist
             if isinstance(row["Processed_Enhancer_Info"], (list, set)):
                 enhancer_genes = set(
-                    str(gene) for gene in row["Processed_Enhancer_Info"] 
+                    str(gene)
+                    for gene in row["Processed_Enhancer_Info"]
                     if pd.notna(gene) and gene
                 )
                 if enhancer_genes:
                     associated_genes.update(enhancer_genes)
-                    print(f"DMR {dmr} has enhancer genes: {enhancer_genes}")
-            
+                    # print(f"DMR {dmr} has enhancer genes: {enhancer_genes}")
+
             # Add edges for all associated genes
             if associated_genes:
                 for gene in associated_genes:
@@ -129,40 +156,46 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
                     B.add_edge(dmr, gene)  # Use 0-based DMR index
                     total_edges += 1
                 dmrs_without_edges.discard(dmr)
-    
+
     print(f"Total edges added: {total_edges}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
-    
+
     # Debug information about nodes without edges
     zero_degree_nodes = [node for node in B.nodes() if B.degree(node) == 0]
     if zero_degree_nodes:
         print(f"Found {len(zero_degree_nodes)} nodes with degree 0:")
         print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
-        print(f"Node types of zero-degree nodes: {[B.nodes[node].get('bipartite') for node in zero_degree_nodes[:5]]}")
-    
+        print(
+            f"Node types of zero-degree nodes: {[B.nodes[node].get('bipartite') for node in zero_degree_nodes[:5]]}"
+        )
+
     if dmrs_without_edges:
         print(f"Found {len(dmrs_without_edges)} DMRs without any edges:")
         print(f"First 5 DMRs without edges: {list(dmrs_without_edges)[:5]}")
-    
+
     return B
+
 
 def preprocess_graph(graph):
     # Add handling for isolated nodes
     isolated_nodes = list(nx.isolates(graph))
     graph.remove_nodes_from(isolated_nodes)
-    
+
     # Existing redundancy removal code
     redundant = []
     for node in graph.nodes():
-        if graph.nodes[node]['bipartite'] == 0:  # DMR nodes
+        if graph.nodes[node]["bipartite"] == 0:  # DMR nodes
             neighbors = set(graph.neighbors(node))
             for other in graph.nodes():
-                if (other != node and 
-                    graph.nodes[other]['bipartite'] == 0 and
-                    set(graph.neighbors(other)).issubset(neighbors)):
+                if (
+                    other != node
+                    and graph.nodes[other]["bipartite"] == 0
+                    and set(graph.neighbors(other)).issubset(neighbors)
+                ):
                     redundant.append(other)
     graph.remove_nodes_from(redundant)
     return graph
+
 
 # Preprocess the bipartite graph for DSS1
 # First create the raw bipartite graph
@@ -200,7 +233,7 @@ try:
 
         # Sort edges by DMR index first, then by gene ID
         sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-        
+
         # Write the edges
         for dmr, gene_id in sorted_edges:
             file.write(f"{dmr} {gene_id}\n")
@@ -223,19 +256,20 @@ num_connected_components = nx.number_connected_components(bipartite_graph)
 import time
 import psutil
 
+
 def process_components(graph):
     # Process larger components first
-    components = sorted(nx.connected_components(graph), 
-                      key=len, reverse=True)
+    components = sorted(nx.connected_components(graph), key=len, reverse=True)
     dominating_sets = []
-    
+
     for component in components:
         if len(component) > 1:  # Skip isolated nodes
             subgraph = graph.subgraph(component)
             dom_set = greedy_rb_domination(subgraph, df)
             dominating_sets.extend(dom_set)
-            
+
     return dominating_sets
+
 
 # Calculate a greedy R-B dominating set for DSS1
 start_time = time.time()
@@ -266,7 +300,9 @@ area_home1 = df_home1["Confidence_Scores"]  # Updated to match HOME1 column name
 enhancer_info_home1 = df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
 
 # Process the enhancer information for HOME1
-df_home1["Processed_Enhancer_Info"] = df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+df_home1["Processed_Enhancer_Info"] = df_home1[
+    "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+].apply(process_enhancer_info)
 
 # Create the bipartite graph for HOME1
 bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
@@ -315,7 +351,7 @@ try:
 
         # Sort edges by DMR index first, then by gene ID
         sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-        
+
         # Write the edges
         for dmr, gene_id in sorted_edges:
             file.write(f"{dmr} {gene_id}\n")
@@ -357,10 +393,14 @@ try:
         file_home1.write(f"{unique_dmrs_home1} {unique_genes_home1}\n")
 
         # Sort edges by DMR index first, then by gene ID
-        sorted_edges_home1 = sorted(bipartite_graph_home1.edges(), 
-                                   key=lambda x: (x[0] if isinstance(x[0], int) else float('inf'), 
-                                                gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1]))
-        
+        sorted_edges_home1 = sorted(
+            bipartite_graph_home1.edges(),
+            key=lambda x: (
+                x[0] if isinstance(x[0], int) else float("inf"),
+                gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1],
+            ),
+        )
+
         # Write the edges of the bipartite graph for HOME1
         for dmr, gene in sorted_edges_home1:
             if isinstance(gene, str):  # If gene is a string (gene name)
@@ -375,7 +415,9 @@ except Exception as e:
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
 
 # Preprocess the bipartite graph for HOME1
-bipartite_graph_home1 = preprocess_graph(create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol"))
+bipartite_graph_home1 = preprocess_graph(
+    create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
+)
 
 # Calculate min and max degrees for HOME1
 degrees_home1 = dict(bipartite_graph_home1.degree())
@@ -400,20 +442,28 @@ process = psutil.Process()
 memory_info = process.memory_info()
 print(f"Execution Time for HOME1: {end_time - start_time} seconds")
 print(f"Memory Usage for HOME1: {memory_info.rss} bytes")
-print(f"Memory Usage per Node (HOME1): {memory_info.rss / len(bipartite_graph_home1.nodes())} bytes")
+print(
+    f"Memory Usage per Node (HOME1): {memory_info.rss / len(bipartite_graph_home1.nodes())} bytes"
+)
+
+
 def preprocess_graph(graph):
     # Remove redundant edges
     redundant = []
     for node in graph.nodes():
-        if graph.nodes[node]['bipartite'] == 0:  # DMR nodes
+        if graph.nodes[node]["bipartite"] == 0:  # DMR nodes
             neighbors = set(graph.neighbors(node))
             for other in graph.nodes():
-                if (other != node and 
-                    graph.nodes[other]['bipartite'] == 0 and
-                    set(graph.neighbors(other)).issubset(neighbors)):
+                if (
+                    other != node
+                    and graph.nodes[other]["bipartite"] == 0
+                    and set(graph.neighbors(other)).issubset(neighbors)
+                ):
                     redundant.append(other)
     graph.remove_nodes_from(redundant)
     return graph
+
+
 def process_components(graph):
     components = list(nx.connected_components(graph))
     dominating_sets = []
