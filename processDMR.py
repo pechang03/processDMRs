@@ -251,6 +251,8 @@ unique_genes_home1_list = list(set(all_genes_home1))
 unique_genes_home1 = len(unique_genes_home1_list)
 
 # First, create the gene ID mapping starting after the highest DMR number
+dmr_nodes = df["DMR_No."].values
+all_unique_genes = list(set(unique_genes_list + unique_genes_home1_list))
 gene_id_start = len(dmr_nodes)  # This will be the number of DMR vertices
 gene_id_mapping = {
     gene: idx + gene_id_start for idx, gene in enumerate(all_unique_genes)
