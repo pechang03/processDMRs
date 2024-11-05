@@ -165,6 +165,21 @@ def preprocess_graph(graph):
 # First create the raw bipartite graph
 raw_bipartite_graph = create_bipartite_graph(df)
 
+# Calculate the number of unique DMRs and genes
+unique_dmrs = df["DMR_No."].nunique()
+all_genes = (
+    df["Processed_Enhancer_Info"].explode().dropna().unique().tolist()
+    + df["Gene_Symbol_Nearby"].dropna().unique().tolist()
+)
+unique_genes_list = list(set(all_genes))
+unique_genes = len(unique_genes_list)
+
+# Create the gene ID mapping
+gene_id_start = len(df["DMR_No."].values)
+gene_id_mapping = {
+    gene: idx + gene_id_start for idx, gene in enumerate(unique_genes_list)
+}
+
 # Write the raw graph to file before preprocessing
 try:
     with open("bipartite_graph_output.txt", "w") as file:
