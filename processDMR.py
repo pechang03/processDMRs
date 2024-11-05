@@ -265,15 +265,21 @@ try:
         # Write the number of DMRs and genes on the first line
         file.write(f"{unique_dmrs} {unique_genes}\n")
 
+        # Sort edges by DMR index first, then by gene ID
+        sorted_edges = sorted(bipartite_graph.edges(), 
+                            key=lambda x: (x[0] if isinstance(x[0], int) else float('inf'), 
+                                         gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1]))
+        
         # Write the edges of the bipartite graph with gene IDs for DSS1
-        for edge in bipartite_graph.edges():
-            dmr = edge[0]  # No need to subtract 1 here
-            gene = edge[1]
-            gene_id = gene_id_mapping[gene]
-            file.write(f"{dmr} {gene_id}\n")
+        for dmr, gene in sorted_edges:
+            if isinstance(gene, str):  # If gene is a string (gene name)
+                gene_id = gene_id_mapping[gene]
+                file.write(f"{dmr} {gene_id}\n")
+            else:  # If gene is already an ID
+                file.write(f"{dmr} {gene}\n")
 except Exception as e:
     print(f"Error writing bipartite_graph_output.txt: {e}")
-    raise  # Re-raise the exception after logging
+    raise
 
 print("Bipartite graph written to bipartite_graph_output.txt")
 
@@ -307,15 +313,21 @@ try:
         # Write the number of unique DMRs and genes on the first line
         file_home1.write(f"{unique_dmrs_home1} {unique_genes_home1}\n")
 
+        # Sort edges by DMR index first, then by gene ID
+        sorted_edges_home1 = sorted(bipartite_graph_home1.edges(), 
+                                   key=lambda x: (x[0] if isinstance(x[0], int) else float('inf'), 
+                                                gene_id_mapping[x[1]] if isinstance(x[1], str) else x[1]))
+        
         # Write the edges of the bipartite graph for HOME1
-        for edge in bipartite_graph_home1.edges():
-            dmr = edge[0] - 1  # Subtract 1 from the DMR number
-            gene = edge[1]
-            gene_id = gene_id_mapping[gene]  # Ensure gene_id is always found
-            file_home1.write(f"{dmr} {gene_id}\n")
+        for dmr, gene in sorted_edges_home1:
+            if isinstance(gene, str):  # If gene is a string (gene name)
+                gene_id = gene_id_mapping[gene]
+                file_home1.write(f"{dmr} {gene_id}\n")
+            else:  # If gene is already an ID
+                file_home1.write(f"{dmr} {gene}\n")
 except Exception as e:
     print(f"Error writing bipartite_graph_home1_output.txt: {e}")
-    raise  # Re-raise the exception after logging
+    raise
 
 print("Bipartite graph for HOME1 written to bipartite_graph_home1_output.txt")
 
