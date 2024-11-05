@@ -62,19 +62,44 @@ def create_bipartite_graph(df):
 
 
 def validate_bipartite_graph(B):
-    """Validate the bipartite graph properties"""
-    # Check for isolated nodes
+    """Validate the bipartite graph properties and print detailed statistics"""
+    print("\nGraph Statistics:")
+    print("-----------------")
+    
+    # Check for isolated nodes (degree 0)
     isolated = list(nx.isolates(B))
     if isolated:
-        print(f"Warning: Found {len(isolated)} isolated nodes: {isolated[:5]}")
+        print(f"WARNING: Found {len(isolated)} isolated nodes: {isolated[:5]}")
+    else:
+        print("✓ No isolated nodes found")
 
-    # Check node degrees
+    # Degree statistics
     degrees = dict(B.degree())
-    if min(degrees.values()) == 0:
+    min_degree = min(degrees.values())
+    max_degree = max(degrees.values())
+    print(f"Degree statistics:")
+    print(f"  - Minimum degree: {min_degree}")
+    print(f"  - Maximum degree: {max_degree}")
+    
+    if min_degree == 0:
         zero_degree_nodes = [n for n, d in degrees.items() if d == 0]
-        print(f"Warning: Graph contains {len(zero_degree_nodes)} nodes with degree 0")
+        print(f"WARNING: Graph contains {len(zero_degree_nodes)} nodes with degree 0")
         print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
+
+    # Connected components analysis
+    components = list(nx.connected_components(B))
+    print(f"Connected components:")
+    print(f"  - Number of components: {len(components)}")
+    print(f"  - Largest component size: {len(max(components, key=len))}")
+    print(f"  - Smallest component size: {len(min(components, key=len))}")
 
     # Verify bipartite property
     if not nx.is_bipartite(B):
-        print("Warning: Graph is not bipartite")
+        print("WARNING: Graph is not bipartite")
+    else:
+        print("✓ Graph is bipartite")
+
+    # Print overall graph size
+    print(f"\nTotal graph size:")
+    print(f"  - Nodes: {B.number_of_nodes()}")
+    print(f"  - Edges: {B.number_of_edges()}")
