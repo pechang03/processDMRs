@@ -88,7 +88,10 @@ print(df["Processed_Enhancer_Info"])
 def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
     dmr_nodes = df["DMR_No."].values
-    B.add_nodes_from(dmr_nodes, bipartite=0)
+    
+    # Add DMR nodes with explicit bipartite attribute
+    for dmr in dmr_nodes:
+        B.add_node(dmr - 1, bipartite=0)  # Subtract 1 to convert to 0-based indexing
     
     # Add debugging
     print(f"\nDebugging create_bipartite_graph:")
@@ -96,12 +99,12 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     
     batch_size = 1000
     total_edges = 0
-    dmrs_without_edges = set(dmr_nodes)  # Track DMRs that haven't received any edges
+    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)  # Track DMRs that haven't received any edges
     
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i+batch_size]
         for _, row in batch.iterrows():
-            dmr = row["DMR_No."] - 1
+            dmr = row["DMR_No."] - 1  # Convert to 0-based indexing
             associated_genes = set()
             
             # Debug closest gene handling
