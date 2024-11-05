@@ -98,7 +98,7 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     
     batch_size = 1000
     total_edges = 0
-    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)
+    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)  # Track DMRs without edges
     
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i+batch_size]
@@ -106,10 +106,12 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
             dmr = row["DMR_No."] - 1  # Convert to 0-based indexing
             associated_genes = set()
             
+            # Add closest gene if it exists
             if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
                 associated_genes.add(str(row[closest_gene_col]))  # Ensure gene names are strings
                 print(f"DMR {dmr} has closest gene: {row[closest_gene_col]}")
             
+            # Add enhancer genes if they exist
             if isinstance(row["Processed_Enhancer_Info"], (list, set)):
                 enhancer_genes = set(
                     str(gene) for gene in row["Processed_Enhancer_Info"] 
@@ -119,6 +121,7 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
                     associated_genes.update(enhancer_genes)
                     print(f"DMR {dmr} has enhancer genes: {enhancer_genes}")
             
+            # Add edges for all associated genes
             if associated_genes:
                 for gene in associated_genes:
                     if not B.has_node(gene):
@@ -130,7 +133,7 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     print(f"Total edges added: {total_edges}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
     
-    # Check for nodes with degree 0
+    # Debug information about nodes without edges
     zero_degree_nodes = [node for node in B.nodes() if B.degree(node) == 0]
     if zero_degree_nodes:
         print(f"Found {len(zero_degree_nodes)} nodes with degree 0:")
