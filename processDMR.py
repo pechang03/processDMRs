@@ -173,7 +173,10 @@ def main():
     bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
 
     # Validate graphs
+    print("\n=== DSS1 Graph Statistics ===")
     validate_bipartite_graph(bipartite_graph)
+    
+    print("\n=== HOME1 Graph Statistics ===")
     validate_bipartite_graph(bipartite_graph_home1)
 
     # Write output files
