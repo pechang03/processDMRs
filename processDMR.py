@@ -14,11 +14,19 @@ def read_excel_file(filepath):
         df = pd.read_excel(filepath, header=0)
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
+        # Determine which columns to display based on what's available
+        if "Gene_Symbol_Nearby" in df.columns:
+            gene_col = "Gene_Symbol_Nearby"
+        elif "Gene_Symbol" in df.columns:
+            gene_col = "Gene_Symbol"
+        else:
+            raise KeyError("No gene symbol column found in the file")
+            
         print(
             df[
                 [
                     "DMR_No.",
-                    "Gene_Symbol_Nearby",
+                    gene_col,
                     "ENCODE_Enhancer_Interaction(BingRen_Lab)",
                 ]
             ].head(10)
