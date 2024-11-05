@@ -59,8 +59,9 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
             dmr = row["DMR_No."] - 1
             associated_genes = set()
 
-            if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
-                associated_genes.add(str(row[closest_gene_col]))
+            gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+            if pd.notna(row[gene_col]) and row[gene_col]:
+                associated_genes.add(str(row[gene_col]))
 
             if isinstance(row["Processed_Enhancer_Info"], (list, set)):
                 enhancer_genes = set(
@@ -73,9 +74,10 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
 
             if associated_genes:
                 for gene in associated_genes:
-                    if not B.has_node(gene):
-                        B.add_node(gene, bipartite=1)
-                    B.add_edge(dmr, gene)
+                    gene_id = gene_id_mapping[gene]
+                    if not B.has_node(gene_id):
+                        B.add_node(gene_id, bipartite=1)
+                    B.add_edge(dmr, gene_id)
                     total_edges += 1
                 dmrs_without_edges.discard(dmr)
 
@@ -161,16 +163,31 @@ def main():
     all_genes.update(df_home1["Processed_Enhancer_Info"].explode().dropna())
     all_genes.update(df_home1[home1_gene_col].dropna())
     
-    # Create gene ID mapping
-    gene_id_start = len(dmr_nodes)
-    gene_id_mapping = {
-        gene: idx + gene_id_start for idx, gene in enumerate(sorted(all_genes))
-    }
+    # Create gene ID mapping BEFORE creating graphs
+    all_genes = set()
+    
+    # Add genes from DSS1
+    dss1_gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+    dss1_genes = set(df[dss1_gene_col].dropna())
+    dss1_enhancer_genes = {gene for genes in df["Processed_Enhancer_Info"] for gene in genes if gene}
+    all_genes.update(dss1_genes)
+    all_genes.update(dss1_enhancer_genes)
+    
+    # Add genes from HOME1
+    home1_gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df_home1.columns else "Gene_Symbol"
+    home1_genes = set(df_home1[home1_gene_col].dropna())
+    home1_enhancer_genes = {gene for genes in df_home1["Processed_Enhancer_Info"] for gene in genes if gene}
+    all_genes.update(home1_genes)
+    all_genes.update(home1_enhancer_genes)
+    
+    # Create sorted gene list and mapping
+    sorted_genes = sorted(all_genes)
+    gene_id_mapping = {gene: idx + max(df["DMR_No."]) for idx, gene in enumerate(sorted_genes)}
 
 
-    # Create bipartite graphs
-    bipartite_graph = create_bipartite_graph(df)
-    bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
+    # Create bipartite graphs using the consistent gene_id_mapping
+    bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+    bipartite_graph_home1 = create_bipartite_graph(df_home1, gene_id_mapping)
 
     # Validate graphs
     print("\n=== DSS1 Graph Statistics ===")

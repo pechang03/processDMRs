@@ -19,7 +19,7 @@ def process_enhancer_info(enhancer_str):
     return processed_genes
 
 
-def create_bipartite_graph(df):
+def create_bipartite_graph(df, gene_id_mapping):
     """
     Create a bipartite graph connecting DMRs to their associated genes.
 
