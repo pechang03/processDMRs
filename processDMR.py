@@ -146,13 +146,6 @@ def main():
         process_enhancer_info
     )
 
-    # Create bipartite graphs
-    bipartite_graph = create_bipartite_graph(df)
-    bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
-
-    # Validate graphs
-    validate_bipartite_graph(bipartite_graph)
-    validate_bipartite_graph(bipartite_graph_home1)
 
     # Get all unique genes from both datasets
     all_genes = set()
