@@ -154,11 +154,9 @@ def main():
     validate_bipartite_graph(bipartite_graph)
     validate_bipartite_graph(bipartite_graph_home1)
 
-    # Create gene ID mapping
-    dmr_nodes = df["DMR_No."].values
-    
     # Get all unique genes from both datasets
     all_genes = set()
+    dmr_nodes = df["DMR_No."].values
     
     # Add genes from DSS1
     dss1_gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
@@ -175,6 +173,14 @@ def main():
     gene_id_mapping = {
         gene: idx + gene_id_start for idx, gene in enumerate(sorted(all_genes))
     }
+
+    # Create bipartite graphs
+    bipartite_graph = create_bipartite_graph(df)
+    bipartite_graph_home1 = create_bipartite_graph(df_home1, closest_gene_col="Gene_Symbol")
+
+    # Validate graphs
+    validate_bipartite_graph(bipartite_graph)
+    validate_bipartite_graph(bipartite_graph_home1)
 
     # Write output files
     write_bipartite_graph(bipartite_graph, "bipartite_graph_output.txt", df, gene_id_mapping)
