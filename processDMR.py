@@ -89,17 +89,16 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
     B = nx.Graph()
     dmr_nodes = df["DMR_No."].values
     
-    # Add DMR nodes with explicit bipartite attribute
+    # Add DMR nodes with explicit bipartite attribute (0-based indexing)
     for dmr in dmr_nodes:
         B.add_node(dmr - 1, bipartite=0)  # Subtract 1 to convert to 0-based indexing
     
-    # Add debugging
     print(f"\nDebugging create_bipartite_graph:")
     print(f"Number of DMR nodes added: {len(dmr_nodes)}")
     
     batch_size = 1000
     total_edges = 0
-    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)  # Track DMRs that haven't received any edges
+    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)
     
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i+batch_size]
@@ -107,33 +106,26 @@ def create_bipartite_graph(df, closest_gene_col="Gene_Symbol_Nearby"):
             dmr = row["DMR_No."] - 1  # Convert to 0-based indexing
             associated_genes = set()
             
-            # Debug closest gene handling
             if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
-                associated_genes.add(row[closest_gene_col])
+                associated_genes.add(str(row[closest_gene_col]))  # Ensure gene names are strings
                 print(f"DMR {dmr} has closest gene: {row[closest_gene_col]}")
-            else:
-                print(f"Warning: DMR {dmr} has no closest gene")
             
-            # Debug enhancer genes handling
             if isinstance(row["Processed_Enhancer_Info"], (list, set)):
                 enhancer_genes = set(
-                    gene for gene in row["Processed_Enhancer_Info"] 
+                    str(gene) for gene in row["Processed_Enhancer_Info"] 
                     if pd.notna(gene) and gene
                 )
                 if enhancer_genes:
                     associated_genes.update(enhancer_genes)
                     print(f"DMR {dmr} has enhancer genes: {enhancer_genes}")
             
-            # Add edges and track them
             if associated_genes:
                 for gene in associated_genes:
                     if not B.has_node(gene):
                         B.add_node(gene, bipartite=1)
-                    B.add_edge(dmr, gene)
+                    B.add_edge(dmr, gene)  # Use 0-based DMR index
                     total_edges += 1
-                dmrs_without_edges.discard(dmr)  # Remove DMR from tracking set
-            else:
-                print(f"Warning: DMR {dmr} has no associated genes")
+                dmrs_without_edges.discard(dmr)
     
     print(f"Total edges added: {total_edges}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
