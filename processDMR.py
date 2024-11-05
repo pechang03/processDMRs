@@ -252,7 +252,8 @@ import time
 import psutil
 
 
-def process_components(graph):
+def process_components(graph, df):
+    """Process connected components of the graph to find dominating sets"""
     # Process larger components first
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
     dominating_sets = []
