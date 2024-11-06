@@ -301,12 +301,10 @@ def process_components(graph, df):
     """Process connected components of the graph to find dominating sets"""
     # Process larger components first
     components = sorted(nx.connected_components(graph), key=len, reverse=True)
-    dominating_sets = []
-
-    for component in components:
-        if len(component) > 1:  # Skip isolated nodes
-            subgraph = graph.subgraph(component)
-            dom_set = greedy_rb_domination(subgraph, df)
-            dominating_sets.extend(dom_set)
-
-    return dominating_sets
+    
+    print(f"Processing {len(components)} components")
+    
+    # Process whole graph at once instead of by components
+    dominating_set = greedy_rb_domination(graph, df, area_col='Area_Stat')
+    
+    return dominating_set
