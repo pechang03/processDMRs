@@ -39,24 +39,31 @@ def greedy_rb_domination(graph, df, area_col=None):
     utility_heap = []
     utility_map = {}  # Keep track of current utility for each DMR
     
-    # Initialize utilities for all DMRs
+    # Initialize utilities for remaining DMRs
     for dmr, data in graph.nodes(data=True):
         if data["bipartite"] == 0 and dmr not in dominating_set:
             new_genes = set(graph.neighbors(dmr)) - dominated_genes
-            area = df.loc[df['DMR_No.'] == dmr + 1, area_col].iloc[0] if area_col else 1.0
-            utility = len(new_genes)
-            # Store (-utility, -area, dmr) for max-heap behavior
-            entry = (-utility, -area, dmr)
-            utility_map[dmr] = entry
-            heappush(utility_heap, entry)
+            if new_genes:  # Only consider DMRs that would dominate new genes
+                area = df.loc[df['DMR_No.'] == dmr + 1, area_col].iloc[0] if area_col else 1.0
+                utility = len(new_genes)
+                entry = (-utility, -area, dmr)
+                utility_map[dmr] = entry
+                heappush(utility_heap, entry)
     
     # While there are still undominated genes and DMRs to choose from
     while utility_heap and dominated_genes < gene_nodes:
         # Get DMR with highest utility
         neg_utility, neg_area, best_dmr = heappop(utility_heap)
         
-        # Skip if this entry is outdated
-        if utility_map[best_dmr] != (neg_utility, neg_area, best_dmr):
+        # Skip if this DMR is no longer in utility_map (already processed)
+        if best_dmr not in utility_map:
+            continue
+            
+        # Skip if utility has changed
+        current_entry = utility_map[best_dmr]
+        if current_entry != (neg_utility, neg_area, best_dmr):
+            if current_entry[0] > neg_utility:  # If utility improved, re-add with new value
+                heappush(utility_heap, current_entry)
             continue
             
         # Add to dominating set
@@ -64,23 +71,25 @@ def greedy_rb_domination(graph, df, area_col=None):
         new_dominated = set(graph.neighbors(best_dmr)) - dominated_genes
         dominated_genes.update(new_dominated)
         
+        # Remove the used DMR from utility tracking
+        del utility_map[best_dmr]
+        
         # Update utilities for affected DMRs
         affected_dmrs = set()
         for gene in new_dominated:
             affected_dmrs.update(dmr for dmr in graph.neighbors(gene) 
-                               if dmr not in dominating_set)
+                               if dmr not in dominating_set and dmr in utility_map)
         
         for dmr in affected_dmrs:
-            if dmr in utility_map:  # Skip if already processed
-                new_genes = set(graph.neighbors(dmr)) - dominated_genes
+            new_genes = set(graph.neighbors(dmr)) - dominated_genes
+            if new_genes:  # Only keep DMRs that would dominate new genes
                 area = df.loc[df['DMR_No.'] == dmr + 1, area_col].iloc[0] if area_col else 1.0
                 utility = len(new_genes)
-                if utility > 0:  # Only keep DMRs that would dominate new genes
-                    new_entry = (-utility, -area, dmr)
-                    utility_map[dmr] = new_entry
-                    heappush(utility_heap, new_entry)
-                else:
-                    del utility_map[dmr]
+                new_entry = (-utility, -area, dmr)
+                utility_map[dmr] = new_entry
+                heappush(utility_heap, new_entry)
+            else:
+                del utility_map[dmr]  # Remove DMRs that wouldn't dominate any new genes
     
     return dominating_set
 
