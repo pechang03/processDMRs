@@ -66,14 +66,8 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             if not line:  # Skip any blank lines
                 continue
             nodes = [int(x) for x in line.split()]
-            if biclique_count < 5:  # Print first 5 bicliques for debugging
-                print(f"\nBiclique {biclique_count}:")
-                print(f"Raw node IDs: {nodes}")
             dmr_nodes = {n for n in nodes if n < max_DMR_id}
             gene_nodes = {n for n in nodes if n >= max_DMR_id}
-            if biclique_count < 5:
-                print(f"DMR nodes: {sorted(dmr_nodes)}")
-                print(f"Gene nodes: {sorted(gene_nodes)}")
             
             # Validate node IDs
             if any(n >= max_DMR_id for n in dmr_nodes):
@@ -278,45 +272,40 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
     print(f"Interesting bicliques (≥3 DMRs, ≥3 genes): {interesting_count}")
     
     # Print interesting bicliques
+    print("\nBiclique Size Distribution:")
+    size_distribution = {}
+    for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+        size_key = (len(dmr_nodes), len(gene_nodes))
+        size_distribution[size_key] = size_distribution.get(size_key, 0) + 1
+    
+    print("\nSize distribution (DMRs × Genes: Count):")
+    for (dmr_count, gene_count), count in sorted(size_distribution.items()):
+        print(f"{dmr_count}×{gene_count}: {count}")
+
     print("\nInteresting Bicliques:")
     total_false_negatives = 0
     expected_edges = len(bicliques_result['debug']['edge_distribution'])
     
-    for i in interesting_bicliques[:10]:  # Show first 10 interesting bicliques
+    for i in interesting_bicliques:  # Show all interesting bicliques
         dmr_nodes, gene_nodes = bicliques_result['bicliques'][i]
-        print(f"\nBiclique {i+1} ({len(dmr_nodes)} DMRs, {len(gene_nodes)} genes):")
         
-        print("  DMRs:")
-        for dmr_id in sorted(dmr_nodes):
-            # DMRs are 0-based in graph but 1-based in df
-            dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
-            area_stat = dmr_row['Area_Stat']
-            dmr_name = dmr_row['DMR_Name']
-            print(f"    DMR_{dmr_id + 1} - {dmr_name} (Area: {area_stat})")
-        
-        print("  Genes:")
-        for gene_id in sorted(gene_nodes):
-            gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
-            # Find gene description from df
-            gene_desc = df[df['Gene_Symbol_Nearby'] == gene_name]['Gene_Description'].iloc[0] \
-                       if len(df[df['Gene_Symbol_Nearby'] == gene_name]) > 0 else 'N/A'
-            print(f"    {gene_name}: {gene_desc}")
-        
-        # Check for missing edges
-        false_negatives = 0
-        missing_edges = []
-        for dmr_id in dmr_nodes:
-            for gene_id in gene_nodes:
-                edge = (dmr_id, gene_id)
-                if edge not in bicliques_result['debug']['edge_distribution']:
-                    false_negatives += 1
-                    missing_edges.append((dmr_id, gene_id))
-        
-        total_false_negatives += false_negatives
-        if missing_edges:
-            print(f"\n    Missing edges ({false_negatives}/{expected_edges} edges not in original graph):")
-            for dmr_id, gene_id in missing_edges:
-                print(f"    ❌ DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
+        # Only print details if it's truly interesting (≥3 DMRs and ≥3 genes)
+        if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3:
+            print(f"\nBiclique {i+1} ({len(dmr_nodes)} DMRs, {len(gene_nodes)} genes):")
+            
+            print("  DMRs:")
+            for dmr_id in sorted(dmr_nodes):
+                dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
+                area_stat = dmr_row['Area_Stat']
+                dmr_name = dmr_row['DMR_Name']
+                print(f"    DMR_{dmr_id + 1} - {dmr_name} (Area: {area_stat})")
+            
+            print("  Genes:")
+            for gene_id in sorted(gene_nodes):
+                gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
+                gene_desc = df[df['Gene_Symbol_Nearby'] == gene_name]['Gene_Description'].iloc[0] \
+                           if len(df[df['Gene_Symbol_Nearby'] == gene_name]) > 0 else 'N/A'
+                print(f"    {gene_name}: {gene_desc}")
 
     print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
     print("Note: False negative edges indicate hypothesized biclique connections that don't exist in the original graph")
