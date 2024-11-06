@@ -49,7 +49,7 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                 line = line[2:]  # Remove the "- " prefix
                 if ':' in line:
                     key, value = line.split(':', 1)
-                    statistics[key.strip()] = value.strip()
+                    statistics[key.strip()] = int(value.strip()) if key.strip() in ['Nb operations', 'Nb splits', 'Nb deletions', 'Nb additions'] else value.strip()
         
         # Process remaining bicliques
         for line in f:
@@ -113,7 +113,13 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
         'debug': {
             'uncovered_edges': list(uncovered_edges)[:5],  # Sample of uncovered edges
             'uncovered_nodes': len(uncovered_nodes),
-            'edge_distribution': edge_distribution
+            'edge_distribution': edge_distribution,
+            'header_stats': {
+                'Nb operations': statistics.get('Nb operations', 0),
+                'Nb splits': statistics.get('Nb splits', 0),
+                'Nb deletions': statistics.get('Nb deletions', 0),
+                'Nb additions': statistics.get('Nb additions', 0)
+            }
         }
     }
     
@@ -159,6 +165,16 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
         for edge in bicliques_result['debug']['uncovered_edges']:
             print(f"  {edge}")
         print(f"Total nodes involved in uncovered edges: {bicliques_result['debug']['uncovered_nodes']}")
+    
+    # Validate header statistics
+    header_stats = bicliques_result['debug']['header_stats']
+    print("\nValidation of Header Statistics:")
+    print(f"Nb operations: {header_stats['Nb operations']}")
+    print(f"Nb splits: {header_stats['Nb splits']}")
+    print(f"Nb deletions: {header_stats['Nb deletions']}")
+    print(f"Nb additions: {header_stats['Nb additions']}")
+    print(f"Total false negative edges across all bicliques: {total_false_negatives}")
+    print(f"Total false positive edges (deletions): {header_stats['Nb deletions']}")
     
     # Validate statistics from header if present
     if 'statistics' in bicliques_result and bicliques_result['statistics']:
