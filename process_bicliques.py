@@ -83,11 +83,19 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             
             biclique_count += 1
     
-    print(f"\nTotal bicliques read: {biclique_count}")
-    print(f"DMR ID range in data: {min(n for dmr_nodes, _ in bicliques for n in dmr_nodes)} to {max(n for dmr_nodes, _ in bicliques for n in dmr_nodes)}")
-    print(f"Gene ID range in data: {min(n for _, gene_nodes in bicliques for n in gene_nodes)} to {max(n for _, gene_nodes in bicliques for n in gene_nodes)}")
-    dmr_coverage.update(dmr_nodes)
-    gene_coverage.update(gene_nodes)
+    print("\nBiclique Statistics:")
+    print(f"Number of bicliques: {len(bicliques)}")
+    print(f"Total unique DMR nodes: {len({n for dmr_nodes, _ in bicliques for n in dmr_nodes})}")
+    print(f"Total unique gene nodes: {len({n for _, gene_nodes in bicliques for n in gene_nodes})}")
+    
+    # Validate all node IDs are within expected ranges
+    all_dmr_nodes = {n for dmr_nodes, _ in bicliques for n in dmr_nodes}
+    all_gene_nodes = {n for _, gene_nodes in bicliques for n in gene_nodes}
+    
+    if max(all_dmr_nodes) >= max_DMR_id:
+        print(f"\nWARNING: Found DMR nodes >= max_DMR_id: {[n for n in all_dmr_nodes if n >= max_DMR_id]}")
+    if min(all_gene_nodes) < max_DMR_id:
+        print(f"\nWARNING: Found gene nodes < max_DMR_id: {[n for n in all_gene_nodes if n < max_DMR_id]}")
             
     # Track which bicliques cover each edge
     for dmr in dmr_nodes:
@@ -98,8 +106,6 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                 if edge not in edge_distribution:
                     edge_distribution[edge] = []
                 edge_distribution[edge].append(len(bicliques))
-            
-            bicliques.append((dmr_nodes, gene_nodes))
     
     # Calculate statistics for any graph
     dmr_nodes = {n for n, d in original_graph.nodes(data=True) if d['bipartite'] == 0}
