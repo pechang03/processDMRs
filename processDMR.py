@@ -260,12 +260,15 @@ def main():
             print(f"\nError processing bicliques for {dataset_name}: {str(e)}")
 
     # Process DSS1 bicliques
-    process_bicliques(
+    bicliques_result = process_bicliques(
         bipartite_graph,
         "./data/bipartite_graph_output.txt.biclusters",
         max(df["DMR_No."]),
         "DSS1"
     )
+    
+    # Add this line after process_bicliques call
+    print_bicliques_detail(bicliques_result, df, gene_id_mapping)
 
     # TODO: Process HOME1 bicliques once they are available
     # process_bicliques(
