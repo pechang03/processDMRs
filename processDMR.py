@@ -246,18 +246,29 @@ def main():
         original_graph=bipartite_graph
     )
     
-    # Print summary of bicliques analysis
+    # Print summary and validate bicliques analysis
     print("\n=== Bicliques Analysis ===")
     print(f"Total bicliques found: {bicliques_result['total_bicliques']}")
     print(f"Split genes: {bicliques_result['total_split_genes']}")
     print(f"False positives: {bicliques_result['total_false_positives']}")
     print(f"False negatives: {bicliques_result['total_false_negatives']}")
     
-    # Print some key statistics from the header if available
+    # Validate header statistics against actual counts
     if 'statistics' in bicliques_result:
         print("\nKey Statistics from Bicliques:")
         for key, value in bicliques_result['statistics'].items():
             print(f"  {key}: {value}")
+            
+        # Validate number of bicliques
+        if 'Number of biclusters' in bicliques_result['statistics']:
+            reported_count = int(bicliques_result['statistics']['Number of biclusters'])
+            actual_count = bicliques_result['total_bicliques']
+            if reported_count != actual_count:
+                print(f"\nWARNING: Mismatch in bicluster counts!")
+                print(f"  Header reports: {reported_count}")
+                print(f"  Actually found: {actual_count}")
+            else:
+                print(f"\n✓ Verified: Bicluster count matches header ({actual_count})")
 
 
 if __name__ == "__main__":
