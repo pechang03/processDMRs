@@ -89,7 +89,14 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
     false_negatives = {edge for edge in original_edges 
                       if edge not in all_edges_in_bicliques}
     
-    return {
+    # Enhanced validation section
+    false_positives = {edge for edge in all_edges_in_bicliques 
+                      if not original_graph.has_edge(*edge)}
+    false_negatives = {edge for edge in original_graph.edges() 
+                      if edge not in all_edges_in_bicliques}
+    
+    # Add debug information to return dict
+    result = {
         'bicliques': bicliques,
         'statistics': statistics,
         'split_genes': split_genes,
@@ -98,8 +105,15 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
         'total_bicliques': len(bicliques),
         'total_split_genes': len(split_genes),
         'total_false_positives': len(false_positives),
-        'total_false_negatives': len(false_negatives)
+        'total_false_negatives': len(false_negatives),
+        'debug': {
+            'edge_tracking': edge_tracking,
+            'biclique_edge_density': len(all_edges_in_bicliques) / (len(original_graph.nodes()) * (len(original_graph.nodes()) - 1) / 2),
+            'original_edge_density': len(original_graph.edges()) / (len(original_graph.nodes()) * (len(original_graph.nodes()) - 1) / 2)
+        }
     }
+    
+    return result
 
 def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) -> None:
     """
@@ -121,8 +135,27 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
     fp_percentage = (bicliques_result['total_false_positives'] / total_edges) * 100
     fn_percentage = (bicliques_result['total_false_negatives'] / total_edges) * 100
     
-    print(f"False positives: {bicliques_result['total_false_positives']} ({fp_percentage:.1f}%)")
-    print(f"False negatives: {bicliques_result['total_false_negatives']} ({fn_percentage:.1f}%)")
+    # Add debug information section
+    print("\nDebug Information:")
+    debug = bicliques_result['debug']
+    print(f"Edge counts:")
+    print(f"  Original graph: {debug['edge_tracking']['edge_counts']['original']}")
+    print(f"  Biclique edges: {debug['edge_tracking']['edge_counts']['bicliques']}")
+    print(f"  Unique biclique edges: {len(debug['edge_tracking']['biclique_edges'])}")
+    print(f"\nEdge density:")
+    print(f"  Original graph: {debug['original_edge_density']:.6f}")
+    print(f"  Bicliques: {debug['biclique_edge_density']:.6f}")
+    
+    # Sample of false positives/negatives
+    if bicliques_result['false_positives']:
+        print("\nSample false positives (first 5):")
+        for edge in list(bicliques_result['false_positives'])[:5]:
+            print(f"  {edge}")
+    
+    if bicliques_result['false_negatives']:
+        print("\nSample false negatives (first 5):")
+        for edge in list(bicliques_result['false_negatives'])[:5]:
+            print(f"  {edge}")
     
     # Print and validate statistics from header
     if 'statistics' in bicliques_result:
