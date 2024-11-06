@@ -81,7 +81,6 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             if any(n < max_DMR_id for n in gene_nodes):
                 print(f"WARNING: Found gene node < max_DMR_id in biclique {biclique_count}")
             
-            bicliques.append((dmr_nodes, gene_nodes))
             biclique_count += 1
     
     print(f"\nTotal bicliques read: {biclique_count}")
@@ -95,10 +94,10 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
         for gene in gene_nodes:
             edge = (dmr, gene)
             # Only track edges that exist in the original graph
-                    if original_graph.has_edge(dmr, gene):
-                        if edge not in edge_distribution:
-                            edge_distribution[edge] = []
-                        edge_distribution[edge].append(len(bicliques))
+            if original_graph.has_edge(dmr, gene):
+                if edge not in edge_distribution:
+                    edge_distribution[edge] = []
+                edge_distribution[edge].append(len(bicliques))
             
             bicliques.append((dmr_nodes, gene_nodes))
     
