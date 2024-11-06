@@ -225,6 +225,9 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
     
     # Print interesting bicliques
     print("\nInteresting Bicliques:")
+    total_false_negatives = 0
+    expected_edges = len(bicliques_result['debug']['edge_distribution'])
+    
     for i in interesting_bicliques[:10]:  # Show first 10 interesting bicliques
         dmr_nodes, gene_nodes = bicliques_result['bicliques'][i]
         print(f"\nBiclique {i+1} ({len(dmr_nodes)} DMRs, {len(gene_nodes)} genes):")
@@ -246,6 +249,7 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
             print(f"    {gene_name}: {gene_desc}")
         
         # Check for missing edges
+        false_negatives = 0
         missing_edges = []
         for dmr_id in dmr_nodes:
             for gene_id in gene_nodes:
