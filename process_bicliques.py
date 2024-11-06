@@ -166,51 +166,83 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
         for key, value in bicliques_result['statistics'].items():
             print(f"  {key}: {value}")
 
+def classify_biclique(dmr_nodes: Set, gene_nodes: Set) -> str:
+    """
+    Classify a biclique based on its size.
+    
+    Returns:
+    --------
+    str: 'trivial', 'small', or 'interesting'
+    """
+    if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
+        return 'trivial'
+    elif len(dmr_nodes) >= 3 and len(gene_nodes) >= 3:
+        return 'interesting'
+    else:
+        return 'small'
+
 def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_mapping: Dict) -> None:
     """
-    Print detailed information about each biclique, including DMR and gene names,
-    false negatives, and split genes.
+    Print detailed information about each biclique, focusing on interesting ones.
+    Trivial bicliques (1 DMR, 1 gene) are ignored.
     """
-    # Create reverse mapping from ID to gene name
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
     
-    # Track which genes appear in which bicliques
-    gene_to_bicliques = {}
-    
-    # First pass: build gene_to_bicliques mapping
+    # Classify all bicliques and track interesting ones
+    biclique_classifications = []
+    interesting_bicliques = []
     for i, (dmr_nodes, gene_nodes) in enumerate(bicliques_result['bicliques']):
-        for gene_id in gene_nodes:
-            if gene_id not in gene_to_bicliques:
-                gene_to_bicliques[gene_id] = []
-            gene_to_bicliques[gene_id].append(i)
+        classification = classify_biclique(dmr_nodes, gene_nodes)
+        biclique_classifications.append(classification)
+        if classification == 'interesting':
+            interesting_bicliques.append(i)
     
-    # Find split genes (appearing in multiple bicliques)
+    # Track genes in interesting bicliques only
+    gene_to_interesting_bicliques = {}
+    for i in interesting_bicliques:
+        _, gene_nodes = bicliques_result['bicliques'][i]
+        for gene_id in gene_nodes:
+            if gene_id not in gene_to_interesting_bicliques:
+                gene_to_interesting_bicliques[gene_id] = []
+            gene_to_interesting_bicliques[gene_id].append(i)
+    
+    # Find split genes (only those appearing in multiple interesting bicliques)
     split_genes = {gene_id: biclique_list 
-                  for gene_id, biclique_list in gene_to_bicliques.items() 
+                  for gene_id, biclique_list in gene_to_interesting_bicliques.items() 
                   if len(biclique_list) > 1}
     
-    print("\nDetailed Bicliques (first 10):")
-    for i, (dmr_nodes, gene_nodes) in enumerate(bicliques_result['bicliques'][:10]):
-        print(f"\nBiclique {i+1}:")
+    # Print statistics
+    total_bicliques = len(bicliques_result['bicliques'])
+    trivial_count = biclique_classifications.count('trivial')
+    small_count = biclique_classifications.count('small')
+    interesting_count = len(interesting_bicliques)
+    
+    print("\nBiclique Classification Summary:")
+    print(f"Total bicliques: {total_bicliques}")
+    print(f"Trivial bicliques (1 DMR, 1 gene): {trivial_count}")
+    print(f"Small bicliques: {small_count}")
+    print(f"Interesting bicliques (≥3 DMRs, ≥3 genes): {interesting_count}")
+    
+    # Print interesting bicliques
+    print("\nInteresting Bicliques:")
+    for i in interesting_bicliques[:10]:  # Show first 10 interesting bicliques
+        dmr_nodes, gene_nodes = bicliques_result['bicliques'][i]
+        print(f"\nBiclique {i+1} ({len(dmr_nodes)} DMRs, {len(gene_nodes)} genes):")
         
-        # Print DMR information
         print("  DMRs:")
         for dmr_id in sorted(dmr_nodes):
-            # DMR IDs in df are 1-based, but our graph uses 0-based
-            dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
             print(f"    DMR_{dmr_id + 1}")
         
-        # Print gene information
         print("  Genes:")
         for gene_id in sorted(gene_nodes):
             gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
             print(f"    {gene_name}")
             
-            # Check if this is a split gene
+            # Only show split gene info for interesting bicliques
             if gene_id in split_genes:
                 other_bicliques = [b+1 for b in split_genes[gene_id] if b != i]
                 if other_bicliques:
-                    print(f"      ⚠ Split gene: also appears in bicliques {other_bicliques}")
+                    print(f"      ⚠ Split gene: also appears in interesting bicliques {other_bicliques}")
         
         # Check for false negatives
         for dmr_id in dmr_nodes:
@@ -219,10 +251,10 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
                 if edge not in bicliques_result['debug']['edge_distribution']:
                     print(f"    ❌ False negative edge: DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
 
-    # Print summary of split genes
+    # Print summary of split genes in interesting bicliques
     if split_genes:
-        print("\nSplit Genes Summary:")
+        print("\nSplit Genes in Interesting Bicliques:")
         for gene_id, biclique_list in split_genes.items():
             gene_name = reverse_gene_mapping[gene_id]
             biclique_nums = [b+1 for b in biclique_list]
-            print(f"  {gene_name} appears in bicliques: {biclique_nums}")
+            print(f"  {gene_name} appears in interesting bicliques: {biclique_nums}")
