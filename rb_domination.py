@@ -41,30 +41,9 @@ def greedy_rb_domination(graph, df, area_col=None):
 
     print(f"Remaining graph size: {len(remaining_graph)} nodes")
 
-    # Handle remaining components
-    for component in nx.connected_components(remaining_graph):
-        # Skip if component has no genes to dominate
-        if not any(remaining_graph.nodes[n]["bipartite"] == 1 for n in component):
-            continue
-
-        # Get DMR nodes in this component
-        dmr_nodes = [node for node in component 
-                     if remaining_graph.nodes[node]["bipartite"] == 0]
-
-        if dmr_nodes:  # If there are DMR nodes in this component
-            # Add weight-based selection
-            def get_node_weight(node):
-                degree = len(set(graph.neighbors(node)))
-                area = df.loc[df['DMR_No.'] == node + 1, area_col].iloc[0] if area_col else 1.0
-                return degree * area
-
-            # Modify selection strategy
-            best_dmr = max(dmr_nodes,
-                           key=lambda x: (len(set(remaining_graph.neighbors(x))),
-                                          get_node_weight(x)))
-            dominating_set.add(best_dmr)
-            # Update dominated genes
-            dominated_genes.update(graph.neighbors(best_dmr))
+    # Use process_components for remaining components
+    remaining_dom_set = process_components(remaining_graph, df)
+    dominating_set.update(remaining_dom_set)
 
     return dominating_set
 
