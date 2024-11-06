@@ -241,20 +241,32 @@ def main():
     from process_bicliques import read_bicliques_file, print_bicliques_summary
     
     # For DSS1
-    bicliques_result_dss1 = read_bicliques_file(
-        "./data/bipartite_graph_output.txt.biclusters",
-        max_DMR_id=max(df["DMR_No."]),
-        original_graph=bipartite_graph
-    )
-    print_bicliques_summary(bicliques_result_dss1, bipartite_graph)
+    if nx.is_bipartite(bipartite_graph):
+        try:
+            bicliques_result_dss1 = read_bicliques_file(
+                "./data/bipartite_graph_output.txt.biclusters",
+                max_DMR_id=max(df["DMR_No."]),
+                original_graph=bipartite_graph
+            )
+            print_bicliques_summary(bicliques_result_dss1, bipartite_graph)
+        except FileNotFoundError:
+            print("Bicliques file for DSS1 not found.")
+    else:
+        print("DSS1 graph is not bipartite, skipping bicliques processing.")
 
     # Later, when needed for HOME1
-    bicliques_result_home1 = read_bicliques_file(
-        "./data/bipartite_graph_home1_output.txt.biclusters",  # when this file exists
-        max_DMR_id=max(df_home1["DMR_No."]),
-        original_graph=bipartite_graph_home1
-    )
-    print_bicliques_summary(bicliques_result_home1, bipartite_graph_home1)
+    if nx.is_bipartite(bipartite_graph_home1):
+        try:
+            bicliques_result_home1 = read_bicliques_file(
+                "./data/bipartite_graph_home1_output.txt.biclusters",
+                max_DMR_id=max(df_home1["DMR_No."]),
+                original_graph=bipartite_graph_home1
+            )
+            print_bicliques_summary(bicliques_result_home1, bipartite_graph_home1)
+        except FileNotFoundError:
+            print("Bicliques file for HOME1 not found.")
+    else:
+        print("HOME1 graph is not bipartite, skipping bicliques processing.")
 
 
 if __name__ == "__main__":
