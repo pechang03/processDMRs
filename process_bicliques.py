@@ -87,10 +87,10 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
     print(f"\nTotal bicliques read: {biclique_count}")
     print(f"DMR ID range in data: {min(n for dmr_nodes, _ in bicliques for n in dmr_nodes)} to {max(n for dmr_nodes, _ in bicliques for n in dmr_nodes)}")
     print(f"Gene ID range in data: {min(n for _, gene_nodes in bicliques for n in gene_nodes)} to {max(n for _, gene_nodes in bicliques for n in gene_nodes)}")
-            dmr_coverage.update(dmr_nodes)
-            gene_coverage.update(gene_nodes)
+    dmr_coverage.update(dmr_nodes)
+    gene_coverage.update(gene_nodes)
             
-            # Track which bicliques cover each edge
+    # Track which bicliques cover each edge
             for dmr in dmr_nodes:
                 for gene in gene_nodes:
                     edge = (dmr, gene)
