@@ -244,19 +244,21 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
             gene_desc = df[df['Gene_Symbol_Nearby'] == gene_name]['Gene_Description'].iloc[0] \
                        if len(df[df['Gene_Symbol_Nearby'] == gene_name]) > 0 else 'N/A'
             print(f"    {gene_name}: {gene_desc}")
-            
-            # Only show split gene info for interesting bicliques
-            if gene_id in split_genes:
-                other_bicliques = [b+1 for b in split_genes[gene_id] if b != i]
-                if other_bicliques:
-                    print(f"      ⚠ Split gene: also appears in interesting bicliques {other_bicliques}")
         
-        # Check for false negatives
+        # Check for missing edges
+        missing_edges = []
         for dmr_id in dmr_nodes:
             for gene_id in gene_nodes:
                 edge = (dmr_id, gene_id)
                 if edge not in bicliques_result['debug']['edge_distribution']:
-                    print(f"    ❌ False negative edge: DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
+                    false_negatives += 1
+                    missing_edges.append((dmr_id, gene_id))
+        
+        total_false_negatives += false_negatives
+        if missing_edges:
+            print(f"\n    Missing edges ({false_negatives}/{expected_edges} edges not in original graph):")
+            for dmr_id, gene_id in missing_edges:
+                print(f"    ❌ DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
 
     print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
     print("Note: False negative edges indicate hypothesized biclique connections that don't exist in the original graph")
