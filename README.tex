@@ -100,23 +100,36 @@ The output files generated from the processing include:
 \end{itemize}
 
 \subsection{Preliminary Results}
-Initial analysis of the DSS1 dataset revealed several interesting patterns in the DMR-gene interaction network:
+Initial analysis of the DSS1 dataset revealed detailed patterns in the DMR-gene interaction network:
 
 \begin{itemize}
-    \item \textbf{Network Size}: The bipartite graph contained multiple connected components, with edges representing validated interactions between DMRs and genes.
+    \item \textbf{Network Coverage}:
+    \begin{itemize}
+        \item Complete coverage achieved for both DMRs (2,109/2,109) and genes (4,536/4,536)
+        \item Edge analysis revealed:
+        \begin{itemize}
+            \item 20 edges with single coverage
+            \item No edges with multiple coverage
+            \item 12,083 uncovered edges
+        \end{itemize}
+    \end{itemize}
     
     \item \textbf{Biclique Distribution}:
     \begin{itemize}
-        \item Multiple interesting bicliques (≥3 DMRs, ≥3 genes) were identified
-        \item The majority of bicliques were either trivial (1×1) or small
-        \item Several larger bicliques suggest coordinated regulatory relationships
+        \item Total bicliques identified: 1,114
+        \item Classification breakdown:
+        \begin{itemize}
+            \item 328 trivial bicliques (1 DMR, 1 gene)
+            \item 628 small bicliques
+            \item 158 interesting bicliques (≥3 DMRs, ≥3 genes)
+        \end{itemize}
     \end{itemize}
     
-    \item \textbf{Coverage Analysis}:
+    \item \textbf{Size Distribution Analysis}:
     \begin{itemize}
-        \item Most edges in the original graph were captured by at least one biclique
-        \item Some edges appeared in multiple bicliques, suggesting overlapping regulatory modules
-        \item A small percentage of edges remained uncovered, potentially indicating noise or weaker interactions
+        \item Range spans from minimal 1×1 up to substantial 24×6 configurations
+        \item Notable larger configurations include 13×17 and 10×28 bicliques
+        \item Majority concentrated in smaller size ranges
     \end{itemize}
 \end{itemize}
 
@@ -126,18 +139,28 @@ Initial analysis of the DSS1 dataset revealed several interesting patterns in th
 \toprule
 \textbf{Metric} & \textbf{Value} \\
 \midrule
-Total Bicliques & Multiple \\
-Trivial Bicliques (1×1) & Majority \\
-Interesting Bicliques (≥3×3) & Several \\
-Edge Coverage & High \\
-Multiple Coverage & Present \\
+Total Bicliques & 1,114 \\
+Trivial Bicliques (1×1) & 328 \\
+Small Bicliques & 628 \\
+Interesting Bicliques (≥3×3) & 158 \\
+DMR Coverage & 100\% (2,109/2,109) \\
+Gene Coverage & 100\% (4,536/4,536) \\
+Single Coverage Edges & 20 \\
+Uncovered Edges & 12,083 \\
 \bottomrule
 \end{tabular}
-\caption{Summary of initial bicliques analysis results}
+\caption{Detailed bicliques analysis results}
 \label{table:biclique_results}
 \end{table}
 
-These preliminary results suggest that the DMR-gene interaction network contains structured regulatory patterns, with some DMRs potentially working together to regulate groups of functionally related genes. Further biological validation would be needed to confirm these computational findings.
+For each interesting biclique identified, detailed information was captured including:
+\begin{itemize}
+    \item DMR identifiers with corresponding area statistics
+    \item Associated gene names and their functional descriptions
+    \item Organized groupings of related DMRs and genes
+\end{itemize}
+
+These results reveal a complex regulatory network structure with distinct patterns of DMR-gene interactions. The presence of numerous interesting bicliques, particularly the larger configurations (e.g., 24×6, 13×17, 10×28), suggests coordinated regulatory relationships where groups of DMRs may collectively influence sets of functionally related genes. The high number of uncovered edges (12,083) might indicate either noise in the original network or weaker interactions that don't form complete bicliques.
 
 \textbf{Note}: The HOME1 dataset analysis is pending and will provide additional validation of these patterns when completed.
 
