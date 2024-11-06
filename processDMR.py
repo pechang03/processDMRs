@@ -250,8 +250,12 @@ def main():
     print("\n=== Bicliques Analysis ===")
     print(f"Total bicliques found: {bicliques_result['total_bicliques']}")
     print(f"Split genes: {bicliques_result['total_split_genes']}")
-    print(f"False positives: {bicliques_result['total_false_positives']}")
-    print(f"False negatives: {bicliques_result['total_false_negatives']}")
+    total_edges = len(bipartite_graph.edges())
+    fp_percentage = (bicliques_result['total_false_positives'] / total_edges) * 100
+    fn_percentage = (bicliques_result['total_false_negatives'] / total_edges) * 100
+    
+    print(f"False positives: {bicliques_result['total_false_positives']} ({fp_percentage:.1f}%)")
+    print(f"False negatives: {bicliques_result['total_false_negatives']} ({fn_percentage:.1f}%)")
     
     # Validate header statistics against actual counts
     if 'statistics' in bicliques_result:
@@ -269,6 +273,16 @@ def main():
                 print(f"  Actually found: {actual_count}")
             else:
                 print(f"\n✓ Verified: Bicluster count matches header ({actual_count})")
+
+        if 'Number of edges' in bicliques_result['statistics']:
+            reported_edges = int(bicliques_result['statistics']['Number of edges'])
+            actual_edges = len(bipartite_graph.edges())
+            if reported_edges != actual_edges:
+                print(f"\nWARNING: Mismatch in edge counts!")
+                print(f"  Header reports: {reported_edges}")
+                print(f"  Original graph has: {actual_edges}")
+            else:
+                print(f"\n✓ Verified: Edge count matches header ({actual_edges})")
 
 
 if __name__ == "__main__":
