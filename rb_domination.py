@@ -91,7 +91,8 @@ def greedy_rb_domination(graph, df, area_col=None):
             else:
                 del utility_map[dmr]  # Remove DMRs that wouldn't dominate any new genes
     
-    return dominating_set
+    minimal_dominating_set = minimize_dominating_set(graph, dominating_set)
+    return minimal_dominating_set
 
 
 def process_components(graph, df):
@@ -106,3 +107,33 @@ def process_components(graph, df):
             dominating_sets.extend(dom_set)
 
     return dominating_sets
+def is_still_dominated(graph, dominating_set, dmr_to_remove):
+    """Check if removing a DMR from dominating set maintains coverage"""
+    # Get all genes currently dominated by this DMR
+    genes_dominated_by_dmr = set(graph.neighbors(dmr_to_remove))
+    
+    # Check if these genes are still dominated by other DMRs in the set
+    remaining_dmrs = dominating_set - {dmr_to_remove}
+    for gene in genes_dominated_by_dmr:
+        if not any(dmr in graph.neighbors(gene) for dmr in remaining_dmrs):
+            return False
+    return True
+
+def minimize_dominating_set(graph, dominating_set):
+    """Remove redundant DMRs while maintaining coverage"""
+    redundant_dmrs = set()
+    
+    # Check each DMR in the dominating set
+    for dmr in sorted(dominating_set):  # Sort for deterministic behavior
+        if is_still_dominated(graph, dominating_set, dmr):
+            redundant_dmrs.add(dmr)
+    
+    # Remove all redundant DMRs
+    minimal_dominating_set = dominating_set - redundant_dmrs
+    
+    if redundant_dmrs:
+        print(f"\nRemoved {len(redundant_dmrs)} redundant DMRs from dominating set")
+        print(f"Original size: {len(dominating_set)}")
+        print(f"Minimal size: {len(minimal_dominating_set)}")
+    
+    return minimal_dominating_set
