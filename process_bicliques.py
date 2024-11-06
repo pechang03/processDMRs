@@ -96,6 +96,26 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                       if edge not in all_edges_in_bicliques}
     
     # Add debug information to return dict
+    # Add debugging information
+    edge_tracking = {
+        'biclique_edges': set(),
+        'original_edges': set(original_graph.edges()),
+        'edge_counts': {'bicliques': 0, 'original': len(original_graph.edges())}
+    }
+    
+    # When processing bicliques, add this debugging section:
+    for dmr_nodes, gene_nodes in bicliques:
+        # Count and track edges in this biclique
+        biclique_edge_count = len(dmr_nodes) * len(gene_nodes)
+        edge_tracking['edge_counts']['bicliques'] += biclique_edge_count
+        
+        # Track actual edges added
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                edge = (dmr, gene)
+                edge_tracking['biclique_edges'].add(edge)
+                all_edges_in_bicliques.add(edge)
+    
     result = {
         'bicliques': bicliques,
         'statistics': statistics,
