@@ -164,3 +164,36 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
         print("\nValidation of Header Statistics:")
         for key, value in bicliques_result['statistics'].items():
             print(f"  {key}: {value}")
+
+def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_mapping: Dict) -> None:
+    """
+    Print detailed information about each biclique, including DMR and gene names.
+    
+    Parameters:
+    -----------
+    bicliques_result : Dict
+        Results from read_bicliques_file
+    df : pd.DataFrame
+        Original DataFrame containing DMR information
+    gene_id_mapping : Dict
+        Mapping between gene names and their IDs
+    """
+    # Create reverse mapping from ID to gene name
+    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
+    
+    print("\nDetailed Bicliques (first 10):")
+    for i, (dmr_nodes, gene_nodes) in enumerate(bicliques_result['bicliques'][:10]):
+        print(f"\nBiclique {i+1}:")
+        
+        # Print DMR information
+        print("  DMRs:")
+        for dmr_id in sorted(dmr_nodes):
+            # DMR IDs in df are 1-based, but our graph uses 0-based
+            dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
+            print(f"    DMR_{dmr_id + 1}")
+            
+        # Print gene information
+        print("  Genes:")
+        for gene_id in sorted(gene_nodes):
+            gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
+            print(f"    {gene_name}")
