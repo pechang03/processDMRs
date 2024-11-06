@@ -19,20 +19,19 @@ def greedy_rb_domination(graph, df, area_col=None):
     # Keep track of dominated genes
     dominated_genes = set()
 
-    # First, handle degree-1 genes that aren't already dominated
+    # Process all degree-1 genes in a single pass
     degree_one_genes = {gene for gene in gene_nodes if graph.degree(gene) == 1}
-    
-    print(f"Found {len(degree_one_genes)} genes with degree 1")
-    
-    for gene in degree_one_genes:
-        if gene not in dominated_genes:
-            dmr = list(graph.neighbors(gene))[0]
-            dominating_set.add(dmr)
-            dominated_genes.update(graph.neighbors(dmr))
-    
-    print(f"After processing degree-1 genes:")
-    print(f"Dominating set size: {len(dominating_set)}")
-    print(f"Dominated genes: {len(dominated_genes)}")
+    if degree_one_genes:
+        print(f"\nProcessing {len(degree_one_genes)} degree-1 genes")
+        for gene in degree_one_genes:
+            if gene not in dominated_genes:
+                dmr = list(graph.neighbors(gene))[0]
+                dominating_set.add(dmr)
+                dominated_genes.update(graph.neighbors(dmr))
+        
+        print(f"After processing degree-1 genes:")
+        print(f"Dominating set size: {len(dominating_set)}")
+        print(f"Dominated genes: {len(dominated_genes)}")
 
     # Initialize utility heap
     # Using negative utility for max-heap behavior
@@ -91,7 +90,22 @@ def greedy_rb_domination(graph, df, area_col=None):
             else:
                 del utility_map[dmr]  # Remove DMRs that wouldn't dominate any new genes
     
+    # Minimize the dominating set
+    print("\nMinimizing dominating set...")
+    original_size = len(dominating_set)
     minimal_dominating_set = minimize_dominating_set(graph, dominating_set)
+    
+    print(f"Original size: {original_size}")
+    print(f"Minimal size: {len(minimal_dominating_set)}")
+    print(f"Removed {original_size - len(minimal_dominating_set)} redundant DMRs")
+    
+    # Verify minimality
+    for dmr in sorted(minimal_dominating_set):
+        remaining = minimal_dominating_set - {dmr}
+        if all(any(d in graph.neighbors(gene) for d in remaining) 
+              for gene in graph.neighbors(dmr)):
+            print(f"Warning: DMR {dmr} could be removed while maintaining coverage")
+    
     return minimal_dominating_set
 
 
