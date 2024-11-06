@@ -67,9 +67,11 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             for dmr in dmr_nodes:
                 for gene in gene_nodes:
                     edge = (dmr, gene)
-                    if edge not in edge_distribution:
-                        edge_distribution[edge] = []
-                    edge_distribution[edge].append(len(bicliques))
+                    # Only track edges that exist in the original graph
+                    if original_graph.has_edge(dmr, gene):
+                        if edge not in edge_distribution:
+                            edge_distribution[edge] = []
+                        edge_distribution[edge].append(len(bicliques))
             
             bicliques.append((dmr_nodes, gene_nodes))
     
