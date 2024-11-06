@@ -267,13 +267,13 @@ def main():
         "DSS1"
     )
 
-    # Process HOME1 bicliques only if bipartite
-    process_bicliques(
-        bipartite_graph_home1,
-        "./data/bipartite_graph_home1_output.txt.biclusters", 
-        max(df_home1["DMR_No."]),
-        "HOME1"
-    )
+    # TODO: Process HOME1 bicliques once they are available
+    # process_bicliques(
+    #     bipartite_graph_home1,
+    #     "./data/bipartite_graph_home1_output.txt.biclusters", 
+    #     max(df_home1["DMR_No."]),
+    #     "HOME1"
+    # )
 
 
 if __name__ == "__main__":
