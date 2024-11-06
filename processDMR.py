@@ -245,8 +245,8 @@ def main():
         """Helper function to process bicliques for a given graph"""
         if not nx.is_bipartite(graph):
             print(f"\n{dataset_name} graph is not bipartite, skipping bicliques processing.")
-            return
-            
+            return None
+        
         try:
             bicliques_result = read_bicliques_file(
                 filename,
@@ -254,11 +254,14 @@ def main():
                 original_graph=graph
             )
             print_bicliques_summary(bicliques_result, graph)
+            return bicliques_result  # Add this line
         except FileNotFoundError:
             print(f"\nBicliques file not found: {filename}")
             print("Note: Bicliques files must be generated separately using the bicliques finding tool.")
+            return None  # Add this line
         except Exception as e:
             print(f"\nError processing bicliques for {dataset_name}: {str(e)}")
+            return None  # Add this line
 
     # Process DSS1 bicliques
     bicliques_result = process_bicliques(
@@ -268,8 +271,9 @@ def main():
         "DSS1"
     )
     
-    # Add this line after process_bicliques call
-    print_bicliques_detail(bicliques_result, df, gene_id_mapping)
+    # Only print details if we have results
+    if bicliques_result:
+        print_bicliques_detail(bicliques_result, df, gene_id_mapping)
 
     # TODO: Process HOME1 bicliques once they are available
     # process_bicliques(
