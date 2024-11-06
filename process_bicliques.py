@@ -31,27 +31,17 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
     
     biclique_count = 0
     with open(filename, 'r') as f:
-        # Process header until we find a line that's just numbers
-        while True:
-            line = next(f).strip()
+        lines = f.readlines()
+        
+        # Skip header lines until we find the first biclique
+        line_idx = 0
+        while line_idx < len(lines):
+            line = lines[line_idx].strip()
             
             # Skip blank lines and comment lines
             if not line or line.startswith('#'):
+                line_idx += 1
                 continue
-                
-            # Check if this line is the start of bicliques data
-            if line and line[0].isdigit():
-                # Process first biclique line
-                nodes = [int(x) for x in line.split()]
-                print(f"\nBiclique {biclique_count}:")
-                print(f"Raw node IDs: {nodes}")
-                dmr_nodes = {n for n in nodes if n < max_DMR_id}
-                gene_nodes = {n for n in nodes if n >= max_DMR_id}
-                print(f"DMR nodes: {sorted(dmr_nodes)}")
-                print(f"Gene nodes: {sorted(gene_nodes)}")
-                bicliques.append((dmr_nodes, gene_nodes))
-                biclique_count += 1
-                break
                 
             # Process header statistic line
             if line.startswith('- '):
@@ -59,23 +49,41 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                 if ':' in line:
                     key, value = line.split(':', 1)
                     statistics[key.strip()] = int(value.strip()) if key.strip() in ['Nb operations', 'Nb splits', 'Nb deletions', 'Nb additions'] else value.strip()
-        
-        # Process remaining bicliques
-        for line in f:
-            line = line.strip()
-            if not line:  # Skip any blank lines
+                line_idx += 1
                 continue
+            
+            # If we get here, we've found the first biclique line
+            break
+        
+        # Now process all bicliques
+        while line_idx < len(lines):
+            line = lines[line_idx].strip()
+            if not line:  # Skip blank lines
+                line_idx += 1
+                continue
+                
             nodes = [int(x) for x in line.split()]
             dmr_nodes = {n for n in nodes if n < max_DMR_id}
             gene_nodes = {n for n in nodes if n >= max_DMR_id}
             
-            # Validate node IDs
-            if any(n >= max_DMR_id for n in dmr_nodes):
-                print(f"WARNING: Found DMR node >= max_DMR_id in biclique {biclique_count}")
-            if any(n < max_DMR_id for n in gene_nodes):
-                print(f"WARNING: Found gene node < max_DMR_id in biclique {biclique_count}")
+            # Add to bicliques list
+            bicliques.append((dmr_nodes, gene_nodes))
+            
+            # Update coverage sets
+            dmr_coverage.update(dmr_nodes)
+            gene_coverage.update(gene_nodes)
+            
+            # Track edge distribution
+            for dmr in dmr_nodes:
+                for gene in gene_nodes:
+                    edge = (dmr, gene)
+                    if original_graph.has_edge(dmr, gene):
+                        if edge not in edge_distribution:
+                            edge_distribution[edge] = []
+                        edge_distribution[edge].append(biclique_count)
             
             biclique_count += 1
+            line_idx += 1
     
     print("\nBiclique Statistics:")
     print(f"Number of bicliques: {len(bicliques)}")
