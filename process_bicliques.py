@@ -231,12 +231,18 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
         
         print("  DMRs:")
         for dmr_id in sorted(dmr_nodes):
-            print(f"    DMR_{dmr_id + 1}")
+            # DMRs are 0-based in graph but 1-based in df
+            dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
+            area_stat = dmr_row['Area_Stat']
+            print(f"    DMR_{dmr_id + 1} (Area: {area_stat})")
         
         print("  Genes:")
         for gene_id in sorted(gene_nodes):
             gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
-            print(f"    {gene_name}")
+            # Find gene description from df
+            gene_desc = df[df['Gene_Symbol_Nearby'] == gene_name]['Gene_Description'].iloc[0] \
+                       if len(df[df['Gene_Symbol_Nearby'] == gene_name]) > 0 else 'N/A'
+            print(f"    {gene_name}: {gene_desc}")
             
             # Only show split gene info for interesting bicliques
             if gene_id in split_genes:
