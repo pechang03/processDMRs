@@ -196,6 +196,37 @@ Interesting bicliques (≥3 DMRs, ≥3 genes) may represent important regulatory
     \item Potential regulatory hotspots in the genome
 \end{itemize}
 
+\section{RB-Domination Analysis}
+The red-blue domination analysis identifies a minimal set of DMRs (red nodes) that collectively dominate all genes (blue nodes) in the network. A gene is considered dominated if it is connected to at least one DMR in the dominating set.
+
+\subsection{Results}
+The analysis of the DSS1 dataset revealed:
+\begin{itemize}
+    \item \textbf{Dominating Set Size:} 1,366 DMRs (64.77\% of total DMRs)
+    \item \textbf{Coverage:}
+    \begin{itemize}
+        \item 4,516 out of 4,536 genes dominated (99.56\% coverage)
+        \item Only 20 genes remain undominated
+    \end{itemize}
+    \item \textbf{Efficiency:} Each DMR in the dominating set connects to multiple genes, with examples showing individual DMRs dominating between 4-13 genes
+\end{itemize}
+
+\subsection{Interpretation}
+The high percentage of genes dominated by a subset of DMRs (64.77\%) suggests:
+\begin{itemize}
+    \item A relatively efficient regulatory network where most genes can be reached through a subset of key DMRs
+    \item Potential regulatory hotspots where individual DMRs influence multiple genes
+    \item The possibility of prioritizing DMRs for experimental validation based on their domination coverage
+\end{itemize}
+
+The small number of undominated genes (20) may represent:
+\begin{itemize}
+    \item Genes with unique or specialized regulatory mechanisms
+    \item Potential gaps in the regulatory network that warrant further investigation
+\end{itemize}
+
+This analysis complements the bicliques analysis by identifying key DMRs that could serve as regulatory hubs in the network.
+
 \end{document}
 import networkx as nx
 
