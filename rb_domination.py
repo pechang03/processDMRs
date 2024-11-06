@@ -37,14 +37,32 @@ def greedy_rb_domination(graph, df, area_col=None):
     # Get remaining undominated subgraph
     remaining_graph = graph.copy()
     remaining_graph.remove_nodes_from(dominating_set)
-    remaining_graph.remove_nodes_from(dominated_genes)
 
-    print(f"Remaining graph size: {len(remaining_graph)} nodes")
-
-    # Use process_components for remaining components
-    remaining_dom_set = process_components(remaining_graph, df)
-    dominating_set.update(remaining_dom_set)
-
+    # While there are still undominated genes
+    while dominated_genes < gene_nodes:
+        # Get DMR nodes in remaining graph
+        dmr_nodes = [node for node, data in remaining_graph.nodes(data=True) 
+                    if data["bipartite"] == 0]
+        
+        if not dmr_nodes:
+            break
+            
+        # Calculate utility (number of new genes that would be dominated)
+        def get_dmr_utility(dmr):
+            new_genes = set(remaining_graph.neighbors(dmr)) - dominated_genes
+            area = df.loc[df['DMR_No.'] == dmr + 1, area_col].iloc[0] if area_col else 1.0
+            return len(new_genes), area
+            
+        # Choose DMR with highest utility
+        best_dmr = max(dmr_nodes, key=lambda x: get_dmr_utility(x))
+        
+        # Add to dominating set and update dominated genes
+        dominating_set.add(best_dmr)
+        dominated_genes.update(remaining_graph.neighbors(best_dmr))
+        
+        # Update remaining graph
+        remaining_graph.remove_node(best_dmr)
+    
     return dominating_set
 
 
