@@ -99,6 +99,48 @@ The output files generated from the processing include:
     \item \textbf{bipartite_graph_output.txt.biclusters}: Contains the identified bicliques in the network, with each line representing the nodes (both DMRs and genes) that form a complete bipartite subgraph.
 \end{itemize}
 
+\subsection{Preliminary Results}
+Initial analysis of the DSS1 dataset revealed several interesting patterns in the DMR-gene interaction network:
+
+\begin{itemize}
+    \item \textbf{Network Size}: The bipartite graph contained multiple connected components, with edges representing validated interactions between DMRs and genes.
+    
+    \item \textbf{Biclique Distribution}:
+    \begin{itemize}
+        \item Multiple interesting bicliques (≥3 DMRs, ≥3 genes) were identified
+        \item The majority of bicliques were either trivial (1×1) or small
+        \item Several larger bicliques suggest coordinated regulatory relationships
+    \end{itemize}
+    
+    \item \textbf{Coverage Analysis}:
+    \begin{itemize}
+        \item Most edges in the original graph were captured by at least one biclique
+        \item Some edges appeared in multiple bicliques, suggesting overlapping regulatory modules
+        \item A small percentage of edges remained uncovered, potentially indicating noise or weaker interactions
+    \end{itemize}
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Bicliques & Multiple \\
+Trivial Bicliques (1×1) & Majority \\
+Interesting Bicliques (≥3×3) & Several \\
+Edge Coverage & High \\
+Multiple Coverage & Present \\
+\bottomrule
+\end{tabular}
+\caption{Summary of initial bicliques analysis results}
+\label{table:biclique_results}
+\end{table}
+
+These preliminary results suggest that the DMR-gene interaction network contains structured regulatory patterns, with some DMRs potentially working together to regulate groups of functionally related genes. Further biological validation would be needed to confirm these computational findings.
+
+\textbf{Note}: The HOME1 dataset analysis is pending and will provide additional validation of these patterns when completed.
+
 \section{Bicliques Analysis}
 The analysis identifies bipartite cliques (bicliques) in the DMR-gene interaction network. A biclique represents a complete subgraph where every DMR is connected to every gene within that subgraph.
 
