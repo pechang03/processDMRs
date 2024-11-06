@@ -296,8 +296,9 @@ def greedy_rb_domination(graph, df, area_col=None):
             dominating_set.add(best_dmr)
 
     """Process connected components of the graph to find dominating sets"""
-    # Get all gene nodes (bipartite=1)
+    # Get all gene nodes (bipartite=1) and DMR nodes (bipartite=0)
     gene_nodes = {node for node, data in graph.nodes(data=True) if data["bipartite"] == 1}
+    dmr_nodes = {node for node, data in graph.nodes(data=True) if data["bipartite"] == 0}
     
     # Process whole graph at once
     dominating_set = greedy_rb_domination(graph, df, area_col='Area_Stat')
