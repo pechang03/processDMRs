@@ -168,19 +168,26 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
 
 def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_mapping: Dict) -> None:
     """
-    Print detailed information about each biclique, including DMR and gene names.
-    
-    Parameters:
-    -----------
-    bicliques_result : Dict
-        Results from read_bicliques_file
-    df : pd.DataFrame
-        Original DataFrame containing DMR information
-    gene_id_mapping : Dict
-        Mapping between gene names and their IDs
+    Print detailed information about each biclique, including DMR and gene names,
+    false negatives, and split genes.
     """
     # Create reverse mapping from ID to gene name
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
+    
+    # Track which genes appear in which bicliques
+    gene_to_bicliques = {}
+    
+    # First pass: build gene_to_bicliques mapping
+    for i, (dmr_nodes, gene_nodes) in enumerate(bicliques_result['bicliques']):
+        for gene_id in gene_nodes:
+            if gene_id not in gene_to_bicliques:
+                gene_to_bicliques[gene_id] = []
+            gene_to_bicliques[gene_id].append(i)
+    
+    # Find split genes (appearing in multiple bicliques)
+    split_genes = {gene_id: biclique_list 
+                  for gene_id, biclique_list in gene_to_bicliques.items() 
+                  if len(biclique_list) > 1}
     
     print("\nDetailed Bicliques (first 10):")
     for i, (dmr_nodes, gene_nodes) in enumerate(bicliques_result['bicliques'][:10]):
@@ -192,9 +199,30 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
             # DMR IDs in df are 1-based, but our graph uses 0-based
             dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
             print(f"    DMR_{dmr_id + 1}")
-            
+        
         # Print gene information
         print("  Genes:")
         for gene_id in sorted(gene_nodes):
             gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
             print(f"    {gene_name}")
+            
+            # Check if this is a split gene
+            if gene_id in split_genes:
+                other_bicliques = [b+1 for b in split_genes[gene_id] if b != i]
+                if other_bicliques:
+                    print(f"      ⚠ Split gene: also appears in bicliques {other_bicliques}")
+        
+        # Check for false negatives
+        for dmr_id in dmr_nodes:
+            for gene_id in gene_nodes:
+                edge = (dmr_id, gene_id)
+                if edge not in bicliques_result['debug']['edge_distribution']:
+                    print(f"    ❌ False negative edge: DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
+
+    # Print summary of split genes
+    if split_genes:
+        print("\nSplit Genes Summary:")
+        for gene_id, biclique_list in split_genes.items():
+            gene_name = reverse_gene_mapping[gene_id]
+            biclique_nums = [b+1 for b in biclique_list]
+            print(f"  {gene_name} appears in bicliques: {biclique_nums}")
