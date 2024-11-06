@@ -28,6 +28,7 @@ def read_excel_file(filepath):
                     "DMR_No.",
                     gene_col,
                     "ENCODE_Enhancer_Interaction(BingRen_Lab)",
+                    "Gene_Description",  # Add this line
                 ]
             ].head(10)
         )
