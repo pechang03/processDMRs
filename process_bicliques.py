@@ -21,11 +21,15 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
     Dict containing analysis results and debug information
     """
     statistics = {}
+    print("\nReading bicliques file:")
+    print(f"Expected DMR range: 0 to {max_DMR_id-1}")
+    
     bicliques = []
     dmr_coverage = set()
     gene_coverage = set()
     edge_distribution = {}  # track which bicliques cover each edge
     
+    biclique_count = 0
     with open(filename, 'r') as f:
         # Process header until we find a line that's just numbers
         while True:
@@ -39,9 +43,14 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             if line and line[0].isdigit():
                 # Process first biclique line
                 nodes = [int(x) for x in line.split()]
+                print(f"\nBiclique {biclique_count}:")
+                print(f"Raw node IDs: {nodes}")
                 dmr_nodes = {n for n in nodes if n < max_DMR_id}
                 gene_nodes = {n for n in nodes if n >= max_DMR_id}
+                print(f"DMR nodes: {sorted(dmr_nodes)}")
+                print(f"Gene nodes: {sorted(gene_nodes)}")
                 bicliques.append((dmr_nodes, gene_nodes))
+                biclique_count += 1
                 break
                 
             # Process header statistic line
@@ -57,10 +66,27 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
             if not line:  # Skip any blank lines
                 continue
             nodes = [int(x) for x in line.split()]
+            if biclique_count < 5:  # Print first 5 bicliques for debugging
+                print(f"\nBiclique {biclique_count}:")
+                print(f"Raw node IDs: {nodes}")
             dmr_nodes = {n for n in nodes if n < max_DMR_id}
             gene_nodes = {n for n in nodes if n >= max_DMR_id}
+            if biclique_count < 5:
+                print(f"DMR nodes: {sorted(dmr_nodes)}")
+                print(f"Gene nodes: {sorted(gene_nodes)}")
             
-            # Track coverage and distribution for any graph
+            # Validate node IDs
+            if any(n >= max_DMR_id for n in dmr_nodes):
+                print(f"WARNING: Found DMR node >= max_DMR_id in biclique {biclique_count}")
+            if any(n < max_DMR_id for n in gene_nodes):
+                print(f"WARNING: Found gene node < max_DMR_id in biclique {biclique_count}")
+            
+            bicliques.append((dmr_nodes, gene_nodes))
+            biclique_count += 1
+    
+    print(f"\nTotal bicliques read: {biclique_count}")
+    print(f"DMR ID range in data: {min(n for dmr_nodes, _ in bicliques for n in dmr_nodes)} to {max(n for dmr_nodes, _ in bicliques for n in dmr_nodes)}")
+    print(f"Gene ID range in data: {min(n for _, gene_nodes in bicliques for n in gene_nodes)} to {max(n for _, gene_nodes in bicliques for n in gene_nodes)}")
             dmr_coverage.update(dmr_nodes)
             gene_coverage.update(gene_nodes)
             
