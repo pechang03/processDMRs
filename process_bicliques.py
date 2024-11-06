@@ -258,10 +258,5 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
                 if edge not in bicliques_result['debug']['edge_distribution']:
                     print(f"    ❌ False negative edge: DMR_{dmr_id+1} - {reverse_gene_mapping[gene_id]}")
 
-    # Print summary of split genes in interesting bicliques
-    if split_genes:
-        print("\nSplit Genes in Interesting Bicliques:")
-        for gene_id, biclique_list in split_genes.items():
-            gene_name = reverse_gene_mapping[gene_id]
-            biclique_nums = [b+1 for b in biclique_list]
-            print(f"  {gene_name} appears in interesting bicliques: {biclique_nums}")
+    print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
+    print("Note: False negative edges indicate hypothesized biclique connections that don't exist in the original graph")
