@@ -29,18 +29,40 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
     bicliques = []
     all_edges_in_bicliques = set()
     genes_seen = {}  # gene_id -> count of appearances
+    header_done = False
     
     with open(filename, 'r') as f:
-        # Read header statistics (first 24 lines)
-        header_lines = [next(f) for _ in range(24)]
-        for line in header_lines:
-            if ':' in line:
-                key, value = line.strip().split(':')
-                statistics[key.strip()] = value.strip()
+        # Process header until we find a line that's just numbers
+        while not header_done:
+            line = next(f).strip()
+            
+            # Skip blank lines and comment lines
+            if not line or line.startswith('#'):
+                continue
                 
-        # Process bicliques
+            # Check if this line is the start of bicliques data
+            if line and line[0].isdigit():
+                # Process first biclique line
+                nodes = [int(x) for x in line.split()]
+                dmr_nodes = {n for n in nodes if n < max_DMR_id}
+                gene_nodes = {n for n in nodes if n >= max_DMR_id}
+                bicliques.append((dmr_nodes, gene_nodes))
+                header_done = True
+                continue
+                
+            # Process header statistic line
+            if line.startswith('- '):
+                line = line[2:]  # Remove the "- " prefix
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    statistics[key.strip()] = value.strip()
+        
+        # Process remaining bicliques
         for line in f:
-            nodes = [int(x) for x in line.strip().split()]
+            line = line.strip()
+            if not line:  # Skip any blank lines
+                continue
+            nodes = [int(x) for x in line.split()]
             dmr_nodes = {n for n in nodes if n < max_DMR_id}
             gene_nodes = {n for n in nodes if n >= max_DMR_id}
             
@@ -54,7 +76,7 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                     all_edges_in_bicliques.add((dmr, gene))
                     
             bicliques.append((dmr_nodes, gene_nodes))
-            
+    
     # Find split genes (appearing in multiple bicliques)
     split_genes = {gene for gene, count in genes_seen.items() if count > 1}
     
