@@ -96,6 +96,39 @@ The output files generated from the processing include:
 \begin{itemize}
     \item \textbf{bipartite_graph_output.txt}: This file contains the edges of the bipartite graph, with the first line indicating the number of unique DMRs and genes. Each subsequent line represents a connection between a DMR and a gene, with the gene represented by its unique ID.
     \item \textbf{gene_ids.csv}: This CSV file contains a mapping of gene names to their unique IDs, allowing for easy reference and analysis of the genes associated with the DMRs.
+    \item \textbf{bipartite_graph_output.txt.biclusters}: Contains the identified bicliques in the network, with each line representing the nodes (both DMRs and genes) that form a complete bipartite subgraph.
+\end{itemize}
+
+\section{Bicliques Analysis}
+The analysis identifies bipartite cliques (bicliques) in the DMR-gene interaction network. A biclique represents a complete subgraph where every DMR is connected to every gene within that subgraph.
+
+\subsection{Classification}
+Bicliques are classified into three categories:
+\begin{itemize}
+    \item \textbf{Trivial}: Contains exactly 1 DMR and 1 gene
+    \item \textbf{Small}: Contains either 2 DMRs or 2 genes (or both)
+    \item \textbf{Interesting}: Contains 3 or more DMRs and 3 or more genes
+\end{itemize}
+
+\subsection{Analysis Output}
+The bicliques analysis produces detailed statistics including:
+\begin{itemize}
+    \item Coverage metrics for DMRs, genes, and edges
+    \item Size distribution of bicliques
+    \item Detailed information about interesting bicliques, including:
+    \begin{itemize}
+        \item DMR IDs and their associated area statistics
+        \item Gene names and descriptions
+        \item Number of DMRs and genes in each biclique
+    \end{itemize}
+\end{itemize}
+
+\subsection{Interpretation}
+Interesting bicliques (≥3 DMRs, ≥3 genes) may represent important regulatory modules where multiple DMRs collectively influence multiple genes. These patterns could indicate:
+\begin{itemize}
+    \item Coordinated regulation of gene groups
+    \item Functional relationships between genes
+    \item Potential regulatory hotspots in the genome
 \end{itemize}
 
 \end{document}
