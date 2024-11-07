@@ -294,9 +294,13 @@ def main():
         
         # Create node labels
         node_labels = {}
-        # Add DMR labels (subtract 1 since DMR IDs are 1-based in df but 0-based in graph)
-        for dmr in dmr_nodes:
-            node_labels[dmr] = f"DMR_{dmr+1}"  # Add 1 to convert back to 1-based IDs for display
+        # Add DMR labels (using DMR_Name from df if available)
+        for dmr_id in range(len(df)):
+            node_id = dmr_id  # Graph uses 0-based indexing
+            dmr_name = f"DMR_{dmr_id+1}"  # Display uses 1-based indexing
+            if 'DMR_Name' in df.columns:
+                dmr_name = df.iloc[dmr_id]['DMR_Name']
+            node_labels[node_id] = dmr_name
         # Add gene labels
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
