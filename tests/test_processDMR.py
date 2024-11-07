@@ -4,8 +4,10 @@ import pandas as pd
 import networkx as nx
 from processDMR import create_bipartite_graph, process_enhancer_info
 import sys
+
 sys.path.append("..")
 from rb_domination import greedy_rb_domination
+
 
 class TestBipartiteGraph(unittest.TestCase):
     def setUp(self):
@@ -19,13 +21,15 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         # Create gene_id_mapping
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-        self.gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
-        
+        self.gene_id_mapping = {
+            gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
+        }
+
         self.df = df  # Store df for use in tests
         self.bipartite_graph = create_bipartite_graph(df, self.gene_id_mapping)
 
@@ -51,7 +55,7 @@ class TestBipartiteGraph(unittest.TestCase):
         single_node_df["Processed_Enhancer_Info"] = single_node_df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         single_mapping = {"GeneA": 1}
         single_node_graph = create_bipartite_graph(single_node_df, single_mapping)
         self.assertEqual(len(single_node_graph.nodes()), 2)
@@ -66,7 +70,7 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         mapping = {"GeneA": 2, "GeneB": 3}
         graph = create_bipartite_graph(df, mapping)
         self.assertEqual(len(graph.nodes()), 4)
@@ -86,12 +90,12 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
         mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
-        
+
         graph = create_bipartite_graph(df, mapping)
         self.assertEqual(len(graph.nodes()), 11)
 
@@ -108,10 +112,10 @@ class TestBipartiteGraph(unittest.TestCase):
             df["Processed_Enhancer_Info"] = df[
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
-            
+
             mapping = {f"Gene{j}": j + num_dmrs for j in range(num_genes)}
             graph = create_bipartite_graph(df, mapping)
-            
+
             self.assertEqual(len(graph.nodes()), num_dmrs + num_genes)
 
     def test_sparse_and_dense_graphs(self):
@@ -125,7 +129,7 @@ class TestBipartiteGraph(unittest.TestCase):
         sparse_df["Processed_Enhancer_Info"] = sparse_df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         sparse_mapping = {"GeneA": 3, "GeneB": 4, "GeneC": 5}
         sparse_graph = create_bipartite_graph(sparse_df, sparse_mapping)
         self.assertEqual(len(sparse_graph.nodes()), 6)
@@ -145,7 +149,7 @@ class TestBipartiteGraph(unittest.TestCase):
         dense_df["Processed_Enhancer_Info"] = dense_df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         dense_mapping = {"GeneA": 3, "GeneB": 4, "GeneC": 5}
         dense_graph = create_bipartite_graph(dense_df, dense_mapping)
         self.assertEqual(len(dense_graph.nodes()), 6)
@@ -161,15 +165,15 @@ class TestBipartiteGraph(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         mapping = {"GeneA": 2, "GeneB": 3}
         graph = create_bipartite_graph(df, mapping)
-        
+
         # Add Area_Stat column for rb_domination
         df["Area_Stat"] = [1.0, 1.0]
-        
+
         dominating_set = greedy_rb_domination(graph, df)
-        
+
         for node in graph.nodes():
             if graph.nodes[node]["bipartite"] == 1 and graph.degree(node) == 1:
                 neighbor = list(graph.neighbors(node))[0]
@@ -177,21 +181,32 @@ class TestBipartiteGraph(unittest.TestCase):
 
     def test_complete_bipartite_graphs(self):
         # Test K_{2,3}
-        data_k23 = {
-            "DMR_No.": [1, 2],
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None],
-        }
-        df_k23 = pd.DataFrame(data_k23)
+        df_k23 = pd.DataFrame(
+            {
+                "DMR_No.": [1, 2],
+                "Gene_Symbol_Nearby": [
+                    "GeneA",
+                    "GeneB",
+                    "GeneC",
+                ],  # Corrected to match DMR_No. length
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                    None,
+                    None,
+                    None,
+                ],  # Corrected to match DMR_No. length
+            }
+        )
+        # df_k23 = pd.DataFrame(data_k23)
         df_k23["Processed_Enhancer_Info"] = df_k23[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        
+
         mapping_k23 = {"GeneA": 2, "GeneB": 3, "GeneC": 4}
         graph_k23 = create_bipartite_graph(df_k23, mapping_k23)
-        
+
         self.assertEqual(len(graph_k23.nodes()), 5)
         self.assertEqual(len(graph_k23.edges()), 6)
+
 
 if __name__ == "__main__":
     unittest.main()
