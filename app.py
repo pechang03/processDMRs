@@ -184,9 +184,13 @@ def index():
     # Prepare node labels and positions
     node_labels = {}
     for component in results["components"]:
-        for node_id in component["dmrs"]:
+        # Check if "dmrs" and "genes" are lists or single integers
+        dmrs = component["dmrs"] if isinstance(component["dmrs"], (list, set)) else [component["dmrs"]]
+        genes = component["genes"] if isinstance(component["genes"], (list, set)) else [component["genes"]]
+        
+        for node_id in dmrs:
             node_labels[node_id] = f"DMR_{node_id}"
-        for node_id in component["genes"]:
+        for node_id in genes:
             node_labels[node_id] = f"Gene_{node_id}"
     node_positions = calculate_node_positions(
         [(set(component["dmrs"]), set(component["genes"])) for component in results["components"]],
