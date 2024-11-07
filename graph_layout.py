@@ -53,7 +53,13 @@ def calculate_node_positions(
     sorted_dmrs = sorted(list(all_dmr_nodes))
     sorted_genes = sorted(list(all_gene_nodes))
     
-    return position_nodes_evenly(set(sorted_dmrs), set(sorted_genes))
+    # Ensure all nodes are included in the positions
+    positions = position_nodes_evenly(set(sorted_dmrs), set(sorted_genes))
+    for node in all_dmr_nodes | all_gene_nodes:
+        if node not in positions:
+            positions[node] = (0, 0)  # Default position if not calculated
+    
+    return positions
 def position_single_biclique(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
     """Position nodes for a single biclique."""
     positions = {}
