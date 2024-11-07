@@ -183,17 +183,17 @@ class TestBipartiteGraph(unittest.TestCase):
         # Test K_{2,3}
         df_k23 = pd.DataFrame(
             {
-                "DMR_No.": [1, 2],
+                "DMR_No.": [1, 2, 3],
                 "Gene_Symbol_Nearby": [
                     "GeneA",
                     "GeneB",
                     "GeneC",
-                ],  # Corrected to match DMR_No. length
+                ],
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
                     None,
                     None,
                     None,
-                ],  # Corrected to match DMR_No. length
+                ],
             }
         )
         # df_k23 = pd.DataFrame(data_k23)
