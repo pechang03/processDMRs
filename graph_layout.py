@@ -20,15 +20,28 @@ def calculate_node_positions(
     """
     positions = {}
     
-    # Sort nodes by their biclique numbers
-    sorted_nodes = sorted(
-        node_biclique_map.keys(),
-        key=lambda n: min(node_biclique_map[n])  # Sort by smallest biclique number
-    )
+    # Get all DMR and gene nodes from bicliques
+    all_dmr_nodes = set()
+    all_gene_nodes = set()
+    for dmr_nodes, gene_nodes in bicliques:
+        all_dmr_nodes.update(dmr_nodes)
+        all_gene_nodes.update(gene_nodes)
     
-    # Separate DMRs and genes
-    dmr_nodes = [n for n in sorted_nodes if n < max(bicliques[0][0])]
-    gene_nodes = [n for n in sorted_nodes if n >= min(bicliques[0][1])]
+    # Sort nodes by their smallest biclique number
+    sorted_dmrs = sorted(all_dmr_nodes, 
+                        key=lambda n: min(node_biclique_map.get(n, [float('inf')])))
+    sorted_genes = sorted(all_gene_nodes,
+                         key=lambda n: min(node_biclique_map.get(n, [float('inf')])))
+    
+    # Position DMRs on left side
+    dmr_spacing = 1.0 / (len(sorted_dmrs) + 1)
+    for i, dmr in enumerate(sorted_dmrs):
+        positions[dmr] = (0, (i + 1) * dmr_spacing)
+        
+    # Position genes on right side
+    gene_spacing = 1.0 / (len(sorted_genes) + 1)
+    for i, gene in enumerate(sorted_genes):
+        positions[gene] = (1, (i + 1) * gene_spacing)
     
     # Position DMRs on left side
     for i, dmr in enumerate(dmr_nodes):
