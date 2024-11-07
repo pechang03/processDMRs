@@ -19,7 +19,6 @@ from process_bicliques import (
     print_bicliques_detail,
 )
 from graph_visualize import create_biclique_visualization, create_node_biclique_map
-from graph_layout import calculate_node_positions
 
 
 def read_excel_file(filepath):
