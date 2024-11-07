@@ -73,7 +73,10 @@ class TestCalculateNodePositions(unittest.TestCase):
                     second_biclique_gene_y.append(y)
         
         # Split gene (node 6) should be positioned between its bicliques
-        split_gene_y = positions[6][1]
+        split_gene_x, split_gene_y = positions[6]
+        
+        # Verify x-coordinate for split gene
+        self.assertEqual(split_gene_x, 1, "Split gene should be positioned on the right side (x=1)")
         
         # Verify y-coordinate relationships
         self.assertTrue(
