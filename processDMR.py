@@ -93,6 +93,7 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
                 # Add gene node if it doesn't exist
                 if not B.has_node(gene_id):
                     B.add_node(gene_id, bipartite=1)
+                    print(f"Added gene node: {gene_id} for gene: {gene}")
 
                 # Check if we've seen this edge before
                 edge = tuple(sorted([dmr, gene_id]))  # Normalize edge representation
