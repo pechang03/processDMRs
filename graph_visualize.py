@@ -44,30 +44,60 @@ def create_biclique_visualization(
                     )
                 )
     
-    # Create DMR nodes
-    dmr_x = []
-    dmr_y = []
-    dmr_text = []
+    # Create DMR nodes (now split between hub and non-hub)
+    hub_dmr_x = []
+    hub_dmr_y = []
+    hub_dmr_text = []
+    
+    regular_dmr_x = []
+    regular_dmr_y = []
+    regular_dmr_text = []
     
     for node_id, pos in node_positions.items():
         if node_id < max(next(iter(bicliques))[0]):  # Is DMR node
-            dmr_x.append(pos[0])
-            dmr_y.append(pos[1])
-            biclique_nums = node_biclique_map[node_id]
             biclique_nums = node_biclique_map.get(node_id, [])
             label = node_labels.get(node_id, f"DMR_{node_id}")
             label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
-            dmr_text.append(label)
+            
+            if dominating_set and node_id in dominating_set:  # Hub DMR
+                hub_dmr_x.append(pos[0])
+                hub_dmr_y.append(pos[1])
+                hub_dmr_text.append(f"{label}<br>(Hub)")
+            else:  # Regular DMR
+                regular_dmr_x.append(pos[0])
+                regular_dmr_y.append(pos[1])
+                regular_dmr_text.append(label)
     
+    # Add regular DMR nodes
     node_traces.append(
         go.Scatter(
-            x=dmr_x,
-            y=dmr_y,
+            x=regular_dmr_x,
+            y=regular_dmr_y,
             mode='markers+text',
             marker=dict(size=10, color='blue'),
-            text=dmr_text,
+            text=regular_dmr_text,
             textposition='middle left',
-            hoverinfo='text'
+            hoverinfo='text',
+            name='DMRs'
+        )
+    )
+    
+    # Add hub DMR nodes with special styling
+    node_traces.append(
+        go.Scatter(
+            x=hub_dmr_x,
+            y=hub_dmr_y,
+            mode='markers+text',
+            marker=dict(
+                size=15,  # Larger size
+                color='gold',  # Distinctive color
+                symbol='star',  # Star shape
+                line=dict(color='orange', width=2)  # Orange border
+            ),
+            text=hub_dmr_text,
+            textposition='middle left',
+            hoverinfo='text',
+            name='Hub DMRs'
         )
     )
     
