@@ -4,7 +4,7 @@ import csv
 import time
 import psutil
 
-from graph_utils import process_enhancer_info, validate_bipartite_graph
+from graph_utils import process_enhancer_info
 from rb_domination import (
     greedy_rb_domination,
     process_components,

@@ -19,55 +19,6 @@ def process_enhancer_info(enhancer_str):
     return processed_genes
 
 
-def create_bipartite_graph(df, gene_id_mapping):
-    """
-    Create a bipartite graph connecting DMRs to their associated genes.
-
-    Parameters:
-    df (DataFrame): A Pandas DataFrame containing DMR and gene information.
-
-    Returns:
-    Graph: A NetworkX bipartite graph with DMRs and genes as nodes.
-    """
-    B = nx.Graph()
-
-    # Add DMR nodes first with explicit bipartite=0
-    dmr_nodes = set(df["DMR_No."].apply(lambda x: x - 1))
-    B.add_nodes_from(dmr_nodes, bipartite=0)
-
-    # Track gene nodes to ensure proper bipartite assignment
-    gene_nodes = set()
-
-    for index, row in df.iterrows():
-        dmr = row["DMR_No."] - 1
-        associated_genes = set()
-
-        # Add closest gene if it exists
-        gene_col = (
-            "Gene_Symbol_Nearby"
-            if "Gene_Symbol_Nearby" in df.columns
-            else "Gene_Symbol"
-        )
-        if pd.notna(row[gene_col]) and row[gene_col]:
-            associated_genes.add(str(row[gene_col]))
-
-        # Add enhancer genes
-        if isinstance(row["Processed_Enhancer_Info"], (list, set)):
-            enhancer_genes = {
-                str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g
-            }
-            associated_genes.update(enhancer_genes)
-
-        # Add edges and gene nodes with proper bipartite value
-        for gene in associated_genes:
-            if gene in gene_id_mapping:
-                gene_id = gene_id_mapping[gene]
-                if gene_id not in gene_nodes:
-                    B.add_node(gene_id, bipartite=1)
-                    gene_nodes.add(gene_id)
-                B.add_edge(dmr, gene_id)
-
-    return B
 
 
 def validate_bipartite_graph(B):
