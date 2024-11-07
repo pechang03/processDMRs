@@ -294,8 +294,10 @@ def main():
         
         # Create node labels
         node_labels = {}
+        # Add DMR labels (subtract 1 since DMR IDs are 1-based in df but 0-based in graph)
         for dmr in dmr_nodes:
-            node_labels[dmr] = f"DMR_{dmr+1}"
+            node_labels[dmr] = f"DMR_{dmr+1}"  # Add 1 to convert back to 1-based IDs for display
+        # Add gene labels
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
         
