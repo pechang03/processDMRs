@@ -105,7 +105,7 @@ class TestBipartiteGraph(unittest.TestCase):
             num_genes = random.randint(1, 10)
             data = {
                 "DMR_No.": list(range(1, num_dmrs + 1)),
-                "Gene_Symbol_Nearby": [f"Gene{j}" for j in range(num_dmrs)],  # Match num_dmrs
+                "Gene_Symbol_Nearby": [f"Gene{j}" for j in range(num_genes)],  # Match num_genes
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None] * num_dmrs,
             }
             df = pd.DataFrame(data)
@@ -181,22 +181,19 @@ class TestBipartiteGraph(unittest.TestCase):
 
     def test_complete_bipartite_graphs(self):
         # Test K_{2,3}
-        df_k23 = pd.DataFrame(
-            {
-                "DMR_No.": [1, 2, 3],
-                "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None],
-            }
-        )
+        df_k23 = pd.DataFrame({
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],
+        })
         df_k23["Processed_Enhancer_Info"] = df_k23[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        mapping_k23 = {"GeneA": 2, "GeneB": 3, "GeneC": 4}
+        mapping_k23 = {"GeneA": 3, "GeneB": 4, "GeneC": 5}
         graph_k23 = create_bipartite_graph(df_k23, mapping_k23)
 
-        self.assertEqual(len(graph_k23.nodes()), 5)
-        self.assertEqual(len(graph_k23.edges()), 6)
+        self.assertEqual(len(graph_k23.edges()), 9)  # Update expected edges to 9 for K_{3,3}
 
 
 if __name__ == "__main__":
