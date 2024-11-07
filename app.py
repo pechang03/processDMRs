@@ -28,8 +28,7 @@ def process_data():
         # Create gene ID mapping
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in
-genes])
+        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
         gene_id_mapping = {gene: idx + len(df) for idx, gene in
 enumerate(sorted(all_genes))}
 
@@ -69,8 +68,7 @@ enumerate(sorted(all_genes))}
                     'size': len(component),
                     'dmrs': len([n for n in subgraph.nodes() if
 bipartite_graph.nodes[n]['bipartite'] == 0]),
-                    'genes': len([n for n in subgraph.nodes() if
-bipartite_graph.nodes[n]['bipartite'] == 1]),
+                    'genes': len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]['bipartite'] == 1]),
                     'bicliques': component_bicliques
                 })
 
@@ -79,8 +77,7 @@ bipartite_graph.nodes[n]['bipartite'] == 1]),
             'total_components': len(components),
             'components_with_bicliques': len(component_data),
             'total_bicliques': len(bicliques_result['bicliques']),
-            'non_trivial_bicliques': sum(1 for comp in component_data for bic in
-comp['bicliques'])
+            'non_trivial_bicliques': sum(1 for comp in component_data for bic in comp['bicliques'])
         }
 
         # Create metadata dictionaries
