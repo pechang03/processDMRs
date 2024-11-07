@@ -152,10 +152,26 @@ def create_metadata(df, gene_id_mapping):
     return dmr_metadata, gene_metadata
 
 
-def create_plotly_graph(component_data, node_labels, node_positions, node_biclique_map, dmr_metadata, gene_metadata):
+def create_plotly_graph(
+    component_data,
+    node_labels,
+    node_positions,
+    node_biclique_map,
+    dmr_metadata,
+    gene_metadata,
+):
     """Create Plotly graph for a component using the visualization function"""
-    bicliques = [(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component_data["bicliques"]]
-
+    bicliques = [
+        (
+            set(component["dmrs"])
+            if isinstance(component["dmrs"], (list, set))
+            else {component["dmrs"]},
+            set(component["genes"])
+            if isinstance(component["genes"], (list, set))
+            else {component["genes"]},
+        )
+        for component in results["components"]
+    ]
     # Use the create_biclique_visualization function
     return create_biclique_visualization(
         bicliques,
@@ -163,7 +179,7 @@ def create_plotly_graph(component_data, node_labels, node_positions, node_bicliq
         node_positions,
         node_biclique_map,
         dmr_metadata=dmr_metadata,
-        gene_metadata=gene_metadata
+        gene_metadata=gene_metadata,
     )
 
 
@@ -185,26 +201,41 @@ def index():
     node_labels = {}
     for component in results["components"]:
         # Check if "dmrs" and "genes" are lists or single integers
-        dmrs = component["dmrs"] if isinstance(component["dmrs"], (list, set)) else [component["dmrs"]]
-        genes = component["genes"] if isinstance(component["genes"], (list, set)) else [component["genes"]]
-        
+        dmrs = (
+            component["dmrs"]
+            if isinstance(component["dmrs"], (list, set))
+            else [component["dmrs"]]
+        )
+        genes = (
+            component["genes"]
+            if isinstance(component["genes"], (list, set))
+            else [component["genes"]]
+        )
+
         for node_id in dmrs:
             node_labels[node_id] = f"DMR_{node_id}"
         for node_id in genes:
             node_labels[node_id] = f"Gene_{node_id}"
     node_positions = calculate_node_positions(
-        bicliques,
-        create_node_biclique_map(bicliques)
+        bicliques, create_node_biclique_map(bicliques)
     )
 
     for component in results["components"]:
         component["plotly_graph"] = create_biclique_visualization(
-            [(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component["bicliques"]],
+            [
+                (set(biclique["dmrs"]), set(biclique["genes"]))
+                for biclique in component["bicliques"]
+            ],
             node_labels,
             node_positions,
-            create_node_biclique_map([(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component["bicliques"]]),
+            create_node_biclique_map(
+                [
+                    (set(biclique["dmrs"]), set(biclique["genes"]))
+                    for biclique in component["bicliques"]
+                ]
+            ),
             dmr_metadata=results["dmr_metadata"],
-            gene_metadata=results["gene_metadata"]
+            gene_metadata=results["gene_metadata"],
         )
 
     return render_template(
