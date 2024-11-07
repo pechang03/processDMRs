@@ -17,7 +17,13 @@ class TestGraphStatistics(unittest.TestCase):
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        self.bipartite_graph = create_bipartite_graph(df)
+        # Create gene_id_mapping for testing
+        all_genes = set()
+        all_genes.update(df["Gene_Symbol_Nearby"].dropna())
+        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes if g])
+        self.gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+        
+        self.bipartite_graph = create_bipartite_graph(df, self.gene_id_mapping)
 
     def test_min_degree(self):
         degrees = dict(self.bipartite_graph.degree())
