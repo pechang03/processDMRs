@@ -54,6 +54,8 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
     total_edges = 0
     dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)
 
+    problematic_edges = []
+
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i : i + batch_size]
         for _, row in batch.iterrows():
@@ -84,7 +86,22 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
                         B.add_node(gene_id, bipartite=1)
                     B.add_edge(dmr, gene_id)
                     total_edges += 1
+                    # Check if this creates a non-bipartite edge
+                    if B.nodes[dmr]['bipartite'] == B.nodes[gene_id]['bipartite']:
+                        problematic_edges.append((dmr, gene_id))
                 dmrs_without_edges.discard(dmr)
+
+    if problematic_edges:
+        print("\nFound problematic edges in graph:")
+        for edge in problematic_edges[:5]:  # Show first 5 problematic edges
+            print(f"Edge between nodes with same bipartite value: {edge}")
+            dmr_node = edge[0]
+            gene_node = edge[1]
+            print(f"DMR {dmr_node}: bipartite={B.nodes[dmr_node]['bipartite']}")
+            print(f"Gene {gene_node}: bipartite={B.nodes[gene_node]['bipartite']}")
+            # Show the actual gene name
+            gene_name = [k for k, v in gene_id_mapping.items() if v == gene_node][0]
+            print(f"Gene name: {gene_name}")
 
     print(f"Total edges added: {total_edges}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
