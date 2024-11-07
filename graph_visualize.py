@@ -70,30 +70,60 @@ def create_biclique_visualization(
         )
     )
     
-    # Create gene nodes
-    gene_x = []
-    gene_y = []
-    gene_text = []
+    # Create gene nodes (split and non-split separately)
+    regular_gene_x = []
+    regular_gene_y = []
+    regular_gene_text = []
+    
+    split_gene_x = []
+    split_gene_y = []
+    split_gene_text = []
     
     for node_id, pos in node_positions.items():
         if node_id >= min(next(iter(bicliques))[1]):  # Is gene node
-            gene_x.append(pos[0])
-            gene_y.append(pos[1])
-            biclique_nums = node_biclique_map[node_id]
             biclique_nums = node_biclique_map.get(node_id, [])
             label = node_labels.get(node_id, f"Gene_{node_id}")
             label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
-            gene_text.append(label)
+            
+            if len(biclique_nums) > 1:  # Split gene
+                split_gene_x.append(pos[0])
+                split_gene_y.append(pos[1])
+                split_gene_text.append(label)
+            else:  # Regular gene
+                regular_gene_x.append(pos[0])
+                regular_gene_y.append(pos[1])
+                regular_gene_text.append(label)
     
+    # Add regular gene nodes
     node_traces.append(
         go.Scatter(
-            x=gene_x,
-            y=gene_y,
+            x=regular_gene_x,
+            y=regular_gene_y,
             mode='markers+text',
             marker=dict(size=10, color='red'),
-            text=gene_text,
+            text=regular_gene_text,
             textposition='middle right',
-            hoverinfo='text'
+            hoverinfo='text',
+            name='Regular Genes'
+        )
+    )
+    
+    # Add split gene nodes with different color and style
+    node_traces.append(
+        go.Scatter(
+            x=split_gene_x,
+            y=split_gene_y,
+            mode='markers+text',
+            marker=dict(
+                size=12,
+                color='purple',
+                line=dict(color='black', width=1),
+                symbol='diamond'
+            ),
+            text=split_gene_text,
+            textposition='middle right',
+            hoverinfo='text',
+            name='Split Genes'
         )
     )
     
