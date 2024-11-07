@@ -1,22 +1,30 @@
 from flask import Flask, render_template
 import pandas as pd
 import networkx as nx
-
-# from processDMR import (
-#    read_excel_file,
-#    create_bipartite_graph,
-# )
-from process_bicliques import (
-    process_enhancer_info,
-    read_bicliques_file,
-    validate_bipartite_graph,
-    print_bicliques_summary,
-    print_bicliques_detail,
-)
-from graph_utils import process_enhancer_info, validate_bipartite_graph
 import json
 import plotly
 import plotly.graph_objs as go
+
+# Import functions from processDMR
+from processDMR import (
+    read_excel_file,
+    create_bipartite_graph,
+)
+
+# Import functions from process_bicliques
+from process_bicliques import (
+    read_bicliques_file,
+    print_bicliques_summary,
+    print_bicliques_detail,
+)
+
+# Import utility functions from graph_utils
+from graph_utils import (
+    process_enhancer_info,
+    validate_bipartite_graph,
+    read_and_prepare_data,
+    create_metadata,
+)
 
 app = Flask(__name__)
 
