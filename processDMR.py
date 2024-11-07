@@ -288,12 +288,6 @@ def main():
 
     def process_bicliques(graph, filename, max_dmr_id, dataset_name):
         """Helper function to process bicliques for a given graph"""
-        def validate_biclique(dmr_nodes, gene_nodes):
-            return all(
-                graph.has_edge(dmr, gene)
-                for dmr in dmr_nodes
-                for gene in gene_nodes
-            )
 
         if not nx.is_bipartite(graph):
             print(f"\n{dataset_name} graph is not bipartite, skipping bicliques processing.")
