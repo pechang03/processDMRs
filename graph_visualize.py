@@ -51,7 +51,9 @@ def create_biclique_visualization(
             dmr_x.append(pos[0])
             dmr_y.append(pos[1])
             biclique_nums = node_biclique_map[node_id]
-            label = f"{node_labels[node_id]}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
+            biclique_nums = node_biclique_map.get(node_id, [])
+            label = node_labels.get(node_id, f"DMR_{node_id}")
+            label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
             dmr_text.append(label)
     
     node_traces.append(
@@ -76,7 +78,9 @@ def create_biclique_visualization(
             gene_x.append(pos[0])
             gene_y.append(pos[1])
             biclique_nums = node_biclique_map[node_id]
-            label = f"{node_labels[node_id]}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
+            biclique_nums = node_biclique_map.get(node_id, [])
+            label = node_labels.get(node_id, f"Gene_{node_id}")
+            label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
             gene_text.append(label)
     
     node_traces.append(
