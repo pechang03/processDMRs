@@ -190,13 +190,24 @@ cls=plotly.utils.PlotlyJSONEncoder)
 @app.route('/')
 def index():
     results = process_data()
-    if 'error' not in results:
-        for component in results['components']:
-            component['plotly_graph'] = create_plotly_graph(component)
+    
+    # Debugging output to check the contents of results
+    print("Results:", results)
+    
+    if 'error' in results:
+        return f"Error: {results['error']}"
+    
+    # Check if 'dmr_metadata' and other keys are present
+    if 'dmr_metadata' not in results or 'gene_metadata' not in results:
+        return "Error: Missing metadata in results"
+    
+    for component in results['components']:
+        component['plotly_graph'] = create_plotly_graph(component)
+    
     return render_template('index.html', 
-                             results=results,
-                             dmr_metadata=results['dmr_metadata'],
-                             gene_metadata=results['gene_metadata'])
+                           results=results,
+                           dmr_metadata=results['dmr_metadata'],
+                           gene_metadata=results['gene_metadata'])
 
 if __name__ == '__main__':
     app.run(debug=True)
