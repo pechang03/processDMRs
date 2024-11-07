@@ -31,6 +31,7 @@ def greedy_rb_domination(graph, df, area_col=None):
         print(f"After processing degree-1 genes:")
         print(f"Dominating set size: {len(dominating_set)}")
         print(f"Dominated genes: {len(dominated_genes)}")
+        print(f"Degree-1 genes processed: {degree_one_genes}")
 
     # Initialize utility heap
     # Using negative utility for max-heap behavior
@@ -48,6 +49,7 @@ def greedy_rb_domination(graph, df, area_col=None):
                     else 1.0
                 )
                 utility = len(new_genes)
+                print(f"DMR {dmr}: Utility = {utility}, Area = {area}, New genes = {new_genes}")
                 entry = (-utility, -area, dmr)
                 utility_map[dmr] = entry
                 heappush(utility_heap, entry)
@@ -104,6 +106,7 @@ def greedy_rb_domination(graph, df, area_col=None):
 
     # Minimize the dominating set
     print("\nMinimizing dominating set...")
+    print(f"Initial dominating set size: {len(dominating_set)}")
     original_size = len(dominating_set)
     minimal_dominating_set = minimize_dominating_set(graph, dominating_set)
 
