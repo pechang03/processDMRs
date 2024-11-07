@@ -150,57 +150,18 @@ def create_metadata(df, gene_id_mapping):
     return dmr_metadata, gene_metadata
 
 
-def create_plotly_graph(component_data):
-    """Create Plotly graph for a component"""
-    edge_trace = []
-    node_trace = []
-
-    # Calculate node positions using the layout function
+def create_plotly_graph(component_data, node_labels, node_positions, node_biclique_map, dmr_metadata, gene_metadata):
+    """Create Plotly graph for a component using the visualization function"""
     bicliques = [(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component_data["bicliques"]]
-    node_biclique_map = {}  # You may need to create this map if not already available
-    node_positions = calculate_node_positions(bicliques, node_biclique_map)
 
-    for biclique in component_data["bicliques"]:
-        dmr_nodes = biclique["dmrs"]
-        gene_nodes = biclique["genes"]
-
-        # Create edges for this biclique
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                edge_trace.append(
-                    go.Scatter(
-                        x=[node_positions[dmr][0], node_positions[gene][0]],
-                        y=[node_positions[dmr][1], node_positions[gene][1]],
-                        mode="lines",
-                        line=dict(width=1),
-                        hoverinfo="none",
-                    )
-                )
-
-        # Create nodes for this biclique
-        for node_id in dmr_nodes + gene_nodes:
-            node_trace.append(
-                go.Scatter(
-                    x=[node_positions[node_id][0]],
-                    y=[node_positions[node_id][1]],
-                    mode="markers",
-                    marker=dict(size=10, color="blue" if node_id in dmr_nodes else "red"),
-                    text=[f"DMR_{node_id}" if node_id in dmr_nodes else f"Gene_{node_id}"],
-                    hoverinfo="text",
-                )
-            )
-
-    layout = go.Layout(
-        showlegend=False,
-        hovermode="closest",
-        margin=dict(b=20, l=5, r=5, t=40),
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-    )
-
-    return json.dumps(
-        go.Figure(data=edge_trace + node_trace, layout=layout),
-        cls=plotly.utils.PlotlyJSONEncoder,
+    # Use the create_biclique_visualization function
+    return create_biclique_visualization(
+        bicliques,
+        node_labels,
+        node_positions,
+        node_biclique_map,
+        dmr_metadata=dmr_metadata,
+        gene_metadata=gene_metadata
     )
 
 
@@ -218,8 +179,19 @@ def index():
     if "dmr_metadata" not in results or "gene_metadata" not in results:
         return "Error: Missing metadata in results"
 
+    # Prepare node labels and positions
+    node_labels = {node_id: f"DMR_{node_id}" if node_id in component["dmrs"] else f"Gene_{node_id}" for component in results["components"] for node_id in component["dmrs"] + component["genes"]}
+    node_positions = calculate_node_positions([(set(component["dmrs"]), set(component["genes"])) for component in results["components"]], {})
+
     for component in results["components"]:
-        component["plotly_graph"] = create_plotly_graph(component)
+        component["plotly_graph"] = create_plotly_graph(
+            component,
+            node_labels,
+            node_positions,
+            {},  # Assuming node_biclique_map is empty or needs to be created
+            results["dmr_metadata"],
+            results["gene_metadata"]
+        )
 
     return render_template(
         "index.html",
@@ -231,4 +203,5 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
+from graph_visualize import create_biclique_visualization
 from graph_layout import calculate_node_positions
