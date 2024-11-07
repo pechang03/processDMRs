@@ -98,11 +98,14 @@
               </div>
               {% endfor %}
             </div>
-            <div id="plotly-graph-{{ component.id }}" class="mt-4"></div>
-            <script>
-              var graph = {{ component.plotly_graph|safe }};
-              Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
-            </script>
+            <div class="biclique-visualization mt-4">
+              <h6>Biclique Visualization:</h6>
+              <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
+              <script>
+                var graph = {{ component.plotly_graph|safe }};
+                Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
+              </script>
+            </div>
           </div>
         </div>
       </div>
