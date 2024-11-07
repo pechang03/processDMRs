@@ -47,6 +47,25 @@ enumerate(sorted(all_genes))}
         components = list(nx.connected_components(bipartite_graph))
         component_data = []
 
+        # Create metadata dictionaries
+        dmr_metadata = {}
+        gene_metadata = {}
+        
+        # Add DMR metadata
+        for _, row in df.iterrows():
+            dmr_id = row['DMR_No.'] - 1  # Convert to 0-based index
+            dmr_metadata[f"DMR_{dmr_id+1}"] = {
+                'area': row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
+            }
+        
+        # Add gene metadata
+        for gene in gene_id_mapping:
+            gene_matches = df[df['Gene_Symbol_Nearby'] == gene]
+            desc = gene_matches.iloc[0]['Gene_Description'] if len(gene_matches) > 0 else 'N/A'
+            gene_metadata[gene] = {
+                'description': desc
+            }
+        
         for idx, component in enumerate(components):
             subgraph = bipartite_graph.subgraph(component)
 
