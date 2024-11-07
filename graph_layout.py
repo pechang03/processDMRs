@@ -104,3 +104,15 @@ def calculate_node_positions(
             positions[gene] = (1, avg_y)
     
     return positions
+def position_overlapping_nodes(biclique, positions):
+    dmr_nodes = sorted(list(biclique[0]))
+    gene_nodes = sorted(list(biclique[1]))
+    
+    # Position DMRs on left side at 0.25 and 0.75
+    positions[dmr_nodes[0]] = (0, 0.25)
+    positions[dmr_nodes[1]] = (0, 0.75)
+    
+    # Position genes on right side at 0.25 and 0.75
+    positions[gene_nodes[0]] = (1, 0.25)
+    positions[gene_nodes[1]] = (1, 0.75)
+    return positions
