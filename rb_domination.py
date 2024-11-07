@@ -31,7 +31,6 @@ def greedy_rb_domination(graph, df, area_col=None):
         print(f"After processing degree-1 genes:")
         print(f"Dominating set size: {len(dominating_set)}")
         print(f"Dominated genes: {len(dominated_genes)}")
-        print(f"Degree-1 genes processed: {degree_one_genes}")
 
     # Initialize utility heap
     # Using negative utility for max-heap behavior
