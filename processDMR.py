@@ -350,12 +350,15 @@ def main():
             node_biclique_map
         )
         
-        # Create visualization
+        # Create visualization with dominating set
         viz_json = create_biclique_visualization(
             bicliques_result['bicliques'],
             node_labels,
             node_positions,
-            node_biclique_map
+            node_biclique_map,
+            dominating_set=dominating_set,  # Add this parameter
+            dmr_metadata=dmr_metadata,
+            gene_metadata=gene_metadata
         )
         
         # Save visualization to file

@@ -11,6 +11,7 @@ def create_biclique_visualization(
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
+    dominating_set: Set[int] = None,  # Add dominating set parameter
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None
 ) -> str:
