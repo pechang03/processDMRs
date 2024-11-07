@@ -292,18 +292,45 @@ def main():
     if bicliques_result:
         print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
         
-        # Create node labels
+        # Create node labels (simple, clean format)
         node_labels = {}
-        # Add DMR labels (using DMR_Name from df if available)
+
+        # Add DMR labels (just the ID)
         for dmr_id in range(len(df)):
             node_id = dmr_id  # Graph uses 0-based indexing
-            dmr_name = f"DMR_{dmr_id+1}"  # Display uses 1-based indexing
-            if 'DMR_Name' in df.columns:
-                dmr_name = df.iloc[dmr_id]['DMR_Name']
-            node_labels[node_id] = dmr_name
-        # Add gene labels
+            node_labels[node_id] = f"DMR_{dmr_id+1}"  # Simple DMR label
+
+        # Add gene labels (just the gene name)
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
+
+        # Create metadata dictionaries for lookup tables
+        dmr_metadata = {}
+        for dmr_id in range(len(df)):
+            area_stat = df.iloc[dmr_id]['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
+            dmr_metadata[f"DMR_{dmr_id+1}"] = {
+                'area': area_stat,
+                'bicliques': node_biclique_map.get(dmr_id, [])
+            }
+
+        gene_metadata = {}
+        for gene, gene_id in dss1_gene_mapping.items():
+            gene_matches = df[df['Gene_Symbol_Nearby'] == gene]
+            desc = gene_matches.iloc[0]['Gene_Description'] if len(gene_matches) > 0 else 'N/A'
+            gene_metadata[gene] = {
+                'description': desc,
+                'bicliques': node_biclique_map.get(gene_id, [])
+            }
+
+        # Create visualization with clean labels
+        viz_json = create_biclique_visualization(
+            bicliques_result['bicliques'],
+            node_labels,
+            node_positions,
+            node_biclique_map,
+            dmr_metadata=dmr_metadata,  # Pass metadata dictionaries
+            gene_metadata=gene_metadata
+        )
         
         # Create biclique membership mapping
         node_biclique_map = create_node_biclique_map(bicliques_result['bicliques'])
