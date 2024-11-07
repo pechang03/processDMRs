@@ -105,7 +105,7 @@ class TestBipartiteGraph(unittest.TestCase):
             num_genes = random.randint(1, 10)
             data = {
                 "DMR_No.": list(range(1, num_dmrs + 1)),
-                "Gene_Symbol_Nearby": [f"Gene{j}" for j in range(num_genes)],
+                "Gene_Symbol_Nearby": [f"Gene{j}" for j in range(num_dmrs)],  # Match num_dmrs
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None] * num_dmrs,
             }
             df = pd.DataFrame(data)
@@ -184,19 +184,10 @@ class TestBipartiteGraph(unittest.TestCase):
         df_k23 = pd.DataFrame(
             {
                 "DMR_No.": [1, 2, 3],
-                "Gene_Symbol_Nearby": [
-                    "GeneA",
-                    "GeneB",
-                    "GeneC",
-                ],
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                    None,
-                    None,
-                    None,
-                ],
+                "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None, None],
             }
         )
-        # df_k23 = pd.DataFrame(data_k23)
         df_k23["Processed_Enhancer_Info"] = df_k23[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
