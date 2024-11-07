@@ -291,6 +291,34 @@ def main():
     # Only print details if we have results
     if bicliques_result:
         print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
+        
+        # Create node labels
+        node_labels = {}
+        for dmr in dmr_nodes:
+            node_labels[dmr] = f"DMR_{dmr+1}"
+        for gene, gene_id in dss1_gene_mapping.items():
+            node_labels[gene_id] = gene
+        
+        # Create biclique membership mapping
+        node_biclique_map = create_node_biclique_map(bicliques_result['bicliques'])
+        
+        # Calculate node positions
+        node_positions = calculate_node_positions(
+            bicliques_result['bicliques'],
+            node_biclique_map
+        )
+        
+        # Create visualization
+        viz_json = create_biclique_visualization(
+            bicliques_result['bicliques'],
+            node_labels,
+            node_positions,
+            node_biclique_map
+        )
+        
+        # Save visualization to file
+        with open('biclique_visualization.json', 'w') as f:
+            f.write(viz_json)
 
     # Run RB-domination analysis on DSS1 graph
     print("\n=== RB-Domination Analysis (DSS1) ===")
