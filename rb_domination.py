@@ -229,3 +229,5 @@ def print_domination_statistics(dominating_set: set, graph: nx.Graph, df: pd.Dat
         area = df.loc[df['DMR_No.'] == dmr + 1, 'Area_Stat'].iloc[0]
         num_dominated = len(list(graph.neighbors(dmr)))
         print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
+import pandas as pd
+import pandas as pd
