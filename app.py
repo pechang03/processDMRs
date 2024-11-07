@@ -188,7 +188,7 @@ def index():
     results = process_data()  # Ensure this line is present to define 'results'
 
     # Debugging output to check the contents of results
-    print("Results:", results)
+    # print("Results:", results)
 
     if "error" in results:
         return f"Error: {results['error']}"
@@ -229,10 +229,10 @@ def index():
         bicliques, create_node_biclique_map(bicliques)
     )
     # Add debugging output to check node positions
-    print("Node Positions:", node_positions)
+    # print("Node Positions:", node_positions)
 
     # Debugging output to check bicliques
-    print("Bicliques:", bicliques)
+    # print("Bicliques:", bicliques)
 
     for component in results["components"]:
         for biclique in component["bicliques"]:
