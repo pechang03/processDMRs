@@ -328,6 +328,11 @@ def main():
                 'bicliques': node_biclique_map.get(gene_id, [])
             }
 
+        # Calculate dominating set before visualization
+        print("\n=== RB-Domination Analysis (DSS1) ===")
+        dominating_set = process_components(bipartite_graph, df)
+        print_domination_statistics(dominating_set, bipartite_graph, df)
+
         # Create visualization with dominating set
         viz_json = create_biclique_visualization(
             bicliques_result['bicliques'],
