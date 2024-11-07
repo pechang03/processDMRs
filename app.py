@@ -228,8 +228,19 @@ def index():
     node_positions = calculate_node_positions(
         bicliques, create_node_biclique_map(bicliques)
     )
+    # Add debugging output to check node positions
+    print("Node Positions:", node_positions)
 
     for component in results["components"]:
+        for biclique in component["bicliques"]:
+            dmr_nodes = set(biclique["dmrs"])
+            gene_nodes = set(biclique["genes"])
+            
+            # Check if all nodes have positions
+            for node in dmr_nodes | gene_nodes:
+                if node not in node_positions:
+                    print(f"Warning: Node {node} does not have a calculated position.")
+        
         component["plotly_graph"] = create_biclique_visualization(
             [
                 (set(biclique["dmrs"]), set(biclique["genes"]))
