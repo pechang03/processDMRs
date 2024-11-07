@@ -5,4 +5,4 @@
 set -e
 
 # Run the test suite
-python -m tests.run_all_tests
+python -m tests.graph_test_suite
