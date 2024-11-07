@@ -225,9 +225,9 @@ def main():
         dss1_gene_mapping = create_gene_id_mapping(df, dss1_max_dmr)
         home1_gene_mapping = create_gene_id_mapping(df_home1, home1_max_dmr)
 
-        # Create graphs with their respective mappings
-        bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping)
-        bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping)
+        # Create graphs with their respective mappings and column names
+        bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby")
+        bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol")
     except Exception as e:
         print(f"Error in initialization: {e}")
         raise
