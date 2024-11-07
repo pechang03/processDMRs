@@ -10,4 +10,4 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 # Run the test suite
-PYTHONPATH="$SCRIPT_DIR" python -m tests.graph_test_suite
+PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m unittest discover -s tests -p 'test_*.py'

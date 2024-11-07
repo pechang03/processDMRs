@@ -1,5 +1,7 @@
 import unittest
 from graph_layout import calculate_node_positions
+import sys
+sys.path.append("..")
 
 class TestCalculateNodePositions(unittest.TestCase):
     def test_single_biclique(self):
