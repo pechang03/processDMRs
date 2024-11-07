@@ -202,50 +202,39 @@ def main():
         all_genes.update(df_home1["Processed_Enhancer_Info"].explode().dropna())
         all_genes.update(df_home1[home1_gene_col].dropna())
 
-        # Create gene ID mapping BEFORE creating graphs
-        all_genes = set()
+        def create_gene_id_mapping(df, dmr_max):
+            """Create gene ID mapping using dataset's own max DMR number"""
+            all_genes = set()
+            gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+            
+            # Add genes from gene column
+            all_genes.update(df[gene_col].dropna())
+            
+            # Add genes from enhancer info
+            enhancer_genes = {gene for genes in df["Processed_Enhancer_Info"] for gene in genes if gene}
+            all_genes.update(enhancer_genes)
+            
+            # Create mapping starting after this dataset's max DMR
+            sorted_genes = sorted(all_genes)
+            return {gene: idx + dmr_max for idx, gene in enumerate(sorted_genes)}
 
-        # Add genes from DSS1
-        dss1_gene_col = (
-            "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
-        )
-        dss1_genes = set(df[dss1_gene_col].dropna())
-        dss1_enhancer_genes = {
-            gene for genes in df["Processed_Enhancer_Info"] for gene in genes if gene
-        }
-        all_genes.update(dss1_genes)
-        all_genes.update(dss1_enhancer_genes)
+        # Create separate mappings for each dataset
+        dss1_max_dmr = max(df["DMR_No."])
+        home1_max_dmr = max(df_home1["DMR_No."])
 
-        # Add genes from HOME1
-        home1_gene_col = (
-            "Gene_Symbol_Nearby"
-            if "Gene_Symbol_Nearby" in df_home1.columns
-            else "Gene_Symbol"
-        )
-        home1_genes = set(df_home1[home1_gene_col].dropna())
-        home1_enhancer_genes = {
-            gene for genes in df_home1["Processed_Enhancer_Info"] for gene in genes if gene
-        }
-        all_genes.update(home1_genes)
-        all_genes.update(home1_enhancer_genes)
+        dss1_gene_mapping = create_gene_id_mapping(df, dss1_max_dmr)
+        home1_gene_mapping = create_gene_id_mapping(df_home1, home1_max_dmr)
 
-        # Create sorted gene list and mapping
-        sorted_genes = sorted(all_genes)
-        gene_id_mapping = {
-            gene: idx + max(df["DMR_No."]) for idx, gene in enumerate(sorted_genes)
-        }
+        # Create graphs with their respective mappings
+        bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping)
+        bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping)
     except Exception as e:
         print(f"Error in initialization: {e}")
         raise
 
-    # Create bipartite graphs using the consistent gene_id_mapping
-    # TODO what about also passing in ENCODE_Enhancer_Interaction(BingRen_Lab)
-    bipartite_graph = create_bipartite_graph(
-        df, gene_id_mapping, closest_gene_col="Gene_Symbol_Nearby"
-    )
-    bipartite_graph_home1 = create_bipartite_graph(
-        df_home1, gene_id_mapping, closest_gene_col="Gene_Symbol"
-    )
+    # Create bipartite graphs using their respective gene ID mappings
+    bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby")
+    bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol")
 
     # Validate graphs
     print("\n=== DSS1 Graph Statistics ===")
