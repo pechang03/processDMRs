@@ -288,7 +288,7 @@ def main():
         "DSS1"
     )
 
-    # Only print details if we have results
+    # Only then create visualization if we have bicliques results
     if bicliques_result:
         print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
         
@@ -301,19 +301,16 @@ def main():
             node_biclique_map
         )
         
-        # Create node labels (simple, clean format)
+        # Create node labels
         node_labels = {}
-
-        # Add DMR labels (just the ID)
         for dmr_id in range(len(df)):
-            node_id = dmr_id  # Graph uses 0-based indexing
-            node_labels[node_id] = f"DMR_{dmr_id+1}"  # Simple DMR label
-
-        # Add gene labels (just the gene name)
+            node_id = dmr_id
+            node_labels[node_id] = f"DMR_{dmr_id+1}"
+        
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
 
-        # Create metadata dictionaries for lookup tables
+        # Create metadata dictionaries
         dmr_metadata = {}
         for dmr_id in range(len(df)):
             area_stat = df.iloc[dmr_id]['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
@@ -331,47 +328,24 @@ def main():
                 'bicliques': node_biclique_map.get(gene_id, [])
             }
 
-        # Create visualization with clean labels
-        viz_json = create_biclique_visualization(
-            bicliques_result['bicliques'],
-            node_labels,
-            node_positions,
-            node_biclique_map,
-            dmr_metadata=dmr_metadata,  # Pass metadata dictionaries
-            gene_metadata=gene_metadata
-        )
-        
-        # Create biclique membership mapping
-        node_biclique_map = create_node_biclique_map(bicliques_result['bicliques'])
-        
-        # Calculate node positions
-        node_positions = calculate_node_positions(
-            bicliques_result['bicliques'],
-            node_biclique_map
-        )
-        
         # Create visualization with dominating set
         viz_json = create_biclique_visualization(
             bicliques_result['bicliques'],
             node_labels,
             node_positions,
             node_biclique_map,
-            dominating_set=dominating_set,  # Add this parameter
+            dominating_set=dominating_set,  # Now dominating_set is defined
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata
         )
         
-        # Save visualization to file
+        # Save visualization
         with open('biclique_visualization.json', 'w') as f:
             f.write(viz_json)
 
-    # Run RB-domination analysis on DSS1 graph
+    # Calculate dominating set before visualization
     print("\n=== RB-Domination Analysis (DSS1) ===")
-    
-    # Get the dominating set using the area statistic as weight
     dominating_set = process_components(bipartite_graph, df)
-    
-    # Print statistics using the extracted method
     print_domination_statistics(dominating_set, bipartite_graph, df)
 
 
