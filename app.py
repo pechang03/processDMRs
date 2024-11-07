@@ -21,9 +21,9 @@ from process_bicliques import (
 # Import utility functions from graph_utils
 from graph_utils import (
     process_enhancer_info,
-    validate_bipartite_graph,
-    read_and_prepare_data,
-    create_metadata,
+    # validate_bipartite_graph,
+    # read_and_prepare_data,
+    # create_metadata,
 )
 
 app = Flask(__name__)
