@@ -231,3 +231,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
+from graph_layout import calculate_node_positions

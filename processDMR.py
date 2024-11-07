@@ -392,3 +392,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+from graph_layout import calculate_node_positions
