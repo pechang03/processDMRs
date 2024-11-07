@@ -185,7 +185,7 @@ def create_plotly_graph(
 
 @app.route("/")
 def index():
-    results = process_data()
+    results = process_data()  # Ensure this line is present to define 'results'
 
     # Debugging output to check the contents of results
     print("Results:", results)
@@ -216,6 +216,15 @@ def index():
             node_labels[node_id] = f"DMR_{node_id}"
         for node_id in genes:
             node_labels[node_id] = f"Gene_{node_id}"
+
+    # Calculate node positions
+    bicliques = [
+        (
+            set(component["dmrs"]) if isinstance(component["dmrs"], (list, set)) else {component["dmrs"]},
+            set(component["genes"]) if isinstance(component["genes"], (list, set)) else {component["genes"]}
+        )
+        for component in results["components"]
+    ]
     node_positions = calculate_node_positions(
         bicliques, create_node_biclique_map(bicliques)
     )
