@@ -64,7 +64,6 @@ enumerate(sorted(all_genes))}
                         })
 
             if component_bicliques:  # Only include components with non-trivial
-                bicliques
                 component_data.append({
                     'id': idx + 1,
                     'size': len(component),
