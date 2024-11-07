@@ -117,9 +117,6 @@ class TestBipartiteGraph(unittest.TestCase):
             graph = create_bipartite_graph(df, mapping)
 
             # Add debugging output
-            if len(graph.nodes()) != num_dmrs + num_genes:
-                print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}")
-                print(f"Graph nodes: {graph.nodes()}")
 
             if len(graph.nodes()) != num_dmrs + num_genes:
                 print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}")
