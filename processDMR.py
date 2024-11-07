@@ -292,6 +292,15 @@ def main():
     if bicliques_result:
         print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
         
+        # Create biclique membership mapping
+        node_biclique_map = create_node_biclique_map(bicliques_result['bicliques'])
+        
+        # Calculate node positions
+        node_positions = calculate_node_positions(
+            bicliques_result['bicliques'],
+            node_biclique_map
+        )
+        
         # Create node labels (simple, clean format)
         node_labels = {}
 
