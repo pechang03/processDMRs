@@ -33,16 +33,17 @@ def calculate_node_positions(
     sorted_genes = sorted(list(all_gene_nodes),
                          key=lambda n: min(node_biclique_map.get(n, [float('inf')])))
     
-    # Calculate spacing based on max number of nodes
+    # Calculate spacing based on number of intervals needed
+    # For n nodes, we need n+1 intervals to get positions at 0.25, 0.75 etc.
     max_nodes = max(len(sorted_dmrs), len(sorted_genes))
-    spacing = 1.0 / (max_nodes + 1) if max_nodes > 0 else 0.5
+    spacing = 0.5 if max_nodes <= 1 else 1.0 / (2 * max_nodes)
     
     # Position DMRs on left side
     for i, dmr in enumerate(sorted_dmrs):
-        positions[dmr] = (0, (i + 1) * spacing)
+        positions[dmr] = (0, (2*i + 1) * spacing)
         
     # Position genes on right side
     for i, gene in enumerate(sorted_genes):
-        positions[gene] = (1, (i + 1) * spacing)
+        positions[gene] = (1, (2*i + 1) * spacing)
     
     return positions
