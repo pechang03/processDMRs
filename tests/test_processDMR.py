@@ -117,14 +117,14 @@ class TestBipartiteGraph(unittest.TestCase):
             graph = create_bipartite_graph(df, mapping)
 
             # Add debugging output
-
-            if len(graph.nodes()) != num_dmrs + num_genes:
-                print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}")
+            if len(graph.nodes()) != num_dmrs + num_genes or len(graph.edges()) != num_dmrs * num_genes:
+                print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}, graph_edges={len(graph.edges())}")
                 print(f"Graph nodes: {graph.nodes()}")
                 print(f"Gene ID Mapping: {mapping}")
                 print(f"Associated Genes: {[f'Gene{j}' for j in range(num_genes)]}")
 
             self.assertEqual(len(graph.nodes()), num_dmrs + num_genes)
+            self.assertEqual(len(graph.edges()), num_dmrs * num_genes)
 
     def test_sparse_and_dense_graphs(self):
         # Test sparse graph
