@@ -72,13 +72,14 @@ def create_bipartite_graph(df, gene_id_mapping):
 
 def validate_bipartite_graph(B):
     """Validate the bipartite graph properties and print detailed statistics"""
-    # Check for isolated nodes (degree 0)
-    isolated = list(nx.isolates(B))
-    if isolated:
-        print(f"WARNING: Found {len(isolated)} isolated nodes")
-        print(f"First 5 isolated nodes: {isolated[:5]}")
+    # Check for nodes with degree 0
+    zero_degree_nodes = [n for n, d in B.degree() if d == 0]
+    if zero_degree_nodes:
+        print(f"\nERROR: Found {len(zero_degree_nodes)} nodes with degree 0:")
+        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
+        raise ValueError("Graph contains nodes with degree 0")
     else:
-        print("✓ No isolated nodes found")
+        print("✓ All nodes have degree > 0")
 
     # Get node sets by bipartite attribute
     top_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
@@ -101,10 +102,6 @@ def validate_bipartite_graph(B):
     print(f"  - Maximum degree: {max_degree}")
     print(f"  - Average degree: {avg_degree:.2f}")
 
-    if min_degree == 0:
-        zero_degree_nodes = [n for n, d in degrees.items() if d == 0]
-        print(f"WARNING: Found {len(zero_degree_nodes)} nodes with degree 0")
-        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
 
     # Connected components analysis
     components = list(nx.connected_components(B))
@@ -115,7 +112,8 @@ def validate_bipartite_graph(B):
 
     # Verify bipartite property
     if not nx.is_bipartite(B):
-        print("\nWARNING: Graph is not bipartite")
+        print("\nERROR: Graph is not bipartite")
+        raise ValueError("Graph is not bipartite")
     else:
         print("\n✓ Graph is bipartite")
 
