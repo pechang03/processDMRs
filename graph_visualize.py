@@ -152,10 +152,16 @@ def create_biclique_visualization(
     
     # Combine visualization with tables
     layout = go.Layout(
-        showlegend=False,
+        showlegend=True,
         hovermode='closest',
         grid=dict(columns=3, rows=1),
-        margin=dict(b=20, l=5, r=5, t=40)
+        margin=dict(b=20, l=5, r=5, t=40),
+        legend=dict(
+            x=0.5,
+            y=1.1,
+            xanchor='center',
+            orientation='h'
+        )
     )
     
     fig = go.Figure(
