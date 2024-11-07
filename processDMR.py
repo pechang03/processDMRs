@@ -364,34 +364,12 @@ def main():
 
     # Run RB-domination analysis on DSS1 graph
     print("\n=== RB-Domination Analysis (DSS1) ===")
-
+    
     # Get the dominating set using the area statistic as weight
     dominating_set = process_components(bipartite_graph, df)
-
-    # Calculate coverage statistics
-    gene_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1}
-    dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0}
-
-    # Get dominated genes (neighbors of dominating DMRs)
-    dominated_genes = set()
-    for dmr in dominating_set:
-        dominated_genes.update(bipartite_graph.neighbors(dmr))
-
-    # Calculate statistics
-    print(f"\nDominating Set Statistics:")
-    print(f"Size of dominating set: {len(dominating_set)} DMRs")
-    print(f"Percentage of DMRs in dominating set: {(len(dominating_set)/len(dmr_nodes))*100:.2f}%")
-    print(f"Number of genes dominated: {len(dominated_genes)} / {len(gene_nodes)}")
-    print(f"Percentage of genes dominated: {(len(dominated_genes)/len(gene_nodes))*100:.2f}%")
-
-    # Optional: Print some example DMRs from the dominating set
-    print("\nSample DMRs from dominating set:")
-    sample_size = min(5, len(dominating_set))
-    for dmr in list(dominating_set)[:sample_size]:
-        dmr_row = df[df['DMR_No.'] == dmr + 1].iloc[0]  # +1 because DMR IDs are 1-based in df
-        area_stat = dmr_row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
-        num_neighbors = len(list(bipartite_graph.neighbors(dmr)))
-        print(f"DMR_{dmr + 1}: Area={area_stat}, Dominates {num_neighbors} genes")
+    
+    # Print statistics using the extracted method
+    print_domination_statistics(dominating_set, bipartite_graph, df)
 
 
 if __name__ == "__main__":
