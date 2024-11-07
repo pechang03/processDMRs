@@ -170,7 +170,7 @@ def create_plotly_graph(
             if isinstance(component["genes"], (list, set))
             else {component["genes"]},
         )
-        for component in results["components"]
+        for component in component_data
     ]
     # Use the create_biclique_visualization function
     return create_biclique_visualization(
