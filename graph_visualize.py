@@ -10,20 +10,22 @@ def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
-    node_biclique_map: Dict[int, List[int]]
+    node_biclique_map: Dict[int, List[int]],
+    dmr_metadata: Dict[str, Dict] = None,
+    gene_metadata: Dict[str, Dict] = None
 ) -> str:
     """
-    Create interactive Plotly visualization of bicliques.
+    Create interactive Plotly visualization of bicliques with metadata tables.
     
     Args:
         bicliques: List of (dmr_nodes, gene_nodes) tuples
         node_labels: Maps node IDs to display labels
         node_positions: Maps node IDs to (x,y) positions
-        node_biclique_map: Maps node IDs to list of biclique numbers they belong to
-    
-    Returns:
-        JSON string containing Plotly figure data
+        node_biclique_map: Maps node IDs to list of biclique numbers
+        dmr_metadata: Dictionary of DMR metadata for tables
+        gene_metadata: Dictionary of gene metadata for tables
     """
+    # Create main visualization as before
     edge_traces = []
     node_traces = []
     
@@ -95,15 +97,42 @@ def create_biclique_visualization(
         )
     )
     
+    # Add metadata tables
+    if dmr_metadata:
+        dmr_table = go.Table(
+            domain=dict(x=[0, 0.3], y=[0, 1]),
+            header=dict(values=['DMR', 'Area', 'Bicliques']),
+            cells=dict(values=[
+                list(dmr_metadata.keys()),
+                [d['area'] for d in dmr_metadata.values()],
+                [','.join(map(str, d['bicliques'])) for d in dmr_metadata.values()]
+            ])
+        )
+        
+    if gene_metadata:
+        gene_table = go.Table(
+            domain=dict(x=[0.7, 1], y=[0, 1]),
+            header=dict(values=['Gene', 'Description', 'Bicliques']),
+            cells=dict(values=[
+                list(gene_metadata.keys()),
+                [d['description'] for d in gene_metadata.values()],
+                [','.join(map(str, d['bicliques'])) for d in gene_metadata.values()]
+            ])
+        )
+    
+    # Combine visualization with tables
     layout = go.Layout(
         showlegend=False,
         hovermode='closest',
-        margin=dict(b=20, l=100, r=100, t=40),
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+        grid=dict(columns=3, rows=1),
+        margin=dict(b=20, l=5, r=5, t=40)
     )
     
-    fig = go.Figure(data=edge_traces + node_traces, layout=layout)
+    fig = go.Figure(
+        data=edge_traces + node_traces + [dmr_table, gene_table] if dmr_metadata else edge_traces + node_traces,
+        layout=layout
+    )
+    
     return json.dumps(fig, cls=PlotlyJSONEncoder)
 
 def create_node_biclique_map(bicliques: List[Tuple[Set[int], Set[int]]]) -> Dict[int, List[int]]:
