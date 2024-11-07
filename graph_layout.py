@@ -44,12 +44,13 @@ def calculate_node_positions(
         positions[gene] = (1, (i + 1) * gene_spacing)
     
     # Position DMRs on left side
-    for i, dmr in enumerate(dmr_nodes):
-        positions[dmr] = (0, i)
+    dmr_spacing = 1.0 / (len(sorted_dmrs) + 1)
+    for i, dmr in enumerate(sorted_dmrs):
+        positions[dmr] = (0, (i + 1) * dmr_spacing)
         
-    # Position genes on right side, sorted by biclique number
-    gene_nodes.sort(key=lambda g: min(node_biclique_map[g]))
-    for i, gene in enumerate(gene_nodes):
-        positions[gene] = (1, i)
+    # Position genes on right side
+    gene_spacing = 1.0 / (len(sorted_genes) + 1)
+    for i, gene in enumerate(sorted_genes):
+        positions[gene] = (1, (i + 1) * gene_spacing)
     
     return positions
