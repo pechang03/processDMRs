@@ -127,19 +127,8 @@ def greedy_rb_domination(graph, df, area_col=None):
 
 def process_components(graph, df):
     """Process connected components of the graph to find dominating sets"""
-    # Get all gene nodes (bipartite=1) and DMR nodes (bipartite=0)
-    gene_nodes = {node for node, data in graph.nodes(data=True) if data["bipartite"] == 1}
-    dmr_nodes = {node for node, data in graph.nodes(data=True) if data["bipartite"] == 0}
-    
     # Process whole graph at once
     dominating_set = greedy_rb_domination(graph, df, area_col='Area_Stat')
-    
-    # Print final statistics only once
-    dominated_genes = set()
-    for dmr in dominating_set:
-        dominated_genes.update(graph.neighbors(dmr))
-        
-    
     return dominating_set
 
 
@@ -174,3 +163,35 @@ def minimize_dominating_set(graph, dominating_set):
         print(f"Minimal size: {len(minimal_dominating_set)}")
 
     return minimal_dominating_set
+def print_domination_statistics(dominating_set: set, graph: nx.Graph, df: pd.DataFrame) -> None:
+    """
+    Print statistics about a dominating set.
+    
+    Args:
+        dominating_set: Set of DMR nodes in the dominating set
+        graph: The bipartite graph
+        df: DataFrame containing DMR metadata
+    """
+    # Get node sets
+    gene_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 1}
+    dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+    
+    # Calculate dominated genes
+    dominated_genes = set()
+    for dmr in dominating_set:
+        dominated_genes.update(graph.neighbors(dmr))
+    
+    # Print statistics
+    print("\nDominating Set Statistics:")
+    print(f"Size of dominating set: {len(dominating_set)} DMRs")
+    print(f"Percentage of DMRs in dominating set: {(len(dominating_set)/len(dmr_nodes))*100:.2f}%")
+    print(f"Number of genes dominated: {len(dominated_genes)} / {len(gene_nodes)}")
+    print(f"Percentage of genes dominated: {(len(dominated_genes)/len(gene_nodes))*100:.2f}%")
+    
+    # Print sample DMRs
+    print("\nSample DMRs from dominating set:")
+    sample_size = min(5, len(dominating_set))
+    for dmr in list(dominating_set)[:sample_size]:
+        area = df.loc[df['DMR_No.'] == dmr + 1, 'Area_Stat'].iloc[0]
+        num_dominated = len(list(graph.neighbors(dmr)))
+        print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
