@@ -106,7 +106,7 @@ class TestBipartiteGraph(unittest.TestCase):
             data = {
                 "DMR_No.": list(range(1, num_dmrs + 1)),
                 "Gene_Symbol_Nearby": [f"Gene{j % num_genes}" for j in range(num_dmrs)],  # Ensure each DMR has a corresponding gene
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [f"Gene{j % num_genes}" for j in range(num_dmrs)],  # Connect each DMR to all genes
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [";".join([f"Gene{k}" for k in range(num_genes)]) for _ in range(num_dmrs)],  # Connect each DMR to all genes
             }
             df = pd.DataFrame(data)
             df["Processed_Enhancer_Info"] = df[
