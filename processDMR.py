@@ -5,8 +5,16 @@ import time
 import psutil
 
 from graph_utils import process_enhancer_info, validate_bipartite_graph
-from rb_domination import greedy_rb_domination, process_components, print_domination_statistics
-from process_bicliques import read_bicliques_file, print_bicliques_summary, print_bicliques_detail
+from rb_domination import (
+    greedy_rb_domination,
+    process_components,
+    print_domination_statistics,
+)
+from process_bicliques import (
+    read_bicliques_file,
+    print_bicliques_summary,
+    print_bicliques_detail,
+)
 from graph_visualize import create_biclique_visualization, create_node_biclique_map
 from graph_layout import calculate_node_positions
 
@@ -69,18 +77,20 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
 
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (list, set)):
-            enhancer_genes = {str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g}
+            enhancer_genes = {
+                str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g
+            }
             associated_genes.update(enhancer_genes)
 
         # Add edges and gene nodes
         for gene in associated_genes:
             if gene in gene_id_mapping:
                 gene_id = gene_id_mapping[gene]
-                
+
                 # Add gene node if it doesn't exist
                 if not B.has_node(gene_id):
                     B.add_node(gene_id, bipartite=1)
-                
+
                 # Check if we've seen this edge before
                 edge = tuple(sorted([dmr, gene_id]))  # Normalize edge representation
                 if edge not in edges_seen:
@@ -105,6 +115,7 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
 
 def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
     """Write bipartite graph to file."""
+
     def validate_edge(dmr, gene_id):
         return graph.has_edge(dmr, gene_id)
 
@@ -139,9 +150,12 @@ def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
                     edges.append((dmr, gene))
 
             sorted_edges = sorted(
-                [(dmr, gene) for dmr, gene in graph.edges() 
-                 if validate_edge(dmr, gene)],
-                key=lambda x: (x[0], x[1])
+                [
+                    (dmr, gene)
+                    for dmr, gene in graph.edges()
+                    if validate_edge(dmr, gene)
+                ],
+                key=lambda x: (x[0], x[1]),
             )
             for dmr, gene_id in sorted_edges:
                 file.write(f"{dmr} {gene_id}\n")
@@ -167,9 +181,9 @@ def main():
     try:
         # Add logging
         import logging
+
         logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
         )
 
         # Read DSS1 data
@@ -190,7 +204,9 @@ def main():
 
         # Add genes from DSS1
         dss1_gene_col = (
-            "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
+            "Gene_Symbol_Nearby"
+            if "Gene_Symbol_Nearby" in df.columns
+            else "Gene_Symbol"
         )
         all_genes.update(df["Processed_Enhancer_Info"].explode().dropna())
         all_genes.update(df[dss1_gene_col].dropna())
@@ -207,15 +223,24 @@ def main():
         def create_gene_id_mapping(df, dmr_max):
             """Create gene ID mapping using dataset's own max DMR number"""
             all_genes = set()
-            gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df.columns else "Gene_Symbol"
-            
+            gene_col = (
+                "Gene_Symbol_Nearby"
+                if "Gene_Symbol_Nearby" in df.columns
+                else "Gene_Symbol"
+            )
+
             # Add genes from gene column
             all_genes.update(df[gene_col].dropna())
-            
+
             # Add genes from enhancer info
-            enhancer_genes = {gene for genes in df["Processed_Enhancer_Info"] for gene in genes if gene}
+            enhancer_genes = {
+                gene
+                for genes in df["Processed_Enhancer_Info"]
+                for gene in genes
+                if gene
+            }
             all_genes.update(enhancer_genes)
-            
+
             # Create mapping starting after this dataset's max DMR
             sorted_genes = sorted(all_genes)
             return {gene: idx + dmr_max for idx, gene in enumerate(sorted_genes)}
@@ -227,16 +252,16 @@ def main():
         dss1_gene_mapping = create_gene_id_mapping(df, dss1_max_dmr)
         home1_gene_mapping = create_gene_id_mapping(df_home1, home1_max_dmr)
 
-        # Create graphs with their respective mappings and column names
-        bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby")
-        bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol")
+        # Create bipgraphs with their respective mappings and column names
+        bipartite_graph = create_bipartite_graph(
+            df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby"
+        )
+        bipartite_graph_home1 = create_bipartite_graph(
+            df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol"
+        )
     except Exception as e:
         print(f"Error in initialization: {e}")
         raise
-
-    # Create bipartite graphs using their respective gene ID mappings
-    bipartite_graph = create_bipartite_graph(df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby")
-    bipartite_graph_home1 = create_bipartite_graph(df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol")
 
     # Validate graphs
     print("\n=== DSS1 Graph Statistics ===")
@@ -258,20 +283,22 @@ def main():
     write_gene_mappings(dss1_gene_mapping, "dss1_gene_ids.csv")
     write_gene_mappings(home1_gene_mapping, "home1_gene_ids.csv")
 
-     # Process bicliques after they've been generated by external tool
+    # Process bicliques after they've been generated by external tool
 
     def process_bicliques(graph, filename, max_dmr_id, dataset_name):
         """Helper function to process bicliques for a given graph"""
 
         if not nx.is_bipartite(graph):
-            print(f"\n{dataset_name} graph is not bipartite, skipping bicliques processing.")
+            print(
+                f"\n{dataset_name} graph is not bipartite, skipping bicliques processing."
+            )
             return None
 
         try:
             bicliques_result = read_bicliques_file(
                 filename,
                 max_DMR_id=max_dmr_id,
-                original_graph=graph  # Remove validate_fn parameter
+                original_graph=graph,  # Remove validate_fn parameter
             )
             if bicliques_result:
                 print_bicliques_summary(bicliques_result, graph)
@@ -285,47 +312,52 @@ def main():
         bipartite_graph,
         "./data/bipartite_graph_output.txt.biclusters",
         max(df["DMR_No."]),
-        "DSS1"
+        "DSS1",
     )
 
     # Only then create visualization if we have bicliques results
     if bicliques_result:
         print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
-        
+
         # Create biclique membership mapping
-        node_biclique_map = create_node_biclique_map(bicliques_result['bicliques'])
-        
+        node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
+
         # Calculate node positions
         node_positions = calculate_node_positions(
-            bicliques_result['bicliques'],
-            node_biclique_map
+            bicliques_result["bicliques"], node_biclique_map
         )
-        
+
         # Create node labels
         node_labels = {}
         for dmr_id in range(len(df)):
             node_id = dmr_id
             node_labels[node_id] = f"DMR_{dmr_id+1}"
-        
+
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
 
         # Create metadata dictionaries
         dmr_metadata = {}
         for dmr_id in range(len(df)):
-            area_stat = df.iloc[dmr_id]['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
+            area_stat = (
+                df.iloc[dmr_id]["Area_Stat"] if "Area_Stat" in df.columns else "N/A"
+            )
             dmr_metadata[f"DMR_{dmr_id+1}"] = {
-                'area': area_stat,
-                'bicliques': node_biclique_map.get(dmr_id, [])
+                "area": area_stat,
+                "bicliques": node_biclique_map.get(dmr_id, []),
             }
 
         gene_metadata = {}
         for gene, gene_id in dss1_gene_mapping.items():
-            gene_matches = df[df['Gene_Symbol_Nearby'] == gene]
-            desc = gene_matches.iloc[0]['Gene_Description'] if len(gene_matches) > 0 else 'N/A'
+            gene_matches = df[df["Gene_Symbol_Nearby"] == gene]
+            desc = (
+                gene_matches.iloc[0]["Gene_Description"]
+                if len(gene_matches) > 0
+                else "N/A"
+            )
             gene_metadata[gene] = {
-                'description': desc,
-                'bicliques': node_biclique_map.get(gene_id, [])
+                "description": desc,
+                "bicliques": node_biclique_map.get(gene_id, []),
             }
 
         # Calculate dominating set before visualization
@@ -335,19 +367,18 @@ def main():
 
         # Create visualization with dominating set
         viz_json = create_biclique_visualization(
-            bicliques_result['bicliques'],
+            bicliques_result["bicliques"],
             node_labels,
             node_positions,
             node_biclique_map,
             dominating_set=dominating_set,  # Now dominating_set is defined
             dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata
+            gene_metadata=gene_metadata,
         )
-        
-        # Save visualization
-        with open('biclique_visualization.json', 'w') as f:
-            f.write(viz_json)
 
+        # Save visualization
+        with open("biclique_visualization.json", "w") as f:
+            f.write(viz_json)
 
 
 if __name__ == "__main__":
