@@ -30,33 +30,42 @@ def create_bipartite_graph(df, gene_id_mapping):
     Graph: A NetworkX bipartite graph with DMRs and genes as nodes.
     """
     B = nx.Graph()
-    # Add nodes with the node attribute "bipartite"
-    B.add_nodes_from(df["DMR_No."].apply(lambda x: x - 1), bipartite=0)
+
+    # Add DMR nodes first with explicit bipartite=0
+    dmr_nodes = set(df["DMR_No."].apply(lambda x: x - 1))
+    B.add_nodes_from(dmr_nodes, bipartite=0)
+
+    # Track gene nodes to ensure proper bipartite assignment
+    gene_nodes = set()
+
     for index, row in df.iterrows():
+        dmr = row["DMR_No."] - 1
         associated_genes = set()
 
-        # Add closest gene if it's not None
-        if row["Gene_Symbol_Nearby"] is not None:
-            associated_genes.add(row["Gene_Symbol_Nearby"])
+        # Add closest gene if it exists
+        gene_col = (
+            "Gene_Symbol_Nearby"
+            if "Gene_Symbol_Nearby" in df.columns
+            else "Gene_Symbol"
+        )
+        if pd.notna(row[gene_col]) and row[gene_col]:
+            associated_genes.add(str(row[gene_col]))
 
-        # Add additional genes from Processed_Enhancer_Info
-        for gene in row["Processed_Enhancer_Info"]:
-            if gene:  # Check if gene is not empty
-                associated_genes.add(gene)
+        # Add enhancer genes
+        if isinstance(row["Processed_Enhancer_Info"], (list, set)):
+            enhancer_genes = {
+                str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g
+            }
+            associated_genes.update(enhancer_genes)
 
-        # Add gene nodes with the 'bipartite' attribute set to 1
+        # Add edges and gene nodes with proper bipartite value
         for gene in associated_genes:
-            if not B.has_node(gene):
-                B.add_node(gene, bipartite=1)
-            B.add_edge(row["DMR_No."] - 1, gene)
-
-        # Check if enhancer information is missing
-        if (
-            pd.isna(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"])
-            or row["ENCODE_Enhancer_Interaction(BingRen_Lab)"] == "."
-        ):
-            if row["Gene_Symbol_Nearby"] is not None:
-                B.add_edge(row["DMR_No."] - 1, row["Gene_Symbol_Nearby"])
+            if gene in gene_id_mapping:
+                gene_id = gene_id_mapping[gene]
+                if gene_id not in gene_nodes:
+                    B.add_node(gene_id, bipartite=1)
+                    gene_nodes.add(gene_id)
+                B.add_edge(dmr, gene_id)
 
     return B
 
@@ -72,9 +81,11 @@ def validate_bipartite_graph(B):
         print("✓ No isolated nodes found")
 
     # Get node sets by bipartite attribute
-    top_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 0}  # DMRs
-    bottom_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 1}  # Genes
-    
+    top_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
+    bottom_nodes = {
+        n for n, d in B.nodes(data=True) if d.get("bipartite") == 1
+    }  # Genes
+
     print(f"\nNode distribution:")
     print(f"  - DMR nodes (bipartite=0): {len(top_nodes)}")
     print(f"  - Gene nodes (bipartite=1): {len(bottom_nodes)}")
@@ -84,12 +95,12 @@ def validate_bipartite_graph(B):
     min_degree = min(degrees.values())
     max_degree = max(degrees.values())
     avg_degree = sum(degrees.values()) / len(degrees)
-    
+
     print(f"\nDegree statistics:")
     print(f"  - Minimum degree: {min_degree}")
     print(f"  - Maximum degree: {max_degree}")
     print(f"  - Average degree: {avg_degree:.2f}")
-    
+
     if min_degree == 0:
         zero_degree_nodes = [n for n, d in degrees.items() if d == 0]
         print(f"WARNING: Found {len(zero_degree_nodes)} nodes with degree 0")
@@ -112,3 +123,14 @@ def validate_bipartite_graph(B):
     print(f"\nTotal graph size:")
     print(f"  - Nodes: {B.number_of_nodes()}")
     print(f"  - Edges: {B.number_of_edges()}")
+
+
+def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
+    """Validate node IDs are properly assigned"""
+    if dmr >= max_dmr_id:
+        print(f"Warning: Invalid DMR ID {dmr}")
+        return False
+    if gene_id not in set(gene_id_mapping.values()):
+        print(f"Warning: Invalid gene ID {gene_id}")
+        return False
+    return True
