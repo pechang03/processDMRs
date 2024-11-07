@@ -120,6 +120,9 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
 
 def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
     """Write bipartite graph to file."""
+    def validate_edge(dmr, gene_id):
+        return graph.has_edge(dmr, gene_id)
+
     try:
         with open(output_file, "w") as file:
             unique_dmrs = df["DMR_No."].nunique()
@@ -150,16 +153,13 @@ def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
                 else:
                     edges.append((dmr, gene))
 
-    def validate_edge(dmr, gene_id):
-        return graph.has_edge(dmr, gene_id)
-
-    sorted_edges = sorted(
-        [(dmr, gene) for dmr, gene in graph.edges() 
-         if validate_edge(dmr, gene)],
-        key=lambda x: (x[0], x[1])
-    )
-    for dmr, gene_id in sorted_edges:
-        file.write(f"{dmr} {gene_id}\n")
+            sorted_edges = sorted(
+                [(dmr, gene) for dmr, gene in graph.edges() 
+                 if validate_edge(dmr, gene)],
+                key=lambda x: (x[0], x[1])
+            )
+            for dmr, gene_id in sorted_edges:
+                file.write(f"{dmr} {gene_id}\n")
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
         raise
