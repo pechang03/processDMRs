@@ -82,6 +82,9 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
             }
             associated_genes.update(enhancer_genes)
 
+        # Debugging output for associated genes
+        print(f"DMR {dmr}: Associated genes: {associated_genes}")
+
         # Add edges and gene nodes
         for gene in associated_genes:
             if gene in gene_id_mapping:
