@@ -19,6 +19,8 @@ from process_bicliques import (
 )
 
 # Import utility functions from graph_utils
+from graph_visualize import create_biclique_visualization, create_node_biclique_map
+from graph_layout import calculate_node_positions
 from graph_utils import (
     process_enhancer_info,
     # validate_bipartite_graph,
@@ -181,16 +183,19 @@ def index():
 
     # Prepare node labels and positions
     node_labels = {node_id: f"DMR_{node_id}" if node_id in component["dmrs"] else f"Gene_{node_id}" for component in results["components"] for node_id in component["dmrs"] + component["genes"]}
-    node_positions = calculate_node_positions([(set(component["dmrs"]), set(component["genes"])) for component in results["components"]], {})
+    node_positions = calculate_node_positions(
+        [(set(component["dmrs"]), set(component["genes"])) for component in results["components"]],
+        create_node_biclique_map([(set(component["dmrs"]), set(component["genes"])) for component in results["components"]])
+    )
 
     for component in results["components"]:
-        component["plotly_graph"] = create_plotly_graph(
-            component,
+        component["plotly_graph"] = create_biclique_visualization(
+            [(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component["bicliques"]],
             node_labels,
             node_positions,
-            {},  # Assuming node_biclique_map is empty or needs to be created
-            results["dmr_metadata"],
-            results["gene_metadata"]
+            create_node_biclique_map([(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component["bicliques"]]),
+            dmr_metadata=results["dmr_metadata"],
+            gene_metadata=results["gene_metadata"]
         )
 
     return render_template(
