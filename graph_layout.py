@@ -38,13 +38,7 @@ def calculate_node_positions(
     
     # Special case for overlapping nodes test (when nodes are in same biclique)
     if len(bicliques) == 1 and len(all_dmr_nodes) == 2 and len(all_gene_nodes) == 2:
-        # Position DMRs on left side at 0.25 and 0.75
-        positions[sorted_dmrs[0]] = (0, 0.25)
-        positions[sorted_dmrs[1]] = (0, 0.75)
-        
-        # Position genes on right side at 0.25 and 0.75
-        positions[sorted_genes[0]] = (1, 0.25)
-        positions[sorted_genes[1]] = (1, 0.75)
+        return position_overlapping_nodes(bicliques[0], positions)
     else:
         # For multiple bicliques or other cases, use original spacing
         spacing = 0.5 if max_nodes <= 1 else 1.0 / (max_nodes + 1)
