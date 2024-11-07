@@ -348,10 +348,6 @@ def main():
         with open('biclique_visualization.json', 'w') as f:
             f.write(viz_json)
 
-    # Calculate dominating set before visualization
-    print("\n=== RB-Domination Analysis (DSS1) ===")
-    dominating_set = process_components(bipartite_graph, df)
-    print_domination_statistics(dominating_set, bipartite_graph, df)
 
 
 if __name__ == "__main__":
