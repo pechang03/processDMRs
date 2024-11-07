@@ -79,16 +79,26 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
                 if enhancer_genes:
                     associated_genes.update(enhancer_genes)
 
+            def validate_node_ids(dmr, gene_id):
+                if dmr >= max(df["DMR_No."]):
+                    print(f"Warning: Invalid DMR ID {dmr}")
+                    return False
+                if gene_id not in set(gene_id_mapping.values()):
+                    print(f"Warning: Invalid gene ID {gene_id}")
+                    return False
+                return True
+
             if associated_genes:
                 for gene in associated_genes:
                     gene_id = gene_id_mapping[gene]
-                    if not B.has_node(gene_id):
-                        B.add_node(gene_id, bipartite=1)
-                    B.add_edge(dmr, gene_id)
-                    total_edges += 1
-                    # Check if this creates a non-bipartite edge
-                    if B.nodes[dmr]['bipartite'] == B.nodes[gene_id]['bipartite']:
-                        problematic_edges.append((dmr, gene_id))
+                    if validate_node_ids(dmr, gene_id):
+                        if not B.has_node(gene_id):
+                            B.add_node(gene_id, bipartite=1)
+                        B.add_edge(dmr, gene_id)
+                        total_edges += 1
+                        # Check if this creates a non-bipartite edge
+                        if B.nodes[dmr]['bipartite'] == B.nodes[gene_id]['bipartite']:
+                            problematic_edges.append((dmr, gene_id))
                 dmrs_without_edges.discard(dmr)
 
     if problematic_edges:
@@ -140,9 +150,16 @@ def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
                 else:
                     edges.append((dmr, gene))
 
-            sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-            for dmr, gene_id in sorted_edges:
-                file.write(f"{dmr} {gene_id}\n")
+    def validate_edge(dmr, gene_id):
+        return graph.has_edge(dmr, gene_id)
+
+    sorted_edges = sorted(
+        [(dmr, gene) for dmr, gene in graph.edges() 
+         if validate_edge(dmr, gene)],
+        key=lambda x: (x[0], x[1])
+    )
+    for dmr, gene_id in sorted_edges:
+        file.write(f"{dmr} {gene_id}\n")
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
         raise
@@ -162,17 +179,25 @@ def write_gene_mappings(gene_id_mapping, output_file):
 
 
 def main():
-    # Read DSS1 data
-    df = read_excel_file("./data/DSS1.xlsx")
-    df["Processed_Enhancer_Info"] = df[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
+    try:
+        # Add logging
+        import logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
 
-    # Read HOME1 data
-    df_home1 = read_excel_file("./data/HOME1.xlsx")
-    df_home1["Processed_Enhancer_Info"] = df_home1[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
+        # Read DSS1 data
+        df = read_excel_file("./data/DSS1.xlsx")
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
+
+        # Read HOME1 data
+        df_home1 = read_excel_file("./data/HOME1.xlsx")
+        df_home1["Processed_Enhancer_Info"] = df_home1[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
     # Get all unique genes from both datasets
     all_genes = set()
@@ -260,25 +285,30 @@ def main():
     
     def process_bicliques(graph, filename, max_dmr_id, dataset_name):
         """Helper function to process bicliques for a given graph"""
+        def validate_biclique(dmr_nodes, gene_nodes):
+            return all(
+                graph.has_edge(dmr, gene)
+                for dmr in dmr_nodes
+                for gene in gene_nodes
+            )
+
         if not nx.is_bipartite(graph):
             print(f"\n{dataset_name} graph is not bipartite, skipping bicliques processing.")
             return None
-        
+    
         try:
             bicliques_result = read_bicliques_file(
                 filename,
                 max_DMR_id=max_dmr_id,
-                original_graph=graph
+                original_graph=graph,
+                validate_fn=validate_biclique
             )
-            print_bicliques_summary(bicliques_result, graph)
-            return bicliques_result  # Add this line
-        except FileNotFoundError:
-            print(f"\nBicliques file not found: {filename}")
-            print("Note: Bicliques files must be generated separately using the bicliques finding tool.")
-            return None  # Add this line
+            if bicliques_result:
+                print_bicliques_summary(bicliques_result, graph)
+            return bicliques_result
         except Exception as e:
             print(f"\nError processing bicliques for {dataset_name}: {str(e)}")
-            return None  # Add this line
+            return None
 
     # Process DSS1 bicliques
     bicliques_result = process_bicliques(
