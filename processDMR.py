@@ -252,6 +252,9 @@ def main():
         gene_id_mapping = {
             gene: idx + max(df["DMR_No."]) for idx, gene in enumerate(sorted_genes)
         }
+    except Exception as e:
+        print(f"Error in initialization: {e}")
+        raise
 
     # Create bipartite graphs using the consistent gene_id_mapping
     # TODO what about also passing in ENCODE_Enhancer_Interaction(BingRen_Lab)
