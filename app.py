@@ -182,7 +182,12 @@ def index():
         return "Error: Missing metadata in results"
 
     # Prepare node labels and positions
-    node_labels = {node_id: f"DMR_{node_id}" if node_id in component["dmrs"] else f"Gene_{node_id}" for component in results["components"] for node_id in component["dmrs"] + component["genes"]}
+    node_labels = {}
+    for component in results["components"]:
+        for node_id in component["dmrs"]:
+            node_labels[node_id] = f"DMR_{node_id}"
+        for node_id in component["genes"]:
+            node_labels[node_id] = f"Gene_{node_id}"
     node_positions = calculate_node_positions(
         [(set(component["dmrs"]), set(component["genes"])) for component in results["components"]],
         create_node_biclique_map([(set(component["dmrs"]), set(component["genes"])) for component in results["components"]])
