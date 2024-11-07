@@ -28,9 +28,9 @@ def calculate_node_positions(
         all_gene_nodes.update(gene_nodes)
     
     # Sort nodes by their smallest biclique number
-    sorted_dmrs = sorted(all_dmr_nodes, 
+    sorted_dmrs = sorted(list(all_dmr_nodes), 
                         key=lambda n: min(node_biclique_map.get(n, [float('inf')])))
-    sorted_genes = sorted(all_gene_nodes,
+    sorted_genes = sorted(list(all_gene_nodes),
                          key=lambda n: min(node_biclique_map.get(n, [float('inf')])))
     
     # Position DMRs on left side
