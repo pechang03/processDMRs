@@ -83,10 +83,38 @@ bipartite_graph.nodes[n]['bipartite'] == 1]),
 comp['bicliques'])
         }
 
+        # Create metadata dictionaries
+        dmr_metadata = {}
+        gene_metadata = {}
+        
+        # Add DMR metadata
+        for _, row in df.iterrows():
+            dmr_id = row['DMR_No.'] - 1  # Convert to 0-based index
+            dmr_metadata[f"DMR_{dmr_id+1}"] = {
+                'area': row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
+            }
+        
+        # Add gene metadata
+        for gene in gene_id_mapping:
+            gene_matches = df[df['Gene_Symbol_Nearby'] == gene]
+            desc = gene_matches.iloc[0]['Gene_Description'] if len(gene_matches) > 0 else 'N/A'
+            gene_metadata[gene] = {
+                'description': desc
+            }
+
+        # Add metadata to component data
+        for component in component_data:
+            component['dmr_metadata'] = {dmr: dmr_metadata[dmr] 
+                                       for dmr in [f"DMR_{d+1}" for d in component['dmrs']]}
+            component['gene_metadata'] = {gene: gene_metadata[gene] 
+                                        for gene in component['genes']}
+
         return {
             "stats": stats,
             "components": component_data,
-            "coverage": bicliques_result['coverage']
+            "coverage": bicliques_result['coverage'],
+            "dmr_metadata": dmr_metadata,
+            "gene_metadata": gene_metadata
         }
     except Exception as e:
         return {"error": str(e)}
@@ -152,7 +180,10 @@ def index():
     if 'error' not in results:
         for component in results['components']:
             component['plotly_graph'] = create_plotly_graph(component)
-    return render_template('index.html', results=results)
+    return render_template('index.html', 
+                             results=results,
+                             dmr_metadata=results['dmr_metadata'],
+                             gene_metadata=results['gene_metadata'])
 
 if __name__ == '__main__':
     app.run(debug=True)
