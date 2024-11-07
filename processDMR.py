@@ -41,7 +41,7 @@ def read_excel_file(filepath):
 
 def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Nearby"):
     """Create a bipartite graph from DataFrame."""
-    B = nx.Graph()
+    B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
     dmr_nodes = df["DMR_No."].values
 
     # Add DMR nodes with explicit bipartite attribute (0-based indexing)
@@ -51,71 +51,53 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
     print(f"\nDebugging create_bipartite_graph:")
     print(f"Number of DMR nodes added: {len(dmr_nodes)}")
 
-    batch_size = 1000
-    total_edges = 0
-    dmrs_without_edges = set(dmr - 1 for dmr in dmr_nodes)
+    # Track edges we've already added
+    edges_seen = set()
+    duplicate_edges = []
+    edges_added = 0
 
-    problematic_edges = []
+    for _, row in df.iterrows():
+        dmr = row["DMR_No."] - 1
+        associated_genes = set()
 
-    for i in range(0, len(df), batch_size):
-        batch = df.iloc[i : i + batch_size]
-        for _, row in batch.iterrows():
-            dmr = row["DMR_No."] - 1
-            associated_genes = set()
+        # Add closest gene if it exists
+        gene_col = closest_gene_col
+        if pd.notna(row[gene_col]) and row[gene_col]:
+            associated_genes.add(str(row[gene_col]))
 
-            gene_col = (
-                "Gene_Symbol_Nearby"
-                if "Gene_Symbol_Nearby" in df.columns
-                else "Gene_Symbol"
-            )
-            if pd.notna(row[gene_col]) and row[gene_col]:
-                associated_genes.add(str(row[gene_col]))
+        # Add enhancer genes if they exist
+        if isinstance(row["Processed_Enhancer_Info"], (list, set)):
+            enhancer_genes = {str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g}
+            associated_genes.update(enhancer_genes)
 
-            if isinstance(row["Processed_Enhancer_Info"], (list, set)):
-                enhancer_genes = set(
-                    str(gene)
-                    for gene in row["Processed_Enhancer_Info"]
-                    if pd.notna(gene) and gene
-                )
-                if enhancer_genes:
-                    associated_genes.update(enhancer_genes)
+        # Add edges and gene nodes
+        for gene in associated_genes:
+            if gene in gene_id_mapping:
+                gene_id = gene_id_mapping[gene]
+                
+                # Add gene node if it doesn't exist
+                if not B.has_node(gene_id):
+                    B.add_node(gene_id, bipartite=1)
+                
+                # Check if we've seen this edge before
+                edge = tuple(sorted([dmr, gene_id]))  # Normalize edge representation
+                if edge not in edges_seen:
+                    B.add_edge(dmr, gene_id)
+                    edges_seen.add(edge)
+                    edges_added += 1
+                else:
+                    duplicate_edges.append((dmr, gene_id, gene))
 
-            def validate_node_ids(dmr, gene_id):
-                if dmr >= max(df["DMR_No."]):
-                    print(f"Warning: Invalid DMR ID {dmr}")
-                    return False
-                if gene_id not in set(gene_id_mapping.values()):
-                    print(f"Warning: Invalid gene ID {gene_id}")
-                    return False
-                return True
+    # Report duplicate edges
+    if duplicate_edges:
+        print("\nFound duplicate edges that were skipped:")
+        for dmr, gene_id, gene_name in duplicate_edges[:5]:  # Show first 5 duplicates
+            print(f"DMR {dmr} -> Gene {gene_id} [{gene_name}]")
 
-            if associated_genes:
-                for gene in associated_genes:
-                    gene_id = gene_id_mapping[gene]
-                    if validate_node_ids(dmr, gene_id):
-                        if not B.has_node(gene_id):
-                            B.add_node(gene_id, bipartite=1)
-                        B.add_edge(dmr, gene_id)
-                        total_edges += 1
-                        # Check if this creates a non-bipartite edge
-                        if B.nodes[dmr]['bipartite'] == B.nodes[gene_id]['bipartite']:
-                            problematic_edges.append((dmr, gene_id))
-                dmrs_without_edges.discard(dmr)
-
-    if problematic_edges:
-        print("\nFound problematic edges in graph:")
-        for edge in problematic_edges[:5]:  # Show first 5 problematic edges
-            print(f"Edge between nodes with same bipartite value: {edge}")
-            dmr_node = edge[0]
-            gene_node = edge[1]
-            print(f"DMR {dmr_node}: bipartite={B.nodes[dmr_node]['bipartite']}")
-            print(f"Gene {gene_node}: bipartite={B.nodes[gene_node]['bipartite']}")
-            # Show the actual gene name
-            gene_name = [k for k, v in gene_id_mapping.items() if v == gene_node][0]
-            print(f"Gene name: {gene_name}")
-
-    print(f"Total edges added: {total_edges}")
+    print(f"Total edges added: {edges_added}")
+    print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
+
     return B
 
 
