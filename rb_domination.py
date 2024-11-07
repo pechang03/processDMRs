@@ -49,7 +49,6 @@ def greedy_rb_domination(graph, df, area_col=None):
                     else 1.0
                 )
                 utility = len(new_genes)
-                print(f"DMR {dmr}: Utility = {utility}, Area = {area}, New genes = {new_genes}")
                 entry = (-utility, -area, dmr)
                 utility_map[dmr] = entry
                 heappush(utility_heap, entry)
