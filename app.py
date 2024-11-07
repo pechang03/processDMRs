@@ -155,6 +155,11 @@ def create_plotly_graph(component_data):
     edge_trace = []
     node_trace = []
 
+    # Calculate node positions using the layout function
+    bicliques = [(set(biclique["dmrs"]), set(biclique["genes"])) for biclique in component_data["bicliques"]]
+    node_biclique_map = {}  # You may need to create this map if not already available
+    node_positions = calculate_node_positions(bicliques, node_biclique_map)
+
     for biclique in component_data["bicliques"]:
         dmr_nodes = biclique["dmrs"]
         gene_nodes = biclique["genes"]
@@ -164,8 +169,8 @@ def create_plotly_graph(component_data):
             for gene in gene_nodes:
                 edge_trace.append(
                     go.Scatter(
-                        x=[dmr, gene],
-                        y=[0, 1],
+                        x=[node_positions[dmr][0], node_positions[gene][0]],
+                        y=[node_positions[dmr][1], node_positions[gene][1]],
                         mode="lines",
                         line=dict(width=1),
                         hoverinfo="none",
@@ -173,26 +178,17 @@ def create_plotly_graph(component_data):
                 )
 
         # Create nodes for this biclique
-        node_trace.append(
-            go.Scatter(
-                x=dmr_nodes,
-                y=[0] * len(dmr_nodes),
-                mode="markers",
-                marker=dict(size=10, color="blue"),
-                text=[f"DMR_{d}" for d in dmr_nodes],
-                hoverinfo="text",
+        for node_id in dmr_nodes + gene_nodes:
+            node_trace.append(
+                go.Scatter(
+                    x=[node_positions[node_id][0]],
+                    y=[node_positions[node_id][1]],
+                    mode="markers",
+                    marker=dict(size=10, color="blue" if node_id in dmr_nodes else "red"),
+                    text=[f"DMR_{node_id}" if node_id in dmr_nodes else f"Gene_{node_id}"],
+                    hoverinfo="text",
+                )
             )
-        )
-        node_trace.append(
-            go.Scatter(
-                x=gene_nodes,
-                y=[1] * len(gene_nodes),
-                mode="markers",
-                marker=dict(size=10, color="red"),
-                text=[f"Gene_{g}" for g in gene_nodes],
-                hoverinfo="text",
-            )
-        )
 
     layout = go.Layout(
         showlegend=False,
