@@ -374,5 +374,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-from rb_domination import print_domination_statistics
-from rb_domination import print_domination_statistics
