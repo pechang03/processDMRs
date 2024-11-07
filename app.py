@@ -239,7 +239,7 @@ def index():
             # Check if all nodes have positions
             for node in dmr_nodes | gene_nodes:
                 if node not in node_positions:
-                    print(f"Warning: Node {node} does not have a calculated position.")
+                    raise KeyError(f"Node {node} does not have a calculated position.")
         
         component["plotly_graph"] = create_biclique_visualization(
             [
