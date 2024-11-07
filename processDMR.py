@@ -303,8 +303,7 @@ def main():
             bicliques_result = read_bicliques_file(
                 filename,
                 max_DMR_id=max_dmr_id,
-                original_graph=graph,
-                validate_fn=validate_biclique
+                original_graph=graph  # Remove validate_fn parameter
             )
             if bicliques_result:
                 print_bicliques_summary(bicliques_result, graph)
