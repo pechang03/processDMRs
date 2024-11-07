@@ -139,19 +139,6 @@ def process_components(graph, df):
     for dmr in dominating_set:
         dominated_genes.update(graph.neighbors(dmr))
         
-    print("\nDominating Set Statistics:")
-    print(f"Size of dominating set: {len(dominating_set)} DMRs")
-    print(f"Percentage of DMRs in dominating set: {(len(dominating_set)/len(dmr_nodes))*100:.2f}%")
-    print(f"Number of genes dominated: {len(dominated_genes)} / {len(gene_nodes)}")
-    print(f"Percentage of genes dominated: {(len(dominated_genes)/len(gene_nodes))*100:.2f}%")
-    
-    # Print sample DMRs
-    print("\nSample DMRs from dominating set:")
-    sample_size = min(5, len(dominating_set))
-    for dmr in list(dominating_set)[:sample_size]:
-        area = df.loc[df['DMR_No.'] == dmr + 1, 'Area_Stat'].iloc[0]
-        num_dominated = len(list(graph.neighbors(dmr)))
-        print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
     
     return dominating_set
 
