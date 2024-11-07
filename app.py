@@ -193,8 +193,8 @@ def index():
         for node_id in genes:
             node_labels[node_id] = f"Gene_{node_id}"
     node_positions = calculate_node_positions(
-        [(set(component["dmrs"]), set(component["genes"])) for component in results["components"]],
-        create_node_biclique_map([(set(component["dmrs"]), set(component["genes"])) for component in results["components"]])
+        bicliques,
+        create_node_biclique_map(bicliques)
     )
 
     for component in results["components"]:
