@@ -5,7 +5,7 @@ import time
 import psutil
 
 from graph_utils import process_enhancer_info, validate_bipartite_graph
-from rb_domination import greedy_rb_domination, process_components
+from rb_domination import greedy_rb_domination, process_components, print_domination_statistics
 from process_bicliques import read_bicliques_file, print_bicliques_summary, print_bicliques_detail
 from graph_visualize import create_biclique_visualization, create_node_biclique_map
 from graph_layout import calculate_node_positions
