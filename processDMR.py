@@ -83,7 +83,7 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
             associated_genes.update(enhancer_genes)
 
         # Debugging output for associated genes
-        print(f"DMR {dmr}: Associated genes: {associated_genes}")
+        # print(f"DMR {dmr}: Associated genes: {associated_genes}")
 
         # Add edges and gene nodes
         for gene in associated_genes:
@@ -93,10 +93,10 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
                 # Add gene node if it doesn't exist
                 if not B.has_node(gene_id):
                     B.add_node(gene_id, bipartite=1)
-                    print(f"Added gene node: {gene_id} for gene: {gene}")
+                    # print(f"Added gene node: {gene_id} for gene: {gene}")
 
                 # Ensure all associated genes are processed
-                print(f"Processing gene: {gene} with ID: {gene_id}")
+                # print(f"Processing gene: {gene} with ID: {gene_id}")
 
                 # Check if we've seen this edge before
                 edge = tuple(sorted([dmr, gene_id]))  # Normalize edge representation
