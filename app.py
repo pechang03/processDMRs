@@ -231,10 +231,17 @@ def index():
     # Add debugging output to check node positions
     print("Node Positions:", node_positions)
 
+    # Debugging output to check bicliques
+    print("Bicliques:", bicliques)
+
     for component in results["components"]:
         for biclique in component["bicliques"]:
             dmr_nodes = set(biclique["dmrs"])
             gene_nodes = set(biclique["genes"])
+            
+            # Check if node 0 is in the bicliques
+            if 0 in dmr_nodes or 0 in gene_nodes:
+                print("Node 0 is present in the bicliques.")
             
             # Check if all nodes have positions
             for node in dmr_nodes | gene_nodes:
