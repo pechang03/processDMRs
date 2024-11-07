@@ -121,6 +121,12 @@ class TestBipartiteGraph(unittest.TestCase):
                 print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}")
                 print(f"Graph nodes: {graph.nodes()}")
 
+            if len(graph.nodes()) != num_dmrs + num_genes:
+                print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}")
+                print(f"Graph nodes: {graph.nodes()}")
+                print(f"Gene ID Mapping: {mapping}")
+                print(f"Associated Genes: {[f'Gene{j}' for j in range(num_genes)]}")
+
             self.assertEqual(len(graph.nodes()), num_dmrs + num_genes)
 
     def test_sparse_and_dense_graphs(self):
