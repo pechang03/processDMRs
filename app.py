@@ -23,8 +23,7 @@ def process_data():
     try:
         # Read DSS1 data
         df = read_excel_file("./data/DSS1.xlsx")
-        df["Processed_Enhancer_Info"] =
-df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
 
         # Create gene ID mapping
         all_genes = set()
