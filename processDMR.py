@@ -23,10 +23,10 @@ from graph_visualize import create_biclique_visualization, create_node_biclique_
 
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
-        try:
-            df = pd.read_excel(filepath, header=0)
-            print(f"Column names: {df.columns.tolist()}")
-        print("\nSample of input data:")
+    try:
+        df = pd.read_excel(filepath, header=0)
+        print(f"Column names: {df.columns.tolist()}")
+    print("\nSample of input data:")
         # Determine which columns to display based on what's available
         if "Gene_Symbol_Nearby" in df.columns:
             gene_col = "Gene_Symbol_Nearby"
@@ -45,11 +45,7 @@ def read_excel_file(filepath):
                 ]
             ].head(10)
         )
-        return df
-    except FileNotFoundError:
-        error_msg = f"Error: The file {filepath} was not found."
-        print(error_msg)
-        raise Exception(error_msg)
+    return df
     except FileNotFoundError:
         error_msg = f"Error: The file {filepath} was not found."
         print(error_msg)
@@ -395,7 +391,7 @@ def main():
         )
 
         # Save visualization
-        with open("biclique_visualization.json", "w") as f:
+    with open("biclique_visualization.json", "w") as f:
         with open("biclique_visualization.json", "w") as f:
             f.write(viz_json)
 
