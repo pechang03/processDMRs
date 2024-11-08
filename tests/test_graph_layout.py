@@ -1,8 +1,8 @@
 import unittest
-from graph_layout import calculate_node_positions
 import sys
-
-sys.path.append("..")
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from graph_layout import calculate_node_positions
 
 
 class TestCalculateNodePositions(unittest.TestCase):
