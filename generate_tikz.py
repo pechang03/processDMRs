@@ -31,15 +31,16 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
         dmr_nodes, gene_nodes = biclique
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                plt.plot(
-                    [pos[dmr][0], pos[gene][0]],
-                    [pos[dmr][1], pos[gene][1]],
-                    'k-', alpha=0.5
-                )
+                if dmr in pos and gene in pos:  # Only draw if both nodes have positions
+                    plt.plot(
+                        [pos[dmr][0], pos[gene][0]],
+                        [pos[dmr][1], pos[gene][1]],
+                        'k-', alpha=0.5
+                    )
 
     # Draw nodes
-    dmr_nodes = {n for dmr_nodes, _ in bicliques for n in dmr_nodes}
-    gene_nodes = {n for _, gene_nodes in bicliques for n in gene_nodes}
+    dmr_nodes = {n for dmr_nodes, _ in bicliques for n in dmr_nodes if n in pos}  # Only include nodes with positions
+    gene_nodes = {n for _, gene_nodes in bicliques for n in gene_nodes if n in pos}  # Only include nodes with positions
 
     dmr_pos = {n: pos[n] for n in dmr_nodes}
     gene_pos = {n: pos[n] for n in gene_nodes}
@@ -49,21 +50,24 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
         pos=dmr_pos,
         node_color='blue',
         node_size=500,
-        alpha=0.8
+        alpha=0.8,
+        nodelist=list(dmr_pos.keys())  # Explicitly specify nodes to draw
     )
     nx.draw_networkx_nodes(
         nx.Graph(),
         pos=gene_pos,
         node_color='red',
         node_size=500,
-        alpha=0.8
+        alpha=0.8,
+        nodelist=list(gene_pos.keys())  # Explicitly specify nodes to draw
     )
 
-    # Draw labels
+    # Draw labels only for nodes that have positions
+    labels_to_draw = {n: label for n, label in node_labels.items() if n in pos}
     nx.draw_networkx_labels(
         nx.Graph(),
         pos=pos,
-        labels=node_labels,
+        labels=labels_to_draw,
         font_size=12,
         font_color='black'
     )
@@ -105,11 +109,12 @@ def main():
     # Create node labels
     node_labels = {}
     for dmr_id in range(len(df)):
-        node_id = dmr_id
-        node_labels[node_id] = f"DMR_{dmr_id+1}"
+        if dmr_id in node_positions:  # Only add labels for nodes with positions
+            node_labels[dmr_id] = f"DMR_{dmr_id+1}"
 
     for gene, gene_id in gene_id_mapping.items():
-        node_labels[gene_id] = gene
+        if gene_id in node_positions:  # Only add labels for nodes with positions
+            node_labels[gene_id] = gene
 
     # Create TikZ visualization
     create_tikz_visualization(
