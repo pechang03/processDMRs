@@ -212,14 +212,14 @@ def index():
         if isinstance(dmrs, int):
             node_labels[dmrs] = f"DMR_{dmrs}"
             all_nodes.add(dmrs)
-        else:
+        elif isinstance(dmrs, (list, set)):
             for node_id in dmrs:
                 node_labels[node_id] = f"DMR_{node_id}"
                 all_nodes.add(node_id)
         if isinstance(genes, int):
             node_labels[genes] = f"Gene_{genes}"
             all_nodes.add(genes)
-        else:
+        elif isinstance(genes, (list, set)):
             for node_id in genes:
                 node_labels[node_id] = f"Gene_{node_id}"
                 all_nodes.add(node_id)
@@ -254,7 +254,11 @@ def index():
         print(f"Warning: Missing positions for nodes: {missing_nodes}")
         # Assign default positions for missing nodes
         for node in missing_nodes:
-            is_dmr = any(node in comp["dmrs"] for comp in results["components"])
+            # Check if node is a DMR by checking if it's less than the minimum gene ID
+            min_gene_id = min(gene_id for comp in results["components"] 
+                              for biclique in comp["bicliques"] 
+                              for gene_id in biclique["genes"])
+            is_dmr = node < min_gene_id
             node_positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
 
     # Create visualizations for each component
