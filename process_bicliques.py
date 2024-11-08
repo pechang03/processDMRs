@@ -63,7 +63,7 @@ def read_bicliques_file(filename: str, max_DMR_id: int, original_graph: nx.Graph
                 continue
                 
             nodes = [int(x) for x in line.split()]
-            dmr_nodes = {n for n in nodes if n < max_DMR_id}
+            dmr_nodes = {n for n in nodes if n < max_DMR_id}  # Ensure consistent ID checks
             gene_nodes = {n for n in nodes if n >= max_DMR_id}
             
             # Add to bicliques list

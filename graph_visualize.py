@@ -54,7 +54,7 @@ def create_biclique_visualization(
     regular_dmr_text = []
     
     for node_id, pos in node_positions.items():
-        if node_id < max(next(iter(bicliques))[0]):  # Is DMR node
+        if node_id in dmr_nodes_set:  # Use the passed DMR node set
             biclique_nums = node_biclique_map.get(node_id, [])
             label = node_labels.get(node_id, f"DMR_{node_id}")
             label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
