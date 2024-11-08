@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import tikzplotlib
 import networkx as nx
 from typing import Dict, List, Set, Tuple
+import plotly.graph_objs as go
+import json
+from plotly.utils import PlotlyJSONEncoder
 
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
@@ -53,6 +56,7 @@ def create_biclique_visualization(
     regular_dmr_y = []
     regular_dmr_text = []
     
+    dmr_nodes_set = set(node_biclique_map.keys())
     for node_id, pos in node_positions.items():
         if node_id in dmr_nodes_set:  # Use the passed DMR node set
             biclique_nums = node_biclique_map.get(node_id, [])
