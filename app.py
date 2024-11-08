@@ -188,6 +188,8 @@ def create_plotly_graph(
 def index():
     try:
         results = process_data()
+    except Exception as e:
+        return render_template("error.html", message=str(e))
 
     # Debugging output to check the contents of results
     # print("Results:", results)
