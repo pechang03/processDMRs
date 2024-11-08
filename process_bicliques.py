@@ -304,7 +304,8 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
             print("  DMRs:")
             for dmr_id in sorted(dmr_nodes):
                 dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
-                area_stat = dmr_row['Area_Stat']
+                area_stat = float(dmr_row['Area_Stat'])  # Ensure it's a float
+                area_stat = float(f"{area_stat:.5g}")  # Round to 5 significant figures
                 dmr_name = dmr_row['DMR_Name']
                 gene_desc = dmr_row['Gene_Description']
                 desc_text = f" - {gene_desc}" if pd.notna(gene_desc) and gene_desc != "N/A" else ""
