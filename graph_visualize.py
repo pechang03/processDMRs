@@ -16,7 +16,8 @@ def create_biclique_visualization(
     node_biclique_map: Dict[int, List[int]],
     dominating_set: Set[int] = None,  # Add dominating set parameter
     dmr_metadata: Dict[str, Dict] = None,
-    gene_metadata: Dict[str, Dict] = None
+    gene_metadata: Dict[str, Dict] = None,
+    gene_id_mapping: Dict[str, int] = None  # Add this parameter
 ) -> str:
     """
     Create interactive Plotly visualization of bicliques with metadata tables.
@@ -192,19 +193,25 @@ def create_biclique_visualization(
             header=dict(values=['DMR', 'Area', 'Bicliques']),
             cells=dict(values=[
                 list(dmr_metadata.keys()),
-                [d['area'] for d in dmr_metadata.values()],
-                [','.join(map(str, d['bicliques'])) for d in dmr_metadata.values()]
+                [d.get('area', 'N/A') for d in dmr_metadata.values()],
+                # Use node_biclique_map to get bicliques for each DMR
+                [','.join(map(str, node_biclique_map.get(int(dmr.split('_')[1])-1, []))) 
+                 for dmr in dmr_metadata.keys()]
             ])
         )
         
-    if gene_metadata:
+    if gene_metadata and gene_id_mapping:
         gene_table = go.Table(
             domain=dict(x=[0.7, 1], y=[0, 1]),
             header=dict(values=['Gene', 'Description', 'Bicliques']),
             cells=dict(values=[
                 list(gene_metadata.keys()),
-                [d['description'] for d in gene_metadata.values()],
-                [','.join(map(str, d['bicliques'])) for d in gene_metadata.values()]
+                [d.get('description', 'N/A') for d in gene_metadata.values()],
+                # Use node_biclique_map and gene_id_mapping to get bicliques
+                [','.join(map(str, node_biclique_map.get(
+                    next((gene_id for gene, gene_id in gene_id_mapping.items() 
+                         if gene.lower() == g.lower()), 'N/A'), [])))
+                 for g in gene_metadata.keys()]
             ])
         )
     
