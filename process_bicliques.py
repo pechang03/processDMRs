@@ -306,7 +306,9 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
                 dmr_row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
                 area_stat = dmr_row['Area_Stat']
                 dmr_name = dmr_row['DMR_Name']
-                print(f"    DMR_{dmr_id + 1} - {dmr_name} (Area: {area_stat})")
+                gene_desc = dmr_row['Gene_Description']
+                desc_text = f" - {gene_desc}" if pd.notna(gene_desc) and gene_desc != "N/A" else ""
+                print(f"    DMR_{dmr_id + 1} - {dmr_name} (Area: {area_stat}){desc_text}")
             
             print("  Genes:")
             for gene_id in sorted(gene_nodes):
@@ -314,9 +316,10 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
                 matching_rows = df[df['Gene_Symbol_Nearby'].str.lower() == gene_name.lower()]
                 if not matching_rows.empty:
                     gene_desc = matching_rows.iloc[0]['Gene_Description']
-                else:
-                    gene_desc = 'N/A'
-                print(f"    {gene_name}: {gene_desc}")
+                    if pd.notna(gene_desc) and gene_desc != "N/A":
+                        print(f"    {gene_name}: {gene_desc}")
+                    else:
+                        print(f"    {gene_name}")
 
     print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
     print("Note: False negative edges indicate hypothesized biclique connections that don't exist in the original graph")
