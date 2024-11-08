@@ -55,7 +55,7 @@ def read_excel_file(filepath):
         raise
 
 
-def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Nearby"):
+def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
     dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
@@ -74,18 +74,17 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
 
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        associated_genes = set()
+        associated_genes = set()  # Initialize a set to collect unique genes
 
         # Add closest gene if it exists
         gene_col = closest_gene_col
         if pd.notna(row[gene_col]) and row[gene_col]:
-            associated_genes.add(str(row[gene_col]))
+            gene_name = str(row[gene_col]).strip().lower()  # Standardize to lowercase
+            associated_genes.add(gene_name)
 
         # Add enhancer genes if they exist
-        if isinstance(row["Processed_Enhancer_Info"], (list, set)):
-            enhancer_genes = {
-                str(g) for g in row["Processed_Enhancer_Info"] if pd.notna(g) and g
-            }
+        if isinstance(row["Processed_Enhancer_Info"], (set, list)):
+            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}  # Standardize to lowercase
             associated_genes.update(enhancer_genes)
 
         # Debugging output for associated genes
@@ -97,8 +96,8 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
                 gene_id = gene_id_mapping[gene]
 
                 # Add gene node if it doesn't exist
-                if not B.has_node(gene_id):
-                    B.add_node(gene_id, bipartite=1)
+                if not B.has_node(gene_id):  # Add gene node if it doesn't exist
+                    B.add_node(gene_id, bipartite=1)  # Mark as gene node
                     # print(f"Added gene node: {gene_id} for gene: {gene}")
 
                 # Ensure all associated genes are processed
@@ -119,9 +118,9 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
         for dmr, gene_id, gene_name in duplicate_edges[:5]:  # Show first 5 duplicates
             print(f"DMR {dmr} -> Gene {gene_id} [{gene_name}]")
 
-    print(f"Total edges added: {edges_added}")
+    print(f"Total edges added: {edges_added}")  # Log total edges added
     print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
-    print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
+    print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")  # Log final graph size
 
     return B
 
@@ -233,7 +232,7 @@ def main():
         all_genes.update(df_home1["Processed_Enhancer_Info"].explode().dropna())
         all_genes.update(df_home1[home1_gene_col].dropna())
 
-        def create_gene_id_mapping(df, dmr_max):
+        def create_gene_id_mapping(df: pd.DataFrame, dmr_max: int) -> Dict[str, int]:
             """Create gene ID mapping using dataset's own max DMR number"""
             all_genes = set()
             gene_col = (
@@ -243,7 +242,8 @@ def main():
             )
 
             # Add genes from gene column
-            all_genes.update(df[gene_col].dropna())
+            gene_symbols = df[gene_col].dropna().str.strip().str.lower()
+            all_genes.update(gene_symbols)
 
             # Add genes from enhancer info
             enhancer_genes = {
