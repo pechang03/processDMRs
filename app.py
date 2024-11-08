@@ -209,12 +209,20 @@ def index():
             else [component["genes"]]
         )
 
-        for node_id in dmrs:
-            node_labels[node_id] = f"DMR_{node_id}"
-            all_nodes.add(node_id)
-        for node_id in genes:
-            node_labels[node_id] = f"Gene_{node_id}"
-            all_nodes.add(node_id)
+        if isinstance(dmrs, int):
+            node_labels[dmrs] = f"DMR_{dmrs}"
+            all_nodes.add(dmrs)
+        else:
+            for node_id in dmrs:
+                node_labels[node_id] = f"DMR_{node_id}"
+                all_nodes.add(node_id)
+        if isinstance(genes, int):
+            node_labels[genes] = f"Gene_{genes}"
+            all_nodes.add(genes)
+        else:
+            for node_id in genes:
+                node_labels[node_id] = f"Gene_{node_id}"
+                all_nodes.add(node_id)
 
         # Add nodes from bicliques
         for biclique in component["bicliques"]:
