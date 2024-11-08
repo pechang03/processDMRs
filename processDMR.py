@@ -23,10 +23,9 @@ from graph_visualize import create_biclique_visualization, create_node_biclique_
 
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
-    try:
-    try:
-        df = pd.read_excel(filepath, header=0)
-        print(f"Column names: {df.columns.tolist()}")
+        try:
+            df = pd.read_excel(filepath, header=0)
+            print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
         # Determine which columns to display based on what's available
         if "Gene_Symbol_Nearby" in df.columns:
@@ -51,9 +50,10 @@ def read_excel_file(filepath):
         error_msg = f"Error: The file {filepath} was not found."
         print(error_msg)
         raise Exception(error_msg)
-    except Exception as e:
-        print(f"Error reading {filepath}: {e}")
-        raise
+    except FileNotFoundError:
+        error_msg = f"Error: The file {filepath} was not found."
+        print(error_msg)
+        raise Exception(error_msg)
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         raise
