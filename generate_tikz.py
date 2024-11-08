@@ -78,17 +78,10 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
     plt.close()
 
 def main():
-    # Read DSS1 data
-    df = read_excel_file("./data/DSS1.xlsx")
-    df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-
-    # Create gene_id_mapping
-    all_genes = set()
-    all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-    all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes if g])
-    gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
-
-    # Create bipartite graph
+    # Use existing function from processDMR.py to read and prepare data
+    df, gene_id_mapping = read_and_prepare_data()
+    
+    # Create bipartite graph using existing function
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 
     # Read bicliques file
