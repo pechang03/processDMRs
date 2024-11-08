@@ -233,17 +233,20 @@ def index():
     bicliques = []
     node_biclique_map = {}
     
-    for idx, component in enumerate(results["components"]):
-        for biclique in component["bicliques"]:
+    for comp_idx, component in enumerate(results["components"]):
+        for biclique_idx, biclique in enumerate(component["bicliques"]):
             dmr_nodes = set(biclique["dmrs"])
             gene_nodes = set(biclique["genes"])
             bicliques.append((dmr_nodes, gene_nodes))
             
-            # Update node_biclique_map
+            # Calculate global biclique index
+            global_biclique_idx = sum(len(c["bicliques"]) for c in results["components"][:comp_idx]) + biclique_idx + 1
+            
+            # Update node_biclique_map for both DMRs and genes
             for node in dmr_nodes | gene_nodes:
                 if node not in node_biclique_map:
                     node_biclique_map[node] = []
-                node_biclique_map[node].append(idx)
+                node_biclique_map[node].append(global_biclique_idx)
 
     # Calculate positions for all nodes
     node_positions = calculate_node_positions(bicliques, node_biclique_map)
