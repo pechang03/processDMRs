@@ -19,7 +19,7 @@ from process_bicliques import (
 )
 
 # Import utility functions from graph_utils
-from graph_visualize import create_biclique_visualization, create_node_biclique_map
+from graph_visualize import create_biclique_visualization
 from graph_layout import calculate_node_positions  # Move import here
 from graph_utils import (
     process_enhancer_info,
