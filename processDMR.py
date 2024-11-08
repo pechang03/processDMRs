@@ -19,6 +19,7 @@ from process_bicliques import (
     print_bicliques_detail,
 )
 from graph_visualize import create_biclique_visualization, create_node_biclique_map
+from typing import Dict
 
 
 def read_excel_file(filepath):
