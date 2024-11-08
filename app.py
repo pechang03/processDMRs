@@ -60,7 +60,7 @@ def process_data():
             "gene_metadata": gene_metadata,
         }
     except Exception as e:
-        return render_template("error.html", message=f"An unexpected error occurred: {e}")
+        return render_template("error.html", message=str(e))
 
 
 def read_and_prepare_data():
