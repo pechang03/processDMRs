@@ -78,29 +78,32 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
     plt.close()
 
 def main():
-    # Use existing function from processDMR.py to read and prepare data
-    df, gene_id_mapping = read_and_prepare_data()
+    # Read and prepare data using processDMR functions
+    df = read_excel_file("./data/DSS1.xlsx")
+    df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
     
-    # Create bipartite graph using existing function
+    # Create gene_id_mapping
+    all_genes = set()
+    all_genes.update(df["Gene_Symbol_Nearby"].dropna())
+    all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+    gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+    
+    # Create bipartite graph
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 
-    # Read bicliques file
+    # Rest of the function remains the same...
     bicliques_result = read_bicliques_file(
         "./data/bipartite_graph_output.txt.biclusters",
         max(df["DMR_No."]),
         bipartite_graph
     )
 
-    # Filter interesting bicliques
     interesting_bicliques = [
         biclique for biclique in bicliques_result['bicliques']
         if classify_biclique(*biclique) == 'interesting'
     ]
 
-    # Create node biclique map using function from graph_visualize
     node_biclique_map = create_node_biclique_map(interesting_bicliques)
-
-    # Calculate node positions
     node_positions = calculate_node_positions(interesting_bicliques, node_biclique_map)
 
     # Create node labels
@@ -116,11 +119,9 @@ def main():
             node_labels[gene_id] = gene_name
 
     # Create metadata for node labels
-    dmr_metadata = {}
     for dmr_id in range(len(df)):
         if dmr_id in node_positions:
             row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
-            area_stat = row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
             gene_desc = row['Gene_Description'] if 'Gene_Description' in df.columns else 'N/A'
             if pd.notna(gene_desc) and gene_desc != "N/A":
                 node_labels[dmr_id] = f"{node_labels[dmr_id]}\n{gene_desc}"
