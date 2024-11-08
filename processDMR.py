@@ -349,7 +349,11 @@ def main():
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
 
-        dmr_nodes_set = {node for node, data in bipartite_graph.nodes(data=True) if data["bipartite"] == 0}
+        dmr_nodes_set = {
+            node
+            for node, data in bipartite_graph.nodes(data=True)
+            if data["bipartite"] == 0
+        }
         dmr_metadata = {}
         for dmr_id in range(len(df)):
             area_stat = (
@@ -380,7 +384,6 @@ def main():
 
         # Create visualization with dominating set
         viz_json = create_biclique_visualization(
-        viz_json = create_biclique_visualization(
             bicliques_result["bicliques"],
             node_labels,
             node_positions,
@@ -392,8 +395,7 @@ def main():
 
         # Save visualization
     with open("biclique_visualization.json", "w") as f:
-        with open("biclique_visualization.json", "w") as f:
-            f.write(viz_json)
+        f.write(viz_json)
 
 
 if __name__ == "__main__":
