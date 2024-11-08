@@ -41,7 +41,7 @@ def read_excel_file(filepath):
                     "DMR_No.",
                     gene_col,
                     "ENCODE_Enhancer_Interaction(BingRen_Lab)",
-                    "Gene_Description",  # Add this line
+                    "Gene_Description",
                 ]
             ].head(10)
         )
@@ -400,4 +400,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-from graph_layout import calculate_node_positions
+# Remove duplicate import statement
