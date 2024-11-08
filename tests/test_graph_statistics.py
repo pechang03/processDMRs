@@ -4,7 +4,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import networkx as nx
-from processDMR import create_bipartite_graph, process_enhancer_info
+from processDMR import create_bipartite_graph
+from graph_utils import process_enhancer_info
 # from rb_domination import greedy_rb_domination
 
 
@@ -46,8 +47,6 @@ class TestGraphStatistics(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":
-    unittest.main()
     def test_graph_structure(self):
         """Test the basic structure of the graph"""
         # Test number of nodes
