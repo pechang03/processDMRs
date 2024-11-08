@@ -24,6 +24,7 @@ from graph_visualize import create_biclique_visualization, create_node_biclique_
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
     try:
+    try:
         df = pd.read_excel(filepath, header=0)
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
@@ -46,6 +47,13 @@ def read_excel_file(filepath):
             ].head(10)
         )
         return df
+    except FileNotFoundError:
+        error_msg = f"Error: The file {filepath} was not found."
+        print(error_msg)
+        raise Exception(error_msg)
+    except Exception as e:
+        print(f"Error reading {filepath}: {e}")
+        raise
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         raise
@@ -54,7 +62,7 @@ def read_excel_file(filepath):
 def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Nearby"):
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
-    dmr_nodes = df["DMR_No."].values
+    dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
 
     # Add DMR nodes with explicit bipartite attribute (0-based indexing)
     for dmr in dmr_nodes:
@@ -69,7 +77,7 @@ def create_bipartite_graph(df, gene_id_mapping, closest_gene_col="Gene_Symbol_Ne
     edges_added = 0
 
     for _, row in df.iterrows():
-        dmr = row["DMR_No."] - 1
+        dmr_id = row["DMR_No."] - 1  # Zero-based indexing
         associated_genes = set()
 
         # Add closest gene if it exists
@@ -345,7 +353,7 @@ def main():
         for gene, gene_id in dss1_gene_mapping.items():
             node_labels[gene_id] = gene
 
-        # Create metadata dictionaries
+        dmr_nodes_set = {node for node, data in bipartite_graph.nodes(data=True) if data["bipartite"] == 0}
         dmr_metadata = {}
         for dmr_id in range(len(df)):
             area_stat = (
@@ -376,6 +384,7 @@ def main():
 
         # Create visualization with dominating set
         viz_json = create_biclique_visualization(
+        viz_json = create_biclique_visualization(
             bicliques_result["bicliques"],
             node_labels,
             node_positions,
@@ -386,6 +395,7 @@ def main():
         )
 
         # Save visualization
+        with open("biclique_visualization.json", "w") as f:
         with open("biclique_visualization.json", "w") as f:
             f.write(viz_json)
 

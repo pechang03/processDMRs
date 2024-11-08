@@ -20,7 +20,7 @@ from process_bicliques import (
 
 # Import utility functions from graph_utils
 from graph_visualize import create_biclique_visualization, create_node_biclique_map
-from graph_layout import calculate_node_positions
+from graph_layout import calculate_node_positions  # Move import here
 from graph_utils import (
     process_enhancer_info,
     # validate_bipartite_graph,
@@ -60,7 +60,7 @@ def process_data():
             "gene_metadata": gene_metadata,
         }
     except Exception as e:
-        return {"error": str(e)}
+        return render_template("error.html", message=f"An unexpected error occurred: {e}")
 
 
 def read_and_prepare_data():
@@ -184,18 +184,20 @@ def create_plotly_graph(
 
 
 @app.route("/")
+@app.route("/")
 def index():
-    results = process_data()  # Ensure this line is present to define 'results'
+    try:
+        results = process_data()
 
     # Debugging output to check the contents of results
     # print("Results:", results)
 
-    if "error" in results:
-        return f"Error: {results['error']}"
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
 
-    # Check if 'dmr_metadata' and other keys are present
-    if "dmr_metadata" not in results or "gene_metadata" not in results:
-        return "Error: Missing metadata in results"
+        required_keys = {"dmr_metadata", "gene_metadata", "components"}
+        if not required_keys.issubset(results.keys()):
+            return render_template("error.html", message="Missing required data in results.")
 
     # Prepare node labels and positions
     node_labels = {}
@@ -248,21 +250,24 @@ def index():
                 if node not in node_positions:
                     raise KeyError(f"Node {node} does not have a calculated position.")
         
-        component["plotly_graph"] = create_biclique_visualization(
-            [
-                (set(biclique["dmrs"]), set(biclique["genes"]))
-                for biclique in component["bicliques"]
-            ],
-            node_labels,
-            node_positions,
-            create_node_biclique_map(
+        # Parse the JSON string into a Python dictionary
+        component["plotly_graph"] = json.loads(
+            create_biclique_visualization(
                 [
                     (set(biclique["dmrs"]), set(biclique["genes"]))
                     for biclique in component["bicliques"]
-                ]
-            ),
-            dmr_metadata=results["dmr_metadata"],
-            gene_metadata=results["gene_metadata"],
+                ],
+                node_labels,
+                node_positions,
+                create_node_biclique_map(
+                    [
+                        (set(biclique["dmrs"]), set(biclique["genes"]))
+                        for biclique in component["bicliques"]
+                    ]
+                ),
+                dmr_metadata=results["dmr_metadata"],
+                gene_metadata=results["gene_metadata"],
+            )
         )
 
     return render_template(
