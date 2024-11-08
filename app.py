@@ -277,6 +277,7 @@ def index():
                 node_biclique_map,
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
+                gene_id_mapping=gene_id_mapping  # Add this parameter
             )
         )
 
