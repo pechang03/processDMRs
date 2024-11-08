@@ -1,9 +1,10 @@
 import unittest
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import networkx as nx
 from processDMR import create_bipartite_graph, process_enhancer_info
-import sys
-sys.path.append("..")
 # from rb_domination import greedy_rb_domination
 
 
