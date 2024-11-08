@@ -105,14 +105,14 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
                 # Ensure all associated genes are processed
                 # print(f"Processing gene: {gene} with ID: {gene_id}")
 
-                # Check if we've seen this edge before
-                edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
-                if edge not in edges_seen:
-                    B.add_edge(dmr_id, gene_id)
-                    edges_seen.add(edge)
-                    edges_added += 1
-                else:
-                    duplicate_edges.append((dmr_id, gene_id, gene))
+            # Check if we've seen this edge before
+            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
+            if edge not in edges_seen:
+                B.add_edge(dmr_id, gene_id)
+                edges_seen.add(edge)
+                edges_added += 1
+            else:
+                duplicate_edges.append((dmr_id, gene_id, gene))
 
     # Report duplicate edges
     if duplicate_edges:
