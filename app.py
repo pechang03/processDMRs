@@ -59,6 +59,7 @@ def process_data():
             "coverage": bicliques_result["coverage"],
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
+            "gene_id_mapping": gene_id_mapping  # Add this line
         }
     except Exception as e:
         return render_template("error.html", message=str(e))
