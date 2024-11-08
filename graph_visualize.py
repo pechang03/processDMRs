@@ -1,10 +1,10 @@
 """
-Functions for visualizing bicliques using Plotly
+Functions for visualizing bicliques using Matplotlib and TikZplotlib
 """
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+import tikzplotlib
+import networkx as nx
 from typing import Dict, List, Set, Tuple
-import json
-from plotly.utils import PlotlyJSONEncoder
 
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
