@@ -311,8 +311,11 @@ def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_map
             print("  Genes:")
             for gene_id in sorted(gene_nodes):
                 gene_name = reverse_gene_mapping.get(gene_id, f"Unknown_{gene_id}")
-                gene_desc = df[df['Gene_Symbol_Nearby'] == gene_name]['Gene_Description'].iloc[0] \
-                           if len(df[df['Gene_Symbol_Nearby'] == gene_name]) > 0 else 'N/A'
+                matching_rows = df[df['Gene_Symbol_Nearby'].str.lower() == gene_name.lower()]
+                if not matching_rows.empty:
+                    gene_desc = matching_rows.iloc[0]['Gene_Description']
+                else:
+                    gene_desc = 'N/A'
                 print(f"    {gene_name}: {gene_desc}")
 
     print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
