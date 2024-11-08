@@ -192,20 +192,12 @@ def index():
     except Exception as e:
         return render_template("error.html", message=str(e))
 
-    # Debugging output to check the contents of results
-    # print("Results:", results)
-
-        if "error" in results:
-            return render_template("error.html", message=results["error"])
-
-        required_keys = {"dmr_metadata", "gene_metadata", "components"}
-        if not required_keys.issubset(results.keys()):
-            return render_template("error.html", message="Missing required data in results.")
-
     # Prepare node labels and positions
     node_labels = {}
+    all_nodes = set()  # Track all nodes that need positions
+
+    # First pass: collect all nodes
     for component in results["components"]:
-        # Check if "dmrs" and "genes" are lists or single integers
         dmrs = (
             component["dmrs"]
             if isinstance(component["dmrs"], (list, set))
@@ -219,41 +211,46 @@ def index():
 
         for node_id in dmrs:
             node_labels[node_id] = f"DMR_{node_id}"
+            all_nodes.add(node_id)
         for node_id in genes:
             node_labels[node_id] = f"Gene_{node_id}"
+            all_nodes.add(node_id)
 
-    # Calculate node positions
-    bicliques = [
-        (
-            set(component["dmrs"]) if isinstance(component["dmrs"], (list, set)) else {component["dmrs"]},
-            set(component["genes"]) if isinstance(component["genes"], (list, set)) else {component["genes"]}
-        )
-        for component in results["components"]
-    ]
-    node_positions = calculate_node_positions(
-        bicliques, create_node_biclique_map(bicliques)
-    )
-    # Add debugging output to check node positions
-    # print("Node Positions:", node_positions)
+        # Add nodes from bicliques
+        for biclique in component["bicliques"]:
+            all_nodes.update(biclique["dmrs"])
+            all_nodes.update(biclique["genes"])
 
-    # Debugging output to check bicliques
-    # print("Bicliques:", bicliques)
-
-    for component in results["components"]:
+    # Create bicliques list with all nodes
+    bicliques = []
+    node_biclique_map = {}
+    
+    for idx, component in enumerate(results["components"]):
         for biclique in component["bicliques"]:
             dmr_nodes = set(biclique["dmrs"])
             gene_nodes = set(biclique["genes"])
+            bicliques.append((dmr_nodes, gene_nodes))
             
-            # Check if node 0 is in the bicliques
-            if 0 in dmr_nodes or 0 in gene_nodes:
-                print("Node 0 is present in the bicliques.")
-            
-            # Check if all nodes have positions
+            # Update node_biclique_map
             for node in dmr_nodes | gene_nodes:
-                if node not in node_positions:
-                    raise KeyError(f"Node {node} does not have a calculated position.")
-        
-        # Parse the JSON string into a Python dictionary
+                if node not in node_biclique_map:
+                    node_biclique_map[node] = []
+                node_biclique_map[node].append(idx)
+
+    # Calculate positions for all nodes
+    node_positions = calculate_node_positions(bicliques, node_biclique_map)
+
+    # Verify all nodes have positions
+    missing_nodes = all_nodes - set(node_positions.keys())
+    if missing_nodes:
+        print(f"Warning: Missing positions for nodes: {missing_nodes}")
+        # Assign default positions for missing nodes
+        for node in missing_nodes:
+            is_dmr = any(node in comp["dmrs"] for comp in results["components"])
+            node_positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
+
+    # Create visualizations for each component
+    for component in results["components"]:
         component["plotly_graph"] = json.loads(
             create_biclique_visualization(
                 [
@@ -262,12 +259,7 @@ def index():
                 ],
                 node_labels,
                 node_positions,
-                create_node_biclique_map(
-                    [
-                        (set(biclique["dmrs"]), set(biclique["genes"]))
-                        for biclique in component["bicliques"]
-                    ]
-                ),
+                node_biclique_map,
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
             )
