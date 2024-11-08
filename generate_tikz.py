@@ -12,6 +12,7 @@ from graph_layout import calculate_node_positions
 from process_bicliques import read_bicliques_file, classify_biclique
 from processDMR import read_excel_file, create_bipartite_graph
 from graph_utils import process_enhancer_info
+from graph_visualize import create_node_biclique_map
 
 def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_positions: Dict[int, Tuple[float, float]], node_labels: Dict[int, str], output_file: str):
     """
@@ -103,18 +104,33 @@ def main():
         if classify_biclique(*biclique) == 'interesting'
     ]
 
+    # Create node biclique map using function from graph_visualize
+    node_biclique_map = create_node_biclique_map(interesting_bicliques)
+
     # Calculate node positions
-    node_positions = calculate_node_positions(interesting_bicliques, {})
+    node_positions = calculate_node_positions(interesting_bicliques, node_biclique_map)
 
     # Create node labels
     node_labels = {}
     for dmr_id in range(len(df)):
-        if dmr_id in node_positions:  # Only add labels for nodes with positions
+        if dmr_id in node_positions:
             node_labels[dmr_id] = f"DMR_{dmr_id+1}"
 
-    for gene, gene_id in gene_id_mapping.items():
-        if gene_id in node_positions:  # Only add labels for nodes with positions
-            node_labels[gene_id] = gene
+    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
+    for gene_id in node_positions:
+        if gene_id >= len(df):  # Gene nodes
+            gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+            node_labels[gene_id] = gene_name
+
+    # Create metadata for node labels
+    dmr_metadata = {}
+    for dmr_id in range(len(df)):
+        if dmr_id in node_positions:
+            row = df[df['DMR_No.'] == dmr_id + 1].iloc[0]
+            area_stat = row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'
+            gene_desc = row['Gene_Description'] if 'Gene_Description' in df.columns else 'N/A'
+            if pd.notna(gene_desc) and gene_desc != "N/A":
+                node_labels[dmr_id] = f"{node_labels[dmr_id]}\n{gene_desc}"
 
     # Create TikZ visualization
     create_tikz_visualization(
