@@ -26,7 +26,7 @@ def read_excel_file(filepath):
     try:
         df = pd.read_excel(filepath, header=0)
         print(f"Column names: {df.columns.tolist()}")
-    print("\nSample of input data:")
+        print("\nSample of input data:")
         # Determine which columns to display based on what's available
         if "Gene_Symbol_Nearby" in df.columns:
             gene_col = "Gene_Symbol_Nearby"
@@ -45,7 +45,7 @@ def read_excel_file(filepath):
                 ]
             ].head(10)
         )
-    return df
+        return df
     except FileNotFoundError:
         error_msg = f"Error: The file {filepath} was not found."
         print(error_msg)
