@@ -2,7 +2,7 @@ import pandas as pd
 import networkx as nx
 
 
-def process_enhancer_info(enhancer_str):
+def process_enhancer_info(enhancer_str: str) -> set:
     """
     Process the enhancer information from the ENCODE data.
 
@@ -15,7 +15,7 @@ def process_enhancer_info(enhancer_str):
     if pd.isna(enhancer_str) or enhancer_str == ".":
         return []
     genes = enhancer_str.split(";")
-    processed_genes = [gene.split("/")[0] for gene in genes]
+    processed_genes = {gene.split("/")[0].strip().lower() for gene in genes if gene}
     return processed_genes
 
 
