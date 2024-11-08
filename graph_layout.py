@@ -20,44 +20,41 @@ def calculate_node_positions(
     """
     positions = {}
     
-    # Get all DMR and gene nodes from bicliques
+    # Get all unique nodes from bicliques
     all_dmr_nodes = set()
     all_gene_nodes = set()
     for dmr_nodes, gene_nodes in bicliques:
         all_dmr_nodes.update(dmr_nodes)
         all_gene_nodes.update(gene_nodes)
     
-    # Sort nodes by their smallest biclique number
-    sorted_dmrs = sorted(list(all_dmr_nodes))
-    sorted_genes = sorted(list(all_gene_nodes))
-    
-    # Calculate spacing based on number of nodes
-    max_nodes = max(len(sorted_dmrs), len(sorted_genes))
-    
-    if not bicliques:
+    # If no nodes, return empty dict
+    if not all_dmr_nodes and not all_gene_nodes:
         return {}
     
-    # For single biclique, use simple positioning
-    if len(bicliques) == 1:
-        dmr_nodes, gene_nodes = bicliques[0]
-        return position_single_biclique(dmr_nodes, gene_nodes)
+    # Calculate y-positions based on total number of nodes
+    total_nodes = max(len(all_dmr_nodes), len(all_gene_nodes))
+    if total_nodes == 0:
+        return {}
     
-    # For multiple bicliques, combine all nodes
-    all_dmr_nodes = set()
-    all_gene_nodes = set()
-    for dmr_nodes, gene_nodes in bicliques:
-        all_dmr_nodes.update(dmr_nodes)
-        all_gene_nodes.update(gene_nodes)
+    spacing = 1.0 / (total_nodes + 1) if total_nodes > 1 else 0.5
     
-    # Sort nodes by their smallest biclique number
-    sorted_dmrs = sorted(list(all_dmr_nodes))
-    sorted_genes = sorted(list(all_gene_nodes))
+    # Position DMR nodes on the left (x=0)
+    for i, dmr in enumerate(sorted(all_dmr_nodes)):
+        y_pos = spacing * (i + 1)
+        positions[dmr] = (0, y_pos)
     
-    # Ensure all nodes are included in the positions
-    positions = position_nodes_evenly(set(sorted_dmrs), set(sorted_genes))
-    for node in all_dmr_nodes | all_gene_nodes:
+    # Position gene nodes on the right (x=1)
+    for i, gene in enumerate(sorted(all_gene_nodes)):
+        y_pos = spacing * (i + 1)
+        positions[gene] = (1, y_pos)
+    
+    # Ensure all nodes in node_biclique_map have positions
+    for node in node_biclique_map:
         if node not in positions:
-            positions[node] = (0, 0)  # Default position if not calculated
+            if node in all_dmr_nodes:
+                positions[node] = (0, 0.5)  # Default position for DMR nodes
+            else:
+                positions[node] = (1, 0.5)  # Default position for gene nodes
     
     return positions
 def position_single_biclique(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
