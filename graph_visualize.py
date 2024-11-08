@@ -130,16 +130,25 @@ def create_biclique_visualization(
     for node_id, pos in node_positions.items():
         if node_id >= min(next(iter(bicliques))[1]):  # Is gene node
             biclique_nums = node_biclique_map.get(node_id, [])
-            label = node_labels.get(node_id, f"Gene_{node_id}")
-            label = f"{label}<br>Bicliques: {', '.join(map(str, biclique_nums))}"
+            base_label = node_labels.get(node_id, f"Gene_{node_id}")
             
-            if len(biclique_nums) > 1:  # Split gene
-                split_gene_x.append(pos[0])
-                split_gene_y.append(pos[1])
-                split_gene_text.append(label)
+            if len(biclique_nums) > 1:  # Split gene - create multiple copies
+                spacing = 0.1  # Vertical spacing between copies
+                base_y = pos[1]
+                
+                for idx, biclique_num in enumerate(biclique_nums):
+                    # Adjust y position for each copy
+                    offset = (idx - (len(biclique_nums) - 1) / 2) * spacing
+                    new_y = base_y + offset
+                    
+                    split_gene_x.append(pos[0])
+                    split_gene_y.append(new_y)
+                    label = f"{base_label}<br>Biclique: {biclique_num}<br>(Split {idx+1}/{len(biclique_nums)})"
+                    split_gene_text.append(label)
             else:  # Regular gene
                 regular_gene_x.append(pos[0])
                 regular_gene_y.append(pos[1])
+                label = f"{base_label}<br>Biclique: {biclique_nums[0]}" if biclique_nums else base_label
                 regular_gene_text.append(label)
     
     # Add regular gene nodes
@@ -157,23 +166,24 @@ def create_biclique_visualization(
     )
     
     # Add split gene nodes with different color and style
-    node_traces.append(
-        go.Scatter(
-            x=split_gene_x,
-            y=split_gene_y,
-            mode='markers+text',
-            marker=dict(
-                size=12,
-                color='purple',
-                line=dict(color='black', width=1),
-                symbol='diamond'
-            ),
-            text=split_gene_text,
-            textposition='middle right',
-            hoverinfo='text',
-            name='Split Genes'
+    if split_gene_x:  # Only add if there are split genes
+        node_traces.append(
+            go.Scatter(
+                x=split_gene_x,
+                y=split_gene_y,
+                mode='markers+text',
+                marker=dict(
+                    size=12,
+                    color='purple',
+                    line=dict(color='black', width=1),
+                    symbol='diamond'
+                ),
+                text=split_gene_text,
+                textposition='middle right',
+                hoverinfo='text',
+                name='Split Genes'
+            )
         )
-    )
     
     # Add metadata tables
     if dmr_metadata:
