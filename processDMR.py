@@ -94,12 +94,17 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
 
         # Add edges and gene nodes
         for gene in associated_genes:
-            if gene in gene_id_mapping:
+            gene = gene.lower()  # Ensure lowercase standardization
+            # Assign a unique ID if gene is not in gene_id_mapping
+            if gene not in gene_id_mapping:
+                gene_id = max(gene_id_mapping.values(), default=len(df) - 1) + 1
+                gene_id_mapping[gene] = gene_id
+            else:
                 gene_id = gene_id_mapping[gene]
 
-                # Add gene node if it doesn't exist
-                if not B.has_node(gene_id):  # Add gene node if it doesn't exist
-                    B.add_node(gene_id, bipartite=1)  # Mark as gene node
+            # Add gene node if it doesn't exist
+            if not B.has_node(gene_id):
+                B.add_node(gene_id, bipartite=1)  # Mark as gene node
                     # print(f"Added gene node: {gene_id} for gene: {gene}")
 
                 # Ensure all associated genes are processed
