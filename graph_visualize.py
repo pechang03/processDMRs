@@ -29,6 +29,19 @@ def create_biclique_visualization(
         dmr_metadata: Dictionary of DMR metadata for tables
         gene_metadata: Dictionary of gene metadata for tables
     """
+    # First ensure all nodes have positions
+    all_nodes = set()
+    for dmr_nodes, gene_nodes in bicliques:
+        all_nodes.update(dmr_nodes)
+        all_nodes.update(gene_nodes)
+    
+    # Add default positions for any missing nodes
+    for node in all_nodes:
+        if node not in node_positions:
+            # Determine if node is DMR or gene based on bicliques structure
+            is_dmr = any(node in dmr_nodes for dmr_nodes, _ in bicliques)
+            node_positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
+    
     # Create main visualization as before
     edge_traces = []
     node_traces = []
