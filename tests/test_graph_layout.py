@@ -35,9 +35,10 @@ class TestCalculateNodePositions(unittest.TestCase):
         )
 
     def test_gene_split_bicliques(self):
+        """Test positioning of split genes (genes appearing in multiple bicliques)"""
         bicliques = [
             ({1, 2}, {5, 6}),  # First biclique
-            ({3, 4}, {6, 7, 8})  # Second biclique
+            ({3, 4}, {6, 7, 8})  # Second biclique, gene 6 appears in both
         ]
         node_biclique_map = {
             1: [0], 2: [0],  # DMRs in first biclique
@@ -52,36 +53,23 @@ class TestCalculateNodePositions(unittest.TestCase):
         # Test basic position requirements
         self.assertEqual(len(positions), 8)  # Total 8 nodes
         
-        # Check x positions and collect y positions by biclique
-        first_biclique_dmr_y = []
-        second_biclique_dmr_y = []
-        first_biclique_gene_y = []
-        second_biclique_gene_y = []
+        # Check x positions
+        for node in [1, 2, 3, 4]:  # DMR nodes
+            self.assertEqual(positions[node][0], 0)
         
-        for node, (x, y) in positions.items():
-            if node <= 4:  # DMR nodes
-                self.assertEqual(x, 0)
-                if node in {1, 2}:
-                    first_biclique_dmr_y.append(y)
-                else:
-                    second_biclique_dmr_y.append(y)
-            else:  # Gene nodes
-                self.assertEqual(x, 1)
-                if node in {5, 6}:
-                    first_biclique_gene_y.append(y)
-                if node in {6, 7, 8}:
-                    second_biclique_gene_y.append(y)
-        
-        # Split gene (node 6) should be positioned between its bicliques
-        split_gene_x, split_gene_y = positions[6]
-        
-        # Verify x-coordinate for split gene
-        self.assertEqual(split_gene_x, 1, "Split gene should be positioned on the right side (x=1)")
+        for node in [5, 6, 7, 8]:  # Gene nodes
+            self.assertEqual(positions[node][0], 1)
         
         # Verify y-coordinate relationships
+        # Split gene (node 6) should be positioned between its connected bicliques
+        split_gene_y = positions[6][1]
+        first_biclique_y = [positions[5][1]]  # y-coords of other genes in first biclique
+        second_biclique_y = [positions[7][1], positions[8][1]]  # y-coords of other genes in second biclique
+        
+        # Split gene should be positioned between its connected bicliques
         self.assertTrue(
-            min(first_biclique_gene_y) <= split_gene_y <= max(second_biclique_gene_y) or
-            min(second_biclique_gene_y) <= split_gene_y <= max(first_biclique_gene_y),
+            min(first_biclique_y) <= split_gene_y <= max(second_biclique_y) or
+            min(second_biclique_y) <= split_gene_y <= max(first_biclique_y),
             "Split gene should be positioned between its connected bicliques"
         )
 
