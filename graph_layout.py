@@ -45,10 +45,14 @@ def calculate_node_positions(
         y_pos = spacing * (i + 1)
         positions[dmr] = (0, y_pos)
     
-    # Position gene nodes on the right (x=1)
+    # Position gene nodes on the right (x=1), with split nodes slightly offset
     for i, gene in enumerate(sorted(all_gene_nodes)):
         y_pos = spacing * (i + 1)
-        positions[gene] = (1, y_pos)
+        # Check if this is a split vertex (appears in multiple bicliques)
+        if len(node_biclique_map.get(gene, [])) > 1:
+            positions[gene] = (1.1, y_pos)  # Slightly offset to the right
+        else:
+            positions[gene] = (1, y_pos)
     
     
     return positions
