@@ -57,8 +57,11 @@ class TestCalculateNodePositions(unittest.TestCase):
         for node in [1, 2, 3, 4]:  # DMR nodes
             self.assertEqual(positions[node][0], 0)
         
-        for node in [5, 6, 7, 8]:  # Gene nodes
+        for node in [5, 7, 8]:  # Regular gene nodes
             self.assertEqual(positions[node][0], 1)
+    
+        # Split gene should be offset
+        self.assertEqual(positions[6][0], 1.1)  # Changed to expect x=1.1 for split gene
         
         # Verify y-coordinate relationships
         # Split gene (node 6) should be positioned between its connected bicliques
