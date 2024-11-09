@@ -29,12 +29,6 @@ def calculate_node_positions(
         all_dmr_nodes.update(dmr_nodes)
         all_gene_nodes.update(gene_nodes)
     
-    # Add any additional nodes from node_biclique_map
-    for node in node_biclique_map:
-        if node < min(all_gene_nodes):  # If node ID is less than minimum gene ID, it's a DMR
-            all_dmr_nodes.add(node)
-        else:
-            all_gene_nodes.add(node)
     
     # Calculate y-positions based on total number of nodes
     total_dmrs = len(all_dmr_nodes)
@@ -44,7 +38,7 @@ def calculate_node_positions(
     if max_nodes == 0:
         return {}
     
-    spacing = 1.0 / (max_nodes + 1) if max_nodes > 1 else 0.5
+    spacing = 1.0 / (max_nodes + 1)
     
     # Position DMR nodes on the left (x=0)
     for i, dmr in enumerate(sorted(all_dmr_nodes)):
@@ -56,12 +50,6 @@ def calculate_node_positions(
         y_pos = spacing * (i + 1)
         positions[gene] = (1, y_pos)
     
-    # Add default positions for any nodes in node_biclique_map that weren't positioned
-    min_gene_id = min(all_gene_nodes) if all_gene_nodes else float('inf')
-    for node in node_biclique_map:
-        if node not in positions:
-            is_dmr = node < min_gene_id
-            positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
     
     return positions
 def position_single_biclique(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
