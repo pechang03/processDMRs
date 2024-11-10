@@ -32,24 +32,46 @@ def calculate_node_positions(
     all_dmr_nodes = set()
     all_gene_nodes = set()
 
-    # Collect all DMR and gene nodes from bicliques
+    # Determine node types based on bicliques
+    all_dmr_nodes = set()
+    all_gene_nodes = set()
+    
+    # First pass: collect nodes from bicliques
     for dmr_nodes, gene_nodes in bicliques:
         all_dmr_nodes.update(dmr_nodes)
         all_gene_nodes.update(gene_nodes)
-
-    # Any remaining nodes get classified based on first biclique if available
+    
+    # Second pass: handle any nodes that appear in both sets (prioritize DMR assignment)
+    overlap = all_dmr_nodes & all_gene_nodes
+    if overlap:
+        all_gene_nodes -= overlap  # Remove overlapping nodes from genes
+    
+    # Third pass: handle remaining nodes based on node_biclique_map patterns
     remaining_nodes = all_nodes - (all_dmr_nodes | all_gene_nodes)
-    if remaining_nodes and bicliques:
-        first_dmr_nodes, first_gene_nodes = bicliques[0]
-        min_gene_id = min(first_gene_nodes) if first_gene_nodes else float('inf')
-        for node in remaining_nodes:
-            if node < min_gene_id:
+    for node in remaining_nodes:
+        # Check biclique patterns to determine if it's more likely a DMR or gene
+        appearances = node_biclique_map.get(node, [])
+        if appearances:
+            # Look at the nodes it appears with in bicliques
+            is_dmr = False
+            for biclique_idx in appearances:
+                if biclique_idx < len(bicliques):
+                    dmr_set, gene_set = bicliques[biclique_idx]
+                    if node in dmr_set:
+                        is_dmr = True
+                        break
+                else:
+                    continue
+            if is_dmr:
                 all_dmr_nodes.add(node)
             else:
                 all_gene_nodes.add(node)
-    else:
-        # If no bicliques, treat remaining nodes as DMRs
-        all_dmr_nodes.update(remaining_nodes)
+        else:
+            # If no pattern available, use ID-based assignment as fallback
+            if node < min(all_gene_nodes, default=float('inf')):
+                all_dmr_nodes.add(node)
+            else:
+                all_gene_nodes.add(node)
     
     
     if not all_nodes:
