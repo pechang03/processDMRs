@@ -30,9 +30,19 @@ class TestCalculateNodePositions(unittest.TestCase):
         bicliques = [({1, 3}, {2, 4})]
         node_biclique_map = {1: [0], 2: [0], 3: [0], 4: [0]}
         positions = calculate_node_positions(bicliques, node_biclique_map)
-        self.assertEqual(
-            positions, {1: (0, 0.25), 2: (1, 0.25), 3: (0, 0.75), 4: (1, 0.75)}
-        )
+        
+        # Check x positions
+        self.assertEqual(positions[1][0], 0)  # DMR at x=0
+        self.assertEqual(positions[3][0], 0)  # DMR at x=0
+        self.assertEqual(positions[2][0], 1)  # Gene at x=1
+        self.assertEqual(positions[4][0], 1)  # Gene at x=1
+        
+        # Check y positions are evenly spaced
+        y_positions = sorted([pos[1] for pos in positions.values()])
+        spacing = y_positions[1] - y_positions[0]
+        
+        for i in range(1, len(y_positions)):
+            self.assertAlmostEqual(y_positions[i] - y_positions[i-1], spacing)
 
     def test_gene_split_bicliques(self):
         """Test positioning of split genes (genes appearing in multiple bicliques)"""

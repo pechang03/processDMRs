@@ -30,29 +30,34 @@ def calculate_node_positions(
         all_gene_nodes.update(gene_nodes)
     
     
-    # Calculate y-positions based on total number of nodes
-    total_dmrs = len(all_dmr_nodes)
-    total_genes = len(all_gene_nodes)
-    max_nodes = max(total_dmrs, total_genes)
-    
-    if max_nodes == 0:
+    if not all_dmr_nodes and not all_gene_nodes:
         return {}
+
+    # Identify split genes (genes that appear in multiple bicliques)
+    split_genes = {gene for gene in all_gene_nodes 
+                  if len(node_biclique_map.get(gene, [])) > 1}
+    regular_genes = all_gene_nodes - split_genes
     
-    spacing = 1.0 / (max_nodes + 1)
+    # Calculate y-spacing based on total number of nodes
+    total_nodes = len(all_dmr_nodes) + len(regular_genes) + sum(len(node_biclique_map[g]) for g in split_genes)
+    spacing = 1.0 / (total_nodes + 1)
     
-    # Position DMR nodes on the left (x=0)
-    for i, dmr in enumerate(sorted(all_dmr_nodes)):
-        y_pos = spacing * (i + 1)
-        positions[dmr] = (0, y_pos)
+    # Position DMR nodes at x=0
+    current_y = spacing
+    for dmr in sorted(all_dmr_nodes):
+        positions[dmr] = (0, current_y)
+        current_y += spacing
     
-    # Position gene nodes on the right (x=1), with split nodes slightly offset
-    for i, gene in enumerate(sorted(all_gene_nodes)):
-        y_pos = spacing * (i + 1)
-        # Check if this is a split vertex (appears in multiple bicliques)
-        if len(node_biclique_map.get(gene, [])) > 1:
-            positions[gene] = (1.1, y_pos)  # Slightly offset to the right
-        else:
-            positions[gene] = (1, y_pos)
+    # Position regular genes at x=1
+    for gene in sorted(regular_genes):
+        positions[gene] = (1, current_y)
+        current_y += spacing
+    
+    # Position split genes at x=1.1, with one position per biclique appearance
+    for gene in sorted(split_genes):
+        for _ in range(len(node_biclique_map[gene])):
+            positions[gene] = (1.1, current_y)
+            current_y += spacing
     
     
     return positions
