@@ -33,6 +33,14 @@ def calculate_node_positions(
     if not all_dmr_nodes and not all_gene_nodes:
         return {}
 
+    # Special case for single biclique with one DMR and one gene
+    if len(all_dmr_nodes) == 1 and len(all_gene_nodes) == 1:
+        dmr = next(iter(all_dmr_nodes))
+        gene = next(iter(all_gene_nodes))
+        positions[dmr] = (0, 0.5)
+        positions[gene] = (1, 0.5)
+        return positions
+
     # Identify split genes (genes that appear in multiple bicliques)
     split_genes = {gene for gene in all_gene_nodes 
                   if len(node_biclique_map.get(gene, [])) > 1}
