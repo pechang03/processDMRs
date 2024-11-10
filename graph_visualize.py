@@ -236,11 +236,18 @@ def create_biclique_visualization(
         )
     )
     
+    # Create the data list based on what's available
+    plot_data = edge_traces + node_traces
+    if dmr_metadata:
+        plot_data.append(dmr_table)
+    if gene_metadata and gene_id_mapping:
+        plot_data.append(gene_table)
+
     fig = go.Figure(
-        data=edge_traces + node_traces + [dmr_table, gene_table] if dmr_metadata else edge_traces + node_traces,
+        data=plot_data,
         layout=layout
     )
-    
+
     return json.dumps(fig, cls=PlotlyJSONEncoder)
 
 def create_node_biclique_map(bicliques: List[Tuple[Set[int], Set[int]]]) -> Dict[int, List[int]]:
