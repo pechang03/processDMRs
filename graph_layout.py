@@ -64,9 +64,14 @@ def calculate_node_positions(
                   if len(node_biclique_map.get(gene, [])) > 1}
     regular_genes = all_gene_nodes - split_genes
     
-    # Calculate y-spacing based on total number of nodes
-    total_nodes = len(all_dmr_nodes) + len(regular_genes) + sum(len(node_biclique_map[g]) for g in split_genes)
-    spacing = 1.0 / (total_nodes + 1)
+    # Calculate total vertical positions needed
+    total_positions = (
+        len(all_dmr_nodes) +  # One position per DMR
+        len(regular_genes) +   # One position per regular gene
+        sum(len(node_biclique_map.get(g, [])) for g in split_genes)  # Multiple positions per split gene
+    )
+    
+    spacing = 1.0 / (total_positions + 1)
     
     # Position DMR nodes at x=0
     current_y = spacing
@@ -79,20 +84,28 @@ def calculate_node_positions(
         positions[gene] = (1, current_y)
         current_y += spacing
     
-    # Position split genes at x=1.1
+    # Position split genes - give each appearance its own y-position
     for gene in sorted(split_genes):
-        appearances = len(node_biclique_map.get(gene, [1]))  # Default to 1 if not in map
-        positions[gene] = (1.1, current_y)  # Use the first position
-        current_y += spacing * appearances
+        appearances = len(node_biclique_map.get(gene, []))
+        if appearances > 0:  # Only process if we know the appearances
+            base_y = current_y
+            positions[gene] = (1.1, base_y)  # Main position
+            current_y += spacing * appearances  # Move current_y past all positions for this gene
+        else:
+            # Fallback for split genes with unknown appearances
+            positions[gene] = (1.1, current_y)
+            current_y += spacing
     
     
-    # Verify all nodes have positions
+    # Final verification - assign default positions to any missing nodes
     missing_nodes = all_nodes - set(positions.keys())
     if missing_nodes:
-        # Assign default positions to any remaining nodes
-        default_x = 0.5
+        print(f"Assigning default positions to nodes: {missing_nodes}")
         for node in missing_nodes:
-            positions[node] = (default_x, current_y)
+            # Determine if it's likely a DMR or gene based on ID
+            is_dmr = node < min_gene_id if bicliques else True
+            x_pos = 0 if is_dmr else 1
+            positions[node] = (x_pos, current_y)
             current_y += spacing
     
     return positions
