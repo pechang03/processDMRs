@@ -289,11 +289,11 @@ def index():
         
         component["plotly_graph"] = json.loads(
             create_biclique_visualization(
-                component_bicliques,
-                node_labels,
-                node_positions,
-                component_node_biclique_map,  # Add this parameter
-                split_positions=split_positions,  # Add this parameter
+                bicliques=component_bicliques,
+                node_labels=node_labels,
+                node_positions=node_positions,
+                node_biclique_map=component_node_biclique_map,
+                split_positions=split_positions,
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
                 gene_id_mapping=results["gene_id_mapping"]
