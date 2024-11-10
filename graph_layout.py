@@ -28,18 +28,28 @@ def calculate_node_positions(
         all_nodes.update(dmr_nodes)
         all_nodes.update(gene_nodes)
     
-    # Determine node types based on first biclique (DMRs are typically lower numbered)
-    if bicliques:
+    # Determine node types based on bicliques
+    all_dmr_nodes = set()
+    all_gene_nodes = set()
+
+    # Collect all DMR and gene nodes from bicliques
+    for dmr_nodes, gene_nodes in bicliques:
+        all_dmr_nodes.update(dmr_nodes)
+        all_gene_nodes.update(gene_nodes)
+
+    # Any remaining nodes get classified based on first biclique if available
+    remaining_nodes = all_nodes - (all_dmr_nodes | all_gene_nodes)
+    if remaining_nodes and bicliques:
         first_dmr_nodes, first_gene_nodes = bicliques[0]
         min_gene_id = min(first_gene_nodes) if first_gene_nodes else float('inf')
-        
-        # Separate nodes into DMRs and genes
-        all_dmr_nodes = {n for n in all_nodes if n < min_gene_id}
-        all_gene_nodes = {n for n in all_nodes if n >= min_gene_id}
+        for node in remaining_nodes:
+            if node < min_gene_id:
+                all_dmr_nodes.add(node)
+            else:
+                all_gene_nodes.add(node)
     else:
-        # If no bicliques, treat all nodes as DMRs (shouldn't happen in practice)
-        all_dmr_nodes = all_nodes
-        all_gene_nodes = set()
+        # If no bicliques, treat remaining nodes as DMRs
+        all_dmr_nodes.update(remaining_nodes)
     
     
     if not all_nodes:
@@ -102,8 +112,7 @@ def calculate_node_positions(
     if missing_nodes:
         print(f"Assigning default positions to nodes: {missing_nodes}")
         for node in missing_nodes:
-            # Determine if it's likely a DMR or gene based on ID
-            is_dmr = node < min_gene_id if bicliques else True
+            is_dmr = node in all_dmr_nodes
             x_pos = 0 if is_dmr else 1
             positions[node] = (x_pos, current_y)
             current_y += spacing
