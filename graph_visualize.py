@@ -120,6 +120,19 @@ def create_biclique_visualization(
         )
     )
     
+    # Calculate split positions if not provided
+    if split_positions is None:
+        split_positions = {}
+        for node, biclique_list in node_biclique_map.items():
+            if len(biclique_list) > 1:
+                base_pos = node_positions[node]
+                # Create positions for each appearance, adjusting y-coordinate
+                spacing = 0.1
+                split_positions[node] = [
+                    (1.1, base_pos[1] + idx * spacing)
+                    for idx in range(len(biclique_list))
+                ]
+    
     # Create gene nodes (split and non-split separately)
     regular_gene_x = []
     regular_gene_y = []
