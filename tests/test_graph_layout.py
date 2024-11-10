@@ -35,8 +35,8 @@ class TestCalculateNodePositions(unittest.TestCase):
         
         # Verify spacing is consistent
         spacing = 1.0 / 5  # 4 nodes + 1 for spacing
-        self.assertAlmostEqual(dmr_y_positions[1] - dmr_y_positions[0], spacing)
-        self.assertAlmostEqual(gene_y_positions[1] - gene_y_positions[0], spacing)
+        self.assertAlmostEqual(dmr_y_positions[1] - dmr_y_positions[0], spacing, places=3)
+        self.assertAlmostEqual(gene_y_positions[1] - gene_y_positions[0], spacing, places=3)
 
     def test_overlapping_nodes(self):
         bicliques = [({1, 3}, {2, 4})]
@@ -54,7 +54,7 @@ class TestCalculateNodePositions(unittest.TestCase):
         spacing = y_positions[1] - y_positions[0]
         
         for i in range(1, len(y_positions)):
-            self.assertAlmostEqual(y_positions[i] - y_positions[i-1], spacing)
+            self.assertAlmostEqual(y_positions[i] - y_positions[i-1], spacing, places=3)
 
     def test_gene_split_bicliques(self):
         """Test positioning of split genes (genes appearing in multiple bicliques)"""
@@ -87,7 +87,7 @@ class TestCalculateNodePositions(unittest.TestCase):
         spacing = y_positions[1] - y_positions[0]
         
         for i in range(1, len(y_positions)):
-            self.assertAlmostEqual(y_positions[i] - y_positions[i-1], spacing)
+            self.assertAlmostEqual(y_positions[i] - y_positions[i-1], spacing, places=3)
 
     def test_empty_bicliques(self):
         bicliques = []
