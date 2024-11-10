@@ -13,12 +13,12 @@ def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
-    split_positions: Dict[int, List[Tuple[float, float]]],  # Add split positions parameter
     node_biclique_map: Dict[int, List[int]],
-    dominating_set: Set[int] = None,  # Add dominating set parameter
+    split_positions: Dict[int, List[Tuple[float, float]]] = None,  # Make optional
+    dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
-    gene_id_mapping: Dict[str, int] = None  # Add this parameter
+    gene_id_mapping: Dict[str, int] = None
 ) -> str:
     """
     Create interactive Plotly visualization of bicliques with metadata tables.

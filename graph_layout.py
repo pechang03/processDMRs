@@ -62,15 +62,10 @@ def calculate_node_positions(
         current_y += spacing
     
     # Position split genes at x=1.1, with one position per biclique appearance
-    split_positions = {}  # New dictionary for split gene positions
     for gene in sorted(split_genes):
-        split_positions[gene] = []  # Initialize list of positions for this gene
         for _ in range(len(node_biclique_map[gene])):
-            split_positions[gene].append((1.1, current_y))
+            positions[gene] = (1.1, current_y)  # Store the first position
             current_y += spacing
-    
-    # Combine regular positions with first position of split genes
-    positions.update({gene: positions[0] for gene, positions in split_positions.items()})
     
     
     return positions
