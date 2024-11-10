@@ -13,6 +13,7 @@ def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
+    split_positions: Dict[int, List[Tuple[float, float]]],  # Add split positions parameter
     node_biclique_map: Dict[int, List[int]],
     dominating_set: Set[int] = None,  # Add dominating set parameter
     dmr_metadata: Dict[str, Dict] = None,
@@ -133,18 +134,11 @@ def create_biclique_visualization(
             biclique_nums = node_biclique_map.get(node_id, [])
             base_label = node_labels.get(node_id, f"Gene_{node_id}")
             
-            if len(biclique_nums) > 1:  # Split gene - create multiple copies
-                spacing = 0.1  # Vertical spacing between copies
-                base_y = pos[1]
-                
-                for idx, biclique_num in enumerate(biclique_nums):
-                    # Adjust y position for each copy
-                    offset = (idx - (len(biclique_nums) - 1) / 2) * spacing
-                    new_y = base_y + offset
-                    
-                    split_gene_x.append(pos[0])
-                    split_gene_y.append(new_y)
-                    label = f"{base_label}<br>Biclique: {biclique_num}<br>(Split {idx+1}/{len(biclique_nums)})"
+            if len(biclique_nums) > 1:  # Split gene - use split positions
+                for idx, split_pos in enumerate(split_positions.get(node_id, [])):
+                    split_gene_x.append(split_pos[0])
+                    split_gene_y.append(split_pos[1])
+                    label = f"{base_label}<br>Biclique: {biclique_nums[idx]}<br>(Split {idx+1}/{len(biclique_nums)})"
                     split_gene_text.append(label)
             else:  # Regular gene
                 regular_gene_x.append(pos[0])
