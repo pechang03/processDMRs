@@ -267,18 +267,36 @@ def index():
 
     # Create visualizations for each component
     for component in results["components"]:
+        # Create bicliques list for this component
+        component_bicliques = [
+            (set(biclique["dmrs"]), set(biclique["genes"]))
+            for biclique in component["bicliques"]
+        ]
+        
+        # Create node_biclique_map for this component
+        component_node_biclique_map = {}
+        for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(component_bicliques):
+            for node in dmr_nodes | gene_nodes:
+                if node not in component_node_biclique_map:
+                    component_node_biclique_map[node] = []
+                component_node_biclique_map[node].append(biclique_idx)
+        
+        # Calculate split positions for this component
+        split_positions = {}
+        for node, biclique_list in component_node_biclique_map.items():
+            if len(biclique_list) > 1:  # This is a split node
+                split_positions[node] = [(1.1, pos[1]) for pos in [node_positions[node]] * len(biclique_list)]
+        
         component["plotly_graph"] = json.loads(
             create_biclique_visualization(
-                [
-                    (set(biclique["dmrs"]), set(biclique["genes"]))
-                    for biclique in component["bicliques"]
-                ],
+                component_bicliques,
                 node_labels,
                 node_positions,
-                node_biclique_map,
+                component_node_biclique_map,  # Add this parameter
+                split_positions=split_positions,  # Add this parameter
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
-                gene_id_mapping=results["gene_id_mapping"]  # Use it from results
+                gene_id_mapping=results["gene_id_mapping"]
             )
         )
 
