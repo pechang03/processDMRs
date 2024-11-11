@@ -2,11 +2,16 @@ import unittest
 import random
 import pandas as pd
 import networkx as nx
-from processDMR import create_bipartite_graph, process_enhancer_info
+import os
 import sys
 
-sys.path.append("..")
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Now import the modules
+from processDMR import create_bipartite_graph, process_enhancer_info
 from rb_domination import greedy_rb_domination
+from visualization.core import create_biclique_visualization
 
 
 class TestBipartiteGraph(unittest.TestCase):
