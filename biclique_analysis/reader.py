@@ -12,7 +12,8 @@ def read_bicliques_file(
     bicliques = []
     dmr_coverage = set()
     gene_coverage = set()
-    edge_distribution = {}
+    edge_coverage = {'single': 0, 'multiple': 0, 'uncovered': 0, 'total': original_graph.number_of_edges()}
+    covered_edges = {}
 
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -71,17 +72,25 @@ def _calculate_coverage(bicliques: List[Tuple[Set[int], Set[int]]], original_gra
     for dmr_nodes, gene_nodes in bicliques:
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
+        
+        # Track edge coverage
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                if original_graph.has_edge(dmr, gene):
+                    edge = tuple(sorted([dmr, gene]))
+                    covered_edges[edge] = covered_edges.get(edge, 0) + 1
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
-            "total": original_graph.number_of_nodes(),
+            "total": len([n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0]),
             "percentage": len(dmr_coverage) / original_graph.number_of_nodes()
         },
         "genes": {
             "covered": len(gene_coverage),
-            "total": original_graph.number_of_nodes(),
+            "total": len([n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1]),
             "percentage": len(gene_coverage) / original_graph.number_of_nodes()
-        }
+        },
+        "edges": edge_coverage  # Add edge coverage information
     }
 
 def _track_edge_distribution(bicliques: List[Tuple[Set[int], Set[int]]], original_graph: nx.Graph) -> Dict:
