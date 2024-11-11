@@ -8,7 +8,7 @@ from .traces import create_node_traces
 from .layout import create_plot_layout
 import plotly.colors
 from .traces import create_node_traces, create_biclique_boxes, create_biclique_edges, create_false_positive_edges
-from node_info import NodeInfo
+from .node_info import NodeInfo
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
     """Generate distinct colors for bicliques"""
