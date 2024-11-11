@@ -22,7 +22,7 @@ from process_bicliques import (
 from biclique_visualization import create_biclique_visualization
 from graph_visualize import create_node_biclique_map
 # Import the calculate_node_positions function
-from graph_layout import calculate_node_positions
+from graph_layout import calculate_node_positions, NodeInfo
 from graph_utils import (
     process_enhancer_info,
     # validate_bipartite_graph,
