@@ -79,6 +79,20 @@ def _calculate_coverage(bicliques: List[Tuple[Set[int], Set[int]]], original_gra
                 if original_graph.has_edge(dmr, gene):
                     edge = tuple(sorted([dmr, gene]))
                     covered_edges[edge] = covered_edges.get(edge, 0) + 1
+    # Calculate edge coverage statistics
+    for edge_count in covered_edges.values():
+        if edge_count == 1:
+            edge_coverage['single'] += 1
+        else:
+            edge_coverage['multiple'] += 1
+    
+    edge_coverage['uncovered'] = edge_coverage['total'] - len(covered_edges)
+    
+    # Calculate percentages
+    edge_coverage['single_percentage'] = edge_coverage['single'] / edge_coverage['total']
+    edge_coverage['multiple_percentage'] = edge_coverage['multiple'] / edge_coverage['total']
+    edge_coverage['uncovered_percentage'] = edge_coverage['uncovered'] / edge_coverage['total']
+
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
