@@ -16,6 +16,8 @@ from process_bicliques import (
     read_bicliques_file,
     print_bicliques_summary,
     print_bicliques_detail,
+    process_bicliques,
+    process_components
 )
 
 # Import utility functions from graph_utils
@@ -42,7 +44,7 @@ def process_data():
     try:
         df, gene_id_mapping = read_and_prepare_data()
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
-        bicliques_result = process_bicliques(bipartite_graph, df)
+        bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
         component_data = process_components(bipartite_graph, bicliques_result)
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
@@ -82,80 +84,6 @@ def read_and_prepare_data():
         gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
     }
     return df, gene_id_mapping
-
-
-def process_bicliques(bipartite_graph, df):
-    """Read and process bicliques from the file"""
-    max_dmr_id = max(df["DMR_No."])
-    bicliques_result = read_bicliques_file(
-        "./data/bipartite_graph_output.txt.biclusters", 
-        max_dmr_id, 
-        bipartite_graph
-    )
-    
-    # Add detailed information for each biclique
-    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
-        detailed_info = {
-            "dmrs": [],
-            "genes": []
-        }
-        
-        # Add DMR details
-        for dmr in sorted(dmr_nodes):
-            dmr_row = df[df["DMR_No."] == dmr + 1].iloc[0]  # +1 because DMR_No is 1-based
-            dmr_info = {
-                "id": f"DMR_{dmr + 1}",
-                "area": dmr_row.get("Area_Stat", "N/A"),
-                "description": dmr_row.get("Gene_Description", "N/A")
-            }
-            detailed_info["dmrs"].append(dmr_info)
-            
-        # Add gene details
-        for gene in sorted(gene_nodes):
-            gene_name = next((g for g, gid in gene_id_mapping.items() if gid == gene), f"Gene_{gene}")
-            gene_rows = df[df["Gene_Symbol_Nearby"] == gene_name]
-            description = gene_rows.iloc[0]["Gene_Description"] if not gene_rows.empty else "N/A"
-            gene_info = {
-                "name": gene_name,
-                "description": description
-            }
-            detailed_info["genes"].append(gene_info)
-            
-        bicliques_result[f"biclique_{idx+1}_details"] = detailed_info
-        
-    return bicliques_result
-
-
-def process_components(bipartite_graph, bicliques_result):
-    """Process connected components of the graph"""
-    components = list(nx.connected_components(bipartite_graph))
-    component_data = []
-
-    for idx, component in enumerate(components):
-        subgraph = bipartite_graph.subgraph(component)
-        component_bicliques = []
-        
-        for bidx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
-            if any(node in component for node in dmr_nodes):
-                biclique_info = {
-                    "dmrs": sorted(list(dmr_nodes)),
-                    "genes": sorted(list(gene_nodes)),
-                    "size": f"{len(dmr_nodes)}×{len(gene_nodes)}",
-                    "details": bicliques_result.get(f"biclique_{bidx+1}_details", {})
-                }
-                if len(dmr_nodes) > 1 or len(gene_nodes) > 1:
-                    component_bicliques.append(biclique_info)
-
-        if component_bicliques:
-            component_data.append({
-                "id": idx + 1,
-                "size": len(component),
-                "dmrs": len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 0]),
-                "genes": len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 1]),
-                "bicliques": component_bicliques
-            })
-
-    return component_data
 
 
 def create_metadata(df, gene_id_mapping):
