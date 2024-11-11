@@ -54,6 +54,7 @@ def process_data():
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
         # Calculate node positions
+        node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
         node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
 
         # Create summary statistics
