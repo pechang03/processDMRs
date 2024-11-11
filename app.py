@@ -53,6 +53,9 @@ def process_data():
         print("Creating metadata...")
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
+        # Calculate node positions
+        node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
+
         # Create summary statistics
         stats = {
             "total_components": len(component_data),
@@ -74,6 +77,7 @@ def process_data():
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
             "gene_id_mapping": gene_id_mapping,
+            "node_positions": node_positions,
         }
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
