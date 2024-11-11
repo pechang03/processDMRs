@@ -56,3 +56,4 @@ class TestGraphStatistics(unittest.TestCase):
         # Test number of edges
         expected_edges = 6  # Each DMR connects to its nearby gene and enhancer genes
         self.assertEqual(len(self.bipartite_graph.edges()), expected_edges)
+from visualization.core import create_biclique_visualization
