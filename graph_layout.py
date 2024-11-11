@@ -141,32 +141,28 @@ def position_biclique_nodes(
     positions: Dict[int, Tuple[float, float]],
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
-    # Special case for single node biclique
-    if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
-        dmr = next(iter(dmr_nodes))
-        gene = next(iter(gene_nodes))
-        positions[dmr] = (0, 0.5)
-        positions[gene] = (1, 0.5)
-        return current_y + spacing
-
-    # Position DMRs
-    for i, dmr in enumerate(sorted(dmr_nodes)):
-        if dmr not in positions:
-            positions[dmr] = (0, current_y + i * spacing)
-
-    # Position regular genes
-    for i, gene in enumerate(sorted(gene_nodes - split_genes)):
-        if gene not in positions:
-            positions[gene] = (1, current_y + i * spacing)
-
-    # Position split genes
-    for i, gene in enumerate(sorted(gene_nodes & split_genes)):
-        if gene not in positions:
-            positions[gene] = (1.1, current_y + i * spacing)
-
-    # Calculate next y position based on maximum number of nodes in this biclique
-    max_nodes = max(len(dmr_nodes), len(gene_nodes))
-    return current_y + max_nodes * spacing
+    sorted_dmrs = sorted(dmr_nodes)
+    sorted_genes = sorted(gene_nodes)
+    
+    # Position DMRs and genes with matching y-coordinates when possible
+    max_len = max(len(dmr_nodes), len(gene_nodes))
+    for i in range(max_len):
+        # Position DMR if available
+        if i < len(sorted_dmrs):
+            dmr = sorted_dmrs[i]
+            if dmr not in positions:
+                positions[dmr] = (0, current_y + i * spacing)
+        
+        # Position gene if available
+        if i < len(sorted_genes):
+            gene = sorted_genes[i]
+            if gene not in positions:
+                # Use 1.1 for split genes, 1 for regular genes
+                x_pos = 1.1 if gene in split_genes else 1
+                positions[gene] = (x_pos, current_y + i * spacing)
+    
+    # Return position for next biclique
+    return current_y + max_len * spacing
 
 
 def position_remaining_nodes(
