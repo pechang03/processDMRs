@@ -110,10 +110,13 @@ def position_nodes_by_biclique(
 
 def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
     """Calculate vertical spacing between nodes."""
-    total_height = sum(
-        len(dmr_nodes) + len(gene_nodes) for dmr_nodes, gene_nodes in bicliques
-    )
-    return 1.0 / (total_height + 1) if total_height > 0 else 0.5
+    # For a single biclique with one node on each side, use 0.5
+    if len(bicliques) == 1 and len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
+        return 0.5
+
+    # Otherwise calculate based on total nodes
+    total_nodes = sum(len(dmr_nodes) + len(gene_nodes) for dmr_nodes, gene_nodes in bicliques)
+    return 1.0 / (total_nodes + 1) if total_nodes > 0 else 0.5
 
 
 def position_biclique_nodes(
@@ -125,6 +128,14 @@ def position_biclique_nodes(
     positions: Dict[int, Tuple[float, float]],
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
+    # Special case for single node biclique
+    if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
+        dmr = next(iter(dmr_nodes))
+        gene = next(iter(gene_nodes))
+        positions[dmr] = (0, 0.5)
+        positions[gene] = (1, 0.5)
+        return current_y + spacing
+
     # Position DMRs
     for dmr in sorted(dmr_nodes):
         if dmr not in positions:
