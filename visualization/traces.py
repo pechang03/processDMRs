@@ -121,3 +121,19 @@ def create_biclique_edges(
                     showlegend=False
                 ))
     return traces
+def create_false_positive_edges(
+    false_positive_edges: Set[Tuple[int, int]],
+    node_positions: Dict[int, Tuple[float, float]],
+) -> List[go.Scatter]:
+    """Create edge traces for false positive edges."""
+    traces = []
+    for node1, node2 in false_positive_edges:
+        traces.append(go.Scatter(
+            x=[node_positions[node1][0], node_positions[node2][0]],
+            y=[node_positions[node1][1], node_positions[node2][1]],
+            mode="lines",
+            line=dict(width=1, color="red", dash="dash"),
+            hoverinfo="none",
+            showlegend=False
+        ))
+    return traces
