@@ -214,19 +214,6 @@ def create_gene_table(
     ]
     return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
 
-    # Ensure box_traces, edge_traces, and node_traces are defined before this line
-    plot_data = box_traces + edge_traces + node_traces
-    layout = go.Layout(
-        showlegend=True,
-        hovermode="closest",
-        margin=dict(b=20, l=5, r=5, t=40),
-        legend=dict(x=0.5, y=1.1, xanchor="center", orientation="h"),
-    )
-
-    fig = go.Figure(data=plot_data, layout=layout)
-    return json.dumps(
-        fig, cls=PlotlyJSONEncoder
-    )  # Make sure this return statement is at the end
 
 
 def create_node_biclique_map(
