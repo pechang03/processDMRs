@@ -6,11 +6,8 @@ from plotly.utils import PlotlyJSONEncoder
 
 from .traces import create_node_traces
 from .layout import create_plot_layout
-from graph_visualize import (
-    create_biclique_boxes,
-    create_biclique_edges,
-    generate_biclique_colors,
-)
+import plotly.colors
+from .traces import create_node_traces, create_biclique_boxes, create_biclique_edges
 from node_info import NodeInfo
 
 def create_biclique_visualization(
@@ -26,6 +23,13 @@ def create_biclique_visualization(
     """Create interactive Plotly visualization with colored bicliques."""
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
+
+def generate_biclique_colors(num_bicliques: int) -> List[str]:
+    """Generate distinct colors for bicliques"""
+    colors = plotly.colors.qualitative.Set3 * (
+        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
+    )
+    return colors[:num_bicliques]
 
     # Create NodeInfo object
     all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
