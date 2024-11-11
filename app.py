@@ -87,9 +87,43 @@ def read_and_prepare_data():
 def process_bicliques(bipartite_graph, df):
     """Read and process bicliques from the file"""
     max_dmr_id = max(df["DMR_No."])
-    return read_bicliques_file(
-        "./data/bipartite_graph_output.txt.biclusters", max_dmr_id, bipartite_graph
+    bicliques_result = read_bicliques_file(
+        "./data/bipartite_graph_output.txt.biclusters", 
+        max_dmr_id, 
+        bipartite_graph
     )
+    
+    # Add detailed information for each biclique
+    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
+        detailed_info = {
+            "dmrs": [],
+            "genes": []
+        }
+        
+        # Add DMR details
+        for dmr in sorted(dmr_nodes):
+            dmr_row = df[df["DMR_No."] == dmr + 1].iloc[0]  # +1 because DMR_No is 1-based
+            dmr_info = {
+                "id": f"DMR_{dmr + 1}",
+                "area": dmr_row.get("Area_Stat", "N/A"),
+                "description": dmr_row.get("Gene_Description", "N/A")
+            }
+            detailed_info["dmrs"].append(dmr_info)
+            
+        # Add gene details
+        for gene in sorted(gene_nodes):
+            gene_name = next((g for g, gid in gene_id_mapping.items() if gid == gene), f"Gene_{gene}")
+            gene_rows = df[df["Gene_Symbol_Nearby"] == gene_name]
+            description = gene_rows.iloc[0]["Gene_Description"] if not gene_rows.empty else "N/A"
+            gene_info = {
+                "name": gene_name,
+                "description": description
+            }
+            detailed_info["genes"].append(gene_info)
+            
+        bicliques_result[f"biclique_{idx+1}_details"] = detailed_info
+        
+    return bicliques_result
 
 
 def process_components(bipartite_graph, bicliques_result):
