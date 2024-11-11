@@ -32,6 +32,10 @@ def create_biclique_visualization(
     node_traces = []
     box_traces = []  # For biclique boxes
 
+    edge_traces = []
+    node_traces = []
+    box_traces = []  # For biclique boxes
+
     # Track node colors based on biclique membership
     node_colors = {}
 
@@ -203,8 +207,8 @@ def create_gene_table(gene_metadata: Dict[str, Dict], gene_id_mapping: Dict[str,
         cells=dict(values=list(zip(*rows)))
     )
 
-    plot_data = box_traces + edge_traces + node_traces
     # Ensure box_traces, edge_traces, and node_traces are defined before this line
+    plot_data = box_traces + edge_traces + node_traces
     layout = go.Layout(
         showlegend=True,
         hovermode='closest',
