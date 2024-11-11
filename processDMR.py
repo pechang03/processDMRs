@@ -326,81 +326,87 @@ def main():
             return None
 
     # Process DSS1 bicliques
-    bicliques_result = process_bicliques(
-        bipartite_graph,
-        "./data/bipartite_graph_output.txt.biclusters",
-        max(df["DMR_No."]),
-        "DSS1",
-    )
-
-    # Only then create visualization if we have bicliques results
-    if bicliques_result:
-        print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
-
-        # Create biclique membership mapping
-        node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
-
-        # Calculate node positions
-        node_positions = calculate_node_positions(
-            bicliques_result["bicliques"], node_biclique_map
+    try:
+        bicliques_result = process_bicliques(
+            bipartite_graph,
+            "./data/bipartite_graph_output.txt.biclusters",
+            max(df["DMR_No."]),
+            "DSS1",
         )
 
-        # Create node labels
-        node_labels = {}
-        for dmr_id in range(len(df)):
-            node_id = dmr_id
-            node_labels[node_id] = f"DMR_{dmr_id+1}"
+        if bicliques_result:
+            print_bicliques_detail(bicliques_result, df, dss1_gene_mapping)
 
-        for gene, gene_id in dss1_gene_mapping.items():
-            node_labels[gene_id] = gene
+            # Create biclique membership mapping
+            node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
 
-        dmr_nodes_set = {
-            node
-            for node, data in bipartite_graph.nodes(data=True)
-            if data["bipartite"] == 0
-        }
-        dmr_metadata = {}
-        for dmr_id in range(len(df)):
-            area_stat = (
-                df.iloc[dmr_id]["Area_Stat"] if "Area_Stat" in df.columns else "N/A"
+            # Calculate node positions
+            node_positions = calculate_node_positions(
+                bicliques_result["bicliques"], node_biclique_map
             )
-            dmr_metadata[f"DMR_{dmr_id+1}"] = {
-                "area": area_stat,
-                "bicliques": node_biclique_map.get(dmr_id, []),
-            }
 
-        gene_metadata = {}
-        for gene, gene_id in dss1_gene_mapping.items():
-            gene_matches = df[df["Gene_Symbol_Nearby"] == gene]
-            desc = (
-                gene_matches.iloc[0]["Gene_Description"]
-                if len(gene_matches) > 0
-                else "N/A"
+            # Create node labels
+            node_labels = {}
+            for dmr_id in range(len(df)):
+                node_id = dmr_id
+                node_labels[node_id] = f"DMR_{dmr_id+1}"
+
+            for gene, gene_id in dss1_gene_mapping.items():
+                node_labels[gene_id] = gene
+
+            dmr_nodes_set = {
+                node
+                for node, data in bipartite_graph.nodes(data=True)
+                if data["bipartite"] == 0
+            }
+            dmr_metadata = {}
+            for dmr_id in range(len(df)):
+                area_stat = (
+                    df.iloc[dmr_id]["Area_Stat"] if "Area_Stat" in df.columns else "N/A"
+                )
+                dmr_metadata[f"DMR_{dmr_id+1}"] = {
+                    "area": area_stat,
+                    "bicliques": node_biclique_map.get(dmr_id, []),
+                }
+
+            gene_metadata = {}
+            for gene, gene_id in dss1_gene_mapping.items():
+                gene_matches = df[df["Gene_Symbol_Nearby"] == gene]
+                desc = (
+                    gene_matches.iloc[0]["Gene_Description"]
+                    if len(gene_matches) > 0
+                    else "N/A"
+                )
+                gene_metadata[gene] = {
+                    "description": desc,
+                    "bicliques": node_biclique_map.get(gene_id, []),
+                }
+
+            # Calculate dominating set before visualization
+            print("\n=== RB-Domination Analysis (DSS1) ===")
+            dominating_set = process_components(bipartite_graph, df)
+            print_domination_statistics(dominating_set, bipartite_graph, df)
+
+            # Create visualization with dominating set
+            viz_json = create_biclique_visualization(
+                bicliques_result["bicliques"],
+                node_labels,
+                node_positions,
+                node_biclique_map,
+                dominating_set=dominating_set,
+                dmr_metadata=dmr_metadata,
+                gene_metadata=gene_metadata,
             )
-            gene_metadata[gene] = {
-                "description": desc,
-                "bicliques": node_biclique_map.get(gene_id, []),
-            }
 
-        # Calculate dominating set before visualization
-        print("\n=== RB-Domination Analysis (DSS1) ===")
-        dominating_set = process_components(bipartite_graph, df)
-        print_domination_statistics(dominating_set, bipartite_graph, df)
+            # Save visualization only if we have valid results
+            with open("biclique_visualization.json", "w") as f:
+                f.write(viz_json)
+            print("\nVisualization saved to biclique_visualization.json")
+        else:
+            print("\nNo bicliques results to visualize")
 
-        # Create visualization with dominating set
-        viz_json = create_biclique_visualization(
-            bicliques_result["bicliques"],
-            node_labels,
-            node_positions,
-            node_biclique_map,
-            dominating_set=dominating_set,  # Now dominating_set is defined
-            dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata,
-        )
-
-        # Save visualization
-    with open("biclique_visualization.json", "w") as f:
-        f.write(viz_json)
+    except Exception as e:
+        print(f"\nError processing and visualizing bicliques: {str(e)}")
 
 
 if __name__ == "__main__":
