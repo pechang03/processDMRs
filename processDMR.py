@@ -335,7 +335,7 @@ def main():
     try:
         bicliques_result = process_bicliques(
             bipartite_graph,
-            "./data/bipartite_graph_output.txt.biclusters",
+            os.path.join("./data", "bipartite_graph_output.txt.biclusters"),
             max(df["DMR_No."]),
             "DSS1",
         )
