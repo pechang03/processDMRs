@@ -358,6 +358,8 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
         num_bicliques // len(plotly.colors.qualitative.Set3) + 1
     )
     return colors[:num_bicliques]
+from biclique_visualization import create_biclique_boxes, create_biclique_edges
+
 def create_component_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_labels: Dict[int, str],
