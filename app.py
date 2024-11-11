@@ -6,7 +6,14 @@ import plotly
 import plotly.graph_objs as go
 
 # Import functions from processDMR
-from processDMR import (
+from biclique_analysis import (
+    process_bicliques,
+    process_components,
+    read_bicliques_file,
+)
+
+from graph_utils import (
+    process_enhancer_info,
     read_excel_file,
     create_bipartite_graph,
 )
