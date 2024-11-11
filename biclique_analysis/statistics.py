@@ -6,6 +6,26 @@ import networkx as nx
 # Author: Peter Shaw
 
 
+def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph) -> Dict:
+    """Calculate coverage statistics for bicliques."""
+    dmr_coverage = set()
+    gene_coverage = set()
+    for dmr_nodes, gene_nodes in bicliques:
+        dmr_coverage.update(dmr_nodes)
+        gene_coverage.update(gene_nodes)
+    return {
+        "dmrs": {
+            "covered": len(dmr_coverage),
+            "total": graph.number_of_nodes(),
+            "percentage": len(dmr_coverage) / graph.number_of_nodes()
+        },
+        "genes": {
+            "covered": len(gene_coverage),
+            "total": graph.number_of_nodes(),
+            "percentage": len(gene_coverage) / graph.number_of_nodes()
+        }
+    }
+
 def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate comprehensive biclique statistics."""
     return {
