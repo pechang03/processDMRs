@@ -357,3 +357,69 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
         num_bicliques // len(plotly.colors.qualitative.Set3) + 1
     )
     return colors[:num_bicliques]
+def create_component_visualization(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_labels: Dict[int, str],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_biclique_map: Dict[int, List[int]],
+    false_positive_edges: Set[Tuple[int, int]],
+    node_info: NodeInfo,
+    dmr_metadata: Dict[str, Dict] = None,
+    gene_metadata: Dict[str, Dict] = None,
+    gene_id_mapping: Dict[str, int] = None,
+) -> str:
+    """
+    Create visualization for a connected component containing bicliques.
+    Includes false positive edges between bicliques.
+    """
+    # Generate colors for bicliques
+    biclique_colors = generate_biclique_colors(len(bicliques))
+    
+    traces = []
+    
+    # Add biclique boxes first (background)
+    traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
+    
+    # Add regular edges within bicliques
+    traces.extend(create_biclique_edges(bicliques, node_positions))
+    
+    # Add false positive edges (red/dotted)
+    traces.extend(create_false_positive_edges(false_positive_edges, node_positions))
+    
+    # Add nodes with proper styling based on type
+    traces.extend(create_node_traces(
+        node_info,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors
+    ))
+
+    # Create layout
+    layout = create_plot_layout()
+    
+    # Create figure and convert to JSON
+    fig = {'data': traces, 'layout': layout}
+    return json.dumps(fig, cls=PlotlyJSONEncoder)
+
+def create_false_positive_edges(
+    false_positive_edges: Set[Tuple[int, int]],
+    node_positions: Dict[int, Tuple[float, float]]
+) -> List[go.Scatter]:
+    """Create traces for false positive edges between bicliques."""
+    traces = []
+    for dmr, gene in false_positive_edges:
+        traces.append(go.Scatter(
+            x=[node_positions[dmr][0], node_positions[gene][0]],
+            y=[node_positions[dmr][1], node_positions[gene][1]],
+            mode="lines",
+            line=dict(
+                color="red",
+                width=1,
+                dash="dot"
+            ),
+            hoverinfo="text",
+            hovertext="False positive edge",
+            showlegend=False
+        ))
+    return traces
