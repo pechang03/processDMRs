@@ -19,7 +19,7 @@ from process_bicliques import (
     print_bicliques_summary,
     print_bicliques_detail,
 )
-from biclique_visualization import create_biclique_visualization
+from visualization.core import create_biclique_visualization
 from graph_visualize import create_node_biclique_map
 from typing import Dict
 

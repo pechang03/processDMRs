@@ -1,5 +1,5 @@
 import unittest
-from biclique_visualization import create_node_traces
+from visualization.traces import create_node_traces
 from node_info import NodeInfo
 
 class TestVisualization(unittest.TestCase):
