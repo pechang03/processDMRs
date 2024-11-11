@@ -12,7 +12,8 @@ from processDMR import (
 )
 
 # Import functions from process_bicliques
-from process_bicliques import process_bicliques, process_components
+from biclique_analysis.processor import process_bicliques
+from biclique_analysis.components import process_components
 import math
 from flask import Flask
 

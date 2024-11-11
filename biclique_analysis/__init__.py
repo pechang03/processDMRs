@@ -1,5 +1,6 @@
 from .reader import read_bicliques_file
-from .processor import process_bicliques, process_components
+from .processor import process_bicliques
+from .components import process_components
 from .classifier import classify_biclique, get_biclique_type_counts
 from .statistics import (
     calculate_biclique_statistics,
