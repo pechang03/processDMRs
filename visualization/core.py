@@ -10,6 +10,13 @@ import plotly.colors
 from .traces import create_node_traces, create_biclique_boxes, create_biclique_edges
 from node_info import NodeInfo
 
+def generate_biclique_colors(num_bicliques: int) -> List[str]:
+    """Generate distinct colors for bicliques"""
+    colors = plotly.colors.qualitative.Set3 * (
+        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
+    )
+    return colors[:num_bicliques]
+
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_labels: Dict[int, str],
