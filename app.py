@@ -7,6 +7,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 DSS1_FILE = os.path.join(DATA_DIR, 'DSS1.xlsx')
 HOME1_FILE = os.path.join(DATA_DIR, 'HOME1.xlsx')
+BICLIQUES_FILE = os.path.join(DATA_DIR, 'bipartite_graph_output.txt.biclusters')
 
 def process_data():
     """Process the DMR data and return results"""
@@ -18,7 +19,12 @@ def process_data():
         print("Reading Excel files...")
         df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
-        bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
+        bicliques_result = process_bicliques(
+            bipartite_graph, 
+            df, 
+            gene_id_mapping,
+            BICLIQUES_FILE
+        )
         component_data = process_components(bipartite_graph, bicliques_result)
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
