@@ -203,6 +203,7 @@ def create_gene_table(gene_metadata: Dict[str, Dict], gene_id_mapping: Dict[str,
     )
 
     plot_data = box_traces + edge_traces + node_traces
+    layout = go.Layout(
         showlegend=True,
         hovermode='closest',
         margin=dict(b=20, l=5, r=5, t=40),
