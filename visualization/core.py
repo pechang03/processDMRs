@@ -24,13 +24,6 @@ def create_biclique_visualization(
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
 
-def generate_biclique_colors(num_bicliques: int) -> List[str]:
-    """Generate distinct colors for bicliques"""
-    colors = plotly.colors.qualitative.Set3 * (
-        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
-    )
-    return colors[:num_bicliques]
-
     # Create NodeInfo object
     all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
     dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
