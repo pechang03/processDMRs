@@ -128,8 +128,29 @@ def create_biclique_visualization(
     # Create traces
     edge_traces = create_edge_traces(bicliques, node_positions)
     box_traces = create_box_traces(bicliques, node_positions, biclique_colors)
+    # First create NodeInfo object
+    all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
+    dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
+    regular_genes = set().union(*[gene_nodes for _, gene_nodes in bicliques])
+    split_genes = set()  # You may want to calculate this if needed
+    node_degrees = {}    # You may want to calculate this if needed
+    min_gene_id = min(set().union(*[gene_nodes for _, gene_nodes in bicliques]), default=0)
+
+    node_info = NodeInfo(
+        all_nodes=all_nodes,
+        dmr_nodes=dmr_nodes,
+        regular_genes=regular_genes,
+        split_genes=split_genes,
+        node_degrees=node_degrees,
+        min_gene_id=min_gene_id
+    )
+
     node_traces = create_node_traces(
-        bicliques, node_positions, node_labels, biclique_colors
+        node_info,
+        node_positions, 
+        node_labels,
+        node_biclique_map,
+        biclique_colors
     )
     hub_traces = (
         create_hub_traces(dominating_set, node_positions, node_labels)
