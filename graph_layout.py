@@ -3,6 +3,7 @@ Functions for calculating node layouts in biclique visualizations
 """
 import networkx as nx
 from typing import Dict, List, Set, Tuple
+from node_info import NodeInfo
 
 def calculate_node_positions(
     bicliques: List[Tuple[Set[int], Set[int]]],
@@ -17,7 +18,7 @@ def calculate_node_positions(
 def collect_node_information(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_biclique_map: Dict[int, List[int]]
-) -> NodeInfo:
+) -> 'NodeInfo':
     """Collect and categorize all nodes from bicliques and map."""
     all_nodes = get_all_nodes(bicliques, node_biclique_map)
     node_degrees = calculate_node_degrees(all_nodes, node_biclique_map)
@@ -81,7 +82,7 @@ def categorize_nodes(
 
 def position_nodes_by_biclique(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_info: NodeInfo
+    node_info: 'NodeInfo'
 ) -> Dict[int, Tuple[float, float]]:
     """Position nodes biclique by biclique, maintaining vertical grouping."""
     positions = {}
@@ -142,7 +143,7 @@ def position_biclique_nodes(
 
 def position_remaining_nodes(
     positions: Dict[int, Tuple[float, float]],
-    node_info: NodeInfo,
+    node_info: 'NodeInfo',
     current_y: float,
     spacing: float
 ) -> None:
@@ -155,7 +156,7 @@ def position_remaining_nodes(
             positions[node] = (x_pos, current_y)
             current_y += spacing
 
-def get_x_position(node: int, node_info: NodeInfo) -> float:
+def get_x_position(node: int, node_info: 'NodeInfo') -> float:
     """Determine x-coordinate based on node type."""
     if node in node_info.dmr_nodes:
         return 0
