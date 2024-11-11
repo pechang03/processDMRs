@@ -35,34 +35,51 @@ def process_data():
         print("Reading Excel files...")
         df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        
+        # Process bicliques
+        print("Processing bicliques...")
         bicliques_result = process_bicliques(
-            bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
+            bipartite_graph, 
+            BICLIQUES_FILE, 
+            max(df["DMR_No."]), 
+            "DSS1"
         )
+        
+        # Process components
+        print("Processing components...")
         component_data = process_components(bipartite_graph, bicliques_result)
+        
+        # Create metadata
+        print("Creating metadata...")
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
         # Create summary statistics
         stats = {
             "total_components": len(component_data),
             "components_with_bicliques": len(
-                [comp for comp in component_data if comp["bicliques"]]
+                [comp for comp in component_data if comp.get("bicliques")]
             ),
             "total_bicliques": len(bicliques_result["bicliques"]),
             "non_trivial_bicliques": sum(
-                1 for comp in component_data for bic in comp["bicliques"]
+                1 for comp in component_data 
+                if comp.get("bicliques") 
+                for bic in comp["bicliques"]
             ),
         }
 
         return {
             "stats": stats,
-            "components": component_data,
-            "coverage": bicliques_result["coverage"],
+            "components": component_data,  # This should be a list of component dictionaries
+            "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
-            "gene_id_mapping": gene_id_mapping,  # Add this line
+            "gene_id_mapping": gene_id_mapping,
         }
     except Exception as e:
-        return render_template("error.html", message=str(e))
+        print(f"Error in process_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 
 def read_and_prepare_data(dss1_path=None, home1_path=None):
