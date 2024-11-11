@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Component Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Component Details</h1>
+        
+        {% if component %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Component {{ component.id }}</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Statistics</h3>
+                        <ul class="list-group">
+                            <li class="list-group-item">DMRs: {{ component.dmrs }}</li>
+                            <li class="list-group-item">Genes: {{ component.genes }}</li>
+                            <li class="list-group-item">Total Size: {{ component.size }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if component.bicliques %}
+                <div class="mt-4">
+                    <h3>Bicliques</h3>
+                    {% for biclique in component.bicliques %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h4>Biclique {{ loop.index }} ({{ biclique.size }})</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>DMRs</h5>
+                                    <ul class="list-unstyled">
+                                        {% for dmr in biclique.details.dmrs %}
+                                        <li>{{ dmr.id }} - Area: {{ dmr.area }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Genes</h5>
+                                    <ul class="list-unstyled">
+                                        {% for gene in biclique.details.genes %}
+                                        <li>{{ gene.name }} - {{ gene.description }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if component.plotly_graph %}
+                <div class="mt-4">
+                    <h3>Visualization</h3>
+                    <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
+                    <script>
+                        var graph = {{ component.plotly_graph|safe }};
+                        Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
+                    </script>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">No component data available.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

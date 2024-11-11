@@ -189,144 +189,30 @@ def create_plotly_graph(
 def index():
     try:
         results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        # Print results for debugging
+        print("Results structure:", results.keys())
+        print("Number of components:", len(results.get("components", [])))
+        
+        # Ensure we have all required data
+        for component in results.get("components", []):
+            if "plotly_graph" not in component:
+                print(f"Warning: Component {component.get('id')} missing plotly_graph")
+
+        return render_template(
+            "index.html",
+            results=results,
+            dmr_metadata=results.get("dmr_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {}),
+            statistics=results.get("stats", {}),
+            coverage=results.get("coverage", {})
+        )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return render_template("error.html", message=str(e))
-
-    # Prepare node labels and positions
-    node_labels = {}
-    all_nodes = set()  # Track all nodes that need positions
-
-    # First pass: collect all nodes
-    for component in results["components"]:
-        dmrs = (
-            component["dmrs"]
-            if isinstance(component["dmrs"], (list, set))
-            else [component["dmrs"]]
-        )
-        genes = (
-            component["genes"]
-            if isinstance(component["genes"], (list, set))
-            else [component["genes"]]
-        )
-
-        if isinstance(dmrs, int):
-            node_labels[dmrs] = f"DMR_{dmrs}"
-            all_nodes.add(dmrs)
-        elif isinstance(dmrs, (list, set)):
-            for node_id in dmrs:
-                node_labels[node_id] = f"DMR_{node_id}"
-                all_nodes.add(node_id)
-        if isinstance(genes, int):
-            node_labels[genes] = f"Gene_{genes}"
-            all_nodes.add(genes)
-        elif isinstance(genes, (list, set)):
-            for node_id in genes:
-                node_labels[node_id] = f"Gene_{node_id}"
-                all_nodes.add(node_id)
-
-        # Add nodes from bicliques
-        for biclique in component["bicliques"]:
-            all_nodes.update(biclique["dmrs"])
-            all_nodes.update(biclique["genes"])
-
-    # Create bicliques list with all nodes
-    bicliques = []
-    # Create bicliques list
-    bicliques = []
-    for component in results["components"]:
-        for biclique in component["bicliques"]:
-            dmr_nodes = set(biclique["dmrs"])
-            gene_nodes = set(biclique["genes"])
-            bicliques.append((dmr_nodes, gene_nodes))
-
-    # Use the imported function to create node_biclique_map
-    node_biclique_map = create_node_biclique_map(bicliques)
-
-    # Calculate positions for all nodes
-    node_positions = calculate_node_positions(bicliques, node_biclique_map)
-
-    # Verify all nodes have positions
-    missing_nodes = all_nodes - set(node_positions.keys())
-    if missing_nodes:
-        print(f"Warning: Missing positions for nodes: {missing_nodes}")
-        # Assign default positions for missing nodes
-        for node in missing_nodes:
-            # Check if node is a DMR by checking if it's less than the minimum gene ID
-            min_gene_id = min(
-                gene_id
-                for comp in results["components"]
-                for biclique in comp["bicliques"]
-                for gene_id in biclique["genes"]
-            )
-            is_dmr = node < min_gene_id
-            node_positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
-
-    # Create visualizations for each component
-    for component in results["components"]:
-        # Create bicliques list for this component
-        component_bicliques = [
-            (set(biclique["dmrs"]), set(biclique["genes"]))
-            for biclique in component["bicliques"]
-        ]
-
-        # Create NodeInfo object
-        all_nodes = set()
-        dmr_nodes = set()
-        gene_nodes = set()
-        for dmrs, genes in component_bicliques:
-            all_nodes.update(dmrs)
-            all_nodes.update(genes)
-            dmr_nodes.update(dmrs)
-            gene_nodes.update(genes)
-
-        # Calculate node degrees
-        node_degrees = {}
-        for node in all_nodes:
-            node_degrees[node] = len(node_biclique_map.get(node, []))
-
-        # Find min gene id to separate DMRs from genes
-        min_gene_id = min(gene_nodes) if gene_nodes else float("inf")
-
-        node_info = NodeInfo(
-            all_nodes=all_nodes,
-            dmr_nodes=dmr_nodes,
-            regular_genes={n for n in gene_nodes if node_degrees[n] == 1},
-            split_genes={n for n in gene_nodes if node_degrees[n] > 1},
-            node_degrees=node_degrees,
-            min_gene_id=min_gene_id,
-        )
-
-        # Calculate false positive edges
-        false_positive_edges = set()
-        # Add edges that exist in the graph but not in any biclique
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                edge_in_biclique = any(
-                    dmr in dmrs and gene in genes for dmrs, genes in component_bicliques
-                )
-                if not edge_in_biclique:
-                    false_positive_edges.add((dmr, gene))
-
-        component["plotly_graph"] = json.loads(
-            create_component_visualization(
-                bicliques=component_bicliques,
-                node_labels=node_labels,
-                node_positions=node_positions,
-                node_biclique_map=node_biclique_map,
-                false_positive_edges=false_positive_edges,  # Add this
-                node_info=node_info,  # Add this
-                dmr_metadata=results["dmr_metadata"],
-                gene_metadata=results["gene_metadata"],
-                gene_id_mapping=results["gene_id_mapping"],
-            )
-        )
-
-    return render_template(
-        "index.html",
-        results=results,
-        dmr_metadata=results["dmr_metadata"],
-        gene_metadata=results["gene_metadata"],
-    )
 
 
 @app.route("/statistics")
@@ -351,3 +237,26 @@ def statistics():
 
 if __name__ == "__main__":
     app.run(debug=True)
+@app.route("/component/<int:component_id>")
+def component_detail(component_id):
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+            
+        component = next(
+            (c for c in results["components"] if c["id"] == component_id), 
+            None
+        )
+        
+        if not component:
+            return render_template("error.html", message=f"Component {component_id} not found")
+            
+        return render_template(
+            "components.html",
+            component=component,
+            dmr_metadata=results["dmr_metadata"],
+            gene_metadata=results["gene_metadata"]
+        )
+    except Exception as e:
+        return render_template("error.html", message=str(e))
