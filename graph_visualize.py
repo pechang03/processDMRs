@@ -172,6 +172,7 @@ def create_biclique_visualization(
     # Combine all traces in the right order (boxes first, then edges then nodes)
     # Remove this duplicate line that appears earlier in the function
 
+    plot_data = []  # Initialize plot_data as an empty list
     # Add metadata tables if provided
     if dmr_metadata:
         plot_data.append(create_dmr_table(dmr_metadata))
@@ -203,6 +204,7 @@ def create_gene_table(gene_metadata: Dict[str, Dict], gene_id_mapping: Dict[str,
     )
 
     plot_data = box_traces + edge_traces + node_traces
+    # Ensure box_traces, edge_traces, and node_traces are defined before this line
     layout = go.Layout(
         showlegend=True,
         hovermode='closest',
