@@ -36,6 +36,10 @@ def create_biclique_visualization(
     node_traces = []
     box_traces = []  # For biclique boxes
 
+    edge_traces = []
+    node_traces = []
+    box_traces = []  # For biclique boxes
+
     # Track node colors based on biclique membership
     node_colors = {}
 
