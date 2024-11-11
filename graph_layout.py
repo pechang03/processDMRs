@@ -71,9 +71,9 @@ def calculate_node_positions(
 
     # Calculate total vertical positions needed
     total_positions = (
-        len(all_dmr_nodes) +  # One position per DMR
-        len(regular_genes) +   # One position per regular gene
-        sum(len(node_biclique_map.get(g, [])) for g in split_genes) Multiple positions per split gene
+        len(all_dmr_nodes) +    # One position per DMR
+        len(regular_genes) +     # One position per regular gene
+        sum(len(node_biclique_map.get(g, [])) for g in split_genes)  # Multiple positions per split gene
     )
 
     spacing = 1.0 / (total_positions + 1)
