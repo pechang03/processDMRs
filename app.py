@@ -16,8 +16,8 @@ from process_bicliques import (
     read_bicliques_file,
     print_bicliques_summary,
     print_bicliques_detail,
-    process_bicliques,
-    process_components
+    process_bicliques,  # This is now only defined in process_bicliques.py
+    process_components  # This is now only defined in process_bicliques.py
 )
 
 # Import utility functions from graph_utils
