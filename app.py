@@ -282,8 +282,6 @@ def index():
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
-                false_positive_edges=false_positive_edges,
-                node_info=node_info,
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
                 gene_id_mapping=results["gene_id_mapping"],
