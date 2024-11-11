@@ -432,6 +432,26 @@ def create_component_visualization(
     fig = {"data": traces, "layout": layout}
     return json.dumps(fig, cls=PlotlyJSONEncoder)
 
+def create_false_positive_edges(
+    false_positive_edges: Set[Tuple[int, int]],
+    node_positions: Dict[int, Tuple[float, float]],
+) -> List[go.Scatter]:
+    """Create traces for false positive edges between bicliques."""
+    traces = []
+    for dmr, gene in false_positive_edges:
+        traces.append(
+            go.Scatter(
+                x=[node_positions[dmr][0], node_positions[gene][0]],
+                y=[node_positions[dmr][1], node_positions[gene][1]],
+                mode="lines",
+                line=dict(color="red", width=1, dash="dot"),
+                hoverinfo="text",
+                hovertext="False positive edge",
+                showlegend=False,
+            )
+        )
+    return traces
+
 
 def create_false_positive_edges(
     false_positive_edges: Set[Tuple[int, int]],
