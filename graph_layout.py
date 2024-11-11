@@ -172,23 +172,7 @@ def validate_positions(
         missing = all_nodes - set(positions.keys())
         print(f"Warning: Missing positions for nodes: {missing}")
 
-class NodeInfo:
-    """Container for node categorization information."""
-    def __init__(
-        self,
-        all_nodes: Set[int],
-        dmr_nodes: Set[int],
-        regular_genes: Set[int],
-        split_genes: Set[int],
-        node_degrees: Dict[int, int],
-        min_gene_id: int
-    ):
-        self.all_nodes = all_nodes
-        self.dmr_nodes = dmr_nodes
-        self.regular_genes = regular_genes
-        self.split_genes = split_genes
-        self.node_degrees = node_degrees
-        self.min_gene_id = min_gene_id
+from node_info import NodeInfo
 
 def position_single_biclique(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
     """Position nodes for a single biclique."""
