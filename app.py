@@ -1,47 +1,22 @@
-from flask import Flask, render_template
-import pandas as pd
-import networkx as nx
-import json
-import plotly
-import plotly.graph_objs as go
-
-# Import functions from processDMR
-from processDMR import (
-    read_excel_file,
-    create_bipartite_graph,
-    process_enhancer_info,
-)
-
-# Import functions from graph_utils
-from graph_utils import (
-    validate_bipartite_graph,
-)
-
-# Import functions from biclique_analysis
-from biclique_analysis import (
-    process_bicliques,
-    process_components,
-    calculate_biclique_statistics,
-)
-
-# Import visualization components
-from visualization import (
-    create_biclique_visualization,
-    create_component_visualization,
-    create_node_biclique_map,
-    NodeInfo
-)
-
-# Import the calculate_node_positions function
-from graph_layout import calculate_node_positions
+import os
 
 app = Flask(__name__)
 
+# Configuration
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+DSS1_FILE = os.path.join(DATA_DIR, 'DSS1.xlsx')
+HOME1_FILE = os.path.join(DATA_DIR, 'HOME1.xlsx')
 
 def process_data():
     """Process the DMR data and return results"""
     try:
-        df, gene_id_mapping = read_and_prepare_data()
+        print("Starting data processing...")
+        print(f"Using data directory: {DATA_DIR}")
+        
+        # Read and prepare data
+        print("Reading Excel files...")
+        df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
         component_data = process_components(bipartite_graph, bicliques_result)
@@ -71,18 +46,43 @@ def process_data():
         return render_template("error.html", message=str(e))
 
 
-def read_and_prepare_data():
-    """Read and prepare the data from the Excel file"""
-    df = read_excel_file("./data/DSS1.xlsx")
-    df["Processed_Enhancer_Info"] = df[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
-    all_genes = set(df["Gene_Symbol_Nearby"].dropna())
-    all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-    gene_id_mapping = {
-        gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
-    }
-    return df, gene_id_mapping
+def read_and_prepare_data(dss1_path=None, home1_path=None):
+    """Read and prepare the data from the Excel files"""
+    try:
+        print(f"Reading Excel file: {dss1_path}")
+        df = read_excel_file(dss1_path or DSS1_FILE)
+        print(f"Successfully read DSS1 file with {len(df)} rows")
+        
+        if home1_path:
+            print(f"Reading Excel file: {home1_path}")
+            df_home1 = read_excel_file(home1_path or HOME1_FILE)
+            print(f"Successfully read HOME1 file with {len(df_home1)} rows")
+        else:
+            df_home1 = None
+        
+        print("Processing enhancer info...")
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        
+        print("Creating gene ID mapping...")
+        all_genes = set(df["Gene_Symbol_Nearby"].dropna())
+        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+        
+        if df_home1 is not None:
+            df_home1["Processed_Enhancer_Info"] = df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+            all_genes.update(df_home1["Gene_Symbol_Nearby"].dropna())
+            all_genes.update([g for genes in df_home1["Processed_Enhancer_Info"] for g in genes])
+        
+        print(f"Found {len(all_genes)} unique genes")
+        
+        gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+        print(f"Created mapping for {len(gene_id_mapping)} genes")
+        
+        return df, gene_id_mapping
+    except Exception as e:
+        print(f"Error in read_and_prepare_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def create_metadata(df, gene_id_mapping):

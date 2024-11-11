@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import networkx as nx
 import csv
@@ -24,9 +25,14 @@ from typing import Dict
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
     try:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Excel file not found: {filepath}")
+            
+        print(f"Reading Excel file from: {filepath}")
         df = pd.read_excel(filepath, header=0)
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
+        
         # Determine which columns to display based on what's available
         if "Gene_Symbol_Nearby" in df.columns:
             gene_col = "Gene_Symbol_Nearby"
@@ -49,7 +55,7 @@ def read_excel_file(filepath):
     except FileNotFoundError:
         error_msg = f"Error: The file {filepath} was not found."
         print(error_msg)
-        raise Exception(error_msg)
+        raise
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         raise
