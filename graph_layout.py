@@ -150,24 +150,23 @@ def position_biclique_nodes(
         return current_y + spacing
 
     # Position DMRs
-    for dmr in sorted(dmr_nodes):
+    for i, dmr in enumerate(sorted(dmr_nodes)):
         if dmr not in positions:
-            positions[dmr] = (0, current_y)
-            current_y += spacing
+            positions[dmr] = (0, current_y + i * spacing)
 
     # Position regular genes
-    for gene in sorted(gene_nodes - split_genes):
+    for i, gene in enumerate(sorted(gene_nodes - split_genes)):
         if gene not in positions:
-            positions[gene] = (1, current_y)
-            current_y += spacing
+            positions[gene] = (1, current_y + i * spacing)
 
     # Position split genes
-    for gene in sorted(gene_nodes & split_genes):
+    for i, gene in enumerate(sorted(gene_nodes & split_genes)):
         if gene not in positions:
-            positions[gene] = (1.1, current_y)
-            current_y += spacing
+            positions[gene] = (1.1, current_y + i * spacing)
 
-    return current_y
+    # Calculate next y position based on maximum number of nodes in this biclique
+    max_nodes = max(len(dmr_nodes), len(gene_nodes))
+    return current_y + max_nodes * spacing
 
 
 def position_remaining_nodes(
