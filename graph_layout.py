@@ -114,9 +114,14 @@ def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> fl
     if len(bicliques) == 1 and len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
         return 0.5
 
-    # Otherwise calculate based on total nodes
-    total_nodes = sum(len(dmr_nodes) + len(gene_nodes) for dmr_nodes, gene_nodes in bicliques)
-    return 1.0 / (total_nodes + 1) if total_nodes > 0 else 0.5
+    # Calculate max nodes on either side (DMRs vs genes)
+    max_side_nodes = max(
+        max(len(dmr_nodes) for dmr_nodes, _ in bicliques),  # Max DMRs in any biclique
+        max(len(gene_nodes) for _, gene_nodes in bicliques)  # Max genes in any biclique
+    )
+    
+    # Calculate spacing based on maximum nodes on either side
+    return 1.0 / (max_side_nodes + 1) if max_side_nodes > 0 else 0.5
 
 
 def position_biclique_nodes(
