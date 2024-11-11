@@ -1,0 +1,74 @@
+"""Core visualization functionality"""
+
+import json
+from typing import Dict, List, Set, Tuple
+from plotly.utils import PlotlyJSONEncoder
+
+from .traces import create_node_traces
+from .layout import create_plot_layout
+from graph_visualize import (
+    create_biclique_boxes,
+    create_biclique_edges,
+    generate_biclique_colors,
+)
+from node_info import NodeInfo
+
+def create_biclique_visualization(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_labels: Dict[int, str],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_biclique_map: Dict[int, List[int]],
+    dominating_set: Set[int] = None,
+    dmr_metadata: Dict[str, Dict] = None,
+    gene_metadata: Dict[str, Dict] = None,
+    gene_id_mapping: Dict[str, int] = None,
+) -> str:
+    """Create interactive Plotly visualization with colored bicliques."""
+    # Generate colors for bicliques
+    biclique_colors = generate_biclique_colors(len(bicliques))
+
+    # Create NodeInfo object
+    all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
+    dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
+    regular_genes = set().union(*[gene_nodes for _, gene_nodes in bicliques])
+    split_genes = {node for node in regular_genes 
+                  if len(node_biclique_map.get(node, [])) > 1}
+    regular_genes -= split_genes
+    
+    node_degrees = {node: len(node_biclique_map.get(node, [])) 
+                   for node in all_nodes}
+    min_gene_id = min(regular_genes | split_genes, default=0)
+
+    node_info = NodeInfo(
+        all_nodes=all_nodes,
+        dmr_nodes=dmr_nodes,
+        regular_genes=regular_genes,
+        split_genes=split_genes,
+        node_degrees=node_degrees,
+        min_gene_id=min_gene_id
+    )
+
+    # Create all visualization elements
+    traces = []
+    
+    # Add biclique boxes first (background)
+    traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
+    
+    # Add edges
+    traces.extend(create_biclique_edges(bicliques, node_positions))
+    
+    # Add nodes with proper styling
+    traces.extend(create_node_traces(
+        node_info,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors
+    ))
+
+    # Create layout
+    layout = create_plot_layout()
+
+    # Create figure and convert to JSON
+    fig = {"data": traces, "layout": layout}
+    return json.dumps(fig, cls=PlotlyJSONEncoder)
