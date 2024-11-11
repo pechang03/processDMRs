@@ -2,7 +2,7 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from graph_layout import calculate_node_positions
+from visualization.layout import calculate_node_positions
 
 class TestCalculateNodePositions(unittest.TestCase):
     def test_single_biclique(self):

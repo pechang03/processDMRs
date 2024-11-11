@@ -206,3 +206,4 @@ class TestBipartiteGraph(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+from visualization.core import create_biclique_visualization

@@ -2,7 +2,7 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from graph_layout import calculate_node_positions
+from visualization.layout import calculate_node_positions
 
 class TestGeneSplitBicliques(unittest.TestCase):
     def test_split_gene_positions(self):
