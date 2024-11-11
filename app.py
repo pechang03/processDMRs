@@ -21,6 +21,11 @@ from process_bicliques import (
 # Import utility functions from graph_utils
 from biclique_visualization import create_biclique_visualization
 from graph_visualize import create_node_biclique_map
+from biclique_visualization import (
+    create_biclique_visualization,
+    create_component_visualization,
+)
+
 # Import the calculate_node_positions function
 from graph_layout import calculate_node_positions, NodeInfo
 from graph_utils import (
@@ -60,7 +65,7 @@ def process_data():
             "coverage": bicliques_result["coverage"],
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
-            "gene_id_mapping": gene_id_mapping  # Add this line
+            "gene_id_mapping": gene_id_mapping,  # Add this line
         }
     except Exception as e:
         return render_template("error.html", message=str(e))
@@ -234,16 +239,20 @@ def index():
     # Create bicliques list with all nodes
     bicliques = []
     node_biclique_map = {}
-    
+
     for comp_idx, component in enumerate(results["components"]):
         for biclique_idx, biclique in enumerate(component["bicliques"]):
             dmr_nodes = set(biclique["dmrs"])
             gene_nodes = set(biclique["genes"])
             bicliques.append((dmr_nodes, gene_nodes))
-            
+
             # Calculate global biclique index
-            global_biclique_idx = sum(len(c["bicliques"]) for c in results["components"][:comp_idx]) + biclique_idx + 1
-            
+            global_biclique_idx = (
+                sum(len(c["bicliques"]) for c in results["components"][:comp_idx])
+                + biclique_idx
+                + 1
+            )
+
             # Update node_biclique_map for both DMRs and genes
             for node in dmr_nodes | gene_nodes:
                 if node not in node_biclique_map:
@@ -260,9 +269,12 @@ def index():
         # Assign default positions for missing nodes
         for node in missing_nodes:
             # Check if node is a DMR by checking if it's less than the minimum gene ID
-            min_gene_id = min(gene_id for comp in results["components"] 
-                              for biclique in comp["bicliques"] 
-                              for gene_id in biclique["genes"])
+            min_gene_id = min(
+                gene_id
+                for comp in results["components"]
+                for biclique in comp["bicliques"]
+                for gene_id in biclique["genes"]
+            )
             is_dmr = node < min_gene_id
             node_positions[node] = (0, 0.5) if is_dmr else (1, 0.5)
 
@@ -273,7 +285,7 @@ def index():
             (set(biclique["dmrs"]), set(biclique["genes"]))
             for biclique in component["bicliques"]
         ]
-        
+
         component["plotly_graph"] = json.loads(
             create_component_visualization(
                 bicliques=component_bicliques,
@@ -284,7 +296,7 @@ def index():
                 node_info=node_info,
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
-                gene_id_mapping=results["gene_id_mapping"]
+                gene_id_mapping=results["gene_id_mapping"],
             )
         )
 
