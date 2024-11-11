@@ -15,4 +15,53 @@ def calculate_size_distribution(bicliques: List) -> Dict:
         distribution[size_key] = distribution.get(size_key, 0) + 1
     return distribution
 
-# Add other statistics functions...
+def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> Dict:
+    """Calculate how many nodes participate in multiple bicliques."""
+    dmr_participation = {}
+    gene_participation = {}
+    
+    for dmr_nodes, gene_nodes in bicliques:
+        for node in dmr_nodes:
+            dmr_participation[node] = dmr_participation.get(node, 0) + 1
+        for node in gene_nodes:
+            gene_participation[node] = gene_participation.get(node, 0) + 1
+    
+    # Convert to count distribution
+    dmr_dist = {}
+    gene_dist = {}
+    for count in dmr_participation.values():
+        dmr_dist[count] = dmr_dist.get(count, 0) + 1
+    for count in gene_participation.values():
+        gene_dist[count] = gene_dist.get(count, 0) + 1
+        
+    return {
+        "dmrs": dmr_dist,
+        "genes": gene_dist
+    }
+
+def calculate_edge_coverage(bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph) -> Dict:
+    """Calculate edge coverage statistics."""
+    edge_coverage = {}
+    total_edges = len(graph.edges())
+    
+    # Count how many bicliques cover each edge
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                if graph.has_edge(dmr, gene):
+                    edge = tuple(sorted([dmr, gene]))
+                    edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+    
+    single = sum(1 for count in edge_coverage.values() if count == 1)
+    multiple = sum(1 for count in edge_coverage.values() if count > 1)
+    uncovered = total_edges - len(edge_coverage)
+    
+    return {
+        "single": single,
+        "multiple": multiple,
+        "uncovered": uncovered,
+        "total": total_edges,
+        "single_percentage": single / total_edges,
+        "multiple_percentage": multiple / total_edges,
+        "uncovered_percentage": uncovered / total_edges
+    }
