@@ -1,4 +1,8 @@
 # file statistics.py
+from typing import List, Dict, Tuple, Set
+import networkx as nx
+
+# file statistics.py
 # Author: Peter Shaw
 
 
