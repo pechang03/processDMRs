@@ -13,6 +13,7 @@ from typing import Dict, List, Set, Tuple
  Functions for creating biclique visualizations using Plotly
 """
 
+from node_info import NodeInfo  # Add this line
 
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
