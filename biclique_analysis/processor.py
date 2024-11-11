@@ -1,6 +1,6 @@
 import networkx as nx
 import pandas as pd
-from typing import Dict, List
+from typing import Dict, List, Set
 from .reader import read_bicliques_file
 
 def process_bicliques(bipartite_graph: nx.Graph, df: pd.DataFrame, gene_id_mapping: Dict) -> Dict:
