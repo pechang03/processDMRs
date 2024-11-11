@@ -10,6 +10,7 @@ from biclique_analysis import (
     process_bicliques,
     process_components,
     read_bicliques_file,
+    calculate_biclique_statistics,  # Add this import
 )
 
 from graph_utils import (
