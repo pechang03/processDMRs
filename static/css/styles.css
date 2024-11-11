@@ -1,0 +1,92 @@
+/* Layout and Container Styles */
+.container {
+    margin-top: 3rem;
+}
+
+/* Component Styles */
+.component-section {
+    margin-bottom: 2em;
+    border: 1px solid #ddd;
+    padding: 1em;
+}
+
+/* Card Styles */
+.card {
+    margin-bottom: 1.5rem;
+}
+
+.card-header h5 {
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.biclique-card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Biclique Section Styles */
+.biclique-details {
+    margin-top: 1em;
+}
+
+.biclique-info {
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background-color: #f8f9fa;
+}
+
+.dmr-section, 
+.gene-section {
+    margin-bottom: 1rem;
+}
+
+/* List Styles */
+.dmr-list, 
+.gene-list {
+    list-style-type: none;
+    padding-left: 1em;
+}
+
+.dmr-list li, 
+.gene-list li {
+    margin-bottom: 0.5em;
+}
+
+.list-unstyled li {
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+}
+
+/* Graph Visualization Styles */
+.plotly-graph {
+    width: 100%;
+    min-height: 400px;
+    margin: 1rem 0;
+}
+
+/* Summary Statistics Styles */
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        margin-top: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .list-unstyled li {
+        padding-left: 0.5rem;
+    }
+}
+
+/* Alert Styles */
+.alert {
+    margin-bottom: 2rem;
+}
