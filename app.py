@@ -7,7 +7,12 @@ from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph, process_enhancer_info
 from biclique_analysis import process_bicliques, process_components, calculate_biclique_statistics
-from visualization import create_node_biclique_map, create_biclique_visualization, calculate_node_positions, create_component_visualization
+from visualization import (
+    create_node_biclique_map, 
+    create_biclique_visualization, 
+    create_component_visualization
+)
+from visualization.graph_layout import calculate_node_positions
 from visualization.node_info import NodeInfo
 
 app = Flask(__name__)
