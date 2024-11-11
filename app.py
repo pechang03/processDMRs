@@ -1,29 +1,37 @@
+# file App.py
+# Author: Peter Shaw
+
 import os
+import json
+from flask import Flask, render_template
+
+from processDMR import read_excel_file, create_bipartite_graph
+from biclique_analysis import process_bicliques
+from visualization import create_node_biclique_map, create_biclique_visualizatio
+from visualization.node_info import NodeInfo
 
 app = Flask(__name__)
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-DSS1_FILE = os.path.join(DATA_DIR, 'DSS1.xlsx')
-HOME1_FILE = os.path.join(DATA_DIR, 'HOME1.xlsx')
-BICLIQUES_FILE = os.path.join(DATA_DIR, 'bipartite_graph_output.txt.biclusters')
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
+HOME1_FILE = os.path.join(DATA_DIR, "HOME1.xlsx")
+BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
+
 
 def process_data():
     """Process the DMR data and return results"""
     try:
         print("Starting data processing...")
         print(f"Using data directory: {DATA_DIR}")
-        
+
         # Read and prepare data
         print("Reading Excel files...")
         df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         bicliques_result = process_bicliques(
-            bipartite_graph,
-            BICLIQUES_FILE,
-            max(df["DMR_No."]),
-            "DSS1"
+            bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
         )
         component_data = process_components(bipartite_graph, bicliques_result)
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
@@ -58,35 +66,44 @@ def read_and_prepare_data(dss1_path=None, home1_path=None):
         print(f"Reading Excel file: {dss1_path}")
         df = read_excel_file(dss1_path or DSS1_FILE)
         print(f"Successfully read DSS1 file with {len(df)} rows")
-        
+
         if home1_path:
             print(f"Reading Excel file: {home1_path}")
             df_home1 = read_excel_file(home1_path or HOME1_FILE)
             print(f"Successfully read HOME1 file with {len(df_home1)} rows")
         else:
             df_home1 = None
-        
+
         print("Processing enhancer info...")
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-        
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
+
         print("Creating gene ID mapping...")
         all_genes = set(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-        
+
         if df_home1 is not None:
-            df_home1["Processed_Enhancer_Info"] = df_home1["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+            df_home1["Processed_Enhancer_Info"] = df_home1[
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+            ].apply(process_enhancer_info)
             all_genes.update(df_home1["Gene_Symbol_Nearby"].dropna())
-            all_genes.update([g for genes in df_home1["Processed_Enhancer_Info"] for g in genes])
-        
+            all_genes.update(
+                [g for genes in df_home1["Processed_Enhancer_Info"] for g in genes]
+            )
+
         print(f"Found {len(all_genes)} unique genes")
-        
-        gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+
+        gene_id_mapping = {
+            gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
+        }
         print(f"Created mapping for {len(gene_id_mapping)} genes")
-        
+
         return df, gene_id_mapping
     except Exception as e:
         print(f"Error in read_and_prepare_data: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -246,7 +263,7 @@ def index():
             node_degrees[node] = len(node_biclique_map.get(node, []))
 
         # Find min gene id to separate DMRs from genes
-        min_gene_id = min(gene_nodes) if gene_nodes else float('inf')
+        min_gene_id = min(gene_nodes) if gene_nodes else float("inf")
 
         node_info = NodeInfo(
             all_nodes=all_nodes,
@@ -254,7 +271,7 @@ def index():
             regular_genes={n for n in gene_nodes if node_degrees[n] == 1},
             split_genes={n for n in gene_nodes if node_degrees[n] > 1},
             node_degrees=node_degrees,
-            min_gene_id=min_gene_id
+            min_gene_id=min_gene_id,
         )
 
         # Calculate false positive edges
@@ -263,8 +280,7 @@ def index():
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 edge_in_biclique = any(
-                    dmr in dmrs and gene in genes 
-                    for dmrs, genes in component_bicliques
+                    dmr in dmrs and gene in genes for dmrs, genes in component_bicliques
                 )
                 if not edge_in_biclique:
                     false_positive_edges.add((dmr, gene))
@@ -290,24 +306,22 @@ def index():
         gene_metadata=results["gene_metadata"],
     )
 
+
 @app.route("/statistics")
 def statistics():
     try:
         results = process_data()
         df, gene_id_mapping = read_and_prepare_data()
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
-        
+
         # Get detailed statistics
         bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
         statistics = calculate_biclique_statistics(
-            bicliques_result["bicliques"],
-            bipartite_graph
+            bicliques_result["bicliques"], bipartite_graph
         )
-        
+
         return render_template(
-            "statistics.html",
-            statistics=statistics,
-            bicliques_result=bicliques_result
+            "statistics.html", statistics=statistics, bicliques_result=bicliques_result
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
