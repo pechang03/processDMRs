@@ -1,7 +1,8 @@
 # File reader.py
-# Authoer: Peter Shaw
-#
+# Author: Peter Shaw
 
+from typing import Dict, List, Union
+import networkx as nx
 
 def read_bicliques_file(
     filename: str, max_DMR_id: int, original_graph: nx.Graph
