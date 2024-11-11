@@ -264,7 +264,10 @@ def create_node_traces(
         # Get node color based on its biclique membership
         biclique_nums = node_biclique_map.get(node, [])
         # Use first biclique color if node belongs to any biclique, otherwise gray
-        color = biclique_colors[biclique_nums[0]-1] if biclique_nums else "gray"
+        if biclique_nums and biclique_nums[0] <= len(biclique_colors):
+            color = biclique_colors[biclique_nums[0]-1]
+        else:
+            color = "gray"
         
         if node in node_info.dmr_nodes:
             dmr_x.append(pos[0])
