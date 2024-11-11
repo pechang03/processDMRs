@@ -1,16 +1,16 @@
+# File biclique visualization.py
+# Author: Peter Shaw 
+# Date: 5/6/2019
+#
+
 """
-Functions for visualizing bicliques using Matplotlib and TikZplotlib
+ Functions for creating biclique visualizations using Plotly
 """
 
-import matplotlib.pyplot as plt
-
-# import tikzplotlib
-import networkx as nx
-from typing import Dict, List, Set, Tuple
 import plotly.graph_objs as go
 import json
 from plotly.utils import PlotlyJSONEncoder
-
+from typing import Dict, List, Set, Tuple
 
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
@@ -23,6 +23,7 @@ def create_biclique_visualization(
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
 ) -> str:
+
     """
     Create interactive Plotly visualization with colored bicliques.
     """
@@ -33,20 +34,11 @@ def create_biclique_visualization(
     node_traces = []
     box_traces = []  # For biclique boxes
 
-    edge_traces = []
-    node_traces = []
-    box_traces = []  # For biclique boxes
-
-    edge_traces = []
-    node_traces = []
-    box_traces = []  # For biclique boxes
-
     # Track node colors based on biclique membership
     node_colors = {}
 
     # Process each biclique
-    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        color = biclique_colors[biclique_idx]
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques color = biclique_colors[biclique_idx]
 
         # Create edges
         for dmr in dmr_nodes:
@@ -98,17 +90,20 @@ def create_biclique_visualization(
     for node_id, pos in node_positions.items():
         color = node_colors.get(node_id, "gray")
         if node_id in node_biclique_map:  # It's a valid node
-            is_dmr = any(node_id in dmr_nodes for dmr_nodes, _ in bicliques)
+            is_dmr = any(node_id in dmr_nodes for dmr_nodes, _ in
+bicliques)
             if is_dmr:
                 dmr_x.append(pos[0])
                 dmr_y.append(pos[1])
                 dmr_colors.append(color)
-                dmr_text.append(node_labels.get(node_id, f"DMR_{node_id}"))
+                dmr_text.append(node_labels.get(node_id,
+f"DMR_{node_id}"))
             else:
                 gene_x.append(pos[0])
                 gene_y.append(pos[1])
                 gene_colors.append(color)
-                gene_text.append(node_labels.get(node_id, f"Gene_{node_id}"))
+                gene_text.append(node_labels.get(node_id,
+f"Gene_{node_id}"))
 
     # Add DMR nodes
     node_traces.append(
@@ -171,86 +166,16 @@ def create_biclique_visualization(
         )
 
     # Combine all traces in the right order (boxes first, then edges then nodes)
-    # Remove this duplicate line that appears earlier in the function
-
-    plot_data = []  # Initialize plot_data as an empty list
-    # Add metadata tables if provided
-    if dmr_metadata:
-        plot_data.append(create_dmr_table(dmr_metadata))
-    if gene_metadata and gene_id_mapping:
-        plot_data.append(
-            create_gene_table(gene_metadata, gene_id_mapping, node_biclique_map)
-        )
-
-
-def create_dmr_table(dmr_metadata: Dict[str, Dict]) -> go.Table:
-    """Create a Plotly table for DMR metadata."""
-    headers = ["DMR", "Area", "Bicliques"]
-    rows = [
-        [
-            dmr,
-            metadata.get("area", "N/A"),
-            ", ".join(map(str, metadata.get("bicliques", []))),
-        ]
-        for dmr, metadata in dmr_metadata.items()
-    ]
-    return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
-
-
-def create_gene_table(
-    gene_metadata: Dict[str, Dict],
-    gene_id_mapping: Dict[str, int],
-    node_biclique_map: Dict[int, List[int]],
-) -> go.Table:
-    """Create a Plotly table for gene metadata."""
-    headers = ["Gene", "Description", "Bicliques"]
-    rows = [
-        [
-            gene,
-            metadata.get("description", "N/A"),
-            ", ".join(map(str, node_biclique_map.get(gene_id_mapping[gene], []))),
-        ]
-        for gene, metadata in gene_metadata.items()
-    ]
-    return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
-
-    # Ensure box_traces, edge_traces, and node_traces are defined before this line
     plot_data = box_traces + edge_traces + node_traces
     layout = go.Layout(
         showlegend=True,
         hovermode="closest",
         margin=dict(b=20, l=5, r=5, t=40),
-        legend=dict(x=0.5, y=1.1, xanchor="center", orientation="h"),
+        legend=dict(x=0.5, y=1.1, xanchor="center", orientation="h")
     )
 
     fig = go.Figure(data=plot_data, layout=layout)
-    return json.dumps(
-        fig, cls=PlotlyJSONEncoder
-    )  # Make sure this return statement is at the end
-
-
-def create_node_biclique_map(
-    bicliques: List[Tuple[Set[int], Set[int]]],
-) -> Dict[int, List[int]]:
-    """
-    Create mapping of nodes to their biclique numbers.
-
-    Args:
-        bicliques: List of (dmr_nodes, gene_nodes) tuples
-
-    Returns:
-        Dictionary mapping node IDs to list of biclique numbers they belong to
-    """
-    node_biclique_map = {}
-
-    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        for node in dmr_nodes | gene_nodes:
-            if node not in node_biclique_map:
-                node_biclique_map[node] = []
-            node_biclique_map[node].append(biclique_idx + 1)
-
-    return node_biclique_map
-
+    return json.dumps(fig, cls=PlotlyJSONEncoder)
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
     """Generate distinct colors for bicliques"""
