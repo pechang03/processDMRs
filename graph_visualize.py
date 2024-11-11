@@ -36,7 +36,8 @@ def create_biclique_visualization(
     node_colors = {}
 
     # Process each biclique
-    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques color = biclique_colors[biclique_idx]
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        color = biclique_colors[biclique_idx]
 
         # Create edges
         for dmr in dmr_nodes:
