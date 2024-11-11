@@ -14,6 +14,23 @@
       .component-section {
         margin-bottom: 2rem;
       }
+      .dmr-section, .gene-section {
+        margin-bottom: 1rem;
+      }
+      
+      .list-unstyled li {
+        margin-bottom: 0.5rem;
+        padding-left: 1rem;
+      }
+      
+      .card-header h5 {
+        color: #495057;
+      }
+      
+      .biclique-card {
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
     </style>
   </head>
   <body>
@@ -83,16 +100,32 @@
             <h6>Bicliques ({{ component.bicliques|length }}):</h6>
             <div class="row">
               {% for biclique in component.bicliques %}
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <div class="card biclique-card">
                   <div class="card-header">
-                    Biclique Size: {{ biclique.size }}
+                    <h5 class="mb-0">Biclique {{ loop.index }} ({{ biclique.size }})</h5>
                   </div>
                   <div class="card-body">
-                    <p><strong>DMRs:</strong> {{ biclique.dmrs|join(', ') }}</p>
-                    <p>
-                      <strong>Genes:</strong> {{ biclique.genes|join(', ') }}
-                    </p>
+                    <div class="dmr-section">
+                      <h6>DMRs:</h6>
+                      <ul class="list-unstyled">
+                        {% for dmr in biclique.details.dmrs %}
+                        <li>
+                          {{ dmr.id }} - Area: {{ dmr.area }} - {{ dmr.description }}
+                        </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    <div class="gene-section">
+                      <h6>Genes:</h6>
+                      <ul class="list-unstyled">
+                        {% for gene in biclique.details.genes %}
+                        <li>
+                          {{ gene.name }} - {{ gene.description }}
+                        </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
