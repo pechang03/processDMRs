@@ -86,19 +86,12 @@ def process_data():
         return {"error": str(e)}
 
 
-def read_and_prepare_data(dss1_path=None, home1_path=None):
+def read_and_prepare_data(dss1_path=None):
     """Read and prepare the data from the Excel files"""
     try:
         print(f"Reading Excel file: {dss1_path}")
         df = read_excel_file(dss1_path or DSS1_FILE)
         print(f"Successfully read DSS1 file with {len(df)} rows")
-
-        if home1_path:
-            print(f"Reading Excel file: {home1_path}")
-            df_home1 = read_excel_file(home1_path or HOME1_FILE)
-            print(f"Successfully read HOME1 file with {len(df_home1)} rows")
-        else:
-            df_home1 = None
 
         print("Processing enhancer info...")
         df["Processed_Enhancer_Info"] = df[
@@ -108,15 +101,6 @@ def read_and_prepare_data(dss1_path=None, home1_path=None):
         print("Creating gene ID mapping...")
         all_genes = set(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-
-        if df_home1 is not None:
-            df_home1["Processed_Enhancer_Info"] = df_home1[
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-            ].apply(process_enhancer_info)
-            all_genes.update(df_home1["Gene_Symbol_Nearby"].dropna())
-            all_genes.update(
-                [g for genes in df_home1["Processed_Enhancer_Info"] for g in genes]
-            )
 
         print(f"Found {len(all_genes)} unique genes")
 
@@ -129,7 +113,6 @@ def read_and_prepare_data(dss1_path=None, home1_path=None):
     except Exception as e:
         print(f"Error in read_and_prepare_data: {str(e)}")
         import traceback
-
         traceback.print_exc()
         raise
 
