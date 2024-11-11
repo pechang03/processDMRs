@@ -1,7 +1,7 @@
 # File reader.py
 # Author: Peter Shaw
 
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple, Set
 import networkx as nx
 
 def read_bicliques_file(
