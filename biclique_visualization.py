@@ -1,16 +1,18 @@
 # File biclique visualization.py
-# Author: Peter Shaw 
+# Author: Peter Shaw
 # Date: 5/6/2019
 #
+
+import plotly.graph_objs as go
+import json
+from plotly.utils import PlotlyJSONEncoder
+import plotly.colors
+from typing import Dict, List, Set, Tuple
 
 """
  Functions for creating biclique visualizations using Plotly
 """
 
-import plotly.graph_objs as go
-import json
-from plotly.utils import PlotlyJSONEncoder
-from typing import Dict, List, Set, Tuple
 
 def create_biclique_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
@@ -23,7 +25,6 @@ def create_biclique_visualization(
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
 ) -> str:
-
     """
     Create interactive Plotly visualization with colored bicliques.
     """
@@ -91,25 +92,6 @@ def create_biclique_visualization(
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
     """Generate distinct colors for bicliques"""
-    import plotly.colors
-
-    colors = plotly.colors.qualitative.Set3 * (
-        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
-    )
-    return colors[:num_bicliques]
-"""
-Functions for creating biclique visualizations using Plotly
-"""
-
-import plotly.graph_objs as go
-import json
-from plotly.utils import PlotlyJSONEncoder
-from typing import Dict, List, Set, Tuple
-
-
-def generate_biclique_colors(num_bicliques: int) -> List[str]:
-    """Generate distinct colors for bicliques"""
-    import plotly.colors
 
     colors = plotly.colors.qualitative.Set3 * (
         num_bicliques // len(plotly.colors.qualitative.Set3) + 1
