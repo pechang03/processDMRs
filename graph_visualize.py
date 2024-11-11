@@ -247,3 +247,53 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
         num_bicliques // len(plotly.colors.qualitative.Set3) + 1
     )
     return colors[:num_bicliques]
+def create_biclique_boxes(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_positions: Dict[int, Tuple[float, float]],
+    biclique_colors: List[str]
+) -> List[go.Scatter]:
+    """Create box traces around bicliques."""
+    traces = []
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        nodes = dmr_nodes | gene_nodes
+        if not nodes:
+            continue
+            
+        x_coords = [node_positions[n][0] for n in nodes]
+        y_coords = [node_positions[n][1] for n in nodes]
+        
+        padding = 0.05
+        x_min, x_max = min(x_coords) - padding, max(x_coords) + padding
+        y_min, y_max = min(y_coords) - padding, max(y_coords) + padding
+        
+        traces.append(go.Scatter(
+            x=[x_min, x_max, x_max, x_min, x_min],
+            y=[y_min, y_min, y_max, y_max, y_min],
+            mode="lines",
+            line=dict(color=biclique_colors[biclique_idx], width=2, dash="dot"),
+            fill="toself",
+            fillcolor=biclique_colors[biclique_idx],
+            opacity=0.1,
+            name=f"Biclique {biclique_idx + 1}",
+            showlegend=True
+        ))
+    return traces
+
+def create_biclique_edges(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_positions: Dict[int, Tuple[float, float]]
+) -> List[go.Scatter]:
+    """Create edge traces for all bicliques."""
+    traces = []
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                traces.append(go.Scatter(
+                    x=[node_positions[dmr][0], node_positions[gene][0]],
+                    y=[node_positions[dmr][1], node_positions[gene][1]],
+                    mode="lines",
+                    line=dict(width=1, color="gray"),
+                    hoverinfo="none",
+                    showlegend=False
+                ))
+    return traces
