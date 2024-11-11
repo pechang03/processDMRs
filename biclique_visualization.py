@@ -250,6 +250,7 @@ def create_node_traces(
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     biclique_colors: List[str],
+    node_biclique_map: Dict[int, List[int]],
 ) -> List[go.Scatter]:
     """Create node traces for DMRs and genes."""
     node_colors = get_node_colors(bicliques, biclique_colors)
