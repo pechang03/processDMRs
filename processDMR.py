@@ -14,11 +14,8 @@ from rb_domination import (
     process_components,
     print_domination_statistics,
 )
-from process_bicliques import (
-    read_bicliques_file,
-    print_bicliques_summary,
-    print_bicliques_detail,
-)
+from biclique_analysis.reader import read_bicliques_file
+from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
 from visualization.core import create_biclique_visualization
 from visualization import create_node_biclique_map
 from typing import Dict
