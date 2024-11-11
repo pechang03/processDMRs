@@ -5,100 +5,92 @@ import networkx as nx
 from typing import Dict, List, Set, Tuple
 
 def calculate_node_positions(
-     bicliques: List[Tuple[Set[int], Set[int]]],
-     node_biclique_map: Dict[int, List[int]]
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_biclique_map: Dict[int, List[int]]
 ) -> Dict[int, Tuple[float, float]]:
     """Calculate positions for nodes in the biclique visualization."""
     positions = {}
-
-    # Get all unique nodes from both sources
+    
+    # 1. First collect all nodes and their biclique memberships
     all_nodes = set(node_biclique_map.keys())
     for dmr_nodes, gene_nodes in bicliques:
         all_nodes.update(dmr_nodes)
         all_nodes.update(gene_nodes)
 
-    # Determine node types based on bicliques
+    # Track node degrees for high-degree node handling
+    node_degrees = {}
+    for node in all_nodes:
+        node_degrees[node] = len(node_biclique_map.get(node, []))
+
+    # 2. Identify node types and split genes
     all_dmr_nodes = set()
-    all_gene_nodes = set()
-
-    # First pass: collect nodes from bicliques
-    for dmr_nodes, gene_nodes in bicliques:
+    regular_genes = set()
+    split_genes = set()
+    
+    min_gene_id = float('inf')
+    for biclique in bicliques:
+        dmr_nodes, gene_nodes = biclique
         all_dmr_nodes.update(dmr_nodes)
-        all_gene_nodes.update(gene_nodes)
+        for gene in gene_nodes:
+            min_gene_id = min(min_gene_id, gene)
+            if len(node_biclique_map.get(gene, [])) > 1:
+                split_genes.add(gene)
+            else:
+                regular_genes.add(gene)
 
-    # Handle any remaining nodes based on node_biclique_map patterns
-    remaining_nodes = all_nodes - (all_dmr_nodes | all_gene_nodes)
-    for node in remaining_nodes:
-        # Check biclique patterns to determine if it's a DMR or gene
-        appearances = node_biclique_map.get(node, [])
-        if appearances:
-            # Look at which set the node appears in within bicliques
-            for biclique_idx in appearances:
-                if biclique_idx < len(bicliques):
-                    dmr_set, gene_set = bicliques[biclique_idx]
-                    if node in dmr_set:
-                        all_dmr_nodes.add(node)
-                        break
-                    elif node in gene_set:
-                        all_gene_nodes.add(node)
-                        break
-        else:
-            # If no pattern available, use ID-based assignment as fallback
-            if node < min(all_gene_nodes, default=float('inf')):
+    # 3. Handle unassigned nodes (error handling)
+    unassigned = all_nodes - (all_dmr_nodes | regular_genes | split_genes)
+    if unassigned:
+        print(f"Found {len(unassigned)} unassigned nodes")
+        for node in unassigned:
+            if node < min_gene_id:
                 all_dmr_nodes.add(node)
             else:
-                all_gene_nodes.add(node)
+                regular_genes.add(node)
 
-    # Special cases handling
-    if not all_nodes:
-        return {}
-
-    if len(all_nodes) == 1:
-        positions[next(iter(all_nodes))] = (0.5, 0.5)
-        return positions
-
-    if len(all_dmr_nodes) == 1 and len(all_gene_nodes) == 1:
-        dmr = next(iter(all_dmr_nodes))
-        gene = next(iter(all_gene_nodes))
-        positions[dmr] = (0, 0.5)
-        positions[gene] = (1, 0.5)
-        return positions
-
-    # Identify split genes (genes that appear in multiple bicliques)
-    split_genes = {gene for gene in all_gene_nodes
-                if len(node_biclique_map.get(gene, [])) > 1}
-    regular_genes = all_gene_nodes - split_genes
-
-    # Calculate total vertical positions needed
-    total_positions = (
-        len(all_dmr_nodes) +    # One position per DMR
-        len(regular_genes) +     # One position per regular gene
-        sum(len(node_biclique_map.get(g, [])) for g in split_genes)  # Multiple positions per split gene
-    )
-
-    spacing = 1.0 / (total_positions + 1)
+    # 4. Calculate vertical spacing based on bicliques
+    total_height = sum(len(dmr_nodes) + len(gene_nodes) for dmr_nodes, gene_nodes in bicliques)
+    spacing = 1.0 / (total_height + 1) if total_height > 0 else 0.5
     current_y = spacing
 
-    # Position DMR nodes at x=0
-    for dmr in sorted(all_dmr_nodes):
-        positions[dmr] = (0, current_y)
-        current_y += spacing
+    # 5. Position nodes biclique by biclique
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        # Position DMRs
+        for dmr in sorted(dmr_nodes):
+            if dmr not in positions:  # Only position if not already positioned
+                positions[dmr] = (0, current_y)
+                current_y += spacing
 
-    # Position regular genes at x=1
-    for gene in sorted(regular_genes):
-        positions[gene] = (1, current_y)
-        current_y += spacing
+        # Position regular genes
+        for gene in sorted(gene_nodes - split_genes):
+            if gene not in positions:
+                positions[gene] = (1, current_y)
+                current_y += spacing
 
-    # Position split genes at x=1.1
-    for gene in sorted(split_genes):
-        appearances = len(node_biclique_map.get(gene, []))
-        if appearances > 0:
-            base_y = current_y
-            positions[gene] = (1.1, base_y)
-            current_y += spacing * appearances
-        else:
-            positions[gene] = (1.1, current_y)
+        # Position split genes
+        for gene in sorted(gene_nodes & split_genes):
+            if gene not in positions:
+                positions[gene] = (1.1, current_y)
+                current_y += spacing
+
+    # Handle any remaining unpositioned nodes (error handling)
+    missing_nodes = all_nodes - set(positions.keys())
+    if missing_nodes:
+        print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
+        for node in missing_nodes:
+            if node in all_dmr_nodes:
+                positions[node] = (0, current_y)
+            elif node in split_genes:
+                positions[node] = (1.1, current_y)
+            else:
+                positions[node] = (1, current_y)
             current_y += spacing
+
+    # Validation step
+    if len(positions) != len(all_nodes):
+        print(f"Warning: Not all nodes positioned. Expected {len(all_nodes)}, got {len(positions)}")
+        missing = all_nodes - set(positions.keys())
+        print(f"Missing positions for nodes: {missing}")
 
     return positions
 
