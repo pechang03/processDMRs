@@ -29,6 +29,59 @@ def read_bicliques_file(
         "edge_distribution": edge_distribution,
     }
 
+def _parse_bicliques(lines: List[str], max_DMR_id: int) -> List[Tuple[Set[int], Set[int]]]:
+    """Parse bicliques from file lines."""
+    bicliques = []
+    current_biclique = None
+    for line in lines:
+        if line.startswith("Biclique"):
+            if current_biclique:
+                bicliques.append(current_biclique)
+            current_biclique = (set(), set())
+        elif line.startswith("DMR"):
+            dmr_id = int(line.split(":")[1].strip())
+            if dmr_id < max_DMR_id:
+                current_biclique[0].add(dmr_id)
+        elif line.startswith("Gene"):
+            gene_id = int(line.split(":")[1].strip())
+            current_biclique[1].add(gene_id)
+    if current_biclique:
+        bicliques.append(current_biclique)
+    return bicliques
+
+def _calculate_coverage(bicliques: List[Tuple[Set[int], Set[int]]], original_graph: nx.Graph) -> Dict:
+    """Calculate coverage statistics."""
+    dmr_coverage = set()
+    gene_coverage = set()
+    for dmr_nodes, gene_nodes in bicliques:
+        dmr_coverage.update(dmr_nodes)
+        gene_coverage.update(gene_nodes)
+    return {
+        "dmrs": {
+            "covered": len(dmr_coverage),
+            "total": original_graph.number_of_nodes(),
+            "percentage": len(dmr_coverage) / original_graph.number_of_nodes()
+        },
+        "genes": {
+            "covered": len(gene_coverage),
+            "total": original_graph.number_of_nodes(),
+            "percentage": len(gene_coverage) / original_graph.number_of_nodes()
+        }
+    }
+
+def _track_edge_distribution(bicliques: List[Tuple[Set[int], Set[int]]], original_graph: nx.Graph) -> Dict:
+    """Track edge distribution across bicliques."""
+    edge_distribution = {}
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                edge = (dmr, gene)
+                if edge in edge_distribution:
+                    edge_distribution[edge] += 1
+                else:
+                    edge_distribution[edge] = 1
+    return edge_distribution
+
 
 def _parse_header_statistics(lines: List[str]) -> Dict:
     """Parse header statistics from file lines."""
