@@ -15,5 +15,6 @@ __all__ = [
     'create_visual_layout',
     'create_axis_layout',
     'calculate_plot_height',
-    'NodeInfo'
+    'NodeInfo',
+    'calculate_node_positions'
 ]
