@@ -2,6 +2,9 @@ from typing import Dict
 import pandas as pd
 import networkx as nx
 
+from biclique_analysis.classifier import classify_biclique
+
+
 def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) -> None:
     """Print detailed summary of bicliques analysis."""
     graph_name = bicliques_result["graph_info"]["name"]
@@ -65,7 +68,10 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
         for key, value in bicliques_result["statistics"].items():
             print(f"  {key}: {value}")
 
-def print_bicliques_detail(bicliques_result: Dict, df: pd.DataFrame, gene_id_mapping: Dict) -> None:
+
+def print_bicliques_detail(
+    bicliques_result: Dict, df: pd.DataFrame, gene_id_mapping: Dict
+) -> None:
     """Print detailed information about each biclique."""
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
 
