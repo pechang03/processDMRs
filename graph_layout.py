@@ -153,3 +153,55 @@ def position_nodes_evenly(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int
             positions[next(iter(gene_nodes))] = (1, 0.5)
     
     return positions
+
+def position_single_biclique(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
+    """Position nodes for a single biclique."""
+    positions = {}
+    
+    # Single DMR and gene case
+    if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
+        dmr = next(iter(dmr_nodes))
+        gene = next(iter(gene_nodes))
+        positions[dmr] = (0, 0.5)  # Fixed y-position at 0.5
+        positions[gene] = (1, 0.5)  # Fixed y-position at 0.5
+        return positions
+    
+    # Two DMRs and two genes case (overlapping)
+    if len(dmr_nodes) == 2 and len(gene_nodes) == 2:
+        dmr_nodes_sorted = sorted(dmr_nodes)
+        gene_nodes_sorted = sorted(gene_nodes)
+        
+        positions[dmr_nodes_sorted[0]] = (0, 0.25)
+        positions[dmr_nodes_sorted[1]] = (0, 0.75)
+        positions[gene_nodes_sorted[0]] = (1, 0.25)
+        positions[gene_nodes_sorted[1]] = (1, 0.75)
+        return positions
+    
+    return position_nodes_evenly(dmr_nodes, gene_nodes)
+
+def position_nodes_evenly(dmr_nodes: Set[int], gene_nodes: Set[int]) -> Dict[int, Tuple[float, float]]:
+    """Position nodes evenly spaced on left and right sides."""
+    positions = {}
+    max_nodes = max(len(dmr_nodes), len(gene_nodes))
+    
+    # For multiple nodes, space them evenly between 0 and 1
+    if max_nodes > 1:
+        spacing = 1.0 / (max_nodes + 1)
+        
+        # Position DMRs on left side
+        for i, dmr in enumerate(sorted(dmr_nodes)):
+            y_pos = spacing * (i + 1)
+            positions[dmr] = (0, y_pos)
+        
+        # Position genes on right side
+        for i, gene in enumerate(sorted(gene_nodes)):
+            y_pos = spacing * (i + 1)
+            positions[gene] = (1, y_pos)
+    else:
+        # Single node case - position at 0.5
+        if dmr_nodes:
+            positions[next(iter(dmr_nodes))] = (0, 0.5)
+        if gene_nodes:
+            positions[next(iter(gene_nodes))] = (1, 0.5)
+    
+    return positions
