@@ -185,3 +185,21 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
         num_bicliques // len(plotly.colors.qualitative.Set3) + 1
     )
     return colors[:num_bicliques]
+"""
+Functions for creating biclique visualizations using Plotly
+"""
+
+import plotly.graph_objs as go
+import json
+from plotly.utils import PlotlyJSONEncoder
+from typing import Dict, List, Set, Tuple
+
+
+def generate_biclique_colors(num_bicliques: int) -> List[str]:
+    """Generate distinct colors for bicliques"""
+    import plotly.colors
+
+    colors = plotly.colors.qualitative.Set3 * (
+        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
+    )
+    return colors[:num_bicliques]

@@ -19,7 +19,8 @@ from process_bicliques import (
 )
 
 # Import utility functions from graph_utils
-from graph_visualize import create_biclique_visualization, create_node_biclique_map
+from biclique_visualization import create_biclique_visualization
+from graph_visualize import create_node_biclique_map
 # Import the calculate_node_positions function
 from graph_layout import calculate_node_positions
 from graph_utils import (
