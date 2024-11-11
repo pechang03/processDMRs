@@ -110,9 +110,17 @@ def position_nodes_by_biclique(
 
 def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
     """Calculate vertical spacing between nodes."""
+    # Handle empty bicliques case
+    if not bicliques:
+        return 0.2  # Default spacing for empty case
+        
     # For a single biclique with one node on each side, use 0.5
     if len(bicliques) == 1 and len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
         return 0.5
+
+    # For multiple bicliques, use fixed spacing of 0.2
+    if len(bicliques) > 1:
+        return 0.2
 
     # Calculate max nodes on either side (DMRs vs genes)
     max_side_nodes = max(
