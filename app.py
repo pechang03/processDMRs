@@ -12,13 +12,8 @@ from processDMR import (
 )
 
 # Import functions from process_bicliques
-from process_bicliques import (
-    read_bicliques_file,
-    print_bicliques_summary,
-    print_bicliques_detail,
-    process_bicliques,  # This is now only defined in process_bicliques.py
-    process_components  # This is now only defined in process_bicliques.py
-)
+import math
+from flask import Flask
 
 # Import utility functions from graph_utils
 from visualization import (
