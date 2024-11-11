@@ -69,6 +69,9 @@ def _calculate_coverage(bicliques: List[Tuple[Set[int], Set[int]]], original_gra
     """Calculate coverage statistics."""
     dmr_coverage = set()
     gene_coverage = set()
+    covered_edges = {}  # Initialize covered_edges dictionary
+    edge_coverage = {'single': 0, 'multiple': 0, 'uncovered': 0, 'total': original_graph.number_of_edges()}  # Initialize edge_coverage dictionary
+
     for dmr_nodes, gene_nodes in bicliques:
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
