@@ -281,6 +281,28 @@ def index():
         gene_metadata=results["gene_metadata"],
     )
 
+@app.route("/statistics")
+def statistics():
+    try:
+        results = process_data()
+        df, gene_id_mapping = read_and_prepare_data()
+        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        
+        # Get detailed statistics
+        bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
+        statistics = calculate_biclique_statistics(
+            bicliques_result["bicliques"],
+            bipartite_graph
+        )
+        
+        return render_template(
+            "statistics.html",
+            statistics=statistics,
+            bicliques_result=bicliques_result
+        )
+    except Exception as e:
+        return render_template("error.html", message=str(e))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
