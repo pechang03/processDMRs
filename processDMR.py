@@ -4,7 +4,7 @@ import csv
 import time
 import psutil
 
-from visualization.graph_layout import calculate_node_positions
+from graph_layout import calculate_node_positions
 from graph_utils import (
     process_enhancer_info,
     validate_bipartite_graph,  # Add this line
