@@ -4,7 +4,7 @@ Functions for calculating node layouts in biclique visualizations
 
 import networkx as nx
 from typing import Dict, List, Set, Tuple
-from node_info import NodeInfo
+from .node_info import NodeInfo
 
 
 def calculate_node_positions(

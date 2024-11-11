@@ -33,7 +33,12 @@ from visualization import (
 )
 
 # Import the calculate_node_positions function
-from graph_layout import calculate_node_positions, NodeInfo
+from visualization import (
+    create_biclique_visualization,
+    create_component_visualization,
+    create_node_biclique_map,
+    NodeInfo
+)
 from graph_utils import (
     process_enhancer_info,
     # validate_bipartite_graph,
