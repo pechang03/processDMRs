@@ -22,11 +22,26 @@ def read_bicliques_file(
     coverage_stats = _calculate_coverage(bicliques, original_graph)
     edge_distribution = _track_edge_distribution(bicliques, original_graph)
 
+    # Add graph info
+    graph_info = {
+        "name": filename.split("/")[-1].split(".")[0],  # Extract name from filename
+        "total_dmrs": len([n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0]),
+        "total_genes": len([n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1]),
+        "total_edges": original_graph.number_of_edges()
+    }
+
     return {
         "bicliques": bicliques,
         "statistics": statistics,
         "coverage": coverage_stats,
         "edge_distribution": edge_distribution,
+        "graph_info": graph_info,  # Add graph info to return dict
+        "debug": {
+            "header_stats": statistics,
+            "edge_distribution": edge_distribution,
+            "uncovered_edges": [],  # Add placeholder for uncovered edges
+            "uncovered_nodes": 0    # Add placeholder for uncovered nodes count
+        }
     }
 
 def _parse_bicliques(lines: List[str], max_DMR_id: int) -> List[Tuple[Set[int], Set[int]]]:
