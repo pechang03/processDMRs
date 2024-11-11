@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set, Tuple
 import plotly.graph_objs as go
-from node_info import NodeInfo
+from .node_info import NodeInfo
 
 def create_node_traces(
     node_info: NodeInfo,
