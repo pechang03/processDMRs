@@ -276,12 +276,53 @@ def index():
             for biclique in component["bicliques"]
         ]
 
+        # Create NodeInfo object
+        all_nodes = set()
+        dmr_nodes = set()
+        gene_nodes = set()
+        for dmrs, genes in component_bicliques:
+            all_nodes.update(dmrs)
+            all_nodes.update(genes)
+            dmr_nodes.update(dmrs)
+            gene_nodes.update(genes)
+
+        # Calculate node degrees
+        node_degrees = {}
+        for node in all_nodes:
+            node_degrees[node] = len(node_biclique_map.get(node, []))
+
+        # Find min gene id to separate DMRs from genes
+        min_gene_id = min(gene_nodes) if gene_nodes else float('inf')
+
+        node_info = NodeInfo(
+            all_nodes=all_nodes,
+            dmr_nodes=dmr_nodes,
+            regular_genes={n for n in gene_nodes if node_degrees[n] == 1},
+            split_genes={n for n in gene_nodes if node_degrees[n] > 1},
+            node_degrees=node_degrees,
+            min_gene_id=min_gene_id
+        )
+
+        # Calculate false positive edges
+        false_positive_edges = set()
+        # Add edges that exist in the graph but not in any biclique
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                edge_in_biclique = any(
+                    dmr in dmrs and gene in genes 
+                    for dmrs, genes in component_bicliques
+                )
+                if not edge_in_biclique:
+                    false_positive_edges.add((dmr, gene))
+
         component["plotly_graph"] = json.loads(
             create_component_visualization(
                 bicliques=component_bicliques,
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
+                false_positive_edges=false_positive_edges,  # Add this
+                node_info=node_info,  # Add this
                 dmr_metadata=results["dmr_metadata"],
                 gene_metadata=results["gene_metadata"],
                 gene_id_mapping=results["gene_id_mapping"],
