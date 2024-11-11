@@ -219,17 +219,21 @@ def index():
 def statistics():
     try:
         results = process_data()
-        df, gene_id_mapping = read_and_prepare_data()
-        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
 
-        # Get detailed statistics
-        bicliques_result = process_bicliques(bipartite_graph, df, gene_id_mapping)
-        statistics = calculate_biclique_statistics(
-            bicliques_result["bicliques"], bipartite_graph
-        )
+        # Calculate additional statistics if needed
+        detailed_stats = {
+            "size_distribution": results.get("size_distribution", {}),
+            "coverage": results.get("coverage", {}),
+            "node_participation": results.get("node_participation", {}),
+            "edge_coverage": results.get("edge_coverage", {})
+        }
 
         return render_template(
-            "statistics.html", statistics=statistics, bicliques_result=bicliques_result
+            "statistics.html", 
+            statistics=detailed_stats,
+            bicliques_result=results
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
