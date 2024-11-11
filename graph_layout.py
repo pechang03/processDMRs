@@ -113,7 +113,7 @@ def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> fl
     # Handle empty bicliques case
     if not bicliques:
         return 0.2  # Default spacing for empty case
-        
+
     # For a single biclique with one node on each side, use 0.5
     if len(bicliques) == 1 and len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
         return 0.5
@@ -125,9 +125,11 @@ def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> fl
     # Calculate max nodes on either side (DMRs vs genes)
     max_side_nodes = max(
         max(len(dmr_nodes) for dmr_nodes, _ in bicliques),  # Max DMRs in any biclique
-        max(len(gene_nodes) for _, gene_nodes in bicliques)  # Max genes in any biclique
+        max(
+            len(gene_nodes) for _, gene_nodes in bicliques
+        ),  # Max genes in any biclique
     )
-    
+
     # Calculate spacing based on maximum nodes on either side
     return 1.0 / (max_side_nodes + 1) if max_side_nodes > 0 else 0.5
 
@@ -143,7 +145,7 @@ def position_biclique_nodes(
     """Position nodes for a single biclique and return new y position."""
     sorted_dmrs = sorted(dmr_nodes)
     sorted_genes = sorted(gene_nodes)
-    
+
     # Position DMRs and genes with matching y-coordinates when possible
     max_len = max(len(dmr_nodes), len(gene_nodes))
     for i in range(max_len):
@@ -152,7 +154,7 @@ def position_biclique_nodes(
             dmr = sorted_dmrs[i]
             if dmr not in positions:
                 positions[dmr] = (0, current_y + i * spacing)
-        
+
         # Position gene if available
         if i < len(sorted_genes):
             gene = sorted_genes[i]
@@ -160,7 +162,7 @@ def position_biclique_nodes(
                 # Use 1.1 for split genes, 1 for regular genes
                 x_pos = 1.1 if gene in split_genes else 1
                 positions[gene] = (x_pos, current_y + i * spacing)
-    
+
     # Return position for next biclique
     return current_y + max_len * spacing
 
@@ -197,9 +199,6 @@ def validate_positions(
     if len(positions) != len(all_nodes):
         missing = all_nodes - set(positions.keys())
         print(f"Warning: Missing positions for nodes: {missing}")
-
-
-from node_info import NodeInfo
 
 
 def position_single_biclique(

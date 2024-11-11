@@ -76,3 +76,17 @@ ile todo.txt
 
 Let me know if you'd like assistance with adjusting specific parts of the code or
 interpreting other sections of the output!
+
+The key changes are:
+
+ 1 Removed the incorrect overlap handling between DMR and gene sets
+ 2 Simplified node type determination based on bipartite graph
+   properties
+ 3 Maintained proper handling of split genes (genes appearing in
+   multiple bicliques)
+ 4 Kept the clear separation between DMR nodes (x=0) and gene nodes
+   (x=1 for regular, x=1.1 for split)
+
+This version better reflects the bipartite nature of the graph while
+still properly handling split genes.
+
