@@ -32,6 +32,9 @@ from visualization import (
     NodeInfo
 )
 
+# Import the calculate_node_positions function
+from graph_layout import calculate_node_positions
+
 app = Flask(__name__)
 
 
