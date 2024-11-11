@@ -170,7 +170,7 @@ def create_biclique_visualization(
         )
 
     # Combine all traces in the right order (boxes first, then edges then nodes)
-    plot_data = box_traces + edge_traces + node_traces
+    # Remove this duplicate line that appears earlier in the function
 
     # Add metadata tables if provided
     if dmr_metadata:
@@ -216,7 +216,7 @@ def create_gene_table(gene_metadata: Dict[str, Dict], gene_id_mapping: Dict[str,
     )
 
     fig = go.Figure(data=plot_data, layout=layout)
-    return json.dumps(fig, cls=PlotlyJSONEncoder)
+    return json.dumps(fig, cls=PlotlyJSONEncoder)  # Make sure this return statement is at the end
 
 def create_node_biclique_map(
     bicliques: List[Tuple[Set[int], Set[int]]],
