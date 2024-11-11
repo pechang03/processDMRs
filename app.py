@@ -31,9 +31,9 @@ def process_data():
         print("Starting data processing...")
         print(f"Using data directory: {DATA_DIR}")
 
-        # Read and prepare data
+        # Read and prepare data - only DSS1
         print("Reading Excel files...")
-        df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
+        df, gene_id_mapping = read_and_prepare_data(DSS1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         
         # Process bicliques
