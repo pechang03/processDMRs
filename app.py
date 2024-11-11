@@ -6,44 +6,30 @@ import plotly
 import plotly.graph_objs as go
 
 # Import functions from processDMR
+from processDMR import (
+    read_excel_file,
+    create_bipartite_graph,
+    process_enhancer_info,
+)
+
+# Import functions from graph_utils
+from graph_utils import (
+    validate_bipartite_graph,
+)
+
+# Import functions from biclique_analysis
 from biclique_analysis import (
     process_bicliques,
     process_components,
-    read_bicliques_file,
-    calculate_biclique_statistics,  # Add this import
+    calculate_biclique_statistics,
 )
 
-from graph_utils import (
-    process_enhancer_info,
-    read_excel_file,
-    create_bipartite_graph,
-)
-
-# Import functions from process_bicliques
-from biclique_analysis.processor import process_bicliques
-from biclique_analysis.components import process_components
-import math
-from flask import Flask
-
-# Import utility functions from graph_utils
-from visualization import (
-    create_biclique_visualization,
-    create_component_visualization,
-    create_node_biclique_map
-)
-
-# Import the calculate_node_positions function
+# Import visualization components
 from visualization import (
     create_biclique_visualization,
     create_component_visualization,
     create_node_biclique_map,
     NodeInfo
-)
-from graph_utils import (
-    process_enhancer_info,
-    # validate_bipartite_graph,
-    # read_and_prepare_data,
-    # create_metadata,
 )
 
 app = Flask(__name__)
