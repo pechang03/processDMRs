@@ -20,10 +20,10 @@ def process_data():
         df, gene_id_mapping = read_and_prepare_data(DSS1_FILE, HOME1_FILE)
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         bicliques_result = process_bicliques(
-            bipartite_graph, 
-            df, 
-            gene_id_mapping,
-            BICLIQUES_FILE
+            bipartite_graph,
+            BICLIQUES_FILE,
+            max(df["DMR_No."]),
+            "DSS1"
         )
         component_data = process_components(bipartite_graph, bicliques_result)
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)

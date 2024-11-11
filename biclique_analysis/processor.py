@@ -3,21 +3,18 @@ import pandas as pd
 from typing import Dict, List, Set
 from .reader import read_bicliques_file
 
-def process_bicliques(bipartite_graph: nx.Graph, df: pd.DataFrame, gene_id_mapping: Dict, bicliques_file: str) -> Dict:
+def process_bicliques(
+    bipartite_graph: nx.Graph, 
+    bicliques_file: str,
+    max_dmr_id: int,
+    dataset_name: str
+) -> Dict:
     """Process bicliques and add detailed information."""
-    max_dmr_id = max(df["DMR_No."])
     bicliques_result = read_bicliques_file(
         bicliques_file,
         max_dmr_id, 
         bipartite_graph
     )
-    
-    detailed_info = _add_biclique_details(
-        bicliques_result["bicliques"],
-        df,
-        gene_id_mapping
-    )
-    bicliques_result.update(detailed_info)
     
     return bicliques_result
 
