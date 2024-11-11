@@ -246,21 +246,68 @@ def create_box_traces(
 
 
 def create_node_traces(
-    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_info: NodeInfo,
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
-    biclique_colors: List[str],
     node_biclique_map: Dict[int, List[int]],
+    biclique_colors: List[str]
 ) -> List[go.Scatter]:
-    """Create node traces for DMRs and genes."""
-    node_colors = get_node_colors(bicliques, biclique_colors)
-    dmr_data, gene_data = separate_node_data(
-        bicliques, node_positions, node_colors, node_labels
-    )
-
+    """Create node traces with proper styling based on node type."""
     traces = []
-    traces.append(create_dmr_trace(*dmr_data))
-    traces.append(create_gene_trace(*gene_data))
+    
+    # Create separate traces for DMRs and genes
+    dmr_x, dmr_y, dmr_colors, dmr_text = [], [], [], []
+    gene_x, gene_y, gene_colors, gene_text = [], [], [], []
+    
+    for node in node_info.all_nodes:
+        pos = node_positions[node]
+        # Get node color based on its biclique membership
+        biclique_nums = node_biclique_map.get(node, [])
+        # Use first biclique color if node belongs to any biclique, otherwise gray
+        color = biclique_colors[biclique_nums[0]-1] if biclique_nums else "gray"
+        
+        if node in node_info.dmr_nodes:
+            dmr_x.append(pos[0])
+            dmr_y.append(pos[1])
+            dmr_colors.append(color)
+            dmr_text.append(node_labels.get(node, f"DMR_{node}"))
+        else:
+            gene_x.append(pos[0])
+            gene_y.append(pos[1])
+            gene_colors.append(color)
+            gene_text.append(node_labels.get(node, f"Gene_{node}"))
+    
+    # Add DMR nodes
+    if dmr_x:
+        traces.append(go.Scatter(
+            x=dmr_x,
+            y=dmr_y,
+            mode="markers+text",
+            marker=dict(size=10, color=dmr_colors, line=dict(color="black", width=1)),
+            text=dmr_text,
+            textposition="middle left",
+            hoverinfo="text",
+            name="DMRs"
+        ))
+    
+    # Add gene nodes
+    if gene_x:
+        traces.append(go.Scatter(
+            x=gene_x,
+            y=gene_y,
+            mode="markers+text",
+            marker=dict(
+                size=10,
+                color=gene_colors,
+                symbol="diamond",
+                line=dict(color="black", width=1)
+            ),
+            text=gene_text,
+            textposition="middle right",
+            hoverinfo="text",
+            name="Genes"
+        ))
+    
     return traces
 
 
