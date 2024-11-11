@@ -2,6 +2,8 @@
 Functions for visualizing bicliques using Matplotlib and TikZplotlib
 """
 
+from typing import Dict, List, Set, Tuple
+import plotly.graph_objs as go
 from visualization.core import create_biclique_visualization
 
 
