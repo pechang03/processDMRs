@@ -98,14 +98,18 @@ def create_edge_traces(
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                traces.append(go.Scatter(
-                    x=[node_positions[dmr][0], node_positions[gene][0]],
-                    y=[node_positions[dmr][1], node_positions[gene][1]],
-                    mode="lines",
-                    line=dict(width=1, color="gray"),
-                    hoverinfo="none",
-                    showlegend=False
-                ))
+                # Check if both nodes have positions
+                if dmr in node_positions and gene in node_positions:
+                    traces.append(go.Scatter(
+                        x=[node_positions[dmr][0], node_positions[gene][0]],
+                        y=[node_positions[dmr][1], node_positions[gene][1]],
+                        mode="lines",
+                        line=dict(width=1, color="gray"),
+                        hoverinfo="none",
+                        showlegend=False
+                    ))
+                else:
+                    print(f"Skipping edge between node {dmr} and node {gene} due to missing positions.")
     return traces
 def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],

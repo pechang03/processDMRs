@@ -21,6 +21,12 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = position_nodes_by_biclique(bicliques, node_info)
     validate_positions(positions, node_info.all_nodes)
+    # Add debug statements
+    print(f"All nodes: {node_info.all_nodes}")
+    print(f"Assigned positions: {positions.keys()}")
+    missing_nodes = node_info.all_nodes - set(positions.keys())
+    print(f"Missing nodes: {missing_nodes}")
+
     return positions
 
 
@@ -70,7 +76,13 @@ def find_min_gene_id(bicliques: List[Tuple[Set[int], Set[int]]]) -> int:
     for _, gene_nodes in bicliques:
         if gene_nodes:
             min_gene_id = min(min_gene_id, min(gene_nodes))
-    return min_gene_id
+    gene_ids = [gene_id for _, gene_nodes in bicliques for gene_id in gene_nodes]
+    if gene_ids:
+        return min(gene_ids)
+    else:
+        # If there are no gene nodes, set min_gene_id to max DMR ID + 1
+        dmr_ids = [dmr_id for dmr_nodes, _ in bicliques for dmr_id in dmr_nodes]
+        return max(dmr_ids, default=-1) + 1
 
 
 def categorize_nodes(
