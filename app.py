@@ -62,20 +62,47 @@ def process_data():
         print("Creating metadata...")
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
 
-        # Calculate node positions
+        # Before calculating positions, let's add debug logging
+        print("\nDebugging node positions:")
+        print(f"Number of bicliques: {len(bicliques_result['bicliques'])}")
+        print(f"Sample biclique: {list(bicliques_result['bicliques'])[0]}")
+
+        # Create node_biclique_map
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
+        print(f"Number of nodes in biclique map: {len(node_biclique_map)}")
+
+        # Get all nodes that should have positions
+        all_nodes = set()
+        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+            all_nodes.update(dmr_nodes)
+            all_nodes.update(gene_nodes)
+        print(f"Total unique nodes: {len(all_nodes)}")
+
+        # Calculate positions
         node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
+        print(f"Number of calculated positions: {len(node_positions)}")
 
-        # Clear existing node_labels if already defined
+        # Verify position coverage
+        missing_nodes = all_nodes - set(node_positions.keys())
+        if missing_nodes:
+            print(f"Missing positions for {len(missing_nodes)} nodes")
+            print(f"Sample missing nodes: {list(missing_nodes)[:5]}")
+
+        # Create node labels with verification
         node_labels = {}
-
         # Add DMR labels
         for dmr_id in range(len(df)):
-            node_labels[dmr_id] = f"DMR_{dmr_id + 1}"
+            if dmr_id in all_nodes:  # Only add labels for nodes that exist in bicliques
+                node_labels[dmr_id] = f"DMR_{dmr_id + 1}"
 
-        # Add gene labels using updated gene_id_mapping
-        for gene_name, gene_id in gene_id_mapping.items():
-            node_labels[gene_id] = gene_name
+        # Add gene labels using gene_id_mapping
+        reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
+        for gene_id in all_nodes:
+            if gene_id >= len(df):  # This is a gene node
+                gene_name = reverse_mapping.get(gene_id, f"Unknown_{gene_id}")
+                node_labels[gene_id] = gene_name
+
+        print(f"Number of node labels created: {len(node_labels)}")
 
         # Add visualization to each component
         for component in component_data:
