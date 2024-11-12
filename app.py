@@ -6,6 +6,7 @@ import json
 from flask import Flask, render_template
 
 from biclique_analysis.processor import process_dataset
+from processDMR import read_excel_file, process_enhancer_info
 from biclique_analysis import process_bicliques, process_components, calculate_biclique_statistics
 from visualization import (
     create_node_biclique_map, 
