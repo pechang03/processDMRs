@@ -61,7 +61,7 @@ def read_excel_file(filepath):
         raise
 
 
-def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
+def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> Tuple[nx.Graph, Dict[str, int]]:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
     dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
@@ -133,7 +133,7 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")  # Log final graph size
 
-    return B
+    return B, gene_id_mapping
 
 
 def write_bipartite_graph(graph, output_file, df, gene_id_mapping):

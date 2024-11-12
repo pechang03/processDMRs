@@ -6,7 +6,7 @@ from .node_info import NodeInfo
 
 def create_node_traces(
     node_info: NodeInfo,
-    node_positions: Dict[Tuple[int, int], Tuple[float, float]],
+    node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str]
@@ -96,12 +96,10 @@ def create_edge_traces(
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                dmr_key = (dmr, biclique_idx)
-                gene_key = (gene, biclique_idx)
-                if dmr_key in node_positions and gene_key in node_positions:
+                if dmr in node_positions and gene in node_positions:
                     traces.append(go.Scatter(
-                        x=[node_positions[dmr_key][0], node_positions[gene_key][0]],
-                        y=[node_positions[dmr_key][1], node_positions[gene_key][1]],
+                        x=[node_positions[dmr][0], node_positions[gene][0]],
+                        y=[node_positions[dmr][1], node_positions[gene][1]],
                         mode="lines",
                         line=dict(width=1, color="gray"),
                         hoverinfo="none",

@@ -34,7 +34,7 @@ def process_data():
         # Read and prepare data - only DSS1
         print("Reading Excel files...")
         df, gene_id_mapping = read_and_prepare_data(DSS1_FILE)
-        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        bipartite_graph, gene_id_mapping = create_bipartite_graph(df, gene_id_mapping)
         
         # Process bicliques
         print("Processing bicliques...")
@@ -57,10 +57,14 @@ def process_data():
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
         node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
 
-        # Create node labels
+        # Clear existing node_labels if already defined
         node_labels = {}
+
+        # Add DMR labels
         for dmr_id in range(len(df)):
             node_labels[dmr_id] = f"DMR_{dmr_id + 1}"
+
+        # Add gene labels using updated gene_id_mapping
         for gene_name, gene_id in gene_id_mapping.items():
             node_labels[gene_id] = gene_name
 
