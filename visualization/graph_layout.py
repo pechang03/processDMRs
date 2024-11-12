@@ -179,7 +179,8 @@ def position_remaining_nodes(
     spacing: float,
 ) -> float:
     """Position any nodes that weren't in bicliques."""
-    missing_nodes = node_info.all_nodes - set(positions.keys())
+    positioned_nodes = {node_id for node_id, _ in positions.keys()}
+    missing_nodes = node_info.all_nodes - positioned_nodes
     if missing_nodes:
         print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
         for node in missing_nodes:
