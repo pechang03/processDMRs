@@ -67,8 +67,22 @@ def process_data():
         # Add visualization to each component
         for component in component_data:
             if component.get("bicliques"):
+                # Convert component bicliques to the expected format (dmr_nodes, gene_nodes) tuples
+                formatted_bicliques = []
+                for biclique in component["bicliques"]:
+                    # Extract DMR and gene nodes from the biclique
+                    if isinstance(biclique, dict):
+                        dmr_nodes = set(n for n in biclique.get("details", {}).get("dmrs", []))
+                        gene_nodes = set(n for n in biclique.get("details", {}).get("genes", []))
+                        formatted_bicliques.append((dmr_nodes, gene_nodes))
+                    elif isinstance(biclique, (list, tuple)) and len(biclique) == 2:
+                        formatted_bicliques.append((set(biclique[0]), set(biclique[1])))
+                    else:
+                        print(f"Warning: Unexpected biclique format: {biclique}")
+                        continue
+
                 component_viz = create_biclique_visualization(
-                    component["bicliques"],
+                    formatted_bicliques,  # Use the formatted bicliques
                     node_labels,
                     node_positions,
                     node_biclique_map,
