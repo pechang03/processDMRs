@@ -339,3 +339,4 @@ def component_detail(component_id):
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
+from processDMR import read_excel_file
