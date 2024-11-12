@@ -9,7 +9,26 @@ def calculate_node_positions(
 ) -> Dict[int, Tuple[float, float]]:
     """Calculate base positions for nodes in the graph."""
     node_info = collect_node_information(bicliques, node_biclique_map)
-    positions = position_nodes_by_biclique(bicliques, node_info)
+    positions = {}  # Initialize empty positions dictionary
+    spacing = calculate_vertical_spacing(bicliques)
+    current_y = spacing
+
+    # Position nodes in bicliques
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        positions = position_biclique_nodes(
+            dmr_nodes,
+            gene_nodes,
+            node_info.split_genes,
+            current_y,
+            spacing,
+            positions,
+            biclique_idx,
+        )
+        current_y += max(len(dmr_nodes), len(gene_nodes)) * spacing
+
+    # Handle any remaining unpositioned nodes
+    position_remaining_nodes(positions, node_info, current_y, spacing)
+    
     validate_positions(positions, node_info.all_nodes)
     return positions
 
