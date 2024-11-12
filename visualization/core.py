@@ -3,6 +3,7 @@
 import json
 from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
+import plotly.graph_objs as go
 
 from .traces import create_node_traces
 from .layout import create_plot_layout
