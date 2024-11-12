@@ -84,26 +84,29 @@ def create_biclique_visualization(
         biclique_colors
     ))
 
-    # Create layout with proper spacing
+    # Create layout with fixed coordinates
     layout = {
         "showlegend": True,
         "hovermode": "closest",
         "margin": dict(b=40, l=40, r=40, t=40),
-        "xaxis": dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            range=[-0.2, 1.3]  # Adjust range to prevent cutoff
-        ),
-        "yaxis": dict(
-            showgrid=False,
-            zeroline=False,
-            showticklabels=False,
-            scaleanchor="x",
-            scaleratio=1
-        ),
-        "height": max(400, len(all_nodes) * 30),  # Dynamic height based on node count
-        "width": 800
+        "xaxis": {
+            "showgrid": False,
+            "zeroline": False,
+            "showticklabels": False,
+            "range": [-0.2, 1.3],  # Fixed range for discrete positions
+            "fixedrange": True  # Prevent zooming/panning
+        },
+        "yaxis": {
+            "showgrid": False,
+            "zeroline": False,
+            "showticklabels": False,
+            "scaleanchor": "x",
+            "scaleratio": 1,
+            "fixedrange": True  # Prevent zooming/panning
+        },
+        "height": max(400, len(all_nodes) * 30),
+        "width": 800,
+        "dragmode": False  # Disable dragging
     }
 
     # Create figure and convert to JSON
