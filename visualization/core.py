@@ -72,6 +72,9 @@ def create_biclique_visualization(
     # Add biclique boxes
     traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
     
+    # Add edges first (background)
+    traces.extend(create_edge_traces(bicliques, node_positions))
+    
     # Add nodes with proper styling
     traces.extend(create_node_traces(
         node_info,
