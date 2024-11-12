@@ -61,3 +61,18 @@ def _add_biclique_details(bicliques: List, df: pd.DataFrame, gene_id_mapping: Di
     return detailed_info
 
 # Add other helper functions...
+def process_enhancer_info(enhancer_str: str) -> set:
+    """
+    Process the enhancer information from the ENCODE data.
+
+    Parameters:
+    enhancer_str (str): A string containing enhancer information, separated by ';'.
+
+    Returns:
+    set: A set of processed gene names, with any suffixes removed.
+    """
+    if pd.isna(enhancer_str) or enhancer_str == ".":
+        return set()
+    genes = enhancer_str.split(";")
+    processed_genes = {gene.split("/")[0].strip().lower() for gene in genes if gene}
+    return processed_genes
