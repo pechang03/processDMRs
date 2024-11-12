@@ -21,7 +21,7 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = position_nodes_by_biclique(bicliques, node_info)
     validate_positions(positions, node_info.all_nodes)
-    return positions
+    return current_y
 
 
 def collect_node_information(
@@ -103,7 +103,7 @@ def position_nodes_by_biclique(
         )
 
     # Handle any remaining unpositioned nodes
-    position_remaining_nodes(positions, node_info, current_y, spacing)
+    current_y = position_remaining_nodes(positions, node_info, current_y, spacing)
 
     return positions
 
@@ -172,7 +172,7 @@ def position_remaining_nodes(
     node_info: "NodeInfo",
     current_y: float,
     spacing: float,
-) -> None:
+) -> float:
     """Position any nodes that weren't in bicliques."""
     missing_nodes = node_info.all_nodes - set(positions.keys())
     if missing_nodes:

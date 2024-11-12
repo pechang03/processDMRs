@@ -119,8 +119,13 @@ def create_biclique_boxes(
         if not nodes:
             continue
             
-        x_coords = [node_positions[n][0] for n in nodes]
-        y_coords = [node_positions[n][1] for n in nodes]
+        nodes_with_positions = [n for n in nodes if n in node_positions]
+        if not nodes_with_positions:
+            print(f"Skipping biclique {biclique_idx} as none of its nodes have positions.")
+            continue
+
+        x_coords = [node_positions[n][0] for n in nodes_with_positions]
+        y_coords = [node_positions[n][1] for n in nodes_with_positions]
         
         padding = 0.05
         x_min, x_max = min(x_coords) - padding, max(x_coords) + padding
