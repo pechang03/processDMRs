@@ -200,6 +200,8 @@ def write_gene_mappings(gene_id_mapping, output_file):
         raise
 
 
+import json
+
 def main():
     try:
         # Add logging
@@ -403,6 +405,9 @@ def main():
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )
+
+            # Define component_data
+            component_data = []  # Assuming this is where component data is stored
 
             # Instead of saving to file, add the visualization to each component
             for component in component_data:
