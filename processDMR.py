@@ -134,7 +134,7 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")  # Log final graph size
 
-    return B, gene_id_mapping
+    return B  # Return just the graph instead of a tuple
 
 
 def write_bipartite_graph(graph, output_file, df, gene_id_mapping):

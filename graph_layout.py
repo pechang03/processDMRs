@@ -153,13 +153,13 @@ def position_biclique_nodes(
         # Position DMR if available
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
-            positions[(dmr, biclique_idx)] = (0, current_y + i * spacing)
+            positions[dmr] = (0, current_y + i * spacing)  # DMRs at x=0
 
         # Position gene if available
         if i < len(sorted_genes):
             gene = sorted_genes[i]
             x_pos = 1.1 if gene in split_genes else 1
-            positions[(gene, biclique_idx)] = (x_pos, current_y + i * spacing)
+            positions[gene] = (x_pos, current_y + i * spacing)
 
     # Return position for next biclique
     return current_y + max_len * spacing
