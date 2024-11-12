@@ -31,58 +31,42 @@ def create_biclique_visualization(
     """Create interactive Plotly visualization with colored bicliques."""
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
-
-    # Create NodeInfo object
+    
+    traces = []
+    
+    # 1. Add biclique boxes first (background)
+    box_traces = create_biclique_boxes(bicliques, node_positions, biclique_colors)
+    traces.extend(box_traces)
+    
+    # 2. Add edges
+    edge_traces = create_biclique_edges(bicliques, node_positions)
+    traces.extend(edge_traces)
+    
+    # 3. Add nodes
+    # Create NodeInfo object for node categorization
     all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
     dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
-    regular_genes = set().union(*[gene_nodes for _, gene_nodes in bicliques])
-    split_genes = {node for node in regular_genes 
-                  if len(node_biclique_map.get(node, [])) > 1}
-    regular_genes -= split_genes
+    gene_nodes = all_nodes - dmr_nodes
+    split_genes = {node for node in gene_nodes if len(node_biclique_map.get(node, [])) > 1}
+    regular_genes = gene_nodes - split_genes
     
-    node_degrees = {node: len(node_biclique_map.get(node, [])) 
-                   for node in all_nodes}
-    min_gene_id = min(regular_genes | split_genes, default=0)
-
     node_info = NodeInfo(
         all_nodes=all_nodes,
         dmr_nodes=dmr_nodes,
         regular_genes=regular_genes,
         split_genes=split_genes,
-        node_degrees=node_degrees,
-        min_gene_id=min_gene_id
+        node_degrees={node: len(node_biclique_map.get(node, [])) for node in all_nodes},
+        min_gene_id=min(gene_nodes, default=0)
     )
-
-    # Create all visualization elements
-    traces = []
     
-    # Add edges first (background)
-    for dmr_nodes, gene_nodes in bicliques:
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                traces.append(go.Scatter(
-                    x=[node_positions[dmr][0], node_positions[gene][0]],
-                    y=[node_positions[dmr][1], node_positions[gene][1]],
-                    mode="lines",
-                    line=dict(color="gray", width=1),
-                    hoverinfo="none",
-                    showlegend=False
-                ))
-    
-    # Add biclique boxes
-    traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
-    
-    # Add edges first (background)
-    traces.extend(create_edge_traces(bicliques, node_positions))
-    
-    # Add nodes with proper styling
-    traces.extend(create_node_traces(
+    node_traces = create_node_traces(
         node_info,
         node_positions,
         node_labels,
         node_biclique_map,
         biclique_colors
-    ))
+    )
+    traces.extend(node_traces)
 
     # Create layout with fixed coordinates
     layout = {
@@ -93,8 +77,8 @@ def create_biclique_visualization(
             "showgrid": False,
             "zeroline": False,
             "showticklabels": False,
-            "range": [-0.2, 1.3],  # Fixed range for discrete positions
-            "fixedrange": True  # Prevent zooming/panning
+            "range": [-0.2, 1.3],
+            "fixedrange": True
         },
         "yaxis": {
             "showgrid": False,
@@ -102,11 +86,11 @@ def create_biclique_visualization(
             "showticklabels": False,
             "scaleanchor": "x",
             "scaleratio": 1,
-            "fixedrange": True  # Prevent zooming/panning
+            "fixedrange": True
         },
         "height": max(400, len(all_nodes) * 30),
         "width": 800,
-        "dragmode": False  # Disable dragging
+        "dragmode": False
     }
 
     # Create figure and convert to JSON
