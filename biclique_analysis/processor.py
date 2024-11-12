@@ -1,6 +1,6 @@
 import networkx as nx
 import pandas as pd
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 from .reader import read_bicliques_file
 import pandas as pd
 
@@ -66,5 +66,33 @@ def _add_biclique_details(bicliques: List, df: pd.DataFrame, gene_id_mapping: Di
             "genes": _get_gene_details(gene_nodes, df, gene_id_mapping)
         }
     return detailed_info
+
+def process_dataset(excel_file: str):
+    """Process an Excel dataset and create bipartite graph.
+    
+    Args:
+        excel_file: Path to Excel file
+        
+    Returns:
+        Tuple of (bipartite_graph, dataframe, gene_id_mapping)
+    """
+    from processDMR import read_excel_file, create_bipartite_graph
+    
+    # Read the Excel file
+    df = read_excel_file(excel_file)
+    
+    # Process enhancer information
+    df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+    
+    # Create gene ID mapping
+    all_genes = set()
+    all_genes.update(df["Gene_Symbol_Nearby"].dropna())
+    all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+    gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+    
+    # Create bipartite graph
+    bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+    
+    return bipartite_graph, df, gene_id_mapping
 
 # Add other helper functions...
