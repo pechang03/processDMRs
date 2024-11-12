@@ -184,7 +184,7 @@ def position_remaining_nodes(
         print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
         for node in missing_nodes:
             x_pos = get_x_position(node, node_info)
-            positions[node] = (x_pos, current_y)
+            positions[(node, -1)] = (x_pos, current_y)
             current_y += spacing
 
 
@@ -201,8 +201,9 @@ def validate_positions(
     positions: Dict[int, Tuple[float, float]], all_nodes: Set[int]
 ) -> None:
     """Validate that all nodes have been positioned."""
-    if len(positions) != len(all_nodes):
-        missing = all_nodes - set(positions.keys())
+    positioned_nodes = {node_id for node_id, _ in positions.keys()}
+    if len(positioned_nodes) != len(all_nodes):
+        missing = all_nodes - positioned_nodes
         print(f"Warning: Missing positions for nodes: {missing}")
 
 
