@@ -6,7 +6,7 @@ import time
 import psutil
 from typing import Dict, Tuple
 
-from graph_layout import calculate_node_positions
+from visualization.graph_layout import calculate_node_positions  # Updated import
 from graph_utils import process_enhancer_info, validate_bipartite_graph
 from rb_domination import (
     greedy_rb_domination,
