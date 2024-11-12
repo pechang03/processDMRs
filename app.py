@@ -60,7 +60,7 @@ def process_data():
         # Create node labels
         node_labels = {}
         for dmr_id in range(len(df)):
-            node_labels[dmr_id] = f"DMR_{dmr_id+1}"
+            node_labels[dmr_id] = f"DMR_{dmr_id + 1}"
         for gene_name, gene_id in gene_id_mapping.items():
             node_labels[gene_id] = gene_name
 
