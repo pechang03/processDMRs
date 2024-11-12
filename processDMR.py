@@ -7,8 +7,7 @@ import psutil
 from typing import Dict, Tuple
 
 from graph_layout import calculate_node_positions
-from graph_utils import (
-    process_enhancer_info,
+from biclique_analysis.processor import process_enhancer_info
     validate_bipartite_graph,  # Add this line
 )
 from rb_domination import (
