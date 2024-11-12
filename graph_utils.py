@@ -1,9 +1,8 @@
+# File: graph_utils.py
+# Auther : Peter Shaw
+
 import pandas as pd
 import networkx as nx
-
-
-
-
 
 
 def validate_bipartite_graph(B):
@@ -37,7 +36,6 @@ def validate_bipartite_graph(B):
     print(f"  - Minimum degree: {min_degree}")
     print(f"  - Maximum degree: {max_degree}")
     print(f"  - Average degree: {avg_degree:.2f}")
-
 
     # Connected components analysis
     components = list(nx.connected_components(B))

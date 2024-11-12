@@ -18,16 +18,21 @@ def read_bicliques_file(
     # Process file contents
     statistics = parse_header_statistics(lines)
     bicliques, line_idx = parse_bicliques(lines, max_DMR_id)
-    
+
     # Calculate coverage information
     coverage_info = calculate_coverage(bicliques, original_graph)
     edge_distribution = calculate_edge_distribution(bicliques, original_graph)
-    
+
     # Build and return result
     return create_result_dict(
-        filename, bicliques, statistics, original_graph,
-        coverage_info, edge_distribution
+        filename,
+        bicliques,
+        statistics,
+        original_graph,
+        coverage_info,
+        edge_distribution,
     )
+
 
 def parse_header_statistics(lines: List[str]) -> Dict:
     """Parse header statistics from file lines."""
@@ -38,7 +43,7 @@ def parse_header_statistics(lines: List[str]) -> Dict:
         if not line or line.startswith("#"):
             line_idx += 1
             continue
-        
+
         if line.startswith("- "):
             line = line[2:]
             if ":" in line:
@@ -46,7 +51,8 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                 key = key.strip()
                 statistics[key] = (
                     int(value.strip())
-                    if key in ["Nb operations", "Nb splits", "Nb deletions", "Nb additions"]
+                    if key
+                    in ["Nb operations", "Nb splits", "Nb deletions", "Nb additions"]
                     else value.strip()
                 )
             line_idx += 1
@@ -54,46 +60,50 @@ def parse_header_statistics(lines: List[str]) -> Dict:
         break
     return statistics
 
-def parse_bicliques(lines: List[str], max_DMR_id: int) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
+
+def parse_bicliques(
+    lines: List[str], max_DMR_id: int
+) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
     """Parse bicliques from file lines."""
     bicliques = []
     line_idx = 0
-    
+
     # Skip to first biclique
-    while line_idx < len(lines) and (not lines[line_idx].strip() or 
-          lines[line_idx].strip().startswith(("#", "- "))):
+    while line_idx < len(lines) and (
+        not lines[line_idx].strip() or lines[line_idx].strip().startswith(("#", "- "))
+    ):
         line_idx += 1
-    
+
     # Parse bicliques
     while line_idx < len(lines):
         line = lines[line_idx].strip()
         if not line:
             line_idx += 1
             continue
-            
+
         nodes = [int(x) for x in line.split()]
         dmr_nodes = {n for n in nodes if n < max_DMR_id}
         gene_nodes = {n for n in nodes if n >= max_DMR_id}
         bicliques.append((dmr_nodes, gene_nodes))
         line_idx += 1
-        
+
     return bicliques, line_idx
 
+
 def calculate_coverage(
-    bicliques: List[Tuple[Set[int], Set[int]]], 
-    original_graph: nx.Graph
+    bicliques: List[Tuple[Set[int], Set[int]]], original_graph: nx.Graph
 ) -> Dict:
     """Calculate coverage statistics."""
     dmr_coverage = set()
     gene_coverage = set()
-    
+
     for dmr_nodes, gene_nodes in bicliques:
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
-    
+
     dmr_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0}
     gene_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1}
-    
+
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
@@ -104,16 +114,16 @@ def calculate_coverage(
             "covered": len(gene_coverage),
             "total": len(gene_nodes),
             "percentage": len(gene_coverage) / len(gene_nodes),
-        }
+        },
     }
 
+
 def calculate_edge_distribution(
-    bicliques: List[Tuple[Set[int], Set[int]]], 
-    original_graph: nx.Graph
+    bicliques: List[Tuple[Set[int], Set[int]]], original_graph: nx.Graph
 ) -> Dict:
     """Calculate edge distribution across bicliques."""
     edge_distribution = {}
-    
+
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
@@ -122,8 +132,9 @@ def calculate_edge_distribution(
                     if edge not in edge_distribution:
                         edge_distribution[edge] = []
                     edge_distribution[edge].append(biclique_idx)
-    
+
     return edge_distribution
+
 
 def create_result_dict(
     filename: str,
@@ -131,22 +142,26 @@ def create_result_dict(
     statistics: Dict,
     original_graph: nx.Graph,
     coverage_info: Dict,
-    edge_distribution: Dict
+    edge_distribution: Dict,
 ) -> Dict:
     """Create the final result dictionary."""
     dmr_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0}
     gene_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1}
-    
+
     uncovered_edges = set(original_graph.edges()) - set(edge_distribution.keys())
     uncovered_nodes = {node for edge in uncovered_edges for node in edge}
-    
+
     coverage_info["edges"] = {
-        "single_coverage": len([e for e, b in edge_distribution.items() if len(b) == 1]),
-        "multiple_coverage": len([e for e, b in edge_distribution.items() if len(b) > 1]),
+        "single_coverage": len(
+            [e for e, b in edge_distribution.items() if len(b) == 1]
+        ),
+        "multiple_coverage": len(
+            [e for e, b in edge_distribution.items() if len(b) > 1]
+        ),
         "uncovered": len(uncovered_edges),
         "total": len(original_graph.edges()),
     }
-    
+
     return {
         "bicliques": bicliques,
         "statistics": statistics,
@@ -169,8 +184,3 @@ def create_result_dict(
             },
         },
     }
-
-
-
-
-# Add other helper functions...

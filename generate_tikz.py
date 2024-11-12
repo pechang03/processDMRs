@@ -1,4 +1,7 @@
-"""
+# File: 
+# Author : Peter Shaw
+# Needs updating
+""""""
 Script to generate TikZ visualizations of interesting bicliques using tikzplotlib
 """
 import matplotlib.pyplot as plt
@@ -8,11 +11,11 @@ from typing import Dict, List, Set, Tuple
 import pandas as pd
 import numpy as np  # Add this import for np.linspace
 
-from graph_layout import calculate_node_positions
-from process_bicliques import read_bicliques_file, classify_biclique
+from visualization.graph_layout import calculate_node_positions
+from biclique_analysis.process_bicliques import read_bicliques_file, classify_biclique
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis.processor import process_enhancer_info
-from graph_visualize import create_node_biclique_map
+from visualization.graph_visualize import create_node_biclique_map
 
 def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_positions: Dict[int, Tuple[float, float]], node_labels: Dict[int, str], output_file: str):
     """
