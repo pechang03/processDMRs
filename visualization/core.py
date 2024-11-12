@@ -55,11 +55,21 @@ def create_biclique_visualization(
     # Create all visualization elements
     traces = []
     
-    # Add biclique boxes first (background)
-    traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
+    # Add edges first (background)
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                traces.append(go.Scatter(
+                    x=[node_positions[dmr][0], node_positions[gene][0]],
+                    y=[node_positions[dmr][1], node_positions[gene][1]],
+                    mode="lines",
+                    line=dict(color="gray", width=1),
+                    hoverinfo="none",
+                    showlegend=False
+                ))
     
-    # Add edges
-    traces.extend(create_biclique_edges(bicliques, node_positions))
+    # Add biclique boxes
+    traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
     
     # Add nodes with proper styling
     traces.extend(create_node_traces(
@@ -70,8 +80,27 @@ def create_biclique_visualization(
         biclique_colors
     ))
 
-    # Create layout
-    layout = create_plot_layout()
+    # Create layout with proper spacing
+    layout = {
+        "showlegend": True,
+        "hovermode": "closest",
+        "margin": dict(b=40, l=40, r=40, t=40),
+        "xaxis": dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            range=[-0.2, 1.3]  # Adjust range to prevent cutoff
+        ),
+        "yaxis": dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            scaleanchor="x",
+            scaleratio=1
+        ),
+        "height": max(400, len(all_nodes) * 30),  # Dynamic height based on node count
+        "width": 800
+    }
 
     # Create figure and convert to JSON
     fig = {"data": traces, "layout": layout}
