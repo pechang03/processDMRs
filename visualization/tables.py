@@ -1,7 +1,11 @@
+# File: tables.py
+# Author: Peter Shaw
+#
 """Table creation functionality"""
 
 from typing import Dict, List
 import plotly.graph_objs as go
+
 
 def create_dmr_table(dmr_metadata: Dict[str, Dict]) -> go.Table:
     """Create a Plotly table for DMR metadata."""
@@ -15,6 +19,7 @@ def create_dmr_table(dmr_metadata: Dict[str, Dict]) -> go.Table:
         for dmr, metadata in dmr_metadata.items()
     ]
     return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
+
 
 def create_gene_table(
     gene_metadata: Dict[str, Dict],

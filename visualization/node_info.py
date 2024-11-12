@@ -1,7 +1,12 @@
+# File: node_info.py
+# Author: Peter Shaw
+
 from typing import Set, Dict
+
 
 class NodeInfo:
     """Container for node categorization information."""
+
     def __init__(
         self,
         all_nodes: Set[int],
@@ -9,7 +14,7 @@ class NodeInfo:
         regular_genes: Set[int],
         split_genes: Set[int],
         node_degrees: Dict[int, int],
-        min_gene_id: int
+        min_gene_id: int,
     ):
         self.all_nodes = all_nodes
         self.dmr_nodes = dmr_nodes
