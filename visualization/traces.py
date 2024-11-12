@@ -151,21 +151,26 @@ def create_biclique_boxes(
 
 def create_biclique_edges(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[int, Tuple[float, float]]
+    node_positions: Dict[Tuple[int, int], Tuple[float, float]]
 ) -> List[go.Scatter]:
     """Create edge traces for all bicliques."""
     traces = []
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                traces.append(go.Scatter(
-                    x=[node_positions[dmr][0], node_positions[gene][0]],
-                    y=[node_positions[dmr][1], node_positions[gene][1]],
-                    mode="lines",
-                    line=dict(width=1, color="gray"),
-                    hoverinfo="none",
-                    showlegend=False
-                ))
+                dmr_key = (dmr, biclique_idx)
+                gene_key = (gene, biclique_idx)
+                if dmr_key in node_positions and gene_key in node_positions:
+                    traces.append(go.Scatter(
+                        x=[node_positions[dmr_key][0], node_positions[gene_key][0]],
+                        y=[node_positions[dmr_key][1], node_positions[gene_key][1]],
+                        mode="lines",
+                        line=dict(width=1, color="gray"),
+                        hoverinfo="none",
+                        showlegend=False
+                    ))
+                else:
+                    print(f"Positions not found for nodes {dmr_key} or {gene_key}")
     return traces
 def create_false_positive_edges(
     false_positive_edges: Set[Tuple[int, int]],
