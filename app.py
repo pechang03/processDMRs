@@ -107,7 +107,11 @@ def process_data():
                         print(f"Warning: Unexpected biclique format: {biclique}")
                         continue
 
-                component_viz = create_biclique_visualization(
+                # Recalculate node_biclique_map and node_positions for each component
+                node_biclique_map = create_node_biclique_map(formatted_bicliques)
+                node_positions = calculate_node_positions(formatted_bicliques, node_biclique_map)
+
+                # Now create the visualization using the component-specific data
                     formatted_bicliques,  # Use the formatted bicliques
                     node_labels,  # Pass the node labels mapping
                     node_positions,

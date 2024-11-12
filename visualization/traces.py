@@ -34,12 +34,12 @@ def create_node_traces(
         if node in node_info.dmr_nodes:
             dmr_x.append(x)
             dmr_y.append(y)
-            dmr_text.append(node_labels.get(node, f"DMR_{node}"))
+            dmr_text.append(node_labels.get(node, f"DMR_{node}"))  # Ensure node is the correct ID
             dmr_colors.append(color)
         else:
             gene_x.append(x)
             gene_y.append(y)
-            gene_text.append(node_labels.get(node, f"Gene_{node}"))
+            gene_text.append(node_labels.get(node, f"Gene_{node}"))  # Ensure node is the correct ID
             gene_colors.append(color)
     
     # Add DMR nodes

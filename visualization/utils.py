@@ -32,8 +32,5 @@ def create_node_biclique_map(
             if node not in node_biclique_map:
                 node_biclique_map[node] = []
             node_biclique_map[node].append(biclique_idx)
-            if node not in node_biclique_map:
-                node_biclique_map[node] = []
-            node_biclique_map[node].append(biclique_idx + 1)
     
     return node_biclique_map
