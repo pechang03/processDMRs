@@ -404,7 +404,22 @@ def main():
                 gene_metadata=gene_metadata,
             )
 
-            # Save visualization only if we have valid results
+            # Instead of saving to file, add the visualization to each component
+            for component in component_data:
+                if component.get("bicliques"):
+                    # Create visualization specific to this component's bicliques
+                    component_viz = create_biclique_visualization(
+                        component["bicliques"],
+                        node_labels,
+                        node_positions,
+                        node_biclique_map,
+                        dominating_set=dominating_set,
+                        dmr_metadata=dmr_metadata,
+                        gene_metadata=gene_metadata,
+                    )
+                    component["plotly_graph"] = json.loads(component_viz)
+
+            # You can still save the full visualization if needed
             with open("biclique_visualization.json", "w") as f:
                 f.write(viz_json)
             print("\nVisualization saved to biclique_visualization.json")
