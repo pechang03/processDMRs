@@ -357,7 +357,7 @@ def main():
                 node_labels[dmr_id] = f"DMR_{dmr_id+1}"
 
             # Use actual gene names for gene labels
-            for gene_name, gene_id in gene_id_mapping.items():
+            for gene_name, gene_id in dss1_gene_mapping.items():
                 node_labels[gene_id] = gene_name
 
             dmr_nodes_set = {
@@ -376,7 +376,7 @@ def main():
 
             # Create gene metadata using actual gene names
             gene_metadata = {}
-            for gene_name, gene_id in gene_id_mapping.items():
+            for gene_name, gene_id in dss1_gene_mapping.items():
                 # Find the gene in the DataFrame
                 gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
                 description = "N/A"
