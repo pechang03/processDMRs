@@ -8,61 +8,126 @@ import networkx as nx
 def read_bicliques_file(
     filename: str, max_DMR_id: int, original_graph: nx.Graph
 ) -> Dict:
-    """Read and process bicliques from a .biclusters file."""
+    """
+    Read and process bicliques from a .biclusters file for any bipartite graph.
+    """
     statistics = {}
+    print("\nReading bicliques file:")
+    print(f"Expected DMR range: 0 to {max_DMR_id-1}")
+
     bicliques = []
     dmr_coverage = set()
     gene_coverage = set()
-    edge_coverage = {
-        "single": 0,
-        "multiple": 0,
-        "uncovered": 0,
-        "total": original_graph.number_of_edges(),
-    }
-    covered_edges = {}
+    edge_distribution = {}  # track which bicliques cover each edge
 
-    print(f"\nReading bicliques file: {filename}")
-    statistics = {}
-    bicliques = []
+    biclique_count = 0
+    with open(filename, "r") as f:
+        lines = f.readlines()
 
-    try:
-        with open(filename, "r") as f:
-            print("Successfully opened bicliques file")
-            lines = f.readlines()
-            statistics = _parse_header_statistics(lines)
-            bicliques = _parse_bicliques(lines, max_DMR_id)
-    except Exception as e:
-        print(f"Error reading bicliques file: {str(e)}")
-        raise
+        # Skip header lines until we find the first biclique
+        line_idx = 0
+        while line_idx < len(lines):
+            line = lines[line_idx].strip()
 
-    coverage_stats = _calculate_coverage(bicliques, original_graph)
-    edge_distribution = _track_edge_distribution(bicliques, original_graph)
+            # Skip blank lines and comment lines
+            if not line or line.startswith("#"):
+                line_idx += 1
+                continue
 
-    # Add graph info
-    graph_info = {
-        "name": filename.split("/")[-1].split(".")[0],  # Extract name from filename
-        "total_dmrs": len(
-            [n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0]
-        ),
-        "total_genes": len(
-            [n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1]
-        ),
-        "total_edges": original_graph.number_of_edges(),
-    }
+            # Process header statistic line
+            if line.startswith("- "):
+                line = line[2:]  # Remove the "- " prefix
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    statistics[key.strip()] = (
+                        int(value.strip())
+                        if key.strip() in ["Nb operations", "Nb splits", "Nb deletions", "Nb additions"]
+                        else value.strip()
+                    )
+                line_idx += 1
+                continue
 
-    return {
+            # If we get here, we've found the first biclique line
+            break
+
+        # Now process all bicliques
+        while line_idx < len(lines):
+            line = lines[line_idx].strip()
+            if not line:  # Skip blank lines
+                line_idx += 1
+                continue
+
+            nodes = [int(x) for x in line.split()]
+            dmr_nodes = {n for n in nodes if n < max_DMR_id}  # Ensure consistent ID checks
+            gene_nodes = {n for n in nodes if n >= max_DMR_id}
+
+            # Add to bicliques list
+            bicliques.append((dmr_nodes, gene_nodes))
+
+            # Update coverage sets
+            dmr_coverage.update(dmr_nodes)
+            gene_coverage.update(gene_nodes)
+
+            # Track edge distribution
+            for dmr in dmr_nodes:
+                for gene in gene_nodes:
+                    edge = (dmr, gene)
+                    if original_graph.has_edge(dmr, gene):
+                        if edge not in edge_distribution:
+                            edge_distribution[edge] = []
+                        edge_distribution[edge].append(biclique_count)
+
+            biclique_count += 1
+            line_idx += 1
+
+    # Calculate statistics for any graph
+    dmr_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0}
+    gene_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1}
+
+    uncovered_edges = set(original_graph.edges()) - set(edge_distribution.keys())
+    uncovered_nodes = {node for edge in uncovered_edges for node in edge}
+
+    result = {
         "bicliques": bicliques,
         "statistics": statistics,
-        "coverage": coverage_stats,
-        "edge_distribution": edge_distribution,
-        "graph_info": graph_info,  # Add graph info to return dict
+        "graph_info": {
+            "name": filename.split("/")[-1].split(".")[0],
+            "total_dmrs": len(dmr_nodes),
+            "total_genes": len(gene_nodes),
+            "total_edges": len(original_graph.edges()),
+        },
+        "coverage": {
+            "dmrs": {
+                "covered": len(dmr_coverage),
+                "total": len(dmr_nodes),
+                "percentage": len(dmr_coverage) / len(dmr_nodes),
+            },
+            "genes": {
+                "covered": len(gene_coverage),
+                "total": len(gene_nodes),
+                "percentage": len(gene_coverage) / len(gene_nodes),
+            },
+            "edges": {
+                "single_coverage": len([e for e, b in edge_distribution.items() if len(b) == 1]),
+                "multiple_coverage": len([e for e, b in edge_distribution.items() if len(b) > 1]),
+                "uncovered": len(uncovered_edges),
+                "total": len(original_graph.edges()),
+            },
+        },
         "debug": {
-            "header_stats": statistics,
+            "uncovered_edges": list(uncovered_edges)[:5],
+            "uncovered_nodes": len(uncovered_nodes),
             "edge_distribution": edge_distribution,
-            "uncovered_edges": [],  # Add placeholder for uncovered edges
-            "uncovered_nodes": 0,  # Add placeholder for uncovered nodes count
+            "header_stats": {
+                "Nb operations": statistics.get("Nb operations", 0),
+                "Nb splits": statistics.get("Nb splits", 0),
+                "Nb deletions": statistics.get("Nb deletions", 0),
+                "Nb additions": statistics.get("Nb additions", 0),
+            },
         },
     }
+
+    return result
 
 
 def _parse_bicliques(
