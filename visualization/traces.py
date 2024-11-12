@@ -26,13 +26,12 @@ def create_node_traces(
     gene_text = []
     gene_colors = []
     
-    for (node_id, biclique_idx), (x, y) in node_positions.items():
-        if biclique_idx == -1:
-            color = 'gray'
-            label = node_labels.get(node_id, str(node_id))
-        else:
+    for node_id, (x, y) in node_positions.items():
+        color = 'gray'
+        label = node_labels.get(node_id, str(node_id))
+        if node_id in node_biclique_map:
+            biclique_idx = node_biclique_map[node_id][0]  # Use the first biclique index
             color = biclique_colors[biclique_idx % len(biclique_colors)]
-            label = node_labels.get(node_id, str(node_id))
             if node_info.get_node_degree(node_id) > 1:
                 label += f" (Biclique {biclique_idx + 1})"
         
@@ -110,7 +109,7 @@ def create_edge_traces(
     return traces
 def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[Tuple[int, int], Tuple[float, float]],
+    node_positions: Dict[int, Tuple[float, float]],
     biclique_colors: List[str]
 ) -> List[go.Scatter]:
     """Create box traces around bicliques."""
@@ -120,15 +119,12 @@ def create_biclique_boxes(
         if not nodes:
             continue
             
-        positions = [node_positions.get((n, biclique_idx)) for n in nodes]
-        positions = [pos for pos in positions if pos is not None]
         positions = []
         for node in nodes:
-            key = (node, biclique_idx)
-            if key in node_positions:
-                positions.append(node_positions[key])
+            if node in node_positions:
+                positions.append(node_positions[node])
             else:
-                print(f"Position not found for node {key}")
+                print(f"Position not found for node {node}")
         if not positions:
             continue  # Skip if no positions are found
         x_coords, y_coords = zip(*positions)
@@ -152,19 +148,17 @@ def create_biclique_boxes(
 
 def create_biclique_edges(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[Tuple[int, int], Tuple[float, float]]
+    node_positions: Dict[int, Tuple[float, float]]
 ) -> List[go.Scatter]:
     """Create edge traces for all bicliques."""
     traces = []
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                dmr_key = (dmr, biclique_idx)
-                gene_key = (gene, biclique_idx)
-                if dmr_key in node_positions and gene_key in node_positions:
+                if dmr in node_positions and gene in node_positions:
                     traces.append(go.Scatter(
-                        x=[node_positions[dmr_key][0], node_positions[gene_key][0]],
-                        y=[node_positions[dmr_key][1], node_positions[gene_key][1]],
+                        x=[node_positions[dmr][0], node_positions[gene][0]],
+                        y=[node_positions[dmr][1], node_positions[gene][1]],
                         mode="lines",
                         line=dict(width=1, color="gray"),
                         hoverinfo="none",
