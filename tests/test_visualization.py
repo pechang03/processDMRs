@@ -76,10 +76,12 @@ class TestVisualization(unittest.TestCase):
         gene_trace = traces[1]
         
         # Check DMR colors
-        self.assertEqual(dmr_trace.marker.color, ["red", "gray"])  # DMR 1 red, DMR 2 gray
-        
-        # Check gene colors
-        self.assertEqual(gene_trace.marker.color, ["red", "red"])  # Both genes red (first biclique)
+        # Convert tuple to list for comparison
+        dmr_colors = list(dmr_trace.marker.color)
+        self.assertEqual(dmr_colors, ["red", "gray"])  # DMR 1 red, DMR 2 gray
+    
+        gene_colors = list(gene_trace.marker.color)
+        self.assertEqual(gene_colors, ["red", "red"])  # Both genes red (first biclique)
 
     def test_create_node_traces_invalid_biclique_number(self):
         """Test handling of invalid biclique numbers"""
