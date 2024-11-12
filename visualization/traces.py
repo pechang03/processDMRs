@@ -126,10 +126,15 @@ def create_biclique_boxes(
             
         positions = [node_positions.get((n, biclique_idx)) for n in nodes]
         positions = [pos for pos in positions if pos is not None]
+        positions = []
+        for node in nodes:
+            key = (node, biclique_idx)
+            if key in node_positions:
+                positions.append(node_positions[key])
+            else:
+                print(f"Position not found for node {key}")
         if not positions:
-            print(f"Skipping biclique {biclique_idx} as none of its nodes have positions.")
-            continue
-
+            continue  # Skip if no positions are found
         x_coords, y_coords = zip(*positions)
         
         padding = 0.05
