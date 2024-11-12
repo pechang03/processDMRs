@@ -87,9 +87,9 @@ def position_nodes_by_biclique(
     current_y = spacing
 
     # Position nodes in bicliques
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         current_y = position_biclique_nodes(
-            dmr_nodes, gene_nodes, node_info.split_genes, current_y, spacing, positions
+            dmr_nodes, gene_nodes, node_info.split_genes, current_y, spacing, positions, biclique_idx
         )
 
     # Handle any remaining unpositioned nodes
@@ -129,6 +129,7 @@ def position_biclique_nodes(
     current_y: float,
     spacing: float,
     positions: Dict[int, Tuple[float, float]],
+    biclique_idx: int
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
     sorted_dmrs = sorted(dmr_nodes)
