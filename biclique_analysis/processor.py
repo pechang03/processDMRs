@@ -2,7 +2,13 @@ import networkx as nx
 import pandas as pd
 from typing import Dict, List, Set
 from .reader import read_bicliques_file
-from graph_utils import process_enhancer_info
+import pandas as pd
+
+def process_enhancer_info(enhancer_info):
+    """Process enhancer interaction information."""
+    if pd.isna(enhancer_info) or not enhancer_info:
+        return set()
+    return {gene.strip() for gene in str(enhancer_info).split(";") if gene.strip()}
 
 def process_bicliques(
     bipartite_graph: nx.Graph, 
