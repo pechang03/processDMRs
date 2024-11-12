@@ -6,7 +6,7 @@ from .node_info import NodeInfo
 
 def create_node_traces(
     node_info: NodeInfo,
-    node_positions: Dict[int, Tuple[float, float]],
+    node_positions: Dict[Tuple[int, int], Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str]
@@ -26,27 +26,21 @@ def create_node_traces(
     gene_text = []
     gene_colors = []
     
-    for node in node_info.all_nodes:
-        x, y = node_positions[node]
-        biclique_nums = node_biclique_map.get(node, [])
-        if biclique_nums:
-            biclique_index = biclique_nums[0]
-            if 0 <= biclique_index < len(biclique_colors):
-                color = biclique_colors[biclique_index]
-            else:
-                color = "gray"
-        else:
-            color = "gray"
+    for (node_id, biclique_idx), (x, y) in node_positions.items():
+        color = biclique_colors[biclique_idx]
+        label = node_labels.get(node_id, str(node_id))
+        if node_id in node_info.split_genes:
+            label += f" (Biclique {biclique_idx + 1})"
         
-        if node in node_info.dmr_nodes:
+        if node_id in node_info.dmr_nodes:
             dmr_x.append(x)
             dmr_y.append(y)
-            dmr_text.append(node_labels.get(node, f"DMR_{node}"))  # Ensure node is the correct ID
+            dmr_text.append(label)
             dmr_colors.append(color)
         else:
             gene_x.append(x)
             gene_y.append(y)
-            gene_text.append(node_labels.get(node, f"Gene_{node}"))  # Ensure node is the correct ID
+            gene_text.append(label)
             gene_colors.append(color)
     
     # Add DMR nodes
@@ -91,29 +85,30 @@ def create_node_traces(
 
 def create_edge_traces(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[int, Tuple[float, float]]
+    node_positions: Dict[Tuple[int, int], Tuple[float, float]]
 ) -> List[go.Scatter]:
     """Create edge traces for all bicliques."""
     traces = []
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                # Check if both nodes have positions
-                if dmr in node_positions and gene in node_positions:
+                dmr_key = (dmr, biclique_idx)
+                gene_key = (gene, biclique_idx)
+                if dmr_key in node_positions and gene_key in node_positions:
                     traces.append(go.Scatter(
-                        x=[node_positions[dmr][0], node_positions[gene][0]],
-                        y=[node_positions[dmr][1], node_positions[gene][1]],
+                        x=[node_positions[dmr_key][0], node_positions[gene_key][0]],
+                        y=[node_positions[dmr_key][1], node_positions[gene_key][1]],
                         mode="lines",
                         line=dict(width=1, color="gray"),
                         hoverinfo="none",
                         showlegend=False
                     ))
                 else:
-                    print(f"Skipping edge between node {dmr} and node {gene} due to missing positions.")
+                    print(f"Missing positions for nodes {dmr_key} or {gene_key}")
     return traces
 def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[int, Tuple[float, float]],
+    node_positions: Dict[Tuple[int, int], Tuple[float, float]],
     biclique_colors: List[str]
 ) -> List[go.Scatter]:
     """Create box traces around bicliques."""
@@ -123,13 +118,13 @@ def create_biclique_boxes(
         if not nodes:
             continue
             
-        nodes_with_positions = [n for n in nodes if n in node_positions]
-        if not nodes_with_positions:
+        positions = [node_positions.get((n, biclique_idx)) for n in nodes]
+        positions = [pos for pos in positions if pos is not None]
+        if not positions:
             print(f"Skipping biclique {biclique_idx} as none of its nodes have positions.")
             continue
 
-        x_coords = [node_positions[n][0] for n in nodes_with_positions]
-        y_coords = [node_positions[n][1] for n in nodes_with_positions]
+        x_coords, y_coords = zip(*positions)
         
         padding = 0.05
         x_min, x_max = min(x_coords) - padding, max(x_coords) + padding

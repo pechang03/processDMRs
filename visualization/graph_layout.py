@@ -9,7 +9,7 @@ from visualization.node_info import NodeInfo  # Change to absolute import
 
 def calculate_node_positions(
     bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
-) -> Dict[int, Tuple[float, float]]:
+) -> Dict[Tuple[int, int], Tuple[float, float]]:
     """
     Calculate positions for nodes in the biclique visualization.
     Args:
@@ -21,11 +21,6 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = position_nodes_by_biclique(bicliques, node_info)
     validate_positions(positions, node_info.all_nodes)
-    # Add debug statements
-    print(f"All nodes: {node_info.all_nodes}")
-    print(f"Assigned positions: {positions.keys()}")
-    missing_nodes = node_info.all_nodes - set(positions.keys())
-    print(f"Missing nodes: {missing_nodes}")
 
     return positions
 
@@ -102,7 +97,7 @@ def categorize_nodes(
 
 def position_nodes_by_biclique(
     bicliques: List[Tuple[Set[int], Set[int]]], node_info: "NodeInfo"
-) -> Dict[int, Tuple[float, float]]:
+) -> Dict[Tuple[int, int], Tuple[float, float]]:
     """Position nodes biclique by biclique, maintaining vertical grouping."""
     positions = {}
     spacing = calculate_vertical_spacing(bicliques)
@@ -152,7 +147,8 @@ def position_biclique_nodes(
     split_genes: Set[int],
     current_y: float,
     spacing: float,
-    positions: Dict[int, Tuple[float, float]],
+    positions: Dict[Tuple[int, int], Tuple[float, float]],
+    biclique_idx: int
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
     sorted_dmrs = sorted(dmr_nodes)
@@ -164,16 +160,13 @@ def position_biclique_nodes(
         # Position DMR if available
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
-            if dmr not in positions:
-                positions[dmr] = (0, current_y + i * spacing)
+            positions[(dmr, biclique_idx)] = (0, current_y + i * spacing)
 
         # Position gene if available
         if i < len(sorted_genes):
             gene = sorted_genes[i]
-            if gene not in positions:
-                # Use 1.1 for split genes, 1 for regular genes
-                x_pos = 1.1 if gene in split_genes else 1
-                positions[gene] = (x_pos, current_y + i * spacing)
+            x_pos = 1.1 if gene in split_genes else 1
+            positions[(gene, biclique_idx)] = (x_pos, current_y + i * spacing)
 
     # Return position for next biclique
     return current_y + (max_len - 1) * spacing + spacing
