@@ -106,7 +106,7 @@ def create_edge_traces(
                         showlegend=False
                     ))
                 else:
-                    print(f"Positions not found for nodes {dmr_key} or {gene_key}")
+                    print(f"Positions not found for nodes {dmr} or {gene}")
     return traces
 def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
