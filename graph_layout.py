@@ -97,7 +97,7 @@ def position_nodes_by_biclique(
     current_y = spacing
 
     # Position nodes in bicliques
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         current_y = position_biclique_nodes(
             dmr_nodes, gene_nodes, node_info.split_genes, current_y, spacing, positions, biclique_idx
         )
