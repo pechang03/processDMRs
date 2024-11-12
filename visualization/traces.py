@@ -165,7 +165,7 @@ def create_biclique_edges(
                         showlegend=False
                     ))
                 else:
-                    print(f"Positions not found for nodes {dmr_key} or {gene_key}")
+                    print(f"Positions not found for nodes {dmr} or {gene}")
     return traces
 def create_false_positive_edges(
     false_positive_edges: Set[Tuple[int, int]],
