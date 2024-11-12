@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import networkx as nx
 from processDMR import create_bipartite_graph
-from graph_utils import process_enhancer_info
+from biclique_analysis.processor import process_enhancer_info
 # from rb_domination import greedy_rb_domination
 
 
