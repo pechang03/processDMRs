@@ -196,8 +196,8 @@ def position_biclique_nodes(
     spacing: float,
     positions: Dict[int, Tuple[float, float]],
     biclique_idx: int,
-) -> float:
-    """Position nodes for a single biclique and return new y position."""
+) -> Dict[int, Tuple[float, float]]:
+    """Position nodes for a single biclique and update positions dictionary."""
     sorted_dmrs = sorted(dmr_nodes)
     sorted_genes = sorted(gene_nodes)
 
@@ -207,17 +207,17 @@ def position_biclique_nodes(
         # Position DMR if available
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
-            positions[(dmr, biclique_idx)] = (0, current_y + i * spacing)
+            positions[dmr] = (0, current_y + i * spacing)
 
         # Position gene if available
         if i < len(sorted_genes):
             gene = sorted_genes[i]
             # Use 1.1 for split genes, 1 for regular genes
             x_pos = 1.1 if gene in split_genes else 1
-            positions[(gene, biclique_idx)] = (x_pos, current_y + i * spacing)
+            positions[gene] = (x_pos, current_y + i * spacing)
 
-    # Return position for next biclique
-    return current_y + max_len * spacing
+    # Return the updated positions dictionary
+    return positions
 
 
 def position_remaining_nodes(
