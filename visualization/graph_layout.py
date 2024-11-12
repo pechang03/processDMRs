@@ -21,7 +21,7 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = position_nodes_by_biclique(bicliques, node_info)
     validate_positions(positions, node_info.all_nodes)
-    return current_y
+    return positions
 
 
 def collect_node_information(
