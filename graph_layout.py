@@ -51,7 +51,7 @@ def get_all_nodes(
 ) -> Set[int]:
     """Collect all unique nodes from bicliques and map."""
     all_nodes = set(node_biclique_map.keys())
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         all_nodes.update(dmr_nodes)
         all_nodes.update(gene_nodes)
     return all_nodes
@@ -99,7 +99,7 @@ def position_nodes_by_biclique(
     # Position nodes in bicliques
     for dmr_nodes, gene_nodes in bicliques:
         current_y = position_biclique_nodes(
-            dmr_nodes, gene_nodes, node_info.split_genes, current_y, spacing, positions
+            dmr_nodes, gene_nodes, node_info.split_genes, current_y, spacing, positions, biclique_idx
         )
 
     # Handle any remaining unpositioned nodes
@@ -141,6 +141,7 @@ def position_biclique_nodes(
     current_y: float,
     spacing: float,
     positions: Dict[int, Tuple[float, float]],
+    biclique_idx: int
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
     sorted_dmrs = sorted(dmr_nodes)
@@ -153,7 +154,7 @@ def position_biclique_nodes(
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
             if dmr not in positions:
-                positions[dmr] = (0, current_y + i * spacing)
+                positions[(dmr, biclique_idx)] = (0, current_y + i * spacing)
 
         # Position gene if available
         if i < len(sorted_genes):
@@ -161,7 +162,7 @@ def position_biclique_nodes(
             if gene not in positions:
                 # Use 1.1 for split genes, 1 for regular genes
                 x_pos = 1.1 if gene in split_genes else 1
-                positions[gene] = (x_pos, current_y + i * spacing)
+                positions[(gene, biclique_idx)] = (x_pos, current_y + i * spacing)
 
     # Return position for next biclique
     return current_y + max_len * spacing
