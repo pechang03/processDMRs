@@ -357,8 +357,9 @@ def main():
                 node_id = dmr_id
                 node_labels[node_id] = f"DMR_{dmr_id+1}"
 
+            # Use actual gene names instead of IDs
             for gene, gene_id in dss1_gene_mapping.items():
-                node_labels[gene_id] = gene
+                node_labels[gene_id] = gene  # Use the actual gene name
 
             dmr_nodes_set = {
                 node
