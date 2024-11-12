@@ -69,12 +69,38 @@ def process_data():
             if component.get("bicliques"):
                 # Convert component bicliques to the expected format (dmr_nodes, gene_nodes) tuples
                 formatted_bicliques = []
+                # Create node labels mapping
+                node_labels = {}
+                # Add DMR labels
+                for dmr_id in range(len(df)):
+                    node_labels[dmr_id] = f"DMR_{dmr_id+1}"
+            
+                # Add gene labels using actual gene names
+                for gene_name, gene_id in gene_id_mapping.items():
+                    node_labels[gene_id] = gene_name  # Use gene name as label
+            
                 for biclique in component["bicliques"]:
-                    # Extract DMR and gene nodes from the biclique
                     if isinstance(biclique, dict):
-                        dmr_nodes = set(n for n in biclique.get("details", {}).get("dmrs", []))
-                        gene_nodes = set(n for n in biclique.get("details", {}).get("genes", []))
-                        formatted_bicliques.append((dmr_nodes, gene_nodes))
+                        # Extract DMR IDs
+                        dmr_nodes = set(
+                            dmr["id"] for dmr in biclique.get("details", {}).get("dmrs", [])
+                            if isinstance(dmr, dict) and "id" in dmr
+                        )
+                
+                        # Extract gene IDs while maintaining name mapping
+                        gene_nodes = set()
+                        for gene in biclique.get("details", {}).get("genes", []):
+                            if isinstance(gene, dict) and "name" in gene:
+                                gene_name = gene["name"]
+                                if gene_name in gene_id_mapping:
+                                    gene_id = gene_id_mapping[gene_name]
+                                    gene_nodes.add(gene_id)
+                                    # Ensure the label is set
+                                    node_labels[gene_id] = gene_name
+                
+                        # Only add if we have valid nodes
+                        if dmr_nodes and gene_nodes:
+                            formatted_bicliques.append((dmr_nodes, gene_nodes))
                     elif isinstance(biclique, (list, tuple)) and len(biclique) == 2:
                         formatted_bicliques.append((set(biclique[0]), set(biclique[1])))
                     else:
@@ -83,7 +109,7 @@ def process_data():
 
                 component_viz = create_biclique_visualization(
                     formatted_bicliques,  # Use the formatted bicliques
-                    node_labels,
+                    node_labels,  # Pass the node labels mapping
                     node_positions,
                     node_biclique_map,
                     dmr_metadata=dmr_metadata,
