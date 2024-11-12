@@ -5,7 +5,7 @@ from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objs as go
 
-from .traces import create_node_traces
+from .traces import create_node_traces, create_edge_traces
 from .layout import create_plot_layout
 import plotly.colors
 from .traces import create_node_traces, create_biclique_boxes, create_biclique_edges, create_false_positive_edges
