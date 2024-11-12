@@ -58,9 +58,9 @@ class TestVisualization(unittest.TestCase):
     def test_create_node_traces_with_bicliques(self):
         """Test node coloring with valid biclique assignments"""
         node_biclique_map = {
-            1: [1],  # Node 1 in first biclique
-            3: [1],  # Node 3 in first biclique
-            4: [1, 2]  # Node 4 in first and second bicliques
+            1: [0],  # Node 1 in first biclique
+            3: [0],  # Node 3 in first biclique
+            4: [0, 1]  # Node 4 in first and second bicliques
         }
         biclique_colors = ["red", "blue", "green"]
         
@@ -86,7 +86,7 @@ class TestVisualization(unittest.TestCase):
     def test_create_node_traces_invalid_biclique_number(self):
         """Test handling of invalid biclique numbers"""
         node_biclique_map = {
-            1: [4]  # Biclique number larger than available colors
+            1: [3]  # Biclique index 3, but only 3 colors in list (indices 0-2)
         }
         biclique_colors = ["red", "blue", "green"]  # Only 3 colors
         
@@ -105,7 +105,7 @@ class TestVisualization(unittest.TestCase):
     def test_create_node_traces_empty_color_list(self):
         """Test handling of empty color list"""
         node_biclique_map = {
-            1: [1]  # Valid biclique number but no colors available
+            1: [0]  # Biclique index 0
         }
         biclique_colors = []  # Empty color list
         

@@ -31,7 +31,6 @@ def create_node_traces(
         biclique_nums = node_biclique_map.get(node, [])
         if biclique_nums:
             biclique_index = biclique_nums[0]
-            # Ensure biclique_index is within the correct range
             if 0 <= biclique_index < len(biclique_colors):
                 color = biclique_colors[biclique_index]
             else:
