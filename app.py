@@ -5,7 +5,7 @@ import os
 import json
 from flask import Flask, render_template
 
-from processDMR import read_excel_file, create_bipartite_graph, process_enhancer_info
+from biclique_analysis.processor import process_dataset
 from biclique_analysis import process_bicliques, process_components, calculate_biclique_statistics
 from visualization import (
     create_node_biclique_map, 
@@ -31,10 +31,8 @@ def process_data():
         print("Starting data processing...")
         print(f"Using data directory: {DATA_DIR}")
 
-        # Read and prepare data - only DSS1
-        print("Reading Excel files...")
-        df, gene_id_mapping = read_and_prepare_data(DSS1_FILE)
-        bipartite_graph, gene_id_mapping = create_bipartite_graph(df, gene_id_mapping)
+        # Process DSS1 dataset using the new function
+        bipartite_graph, df, gene_id_mapping = process_dataset(DSS1_FILE)
         
         # Process bicliques
         print("Processing bicliques...")
