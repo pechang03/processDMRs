@@ -52,7 +52,7 @@ def get_all_nodes(
 ) -> Set[int]:
     """Collect all unique nodes from bicliques and map."""
     all_nodes = set(node_biclique_map.keys())
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         all_nodes.update(dmr_nodes)
         all_nodes.update(gene_nodes)
     return all_nodes
