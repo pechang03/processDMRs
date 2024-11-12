@@ -23,16 +23,8 @@ def adjust_positions_for_display(
     base_positions: Dict[int, Tuple[float, float]],
 ) -> Dict[int, Tuple[float, float]]:
     """Adjust node positions for display requirements."""
-    display_positions = {}
-
-    # Add padding and adjust coordinates for display
-    for node, (x, y) in base_positions.items():
-        display_positions[node] = (
-            x,  # Keep original x coordinate
-            y * 1.2,  # Scale y coordinates for better spacing
-        )
-
-    return display_positions
+    # Return positions unchanged to preserve spacing
+    return base_positions.copy()
 
 
 def create_visual_layout(

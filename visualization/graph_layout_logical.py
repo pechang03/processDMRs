@@ -183,28 +183,22 @@ def position_nodes_evenly(
 
 def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
     """Calculate vertical spacing between nodes."""
-    # Handle empty bicliques case
-    if not bicliques:
-        return 0.2  # Default spacing for empty case
-
     # For a single biclique with one node on each side, use 0.5
-    if len(bicliques) == 1 and len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
-        return 0.5
-
-    # For multiple bicliques, use fixed spacing of 0.2
-    if len(bicliques) > 1:
+    if len(bicliques) == 1:
+        if len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
+            return 0.5
+        # For single biclique with multiple nodes, use smaller spacing
         return 0.2
 
-    # Calculate max nodes on either side (DMRs vs genes)
-    max_side_nodes = max(
-        max(len(dmr_nodes) for dmr_nodes, _ in bicliques),  # Max DMRs in any biclique
-        max(
-            len(gene_nodes) for _, gene_nodes in bicliques
-        ),  # Max genes in any biclique
-    )
+    # For overlapping bicliques, use 0.0 spacing to stack nodes
+    overlapping = any(len(set.intersection(b1[0], b2[0]) | set.intersection(b1[1], b2[1])) > 0 
+                     for i, b1 in enumerate(bicliques) 
+                     for b2 in bicliques[i+1:])
+    if overlapping:
+        return 0.0
 
-    # Calculate spacing based on maximum nodes on either side
-    return 1.0 / (max_side_nodes + 1) if max_side_nodes > 0 else 0.5
+    # Default spacing for multiple non-overlapping bicliques
+    return 0.2
 
 
 def position_biclique_nodes(
@@ -220,22 +214,23 @@ def position_biclique_nodes(
     sorted_dmrs = sorted(dmr_nodes)
     sorted_genes = sorted(gene_nodes)
 
-    # Position DMRs and genes with matching y-coordinates when possible
-    max_len = max(len(dmr_nodes), len(gene_nodes))
-    for i in range(max_len):
-        # Position DMR if available
-        if i < len(sorted_dmrs):
-            dmr = sorted_dmrs[i]
-            positions[dmr] = (0, current_y + i * spacing)  # DMRs always at x=0
+    # For overlapping nodes or split genes, use the same y-coordinate
+    if split_genes & gene_nodes or any(dmr in positions for dmr in dmr_nodes):
+        y_coord = current_y
+    else:
+        y_coord = current_y + (spacing * biclique_idx)
 
-        # Position gene if available
-        if i < len(sorted_genes):
-            gene = sorted_genes[i]
-            # Use 1.1 for split genes, 1 for regular genes
+    # Position DMRs
+    for dmr in sorted_dmrs:
+        if dmr not in positions:  # Only set position if not already set
+            positions[dmr] = (0, y_coord)
+
+    # Position genes
+    for gene in sorted_genes:
+        if gene not in positions:  # Only set position if not already set
             x_pos = 1.1 if gene in split_genes else 1
-            positions[gene] = (x_pos, current_y + i * spacing)
+            positions[gene] = (x_pos, y_coord)
 
-    # Return the updated positions dictionary
     return positions
 
 
