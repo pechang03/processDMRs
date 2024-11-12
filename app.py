@@ -5,7 +5,8 @@ import os
 import json
 from flask import Flask, render_template
 
-from biclique_analysis.processor import process_dataset
+from processDMR import read_excel_file, create_bipartite_graph
+from biclique_analysis.processor import process_enhancer_info
 from biclique_analysis.processor import process_enhancer_info
 from biclique_analysis import process_bicliques, process_components, calculate_biclique_statistics
 from visualization import (
@@ -33,7 +34,16 @@ def process_data():
         print(f"Using data directory: {DATA_DIR}")
 
         # Process DSS1 dataset using the new function
-        bipartite_graph, df, gene_id_mapping = process_dataset(DSS1_FILE)
+        df = read_excel_file(DSS1_FILE)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+
+        # Create gene ID mapping
+        all_genes = set()
+        all_genes.update(df["Gene_Symbol_Nearby"].dropna())
+        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+        gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+
+        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         
         # Process bicliques
         print("Processing bicliques...")
