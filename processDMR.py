@@ -8,7 +8,6 @@ from typing import Dict, Tuple
 
 from graph_layout import calculate_node_positions
 from graph_utils import process_enhancer_info, validate_bipartite_graph
-)
 from rb_domination import (
     greedy_rb_domination,
     process_components,
