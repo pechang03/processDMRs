@@ -9,7 +9,7 @@ from visualization.node_info import NodeInfo  # Change to absolute import
 
 def calculate_node_positions(
     bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
-) -> Dict[Tuple[int, int], Tuple[float, float]]:
+) -> Dict[int, Tuple[float, float]]:
     """
     Calculate positions for nodes in the biclique visualization.
     Args:
@@ -97,7 +97,7 @@ def categorize_nodes(
 
 def position_nodes_by_biclique(
     bicliques: List[Tuple[Set[int], Set[int]]], node_info: "NodeInfo"
-) -> Dict[Tuple[int, int], Tuple[float, float]]:
+) -> Dict[int, Tuple[float, float]]:
     """Position nodes biclique by biclique, maintaining vertical grouping."""
     positions = {}
     spacing = calculate_vertical_spacing(bicliques)
@@ -202,7 +202,7 @@ def validate_positions(
     positions: Dict[int, Tuple[float, float]], all_nodes: Set[int]
 ) -> None:
     """Validate that all nodes have been positioned."""
-    positioned_nodes = {node_id for node_id, _ in positions.keys()}
+    positioned_nodes = set(positions.keys())
     if len(positioned_nodes) != len(all_nodes):
         missing = all_nodes - positioned_nodes
         print(f"Warning: Missing positions for nodes: {missing}")
