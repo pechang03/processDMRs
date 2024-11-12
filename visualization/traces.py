@@ -29,14 +29,13 @@ def create_node_traces(
     for (node_id, biclique_idx), (x, y) in node_positions.items():
         if biclique_idx == -1:
             # Node not in any biclique
-            color = 'gray'  # Use a default color
+            color = 'gray'
             label = node_labels.get(node_id, str(node_id))
         else:
-            # Node in a biclique
-            color = biclique_colors[biclique_idx]
+            color = biclique_colors[biclique_idx % len(biclique_colors)]
             label = node_labels.get(node_id, str(node_id))
-            # If it's a split gene, append biclique info
-            if node_id in node_info.split_genes:
+            # For split nodes, indicate the biclique
+            if node_info.get_node_degree(node_id) > 1:
                 label += f" (Biclique {biclique_idx + 1})"
         
         if node_id in node_info.dmr_nodes:
