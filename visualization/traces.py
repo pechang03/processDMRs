@@ -28,13 +28,11 @@ def create_node_traces(
     
     for (node_id, biclique_idx), (x, y) in node_positions.items():
         if biclique_idx == -1:
-            # Node not in any biclique
             color = 'gray'
             label = node_labels.get(node_id, str(node_id))
         else:
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             label = node_labels.get(node_id, str(node_id))
-            # For split nodes, indicate the biclique
             if node_info.get_node_degree(node_id) > 1:
                 label += f" (Biclique {biclique_idx + 1})"
         
