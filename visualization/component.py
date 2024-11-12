@@ -4,10 +4,16 @@ from typing import Dict, List, Set, Tuple
 import json
 from plotly.utils import PlotlyJSONEncoder
 
-from .traces import create_node_traces, create_biclique_boxes, create_biclique_edges, create_false_positive_edges
+from .traces import (
+    create_node_traces,
+    create_biclique_boxes,
+    create_biclique_edges,
+    create_false_positive_edges,
+)
 from .layout import create_plot_layout
 from .core import generate_biclique_colors
-from node_info import NodeInfo
+from .node_info import NodeInfo
+
 
 def create_component_visualization(
     bicliques: List[Tuple[Set[int], Set[int]]],
@@ -25,24 +31,22 @@ def create_component_visualization(
     biclique_colors = generate_biclique_colors(len(bicliques))
 
     traces = []
-    
+
     # Add biclique boxes first (background)
     traces.extend(create_biclique_boxes(bicliques, node_positions, biclique_colors))
-    
+
     # Add regular biclique edges
     traces.extend(create_biclique_edges(bicliques, node_positions))
-    
+
     # Add false positive edges
     traces.extend(create_false_positive_edges(false_positive_edges, node_positions))
-    
+
     # Add nodes with proper styling
-    traces.extend(create_node_traces(
-        node_info,
-        node_positions,
-        node_labels,
-        node_biclique_map,
-        biclique_colors
-    ))
+    traces.extend(
+        create_node_traces(
+            node_info, node_positions, node_labels, node_biclique_map, biclique_colors
+        )
+    )
 
     # Create layout
     layout = create_plot_layout()
