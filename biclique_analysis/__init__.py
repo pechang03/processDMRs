@@ -21,3 +21,10 @@ __all__ = [
     "print_bicliques_summary",
     "print_bicliques_detail",
 ]
+from .processor import process_enhancer_info, process_dataset
+
+__all__ = [
+    'process_enhancer_info',
+    'process_dataset',
+    # ... other exports ...
+]
