@@ -89,7 +89,7 @@ def create_edge_traces(
 ) -> List[go.Scatter]:
     """Create edge traces for all bicliques."""
     traces = []
-    for dmr_nodes, gene_nodes in bicliques:
+    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 dmr_key = (dmr, biclique_idx)
