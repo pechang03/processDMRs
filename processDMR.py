@@ -354,12 +354,11 @@ def main():
             # Create node labels
             node_labels = {}
             for dmr_id in range(len(df)):
-                node_id = dmr_id
-                node_labels[node_id] = f"DMR_{dmr_id+1}"
+                node_labels[dmr_id] = f"DMR_{dmr_id+1}"
 
-            # Use actual gene names instead of IDs
-            for gene, gene_id in dss1_gene_mapping.items():
-                node_labels[gene_id] = gene  # Use the actual gene name
+            # Use actual gene names for gene labels
+            for gene_name, gene_id in gene_id_mapping.items():
+                node_labels[gene_id] = gene_name
 
             dmr_nodes_set = {
                 node
@@ -367,26 +366,26 @@ def main():
                 if data["bipartite"] == 0
             }
             dmr_metadata = {}
-            for dmr_id in range(len(df)):
-                area_stat = (
-                    df.iloc[dmr_id]["Area_Stat"] if "Area_Stat" in df.columns else "N/A"
-                )
+            for _, row in df.iterrows():
+                dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
                 dmr_metadata[f"DMR_{dmr_id+1}"] = {
-                    "area": area_stat,
-                    "bicliques": node_biclique_map.get(dmr_id, []),
+                    "area": row["Area_Stat"] if "Area_Stat" in df.columns else "N/A",
+                    "description": row["Gene_Description"] if "Gene_Description" in df.columns else "N/A",
+                    "bicliques": node_biclique_map.get(dmr_id, [])
                 }
 
+            # Create gene metadata using actual gene names
             gene_metadata = {}
-            for gene, gene_id in dss1_gene_mapping.items():
-                gene_matches = df[df["Gene_Symbol_Nearby"] == gene]
-                desc = (
-                    gene_matches.iloc[0]["Gene_Description"]
-                    if len(gene_matches) > 0
-                    else "N/A"
-                )
-                gene_metadata[gene] = {
-                    "description": desc,
-                    "bicliques": node_biclique_map.get(gene_id, []),
+            for gene_name, gene_id in gene_id_mapping.items():
+                # Find the gene in the DataFrame
+                gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+                description = "N/A"
+                if len(gene_matches) > 0 and "Gene_Description" in gene_matches.columns:
+                    description = gene_matches.iloc[0]["Gene_Description"]
+        
+                gene_metadata[gene_name] = {
+                    "description": description,
+                    "bicliques": node_biclique_map.get(gene_id, [])
                 }
 
             # Calculate dominating set before visualization
