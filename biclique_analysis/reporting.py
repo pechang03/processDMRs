@@ -167,3 +167,47 @@ def print_bicliques_detail(
     print(
         "Note: False negative edges indicate hypothesized biclique connections that don't exist in the original graph"
     )
+def create_node_labels_and_metadata(df: pd.DataFrame, 
+                                  bicliques_result: Dict, 
+                                  gene_id_mapping: Dict[str, int],
+                                  node_biclique_map: Dict[int, List[int]]) -> Tuple[Dict, Dict, Dict]:
+    """
+    Create node labels and metadata for visualization.
+    
+    Returns:
+        Tuple of (node_labels, dmr_metadata, gene_metadata)
+    """
+    node_labels = {}
+    dmr_metadata = {}
+    gene_metadata = {}
+    
+    # Process DMR metadata and labels
+    for _, row in df.iterrows():
+        dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+        dmr_label = f"DMR_{row['DMR_No.']}"
+        
+        dmr_metadata[dmr_label] = {
+            "area": row["Area_Stat"] if "Area_Stat" in df.columns else "N/A",
+            "description": row["Gene_Description"] if "Gene_Description" in df.columns else "N/A",
+            "bicliques": node_biclique_map.get(dmr_id, [])
+        }
+        node_labels[dmr_id] = dmr_label
+
+    # Process gene metadata and labels
+    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
+    for gene_id in set().union(*[genes for _, genes in bicliques_result["bicliques"]]):
+        if gene_id >= len(df):  # This is a gene node
+            gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+            
+            gene_desc = "N/A"
+            gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+            if len(gene_matches) > 0 and "Gene_Description" in gene_matches.columns:
+                gene_desc = gene_matches.iloc[0]["Gene_Description"]
+            
+            gene_metadata[gene_name] = {
+                "description": gene_desc,
+                "bicliques": node_biclique_map.get(gene_id, [])
+            }
+            node_labels[gene_id] = gene_name
+            
+    return node_labels, dmr_metadata, gene_metadata
