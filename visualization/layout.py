@@ -93,7 +93,7 @@ def position_nodes_by_biclique(
         )
 
     # Handle any remaining unpositioned nodes
-    position_remaining_nodes(positions, node_info, current_y, spacing)
+    current_y = position_remaining_nodes(positions, node_info, current_y, spacing)
 
     return positions
 
