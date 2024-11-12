@@ -112,14 +112,20 @@ def process_data():
                 node_positions = calculate_node_positions(formatted_bicliques, node_biclique_map)
 
                 # Now create the visualization using the component-specific data
-                    formatted_bicliques,  # Use the formatted bicliques
-                    node_labels,  # Pass the node labels mapping
-                    node_positions,
-                    node_biclique_map,
-                    dmr_metadata=dmr_metadata,
-                    gene_metadata=gene_metadata,
-                )
-                component["plotly_graph"] = json.loads(component_viz)
+                try:
+                    component_viz = create_biclique_visualization(
+                        formatted_bicliques,
+                        node_labels,
+                        node_positions,
+                        node_biclique_map,
+                        dmr_metadata=dmr_metadata,
+                        gene_metadata=gene_metadata,
+                    )
+                    component["plotly_graph"] = json.loads(component_viz)
+                except Exception as e:
+                    print(f"Error creating visualization for component {component['id']}: {e}")
+                    import traceback
+                    traceback.print_exc()
 
         # Create full visualization
         full_viz = create_biclique_visualization(
