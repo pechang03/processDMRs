@@ -1,31 +1,21 @@
-"""
-Functions for calculating node layouts in biclique visualizations
-"""
+"""Core graph layout algorithms"""
 
-import networkx as nx
 from typing import Dict, List, Set, Tuple
 from visualization.node_info import NodeInfo
 
-
 def calculate_node_positions(
-    bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    node_biclique_map: Dict[int, List[int]]
 ) -> Dict[int, Tuple[float, float]]:
-    """
-    Calculate positions for nodes in the biclique visualization.
-    Args:
-        bicliques: List of bicliques, each containing sets of DMR an gene nodes.
-        node_biclique_map: Mapping of nodes to their biclique number
-    Returns:
-        Dictionary mapping node IDs to their (x, y) positions.
-    """
+    """Calculate base positions for nodes in the graph."""
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = position_nodes_by_biclique(bicliques, node_info)
     validate_positions(positions, node_info.all_nodes)
     return positions
 
-
 def collect_node_information(
-    bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    node_biclique_map: Dict[int, List[int]]
 ) -> "NodeInfo":
     """Collect and categorize all nodes from bicliques and map."""
     all_nodes = get_all_nodes(bicliques, node_biclique_map)
@@ -45,9 +35,9 @@ def collect_node_information(
         min_gene_id=min_gene_id,
     )
 
-
 def get_all_nodes(
-    bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    node_biclique_map: Dict[int, List[int]]
 ) -> Set[int]:
     """Collect all unique nodes from bicliques and map."""
     all_nodes = set(node_biclique_map.keys())
@@ -56,13 +46,12 @@ def get_all_nodes(
         all_nodes.update(gene_nodes)
     return all_nodes
 
-
 def calculate_node_degrees(
-    nodes: Set[int], node_biclique_map: Dict[int, List[int]]
+    nodes: Set[int], 
+    node_biclique_map: Dict[int, List[int]]
 ) -> Dict[int, int]:
     """Calculate degree (number of bicliques) for each node."""
     return {node: len(node_biclique_map.get(node, [])) for node in nodes}
-
 
 def find_min_gene_id(bicliques: List[Tuple[Set[int], Set[int]]]) -> int:
     """Find the minimum gene ID to separate DMRs from genes."""
@@ -72,9 +61,10 @@ def find_min_gene_id(bicliques: List[Tuple[Set[int], Set[int]]]) -> int:
             min_gene_id = min(min_gene_id, min(gene_nodes))
     return min_gene_id
 
-
 def categorize_nodes(
-    all_nodes: Set[int], node_biclique_map: Dict[int, List[int]], min_gene_id: int
+    all_nodes: Set[int], 
+    node_biclique_map: Dict[int, List[int]], 
+    min_gene_id: int
 ) -> Tuple[Set[int], Set[int], Set[int]]:
     """Categorize nodes into DMRs, regular genes, and split genes."""
     dmr_nodes = {node for node in all_nodes if node < min_gene_id}
@@ -87,9 +77,9 @@ def categorize_nodes(
 
     return dmr_nodes, regular_genes, split_genes
 
-
 def position_nodes_by_biclique(
-    bicliques: List[Tuple[Set[int], Set[int]]], node_info: "NodeInfo"
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    node_info: "NodeInfo"
 ) -> Dict[int, Tuple[float, float]]:
     """Position nodes biclique by biclique, maintaining vertical grouping."""
     positions = {}
@@ -106,7 +96,6 @@ def position_nodes_by_biclique(
     position_remaining_nodes(positions, node_info, current_y, spacing)
 
     return positions
-
 
 def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
     """Calculate vertical spacing between nodes."""
@@ -133,7 +122,6 @@ def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> fl
     # Calculate spacing based on maximum nodes on either side
     return 1.0 / (max_side_nodes + 1) if max_side_nodes > 0 else 0.5
 
-
 def position_biclique_nodes(
     dmr_nodes: Set[int],
     gene_nodes: Set[int],
@@ -153,7 +141,7 @@ def position_biclique_nodes(
         # Position DMR if available
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
-            positions[dmr] = (0, current_y + i * spacing)  # DMRs at x=0
+            positions[dmr] = (0, current_y + i * spacing)
 
         # Position gene if available
         if i < len(sorted_genes):
@@ -163,7 +151,6 @@ def position_biclique_nodes(
 
     # Return position for next biclique
     return current_y + max_len * spacing
-
 
 def position_remaining_nodes(
     positions: Dict[int, Tuple[float, float]],
@@ -180,7 +167,6 @@ def position_remaining_nodes(
             positions[node] = (x_pos, current_y)
             current_y += spacing
 
-
 def get_x_position(node: int, node_info: "NodeInfo") -> float:
     """Determine x-coordinate based on node type."""
     if node in node_info.dmr_nodes:
@@ -189,69 +175,11 @@ def get_x_position(node: int, node_info: "NodeInfo") -> float:
         return 1.1
     return 1
 
-
 def validate_positions(
-    positions: Dict[int, Tuple[float, float]], all_nodes: Set[int]
+    positions: Dict[int, Tuple[float, float]], 
+    all_nodes: Set[int]
 ) -> None:
     """Validate that all nodes have been positioned."""
     if len(positions) != len(all_nodes):
         missing = all_nodes - set(positions.keys())
         print(f"Warning: Missing positions for nodes: {missing}")
-
-
-def position_single_biclique(
-    dmr_nodes: Set[int], gene_nodes: Set[int]
-) -> Dict[int, Tuple[float, float]]:
-    """Position nodes for a single biclique."""
-    positions = {}
-
-    # Single DMR and gene case
-    if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
-        dmr = next(iter(dmr_nodes))
-        gene = next(iter(gene_nodes))
-        positions[dmr] = (0, 0.5)  # Fixed y-position at 0.5
-        positions[gene] = (1, 0.5)  # Fixed y-position at 0.5
-        return positions
-
-    # Two DMRs and two genes case (overlapping)
-    if len(dmr_nodes) == 2 and len(gene_nodes) == 2:
-        dmr_nodes_sorted = sorted(dmr_nodes)
-        gene_nodes_sorted = sorted(gene_nodes)
-
-        positions[dmr_nodes_sorted[0]] = (0, 0.25)
-        positions[dmr_nodes_sorted[1]] = (0, 0.75)
-        positions[gene_nodes_sorted[0]] = (1, 0.25)
-        positions[gene_nodes_sorted[1]] = (1, 0.75)
-        return positions
-
-    return position_nodes_evenly(dmr_nodes, gene_nodes)
-
-
-def position_nodes_evenly(
-    dmr_nodes: Set[int], gene_nodes: Set[int]
-) -> Dict[int, Tuple[float, float]]:
-    """Position nodes evenly spaced on left and right sides."""
-    positions = {}
-    max_nodes = max(len(dmr_nodes), len(gene_nodes))
-
-    # For multiple nodes, space them evenly between 0 and 1
-    if max_nodes > 1:
-        spacing = 1.0 / (max_nodes + 1)
-
-        # Position DMRs on left side
-        for i, dmr in enumerate(sorted(dmr_nodes)):
-            y_pos = spacing * (i + 1)
-            positions[dmr] = (0, y_pos)
-
-        # Position genes on right side
-        for i, gene in enumerate(sorted(gene_nodes)):
-            y_pos = spacing * (i + 1)
-            positions[gene] = (1, y_pos)
-    else:
-        # Single node case - position at 0.5
-        if dmr_nodes:
-            positions[next(iter(dmr_nodes))] = (0, 0.5)
-        if gene_nodes:
-            positions[next(iter(gene_nodes))] = (1, 0.5)
-
-    return positions
