@@ -26,10 +26,9 @@ def adjust_positions_for_display(
     display_positions = {}
 
     # Add padding and adjust coordinates for display
-    padding = 0.1
     for node, (x, y) in base_positions.items():
         display_positions[node] = (
-            x + padding,  # Add padding to x coordinate
+            x,  # Keep original x coordinate
             y * 1.2,  # Scale y coordinates for better spacing
         )
 
