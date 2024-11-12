@@ -57,6 +57,40 @@ def process_data():
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
         node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
 
+        # Create node labels
+        node_labels = {}
+        for dmr_id in range(len(df)):
+            node_labels[dmr_id] = f"DMR_{dmr_id+1}"
+        for gene_name, gene_id in gene_id_mapping.items():
+            node_labels[gene_id] = gene_name
+
+        # Add visualization to each component
+        for component in component_data:
+            if component.get("bicliques"):
+                component_viz = create_biclique_visualization(
+                    component["bicliques"],
+                    node_labels,
+                    node_positions,
+                    node_biclique_map,
+                    dmr_metadata=dmr_metadata,
+                    gene_metadata=gene_metadata,
+                )
+                component["plotly_graph"] = json.loads(component_viz)
+
+        # Create full visualization
+        full_viz = create_biclique_visualization(
+            bicliques_result["bicliques"],
+            node_labels,
+            node_positions,
+            node_biclique_map,
+            dmr_metadata=dmr_metadata,
+            gene_metadata=gene_metadata,
+        )
+
+        # Save full visualization
+        with open("biclique_visualization.json", "w") as f:
+            f.write(full_viz)
+
         # Create summary statistics
         stats = {
             "total_components": len(component_data),
