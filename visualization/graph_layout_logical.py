@@ -226,7 +226,7 @@ def position_biclique_nodes(
         # Position DMR if available
         if i < len(sorted_dmrs):
             dmr = sorted_dmrs[i]
-            positions[dmr] = (0, current_y + i * spacing)
+            positions[dmr] = (0, current_y + i * spacing)  # DMRs always at x=0
 
         # Position gene if available
         if i < len(sorted_genes):
