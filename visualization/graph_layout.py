@@ -147,7 +147,7 @@ def position_biclique_nodes(
     split_genes: Set[int],
     current_y: float,
     spacing: float,
-    positions: Dict[Tuple[int, int], Tuple[float, float]],
+    positions: Dict[int, Tuple[float, float]],
     biclique_idx: int
 ) -> float:
     """Position nodes for a single biclique and return new y position."""
@@ -173,19 +173,19 @@ def position_biclique_nodes(
 
 
 def position_remaining_nodes(
-    positions: Dict[Tuple[int, int], Tuple[float, float]],
+    positions: Dict[int, Tuple[float, float]],
     node_info: "NodeInfo",
     current_y: float,
     spacing: float,
 ) -> float:
     """Position any nodes that weren't in bicliques."""
-    positioned_nodes = {node_id for node_id, _ in positions.keys()}
+    positioned_nodes = set(positions.keys())
     missing_nodes = node_info.all_nodes - positioned_nodes
     if missing_nodes:
         print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
         for node in missing_nodes:
             x_pos = get_x_position(node, node_info)
-            positions[(node, -1)] = (x_pos, current_y)
+            positions[node] = (x_pos, current_y)
             current_y += spacing
 
 
