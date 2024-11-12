@@ -29,7 +29,15 @@ def create_node_traces(
     for node in node_info.all_nodes:
         x, y = node_positions[node]
         biclique_nums = node_biclique_map.get(node, [])
-        color = biclique_colors[biclique_nums[0]-1] if biclique_nums else "gray"
+        if biclique_nums:
+            biclique_index = biclique_nums[0]
+            # Ensure biclique_index is within the correct range
+            if 0 <= biclique_index < len(biclique_colors):
+                color = biclique_colors[biclique_index]
+            else:
+                color = "gray"
+        else:
+            color = "gray"
         
         if node in node_info.dmr_nodes:
             dmr_x.append(x)

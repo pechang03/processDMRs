@@ -164,7 +164,7 @@ def position_biclique_nodes(
                 positions[gene] = (x_pos, current_y + i * spacing)
 
     # Return position for next biclique
-    return current_y + max_len * spacing
+    return current_y + (max_len - 1) * spacing + spacing
 
 
 def position_remaining_nodes(
