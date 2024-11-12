@@ -71,6 +71,25 @@ def create_node_traces(
         ))
     
     return traces
+
+def create_edge_traces(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_positions: Dict[int, Tuple[float, float]]
+) -> List[go.Scatter]:
+    """Create edge traces for all bicliques."""
+    traces = []
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                traces.append(go.Scatter(
+                    x=[node_positions[dmr][0], node_positions[gene][0]],
+                    y=[node_positions[dmr][1], node_positions[gene][1]],
+                    mode="lines",
+                    line=dict(width=1, color="gray"),
+                    hoverinfo="none",
+                    showlegend=False
+                ))
+    return traces
 def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_positions: Dict[int, Tuple[float, float]],
