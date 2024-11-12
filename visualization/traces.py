@@ -29,11 +29,12 @@ def create_node_traces(
     for node_id, (x, y) in node_positions.items():
         color = 'gray'
         label = node_labels.get(node_id, str(node_id))
-        if node_id in node_biclique_map:
+        if node_id in node_biclique_map and biclique_colors:  # Check if colors list is not empty
             biclique_idx = node_biclique_map[node_id][0]  # Use the first biclique index
-            color = biclique_colors[biclique_idx % len(biclique_colors)]
-            if node_info.get_node_degree(node_id) > 1:
-                label += f" (Biclique {biclique_idx + 1})"
+            if biclique_idx < len(biclique_colors):  # Check if index is valid
+                color = biclique_colors[biclique_idx]
+            else:
+                color = 'gray'  # Use gray for invalid biclique numbers
         
         if node_id in node_info.dmr_nodes:
             dmr_x.append(x)
