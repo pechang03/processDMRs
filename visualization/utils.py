@@ -21,7 +21,17 @@ def create_node_biclique_map(
         dmr_set = set(dmr_nodes) if isinstance(dmr_nodes, list) else dmr_nodes
         gene_set = set(gene_nodes) if isinstance(gene_nodes, list) else gene_nodes
         
-        for node in dmr_set | gene_set:
+        # Process DMR nodes
+        for node in dmr_set:
+            if node not in node_biclique_map:
+                node_biclique_map[node] = []
+            node_biclique_map[node].append(biclique_idx)
+            
+        # Process gene nodes
+        for node in gene_set:
+            if node not in node_biclique_map:
+                node_biclique_map[node] = []
+            node_biclique_map[node].append(biclique_idx)
             if node not in node_biclique_map:
                 node_biclique_map[node] = []
             node_biclique_map[node].append(biclique_idx + 1)
