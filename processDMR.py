@@ -4,6 +4,7 @@ import networkx as nx
 import csv
 import time
 import psutil
+from typing import Dict, Tuple
 
 from graph_layout import calculate_node_positions
 from graph_utils import (
