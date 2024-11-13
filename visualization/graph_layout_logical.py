@@ -11,6 +11,13 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
     current_y = 0
+
+    # Handle empty bicliques case
+    if not bicliques:
+        print("Warning: No bicliques provided")
+        # Return default positions for all nodes
+        return position_remaining_nodes({}, node_info, 0, 0.2)
+    
     # Calculate max counts for spacing
     max_dmr_count = max(len(dmr_nodes) for dmr_nodes, _ in bicliques)
     max_gene_count = max(len(gene_nodes) for _, gene_nodes in bicliques)
