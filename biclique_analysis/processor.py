@@ -5,9 +5,20 @@ import networkx as nx
 import pandas as pd
 from typing import Dict, List, Set, Tuple
 from .reader import read_bicliques_file
-import pandas as pd
 
 
+def process_enhancer_info(enhancer_info):
+    """Process enhancer interaction information."""
+    if pd.isna(enhancer_info) or not enhancer_info:
+        return set()
+    genes = set()
+    for gene in str(enhancer_info).split(";"):
+        gene = gene.strip()
+        if "/" in gene:
+            gene = gene.split("/")[0].strip()  # Strip suffix after '/'
+        if gene:
+            genes.add(gene)
+    return genes
 
 
 def process_bicliques(
