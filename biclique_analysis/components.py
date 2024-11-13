@@ -31,13 +31,32 @@ def process_components(
             # Check if this biclique belongs to this component
             biclique_nodes = dmr_nodes | gene_nodes
             if biclique_nodes & component_nodes:  # If there's any overlap
+                # Create reverse mapping for gene IDs to names
+                reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
+                
                 biclique_info = {
                     "dmrs": sorted(list(dmr_nodes)),
                     "genes": sorted(list(gene_nodes)),
                     "size": f"{len(dmr_nodes)}×{len(gene_nodes)}",
                     "details": {
-                        "dmrs": [{"id": dmr, "area": "N/A"} for dmr in dmr_nodes],
-                        "genes": [{"name": str(gene), "description": "N/A"} for gene in gene_nodes]
+                        "dmrs": [
+                            {
+                                "id": f"DMR_{dmr+1}",
+                                "area": dmr_metadata.get(f"DMR_{dmr+1}", {}).get("area", "N/A"),
+                                "description": dmr_metadata.get(f"DMR_{dmr+1}", {}).get("description", "N/A")
+                            } 
+                            for dmr in dmr_nodes
+                        ],
+                        "genes": [
+                            {
+                                "name": reverse_gene_mapping.get(gene, f"Gene_{gene}"),
+                                "description": gene_metadata.get(
+                                    reverse_gene_mapping.get(gene, f"Gene_{gene}"), 
+                                    {}
+                                ).get("description", "N/A")
+                            }
+                            for gene in gene_nodes
+                        ]
                     }
                 }
                 if len(dmr_nodes) > 1 or len(gene_nodes) > 1:
