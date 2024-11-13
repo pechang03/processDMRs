@@ -100,6 +100,8 @@ def create_biclique_visualization(
         node_biclique_map,
         biclique_colors,
         dominating_set,
+        dmr_metadata,  # Pass these parameters
+        gene_metadata
     )
     traces.extend(node_traces)
 
