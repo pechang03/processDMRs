@@ -146,8 +146,10 @@ if __name__ == "__main__":
 @app.route("/component/<int:component_id>")
 def component_detail(component_id):
     try:
+        print(f"\nAccessing component {component_id}")
         results = process_data()
         if "error" in results:
+            print(f"Error in results: {results['error']}")
             return render_template("error.html", message=results["error"])
 
         component = next(
@@ -158,10 +160,12 @@ def component_detail(component_id):
         )
 
         if not component:
-            return render_template(
-                "error.html", message=f"Component {component_id} not found"
-            )
+            print(f"Component {component_id} not found")
+            return render_template("error.html", message=f"Component {component_id} not found")
 
+        print(f"Found component with {len(component.get('bicliques', []))} bicliques")
+        print(f"Component data keys: {component.keys()}")
+        
         return render_template(
             "components.html",
             component=component,
@@ -169,4 +173,7 @@ def component_detail(component_id):
             gene_metadata=results["gene_metadata"],
         )
     except Exception as e:
+        import traceback
+        print(f"Error in component_detail: {str(e)}")
+        traceback.print_exc()
         return render_template("error.html", message=str(e))
