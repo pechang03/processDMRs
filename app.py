@@ -7,7 +7,11 @@ from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis import reporting
-from biclique_analysis.processor import process_enhancer_info
+from biclique_analysis.processor import (
+    process_bicliques,
+    process_enhancer_info,
+    create_node_metadata,  # Add this import
+)
 from biclique_analysis import (
     process_bicliques,
     process_components,
@@ -74,9 +78,11 @@ def process_data():
             dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
             dmr_metadata[f"DMR_{row['DMR_No.']}"] = {
                 "area": str(row["Area_Stat"]) if "Area_Stat" in df.columns else "N/A",
-                "description": str(row["Gene_Description"]) if "Gene_Description" in df.columns else "N/A",
+                "description": str(row["Gene_Description"])
+                if "Gene_Description" in df.columns
+                else "N/A",
                 "name": f"DMR_{row['DMR_No.']}",
-                "bicliques": node_biclique_map.get(dmr_id, [])
+                "bicliques": node_biclique_map.get(dmr_id, []),
             }
 
         gene_metadata = {}
@@ -85,21 +91,21 @@ def process_data():
             description = "N/A"
             if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
                 description = str(gene_matches.iloc[0]["Gene_Description"])
-            
+
             gene_metadata[gene_name] = {
                 "description": description,
                 "id": gene_id,
                 "bicliques": node_biclique_map.get(gene_id, []),
-                "name": gene_name
+                "name": gene_name,
             }
 
         # Now process components with the metadata
         print("Processing components...")
         component_data = process_components(
-            bipartite_graph, 
+            bipartite_graph,
             bicliques_result,
             dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata
+            gene_metadata=gene_metadata,
         )
         # Create node_biclique_map before creating metadata
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
@@ -107,9 +113,7 @@ def process_data():
         # Create metadata using the new function
         print("Creating metadata...")
         dmr_metadata, gene_metadata = create_node_metadata(
-            df, 
-            gene_id_mapping, 
-            node_biclique_map
+            df, gene_id_mapping, node_biclique_map
         )
 
         # Before calculating positions, let's add debug logging
