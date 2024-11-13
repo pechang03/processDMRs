@@ -5,6 +5,7 @@ from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objs as go
 import plotly.colors
+import networkx as nx  # Add this import
 
 from .traces import (
     create_node_traces,
@@ -39,6 +40,7 @@ def create_biclique_visualization(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
+    bipartite_graph: nx.Graph = None,  # Add this parameter
 ) -> str:
     """Create interactive Plotly visualization with colored bicliques."""
     # Generate colors for bicliques
