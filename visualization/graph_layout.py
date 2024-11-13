@@ -4,7 +4,7 @@ from typing import Dict, List, Set, Tuple
 from .graph_layout_logical import (  # Updated import
     calculate_node_positions as core_calculate_positions,
     collect_node_information,
-    position_nodes_by_biclique,  # Add this import
+    # position_nodes_by_biclique,  # Add this import
 )
 from .node_info import NodeInfo
 
@@ -15,10 +15,12 @@ def calculate_node_positions(
     """Calculate visualization-ready positions for nodes."""
     # Get node information
     node_info = collect_node_information(bicliques, node_biclique_map)
-    
+
     # Use position_nodes_by_biclique for core positioning logic
-    base_positions = position_nodes_by_biclique(bicliques, node_info)
-    
+    # base_positions = position_nodes_by_biclique(bicliques, node_info)
+    # Use core positioning logic
+    base_positions = core_calculate_positions(bicliques, node_biclique_map)
+
     # Apply any visualization-specific adjustments
     return adjust_positions_for_display(base_positions)
 
