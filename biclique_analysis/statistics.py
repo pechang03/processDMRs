@@ -110,11 +110,11 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     dmr_dist = {}
     gene_dist = {}
     
-    # Count occurrences of each participation count
-    for count in dmr_participation.values():
-        dmr_dist[count] = dmr_dist.get(count, 0) + 1
-    for count in gene_participation.values():
-        gene_dist[count] = gene_dist.get(count, 0) + 1
+    # Count how many nodes appear exactly k times
+    for k in set(dmr_participation.values()):
+        dmr_dist[k] = sum(1 for count in dmr_participation.values() if count == k)
+    for k in set(gene_participation.values()):
+        gene_dist[k] = sum(1 for count in gene_participation.values() if count == k)
 
     return {"dmrs": dmr_dist, "genes": gene_dist}
 
@@ -129,8 +129,9 @@ def calculate_edge_coverage(bicliques: List[Tuple[Set[int], Set[int]]], graph: n
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                edge = tuple(sorted([dmr, gene]))
-                edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+                if graph.has_edge(dmr, gene):  # Only count edges that exist in graph
+                    edge = tuple(sorted([dmr, gene]))
+                    edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
     # Count edges by coverage
     single = sum(1 for count in edge_coverage.values() if count == 1)
