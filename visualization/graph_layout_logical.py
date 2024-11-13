@@ -11,9 +11,13 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
     current_y = 0
+    # Calculate max counts for spacing
+    max_dmr_count = max(len(dmr_nodes) for dmr_nodes, _ in bicliques)
+    max_gene_count = max(len(gene_nodes) for _, gene_nodes in bicliques)
+    
     spacing = calculate_vertical_spacing(
-        max(len(dmr_nodes) for dmr_nodes, _ in bicliques),
-        max(len(gene_nodes) for _, gene_nodes in bicliques)
+        max_dmr_count,
+        max_gene_count
     )
 
     # Track nodes positioned in biclique phase
@@ -214,8 +218,8 @@ def position_nodes_evenly(
 
 
 def calculate_vertical_spacing(
-    dmr_nodes: Set[int],
-    gene_nodes: Set[int],
+    max_dmr_count: int,
+    max_gene_count: int,
     split_genes: Set[int] = None
 ) -> float:
     """
@@ -226,9 +230,8 @@ def calculate_vertical_spacing(
     if split_genes is None:
         split_genes = set()
         
-    num_dmrs = len(dmr_nodes)
-    num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
-    max_nodes = max(num_dmrs, num_genes)
+    # Use the counts directly
+    max_nodes = max(max_dmr_count, max_gene_count)
     
     # Base spacing of 0.2, increased proportionally with node count
     spacing = max(0.2, 0.2 * (1 + max_nodes / 10))
