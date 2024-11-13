@@ -1,5 +1,5 @@
 import networkx as nx
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
