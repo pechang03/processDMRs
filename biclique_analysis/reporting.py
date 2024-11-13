@@ -162,6 +162,9 @@ def print_bicliques_detail(
                         print(f"    {gene_name}: {gene_desc}")
                     else:
                         print(f"    {gene_name}")
+                else:
+                    # Print gene even if no description found
+                    print(f"    {gene_name}")
 
     print(f"\nTotal false negative edges across all bicliques: {total_false_negatives}")
     print(
