@@ -106,7 +106,7 @@ def position_nodes_by_biclique(
 ) -> Dict[int, Tuple[float, float]]:
     """Position nodes biclique by biclique, maintaining vertical grouping."""
     positions = {}
-    spacing = calculate_vertical_spacing(bicliques)
+    spacing = calculate_vertical_spacing()
     current_y = spacing
 
     # Position nodes in bicliques
