@@ -6,7 +6,12 @@ from visualization import (
     calculate_node_positions
 )
 
-def process_components(bipartite_graph: nx.Graph, bicliques_result: Dict) -> List[Dict]:
+def process_components(
+    bipartite_graph: nx.Graph, 
+    bicliques_result: Dict,
+    dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
+    gene_metadata: Dict[str, Dict] = None
+) -> List[Dict]:
     """Process connected components of the graph."""
     print(f"Starting component processing...")  # Debug logging
     components = list(nx.connected_components(bipartite_graph))
@@ -64,7 +69,9 @@ def process_components(bipartite_graph: nx.Graph, bicliques_result: Dict) -> Lis
                 node_labels,
                 node_positions,
                 node_biclique_map,
-                bipartite_graph=subgraph  # Add this parameter
+                bipartite_graph=subgraph,  # Add this parameter
+                dmr_metadata=dmr_metadata,  # Pass these parameters
+                gene_metadata=gene_metadata
             )
 
             component_info = {
