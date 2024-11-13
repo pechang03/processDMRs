@@ -65,6 +65,8 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
             gene_participation[node] = gene_participation.get(node, 0) + 1
 
     # Initialize counts to 0
+    dmr_dist = {}
+    gene_dist = {}
     max_count = max(max(dmr_participation.values(), default=0), 
                    max(gene_participation.values(), default=0))
     for i in range(1, max_count + 1):
