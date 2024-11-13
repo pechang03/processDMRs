@@ -186,9 +186,27 @@ def position_nodes_evenly(
     return positions
 
 
-def calculate_vertical_spacing() -> float:
-    """Calculate base vertical spacing between nodes within a biclique."""
-    return 0.2  # Fixed spacing constant between nodes
+def calculate_vertical_spacing(
+    dmr_nodes: Set[int],
+    gene_nodes: Set[int],
+    split_genes: Set[int] = None
+) -> float:
+    """
+    Calculate vertical spacing based on node counts.
+    Returns a spacing value that is proportional to the maximum number of nodes
+    on either side, with a minimum spacing of 0.2.
+    """
+    if split_genes is None:
+        split_genes = set()
+        
+    num_dmrs = len(dmr_nodes)
+    num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
+    max_nodes = max(num_dmrs, num_genes)
+    
+    # Base spacing of 0.2, increased proportionally with node count
+    spacing = max(0.2, 0.2 * (1 + max_nodes / 10))
+    
+    return spacing
 
 
 def calculate_biclique_height(
@@ -197,7 +215,7 @@ def calculate_biclique_height(
     split_genes: Set[int]
 ) -> float:
     """Calculate the height needed for a single biclique."""
-    spacing = calculate_vertical_spacing(bicliques)
+    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, split_genes)
     num_dmrs = len(dmr_nodes)
     num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
     return max(num_dmrs, num_genes) * spacing
