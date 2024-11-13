@@ -107,7 +107,7 @@ def position_nodes_by_biclique(
 
     # Position nodes in bicliques
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        current_pos = position_biclique_nodes(
+        positions = position_biclique_nodes(
             dmr_nodes,
             gene_nodes,
             node_info.split_genes,
@@ -116,11 +116,12 @@ def position_nodes_by_biclique(
             positions,
             biclique_idx,
         )
+        current_y += spacing * max(len(dmr_nodes), len(gene_nodes))
 
     # Handle any remaining unpositioned nodes
-    current_y = position_remaining_nodes(positions, node_info, current_y, spacing)
-    # TODO this currently is WRONG
-    return current_pos
+    position_remaining_nodes(positions, node_info, current_y, spacing)
+    
+    return positions
 
 
 def position_single_biclique(
