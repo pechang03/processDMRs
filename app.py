@@ -112,6 +112,7 @@ def process_data():
 
         # Update visualization only for interesting components
         # Add visualization to each component
+        # Add visualization to each component
         for component in interesting_components:
             if component.get("bicliques"):
                 # Format bicliques for visualization
