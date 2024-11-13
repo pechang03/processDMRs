@@ -35,6 +35,18 @@ def create_node_traces(
     for node_id, (x, y) in node_positions.items():
         color = "gray"
         label = node_labels.get(node_id, str(node_id))
+        hover_text = label
+        
+        # Add metadata to hover text
+        if node_id in node_info.dmr_nodes and dmr_metadata:
+            meta = dmr_metadata.get(label, {})
+            hover_text = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
+        elif gene_metadata:
+            gene_name = node_labels.get(node_id)
+            if gene_name in gene_metadata:
+                meta = gene_metadata[gene_name]
+                hover_text = f"{gene_name}<br>Description: {meta.get('description', 'N/A')}"
+
         if (
             node_id in node_biclique_map and biclique_colors
         ):  # Check if colors list is not empty
@@ -51,12 +63,12 @@ def create_node_traces(
         if node_id in node_info.dmr_nodes:
             dmr_x.append(x)
             dmr_y.append(y)
-            dmr_text.append(label)
+            dmr_text.append(hover_text)
             dmr_colors.append(color)
         else:
             gene_x.append(x)
             gene_y.append(y)
-            gene_text.append(label)
+            gene_text.append(hover_text)
             gene_colors.append(color)
 
     # Add DMR nodes
