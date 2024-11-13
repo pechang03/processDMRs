@@ -111,16 +111,20 @@ def process_data():
         )
 
         # Update visualization only for interesting components
+        # Add visualization to each component
         for component in interesting_components:
-            if component.get('bicliques'):
+            if component.get("bicliques"):
+                # Format bicliques for visualization
                 formatted_bicliques = [
-                    (set(bic['dmrs']), set(bic['genes'])) 
-                    for bic in component['bicliques']
+                    (set(bic["dmrs"]), set(bic["genes"]))
+                    for bic in component["bicliques"]
                 ]
-                
+
+                print(f"\nProcessing visualization for component {component['id']}:")
+                print(f"Number of bicliques: {len(component['bicliques'])}")
                 try:
                     component_viz = create_biclique_visualization(
-                        formatted_bicliques,
+                        formatted_bicliques,  # Now this is defined
                         node_labels,
                         node_positions,
                         node_biclique_map,
@@ -128,10 +132,15 @@ def process_data():
                         gene_metadata=gene_metadata,
                     )
                     component["plotly_graph"] = json.loads(component_viz)
-                    print(f"Successfully created visualization for component {component['id']}")
+                    print(
+                        f"Successfully created visualization for component {component['id']}"
+                    )
                 except Exception as e:
-                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
+                    print(
+                        f"Error creating visualization for component {component['id']}: {str(e)}"
+                    )
                     import traceback
+
                     traceback.print_exc()
         # Create node_biclique_map before creating metadata
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
@@ -253,14 +262,14 @@ def process_data():
 
         # Create summary statistics
         stats = {
-            "total_components": len(component_data),
+            "total_components": len(interesting_components),
             "components_with_bicliques": len(
-                [comp for comp in component_data if comp.get("bicliques")]
+                [comp for comp in interesting_components if comp.get("bicliques")]
             ),
             "total_bicliques": len(bicliques_result["bicliques"]),
             "non_trivial_bicliques": sum(
                 1
-                for comp in component_data
+                for comp in interesting_components
                 if comp.get("bicliques")
                 for bic in comp["bicliques"]
             ),
@@ -268,13 +277,14 @@ def process_data():
 
         return {
             "stats": stats,
-            "interesting_components": interesting_components,  # Changed from components
-            "simple_connections": simple_connections,  # Added this
+            "interesting_components": interesting_components,
+            "simple_connections": simple_connections,
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
             "gene_id_mapping": gene_id_mapping,
             "node_positions": node_positions,
+            "node_labels": node_labels,  # Ensure node_labels is returned
         }
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
@@ -395,6 +405,7 @@ def index():
             gene_metadata=results.get("gene_metadata", {}),
             statistics=results.get("stats", {}),
             coverage=results.get("coverage", {}),
+            node_labels=results.get("node_labels", {}),  # Pass node_labels to the template
         )
     except Exception as e:
         import traceback
