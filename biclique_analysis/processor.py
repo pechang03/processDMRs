@@ -4,7 +4,6 @@
 import networkx as nx
 import pandas as pd
 from typing import Dict, List, Set, Tuple
-from .reader import read_bicliques_file
 
 
 def process_enhancer_info(enhancer_info):

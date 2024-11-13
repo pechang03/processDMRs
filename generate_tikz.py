@@ -12,7 +12,8 @@ import pandas as pd
 import numpy as np  # Add this import for np.linspace
 
 from visualization.graph_layout import calculate_node_positions
-from biclique_analysis.process_bicliques import read_bicliques_file, classify_biclique
+from biclique_analysis.reader import read_bicliques_file
+from biclique_analysis.classifier import classify_biclique
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis.processor import process_enhancer_info
 from visualization.graph_visualize import create_node_biclique_map

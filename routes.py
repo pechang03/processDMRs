@@ -1,5 +1,4 @@
 from flask import render_template
-from process_data import process_data
 
 def index():
     try:
