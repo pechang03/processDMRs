@@ -23,6 +23,11 @@ __all__ = [
 ]
 from .processor import process_enhancer_info, process_dataset
 
+__all__.extend([
+    'process_enhancer_info',
+    'process_dataset'
+])
+
 __all__ = [
     'process_enhancer_info',
     'process_dataset',
