@@ -97,7 +97,7 @@ def calculate_edge_coverage(
         "multiple": multiple,
         "uncovered": uncovered,
         "total": total_edges,
-        "single_percentage": single / total_edges,
-        "multiple_percentage": multiple / total_edges,
-        "uncovered_percentage": uncovered / total_edges,
+        "single_percentage": single / total_edges if total_edges else 0,
+        "multiple_percentage": multiple / total_edges if total_edges else 0,
+        "uncovered_percentage": uncovered / total_edges if total_edges else 0,
     }
