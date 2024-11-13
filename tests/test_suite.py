@@ -18,11 +18,13 @@ if __name__ == '__main__':
 import unittest
 from test_gene_processing import TestGeneProcessing
 from test_classifier import TestClassifier
+from test_statistics import TestStatistics
 
 def create_test_suite():
     suite = unittest.TestSuite()
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestGeneProcessing))
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestClassifier))
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestStatistics))
     return suite
 
 if __name__ == '__main__':
