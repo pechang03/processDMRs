@@ -46,9 +46,13 @@ def process_data():
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-        gene_id_mapping = {
-            gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
-        }
+        
+        # Create gene mapping starting after max DMR number
+        max_dmr = df["DMR_No."].max()
+        gene_id_mapping = {gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted(all_genes))}
+        
+        # Create reverse mapping for labels
+        reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
 
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 
@@ -63,8 +67,23 @@ def process_data():
         component_data = process_components(bipartite_graph, bicliques_result)
 
         # Create metadata
-        print("Creating metadata...")
-        dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
+        dmr_metadata = {}
+        for _, row in df.iterrows():
+            dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+            dmr_metadata[f"DMR_{row['DMR_No.']}"] = {
+                "area": row["Area_Stat"],
+                "description": row.get("Gene_Description", "N/A")
+            }
+            
+        gene_metadata = {}
+        for gene_name in all_genes:
+            gene_rows = df[df["Gene_Symbol_Nearby"] == gene_name]
+            description = "N/A"
+            if not gene_rows.empty and "Gene_Description" in gene_rows:
+                description = gene_rows.iloc[0]["Gene_Description"]
+            gene_metadata[gene_name] = {
+                "description": description
+            }
 
         # Before calculating positions, let's add debug logging
         print("\nDebugging node positions:")
@@ -101,7 +120,7 @@ def process_data():
             )
         )
 
-        # Create visualization with the labels and metadata
+        # Create visualization
         viz_json = create_biclique_visualization(
             bicliques_result["bicliques"],
             node_labels,
@@ -109,7 +128,7 @@ def process_data():
             node_biclique_map,
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
-            gene_id_mapping=gene_id_mapping,
+            gene_id_mapping=gene_id_mapping
         )
 
         # Add visualization to each component
