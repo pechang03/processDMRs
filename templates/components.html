@@ -70,6 +70,25 @@
                     </script>
                 </div>
                 {% endif %}
+
+                {% if component.single_connection_genes %}
+                <div class="mt-4">
+                    <h3>Genes with Single DMR Connection</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                {% for gene in component.single_connection_genes %}
+                                <li>{{ gene.gene_name }} - Connected to DMR_{{ gene.dmr + 1 }}
+                                    {% if gene.description != "N/A" %}
+                                    <br><small class="text-muted">{{ gene.description }}</small>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% else %}
