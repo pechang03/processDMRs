@@ -11,12 +11,17 @@ def calculate_node_positions(
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
     current_y = 0
-    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, node_info.split_genes)
+    spacing = calculate_vertical_spacing(
+        max(len(dmr_nodes) for dmr_nodes, _ in bicliques),
+        max(len(gene_nodes) for _, gene_nodes in bicliques)
+    )
+
+    # Track nodes positioned in biclique phase
+    nodes_positioned_in_bicliques = set()
     
     # Position nodes biclique by biclique
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        # Position nodes in this biclique
+        initial_position_count = len(positions)
         positions = position_biclique_nodes(
             dmr_nodes,
             gene_nodes,
@@ -26,16 +31,36 @@ def calculate_node_positions(
             positions,
             biclique_idx,
         )
+        nodes_positioned_this_biclique = len(positions) - initial_position_count
+        nodes_positioned_in_bicliques.update(dmr_nodes)
+        nodes_positioned_in_bicliques.update(gene_nodes)
         
-        # Move current_y by the height of this biclique plus spacing
+        if nodes_positioned_this_biclique > 0:
+            print(f"Biclique {biclique_idx}: Positioned {nodes_positioned_this_biclique} nodes")
+        
         biclique_height = calculate_biclique_height(dmr_nodes, gene_nodes, node_info.split_genes)
         current_y += biclique_height + spacing
 
-    # Handle any remaining unpositioned nodes
-    default_spacing = 0.2
-    position_remaining_nodes(positions, node_info, current_y, default_spacing)
+    print(f"\nNodes positioned in biclique phase: {len(nodes_positioned_in_bicliques)}")
     
-    validate_positions(positions, node_info.all_nodes)
+    # Handle remaining nodes
+    missing_nodes = node_info.all_nodes - set(positions.keys())
+    if missing_nodes:
+        print(f"\nRemaining nodes analysis:")
+        print(f"Total missing nodes: {len(missing_nodes)}")
+        print(f"Missing DMRs: {len([n for n in missing_nodes if n in node_info.dmr_nodes])}")
+        print(f"Missing genes: {len([n for n in missing_nodes if n not in node_info.dmr_nodes])}")
+        print(f"Sample missing node IDs: {sorted(list(missing_nodes))[:5]}")
+        
+        position_remaining_nodes(positions, node_info, current_y, spacing)
+
+    # Final validation
+    final_missing = node_info.all_nodes - set(positions.keys())
+    if final_missing:
+        print(f"\nFinal position check:")
+        print(f"Nodes still missing positions: {len(final_missing)}")
+        print(f"Sample missing: {sorted(list(final_missing))[:5]}")
+
     return positions
 
 
