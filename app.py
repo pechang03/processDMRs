@@ -62,7 +62,7 @@ def process_data():
             bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
         )
 
-        # Process components
+        # Process components - pass the bipartite_graph
         print("Processing components...")
         component_data = process_components(bipartite_graph, bicliques_result)
 
@@ -216,7 +216,7 @@ def process_data():
 
                     traceback.print_exc()
 
-        # Create full visualization
+        # Update the full visualization creation
         full_viz = create_biclique_visualization(
             bicliques_result["bicliques"],
             node_labels,
@@ -224,6 +224,7 @@ def process_data():
             node_biclique_map,
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
+            bipartite_graph=bipartite_graph  # Add this parameter
         )
 
         # Save full visualization
