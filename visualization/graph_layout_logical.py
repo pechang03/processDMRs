@@ -305,7 +305,7 @@ def position_remaining_nodes(
     node_info: "NodeInfo",
     current_y: float,
     spacing: float,
-) -> None:
+) -> Dict[int, Tuple[float, float]]:
     """Position any nodes that weren't in bicliques."""
     missing_nodes = node_info.all_nodes - set(positions.keys())
     if missing_nodes:
@@ -314,6 +314,7 @@ def position_remaining_nodes(
             x_pos = get_x_position(node, node_info)
             positions[node] = (x_pos, current_y)
             current_y += spacing
+    return positions
 
 
 def get_x_position(node: int, node_info: "NodeInfo") -> float:
