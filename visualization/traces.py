@@ -15,6 +15,7 @@ def create_node_traces(
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
+    dominating_set: Set[int] = None,
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     traces = []
@@ -42,6 +43,10 @@ def create_node_traces(
                 color = biclique_colors[biclique_idx]
             else:
                 color = "gray"  # Use gray for invalid biclique numbers
+
+        # Highlight dominating set nodes
+        if dominating_set and node_id in dominating_set:
+            color = "red"  # Or any other distinctive color for dominating set nodes
 
         if node_id in node_info.dmr_nodes:
             dmr_x.append(x)
