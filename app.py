@@ -119,6 +119,14 @@ def process_data():
             )
         )
 
+        # Debug output
+        print("\nVisualization preparation:")
+        print(f"Number of node labels: {len(node_labels)}")
+        print(f"Number of node positions: {len(node_positions)}")
+        print(f"Sample node labels: {list(node_labels.items())[:5]}")
+        print(f"Sample DMR metadata: {list(dmr_metadata.items())[:2]}")
+        print(f"Sample gene metadata: {list(gene_metadata.items())[:2]}")
+
         # Create visualization
         viz_json = create_biclique_visualization(
             bicliques_result["bicliques"],
