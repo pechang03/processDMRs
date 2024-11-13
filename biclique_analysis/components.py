@@ -16,7 +16,11 @@ def process_components(
 ) -> Tuple[List[Dict], List[Dict]]:
     """Process connected components of the graph."""
     
-    # ... (keep existing initialization code) ...
+    # Initialize variables
+    components = list(nx.connected_components(bipartite_graph))
+    interesting_components = []
+    simple_connections = []
+    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
 
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
@@ -26,6 +30,27 @@ def process_components(
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
         
+        # Collect component's bicliques
+        component_raw_bicliques = []
+        for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]:
+            biclique_nodes = dmr_nodes_bic | gene_nodes_bic
+            if biclique_nodes & set(component):
+                component_raw_bicliques.append((dmr_nodes_bic, gene_nodes_bic))
+        
+        # Find split genes in this component
+        gene_to_bicliques = {}
+        for bidx, (_, gene_nodes_bic) in enumerate(component_raw_bicliques):
+            for gene in gene_nodes_bic:
+                if gene not in gene_to_bicliques:
+                    gene_to_bicliques[gene] = []
+                gene_to_bicliques[gene].append(bidx + 1)  # Store 1-based biclique index
+        
+        split_genes = {
+            gene: bicliques 
+            for gene, bicliques in gene_to_bicliques.items() 
+            if len(bicliques) > 1
+        }
+
         # Process bicliques for this component
         for bidx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(component_raw_bicliques):
             if len(dmr_nodes_bic) >= 3 and len(gene_nodes_bic) >= 3:
@@ -81,6 +106,18 @@ def process_components(
                 gene_id_mapping=gene_id_mapping,
                 bipartite_graph=subgraph
             )
+
+            split_genes_info = [
+                {
+                    "gene_name": reverse_gene_mapping.get(gene, f"Gene_{gene}"),
+                    "description": gene_metadata.get(
+                        reverse_gene_mapping.get(gene, f"Gene_{gene}"), 
+                        {}
+                    ).get("description", "N/A"),
+                    "bicliques": bicliques
+                }
+                for gene, bicliques in split_genes.items()
+            ]
 
             component_info = {
                 "id": idx + 1,
