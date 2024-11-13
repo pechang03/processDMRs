@@ -106,6 +106,7 @@ def process_data():
             bicliques_result,
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
+            gene_id_mapping=gene_id_mapping,
         )
         # Create node_biclique_map before creating metadata
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
@@ -193,10 +194,15 @@ def process_data():
                         gene_metadata=gene_metadata,
                     )
                     component["plotly_graph"] = json.loads(component_viz)
-                    print(f"Successfully created visualization for component {component['id']}")
+                    print(
+                        f"Successfully created visualization for component {component['id']}"
+                    )
                 except Exception as e:
-                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
+                    print(
+                        f"Error creating visualization for component {component['id']}: {str(e)}"
+                    )
                     import traceback
+
                     traceback.print_exc()
 
         # Update the full visualization creation
