@@ -3,78 +3,84 @@ import warnings
 from typing import List, Dict, Tuple, Set
 import networkx as nx
 
+
 class InvalidGraphError(Exception):
     """Exception raised for invalid graph structures."""
+
     pass
+
 
 def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
     """
     Validate graph structure and return DMR and gene node sets.
-    
+
     Args:
         graph: NetworkX graph to validate
-        
+
     Returns:
         Tuple of (dmr_nodes, gene_nodes)
-        
+
     Raises:
         InvalidGraphError: If graph structure is invalid
     """
     if not graph.nodes():
         raise InvalidGraphError("Graph contains no nodes")
-        
+
     # Check for degree 0 nodes
     zero_degree_nodes = [n for n, d in graph.degree() if d == 0]
     if zero_degree_nodes:
         raise InvalidGraphError(f"Graph contains isolated nodes: {zero_degree_nodes}")
-        
+
     # Check for multi-edges
     if any(len(graph[u][v]) > 1 for u, v in graph.edges()):
         raise InvalidGraphError("Graph contains multi-edges")
-        
+
     # Identify DMR and gene nodes (DMRs are 0-2, genes are 3+)
     all_nodes = set(graph.nodes())
     dmr_nodes = {n for n in all_nodes if n <= 2}
     gene_nodes = {n for n in all_nodes if n > 2}
-    
+
     # Check for empty partite sets
     if not dmr_nodes:
         raise InvalidGraphError("Graph contains no DMR nodes")
     if not gene_nodes:
         raise InvalidGraphError("Graph contains no gene nodes")
-        
+
     return dmr_nodes, gene_nodes
 
 
-def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph) -> Dict:
+def calculate_coverage_statistics(
+    bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph
+) -> Dict:
     """Calculate coverage statistics for bicliques."""
     # Validate graph structure first
     dmrs, genes = validate_graph(graph)
-    
+
     dmr_coverage = set()
     gene_coverage = set()
     for dmr_nodes, gene_nodes in bicliques:
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
-    
+
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
             "total": len(dmrs),
-            "percentage": len(dmr_coverage) / len(dmrs)
+            "percentage": len(dmr_coverage) / len(dmrs),
         },
         "genes": {
             "covered": len(gene_coverage),
             "total": len(genes),
-            "percentage": len(gene_coverage) / len(genes)
-        }
+            "percentage": len(gene_coverage) / len(genes),
+        },
     }
+
 
 def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate comprehensive biclique statistics."""
     # Validate graph structure first
     validate_graph(graph)
-    
+
     node_participation = calculate_node_participation(bicliques)
     edge_coverage = calculate_edge_coverage(bicliques, graph)
     return {
@@ -109,23 +115,30 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     # Convert to count distribution
     dmr_dist = {}
     gene_dist = {}
-    
+
     # Initialize with 0 for all possible counts
     max_dmr_count = max(dmr_participation.values()) if dmr_participation else 0
     max_gene_count = max(gene_participation.values()) if gene_participation else 0
-    
-    for i in range(1, max(max_dmr_count, max_gene_count) + 1):
-        dmr_dist[i] = sum(1 for count in dmr_participation.values() if count == i)
-        gene_dist[i] = sum(1 for count in gene_participation.values() if count == i)
+    # Count nodes by their participation frequency
+    for count in set(dmr_participation.values()):
+        dmr_dist[count] = sum(1 for v in dmr_participation.values() if v == count)
+    for count in set(gene_participation.values()):
+        gene_dist[count] = sum(1 for v in gene_participation.values() if v == count)
+
+    # for i in range(1, max(max_dmr_count, max_gene_count) + 1):
+    # dmr_dist[i] = sum(1 for count in dmr_participation.values() if count == i)
+    # gene_dist[i] = sum(1 for count in gene_participation.values() if count == i)
 
     return {"dmrs": dmr_dist, "genes": gene_dist}
 
 
-def calculate_edge_coverage(bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph) -> Dict:
+def calculate_edge_coverage(
+    bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph
+) -> Dict:
     """Calculate edge coverage statistics."""
     # Validate graph structure first
     validate_graph(graph)
-    
+
     edge_coverage = {}
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
@@ -144,12 +157,12 @@ def calculate_edge_coverage(bicliques: List[Tuple[Set[int], Set[int]]], graph: n
     total_edges = len(graph.edges())
     return {
         "single": single,
-        "multiple": multiple, 
+        "multiple": multiple,
         "uncovered": uncovered,
         "total": total_edges,
         "single_percentage": single / total_edges if total_edges > 0 else 0,
         "multiple_percentage": multiple / total_edges if total_edges > 0 else 0,
-        "uncovered_percentage": uncovered / total_edges if total_edges > 0 else 0
+        "uncovered_percentage": uncovered / total_edges if total_edges > 0 else 0,
     }
 
     return {
