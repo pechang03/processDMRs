@@ -24,10 +24,32 @@ def process_components(
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
         component_bicliques = []
+        single_connection_genes = []
 
         # Get nodes in this component
         component_nodes = set(component)
         
+        # First, collect all genes in bicliques
+        genes_in_bicliques = set()
+        for _, gene_nodes in bicliques_result["bicliques"]:
+            genes_in_bicliques.update(gene_nodes)
+        
+        # Find genes with single DMR connections
+        for node in component_nodes:
+            if node in gene_id_mapping.values():  # If it's a gene
+                if node not in genes_in_bicliques:  # And not in any biclique
+                    neighbors = list(bipartite_graph.neighbors(node))
+                    if len(neighbors) == 1:  # Single DMR connection
+                        dmr = neighbors[0]
+                        gene_name = reverse_gene_mapping.get(node, f"Gene_{node}")
+                        single_connection_genes.append({
+                            "gene": node,
+                            "dmr": dmr,
+                            "gene_name": gene_name,
+                            "description": gene_metadata.get(gene_name, {}).get("description", "N/A")
+                        })
+
+        # Process bicliques as before
         for bidx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
             # Check if this biclique belongs to this component
             biclique_nodes = dmr_nodes | gene_nodes
@@ -63,7 +85,7 @@ def process_components(
                 if len(dmr_nodes) > 1 or len(gene_nodes) > 1:
                     component_bicliques.append(biclique_info)
 
-        if component_bicliques:  # Only add components that have bicliques
+        if component_bicliques or single_connection_genes:
             dmr_count = len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 0])
             gene_count = len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 1])
             
@@ -100,6 +122,7 @@ def process_components(
                 "dmrs": dmr_count,
                 "genes": gene_count,
                 "bicliques": component_bicliques,
+                "single_connection_genes": single_connection_genes,
                 "plotly_graph": plotly_graph
             }
             component_data.append(component_info)
