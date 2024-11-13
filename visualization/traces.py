@@ -16,6 +16,8 @@ def create_node_traces(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     dominating_set: Set[int] = None,
+    dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
+    gene_metadata: Dict[str, Dict] = None
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     traces = []
