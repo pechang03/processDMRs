@@ -16,16 +16,26 @@
                 <h2>Component {{ component.id }}</h2>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h3>Statistics</h3>
-                        <ul class="list-group">
-                            <li class="list-group-item">DMRs: {{ component.dmrs }}</li>
-                            <li class="list-group-item">Genes: {{ component.genes }}</li>
-                            <li class="list-group-item">Total Size: {{ component.size }}</li>
-                        </ul>
-                    </div>
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Total Bicliques</th>
+                            <th>Total DMRs</th>
+                            <th>Total Genes</th>
+                            <th>Split Genes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ component.bicliques|length }}</td>
+                            <td>{{ component.dmrs }}</td>
+                            <td>{{ component.genes }}</td>
+                            <td>{{ component.split_genes|length }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
                 {% if component.split_genes %}
                 <div class="mt-4">
                     <h3>Split Genes</h3>
@@ -65,28 +75,43 @@
                                         {% endfor %}
                                     </ul>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h5>DMRs</h5>
+                                    <ul class="list-unstyled">
+                                        {% for dmr in biclique.details.dmrs %}
+                                        <li>{{ dmr.id }} - Area: {{ dmr.area }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                    
+                                <!-- Regular Genes section -->
+                                <div class="col-md-4">
                                     <h5>Genes</h5>
                                     <ul class="list-unstyled">
-                                        {% for gene in biclique.details.genes|batch(2) %}
-                                        <div class="row">
-                                            {% for g in gene %}
-                                            {% if g %}
-                                            <div class="col-md-6">
-                                                <li>
-                                                    {% if g.is_split %}
-                                                    <strong class="text-primary">{{ g.name }}</strong> *
-                                                    {% else %}
-                                                    {{ g.name }}
-                                                    {% endif %}
-                                                    {% if g.description != "N/A" %}
-                                                    <br><small class="text-muted">{{ g.description }}</small>
-                                                    {% endif %}
-                                                </li>
-                                            </div>
+                                        {% for gene in biclique.details.genes %}
+                                            {% if not gene.is_split %}
+                                            <li>{{ gene.name }}
+                                                {% if gene.description != "N/A" %}
+                                                <br><small class="text-muted">{{ gene.description }}</small>
+                                                {% endif %}
+                                            </li>
                                             {% endif %}
-                                            {% endfor %}
-                                        </div>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                    
+                                <!-- Split Genes section -->
+                                <div class="col-md-4">
+                                    <h5>Split Genes</h5>
+                                    <ul class="list-unstyled">
+                                        {% for gene in biclique.details.genes %}
+                                            {% if gene.is_split %}
+                                            <li><strong class="text-primary">{{ gene.name }}</strong>
+                                                {% if gene.description != "N/A" %}
+                                                <br><small class="text-muted">{{ gene.description }}</small>
+                                                {% endif %}
+                                            </li>
+                                            {% endif %}
                                         {% endfor %}
                                     </ul>
                                 </div>
