@@ -32,7 +32,7 @@ def create_biclique_visualization(
     node_biclique_map: Dict[int, List[int]],
     false_positive_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
-    dmr_metadata: Dict[str, Dict] = None,
+    dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
     bipartite_graph: nx.Graph = None,  # Add this parameter
