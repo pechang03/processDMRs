@@ -63,7 +63,8 @@ def process_components(bipartite_graph: nx.Graph, bicliques_result: Dict) -> Lis
                 [(set(bic["dmrs"]), set(bic["genes"])) for bic in component_bicliques],
                 node_labels,
                 node_positions,
-                node_biclique_map
+                node_biclique_map,
+                bipartite_graph=subgraph  # Add this parameter
             )
 
             component_info = {
