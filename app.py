@@ -4,7 +4,7 @@ print("Server starting with updated templates...")
 # Author: Peter Shaw
 
 import os
-from flask import Flask
+from flask import Flask, render_template
 from routes import index
 from process_data import process_data
 from processDMR import read_excel_file  # Add this import
