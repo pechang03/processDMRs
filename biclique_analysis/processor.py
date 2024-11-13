@@ -8,11 +8,6 @@ from .reader import read_bicliques_file
 import pandas as pd
 
 
-def process_enhancer_info(enhancer_info):
-    """Process enhancer interaction information."""
-    if pd.isna(enhancer_info) or not enhancer_info:
-        return set()
-    return {gene.strip() for gene in str(enhancer_info).split(";") if gene.strip()}
 
 
 def process_bicliques(
