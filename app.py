@@ -64,13 +64,42 @@ def process_data():
             bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
         )
 
-        # Process components - pass the bipartite_graph
+        # Create node_biclique_map before creating metadata
+        node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
+
+        # Create metadata BEFORE processing components
+        print("Creating metadata...")
+        dmr_metadata = {}
+        for _, row in df.iterrows():
+            dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+            dmr_metadata[f"DMR_{row['DMR_No.']}"] = {
+                "area": str(row["Area_Stat"]) if "Area_Stat" in df.columns else "N/A",
+                "description": str(row["Gene_Description"]) if "Gene_Description" in df.columns else "N/A",
+                "name": f"DMR_{row['DMR_No.']}",
+                "bicliques": node_biclique_map.get(dmr_id, [])
+            }
+
+        gene_metadata = {}
+        for gene_name, gene_id in gene_id_mapping.items():
+            gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+            description = "N/A"
+            if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
+                description = str(gene_matches.iloc[0]["Gene_Description"])
+            
+            gene_metadata[gene_name] = {
+                "description": description,
+                "id": gene_id,
+                "bicliques": node_biclique_map.get(gene_id, []),
+                "name": gene_name
+            }
+
+        # Now process components with the metadata
         print("Processing components...")
         component_data = process_components(
-            bipartite_graph,
+            bipartite_graph, 
             bicliques_result,
             dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata,
+            gene_metadata=gene_metadata
         )
         # Create metadata
         dmr_metadata = {}
