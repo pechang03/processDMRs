@@ -16,6 +16,7 @@ from biclique_analysis import (
     process_bicliques,
     process_components,
     calculate_biclique_statistics,
+    classifier
 )
 from visualization import (
     create_node_biclique_map,
@@ -101,13 +102,37 @@ def process_data():
 
         # Now process components with the metadata
         print("Processing components...")
-        component_data = process_components(
+        interesting_components, simple_connections = process_components(
             bipartite_graph,
             bicliques_result,
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
             gene_id_mapping=gene_id_mapping,
         )
+
+        # Update visualization only for interesting components
+        for component in interesting_components:
+            if component.get('bicliques'):
+                formatted_bicliques = [
+                    (set(bic['dmrs']), set(bic['genes'])) 
+                    for bic in component['bicliques']
+                ]
+                
+                try:
+                    component_viz = create_biclique_visualization(
+                        formatted_bicliques,
+                        node_labels,
+                        node_positions,
+                        node_biclique_map,
+                        dmr_metadata=dmr_metadata,
+                        gene_metadata=gene_metadata,
+                    )
+                    component["plotly_graph"] = json.loads(component_viz)
+                    print(f"Successfully created visualization for component {component['id']}")
+                except Exception as e:
+                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
         # Create node_biclique_map before creating metadata
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
 
@@ -243,7 +268,8 @@ def process_data():
 
         return {
             "stats": stats,
-            "components": component_data,  # This should be a list of component dictionaries
+            "interesting_components": interesting_components,  # Changed from components
+            "simple_connections": simple_connections,  # Added this
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
