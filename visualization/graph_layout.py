@@ -4,6 +4,7 @@ from typing import Dict, List, Set, Tuple
 from .graph_layout_logical import (  # Updated import
     calculate_node_positions as core_calculate_positions,
     collect_node_information,
+    position_nodes_by_biclique,  # Add this import
 )
 from .node_info import NodeInfo
 
