@@ -380,10 +380,11 @@ def index():
 
         # Print results for debugging
         print("Results structure:", results.keys())
-        print("Number of components:", len(results.get("components", [])))
+        print("Number of interesting components:", len(results.get("interesting_components", [])))
+        print("Number of simple connections:", len(results.get("simple_connections", [])))
 
         # Ensure we have all required data
-        for component in results.get("components", []):
+        for component in results.get("interesting_components", []):
             if "plotly_graph" not in component:
                 print(f"Warning: Component {component.get('id')} missing plotly_graph")
 
@@ -397,7 +398,6 @@ def index():
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
@@ -436,7 +436,8 @@ def component_detail(component_id):
             return render_template("error.html", message=results["error"])
 
         component = next(
-            (c for c in results["components"] if c["id"] == component_id), None
+            (c for c in results["interesting_components"] if c["id"] == component_id),  # Changed from components
+            None
         )
 
         if not component:
