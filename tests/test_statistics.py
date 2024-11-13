@@ -6,6 +6,8 @@ from biclique_analysis.statistics import (
     calculate_size_distribution,
     calculate_node_participation,
     calculate_edge_coverage,
+    InvalidGraphError,
+    validate_graph,
 )
 
 class TestStatistics(unittest.TestCase):
@@ -56,6 +58,31 @@ class TestStatistics(unittest.TestCase):
         self.assertEqual(edge_coverage["single"], 3)
         self.assertEqual(edge_coverage["multiple"], 0)
         self.assertEqual(edge_coverage["uncovered"], 3)
+
+    def test_invalid_graph_structures(self):
+        """Test that invalid graph structures raise appropriate exceptions"""
+        # Test empty graph
+        empty_graph = nx.Graph()
+        with self.assertRaises(InvalidGraphError):
+            calculate_coverage_statistics([], empty_graph)
+        
+        # Test graph with isolated node
+        isolated_graph = nx.Graph()
+        isolated_graph.add_node(0)
+        with self.assertRaises(InvalidGraphError):
+            calculate_coverage_statistics([], isolated_graph)
+        
+        # Test graph with only DMRs
+        dmr_graph = nx.Graph()
+        dmr_graph.add_edge(0, 1)
+        with self.assertRaises(InvalidGraphError):
+            calculate_coverage_statistics([], dmr_graph)
+        
+        # Test graph with only genes
+        gene_graph = nx.Graph()
+        gene_graph.add_edge(3, 4)
+        with self.assertRaises(InvalidGraphError):
+            calculate_coverage_statistics([], gene_graph)
 
 if __name__ == '__main__':
     unittest.main()
