@@ -13,16 +13,20 @@ def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], gr
     for dmr_nodes, gene_nodes in bicliques:
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
+    # Get all DMRs and genes from the graph
+    dmrs = {n for n, d in graph.nodes(data=True) if not d.get('bipartite', 1)}
+    genes = {n for n, d in graph.nodes(data=True) if d.get('bipartite', 1)}
+    
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
-            "total": graph.number_of_nodes(),
-            "percentage": len(dmr_coverage) / graph.number_of_nodes()
+            "total": len(dmrs),
+            "percentage": len(dmr_coverage) / len(dmrs) if dmrs else 0
         },
         "genes": {
             "covered": len(gene_coverage),
-            "total": graph.number_of_nodes(),
-            "percentage": len(gene_coverage) / graph.number_of_nodes()
+            "total": len(genes),
+            "percentage": len(gene_coverage) / len(genes) if genes else 0
         }
     }
 
@@ -66,14 +70,6 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     for count in gene_participation.values():
         gene_dist[count] = gene_dist.get(count, 0) + 1
 
-    # Convert to count distribution
-    dmr_dist = {}
-    gene_dist = {}
-    for count in dmr_participation.values():
-        dmr_dist[count] = dmr_dist.get(count, 0) + 1
-    for count in gene_participation.values():
-        gene_dist[count] = gene_dist.get(count, 0) + 1
-
     return {"dmrs": dmr_dist, "genes": gene_dist}
 
 
@@ -91,10 +87,6 @@ def calculate_edge_coverage(
                 if graph.has_edge(dmr, gene):
                     edge = tuple(sorted([dmr, gene]))
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
-
-    single = sum(1 for count in edge_coverage.values() if count == 1)
-    multiple = sum(1 for count in edge_coverage.values() if count > 1)
-    uncovered = total_edges - len(edge_coverage)
 
     single = sum(1 for count in edge_coverage.values() if count == 1)
     multiple = sum(1 for count in edge_coverage.values() if count > 1)
