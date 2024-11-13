@@ -104,6 +104,14 @@ def process_data():
         # Calculate positions
         node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
         
+        # Create node labels and metadata using the reporting function
+        node_labels, dmr_metadata, gene_metadata = reporting.create_node_labels_and_metadata(
+            df, 
+            bicliques_result, 
+            gene_id_mapping,
+            node_biclique_map
+        )
+        
         # Debug output
         print("\nVisualization preparation:")
         print(f"Number of node labels: {len(node_labels)}")
