@@ -16,13 +16,18 @@ def process_components(
 ) -> Tuple[List[Dict], List[Dict]]:
     """Process connected components of the graph."""
     
+    print("\nProcessing components:")  # Add debug logging
+    
     # Initialize variables
     components = list(nx.connected_components(bipartite_graph))
+    print(f"Found {len(components)} total components")  # Debug
+    
     interesting_components = []
     simple_connections = []
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
 
     for idx, component in enumerate(components):
+        print(f"\nProcessing component {idx + 1}:")  # Debug
         subgraph = bipartite_graph.subgraph(component)
         component_bicliques = []
         
@@ -30,6 +35,9 @@ def process_components(
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
         
+        print(f"Component size: {len(component)}")  # Debug
+        print(f"DMRs: {len(dmr_nodes)}, Genes: {len(gene_nodes)}")  # Debug
+
         # Collect component's bicliques
         component_raw_bicliques = []
         for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]:
@@ -127,8 +135,11 @@ def process_components(
                 "split_genes": split_genes_info,
                 "bicliques": component_bicliques,
                 "plotly_graph": plotly_graph,
+                "total_edges": len(subgraph.edges()),  # Add this
                 "raw_bicliques": [(set(bic["dmrs"]), set(bic["genes"])) for bic in component_bicliques]
             }
             interesting_components.append(component_info)
+            print(f"Added interesting component with {len(component_bicliques)} bicliques")  # Debug
 
+    print(f"\nTotal interesting components: {len(interesting_components)}")  # Debug
     return interesting_components, simple_connections
