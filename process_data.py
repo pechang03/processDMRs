@@ -6,18 +6,11 @@ import json
 from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph
-from biclique_analysis import reporting
-from biclique_analysis.processor import (
+from biclique_analysis import (
     process_bicliques,
     process_enhancer_info,
-    create_node_metadata,  # Add this import
-)
-
-# from processDMR import read_excel_file
-from biclique_analysis import (
+    create_node_metadata,
     process_components,
-    # calculate_biclique_statistics,
-    # classifier,
 )
 from visualization import (
     create_node_biclique_map,
