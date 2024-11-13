@@ -12,10 +12,13 @@ def calculate_node_positions(
     bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
 ) -> Dict[int, Tuple[float, float]]:
     """Calculate visualization-ready positions for nodes."""
-    # Get base positions from core layout
-    base_positions = core_calculate_positions(bicliques, node_biclique_map)
-
-    # Apply visualization-specific transformations
+    # Get node information
+    node_info = collect_node_information(bicliques, node_biclique_map)
+    
+    # Use position_nodes_by_biclique for core positioning logic
+    base_positions = position_nodes_by_biclique(bicliques, node_info)
+    
+    # Apply any visualization-specific adjustments
     return adjust_positions_for_display(base_positions)
 
 
