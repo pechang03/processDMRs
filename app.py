@@ -182,11 +182,17 @@ def process_data():
         # Add visualization to each component
         for component in component_data:
             if component.get("bicliques"):
+                # Format bicliques for visualization
+                formatted_bicliques = [
+                    (set(bic["dmrs"]), set(bic["genes"]))
+                    for bic in component["bicliques"]
+                ]
+
                 print(f"\nProcessing visualization for component {component['id']}:")
                 print(f"Number of bicliques: {len(component['bicliques'])}")
                 try:
                     component_viz = create_biclique_visualization(
-                        formatted_bicliques,
+                        formatted_bicliques,  # Now this is defined
                         node_labels,
                         node_positions,
                         node_biclique_map,
