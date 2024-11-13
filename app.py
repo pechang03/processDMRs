@@ -101,22 +101,16 @@ def process_data():
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata
         )
-        # Create metadata
-        dmr_metadata = {}
-        for _, row in df.iterrows():
-            dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
-            dmr_metadata[f"DMR_{row['DMR_No.']}"] = {
-                "area": row["Area_Stat"],
-                "description": row.get("Gene_Description", "N/A"),
-            }
+        # Create node_biclique_map before creating metadata
+        node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
 
-        gene_metadata = {}
-        for gene_name in all_genes:
-            gene_rows = df[df["Gene_Symbol_Nearby"] == gene_name]
-            description = "N/A"
-            if not gene_rows.empty and "Gene_Description" in gene_rows:
-                description = gene_rows.iloc[0]["Gene_Description"]
-            gene_metadata[gene_name] = {"description": description}
+        # Create metadata using the new function
+        print("Creating metadata...")
+        dmr_metadata, gene_metadata = create_node_metadata(
+            df, 
+            gene_id_mapping, 
+            node_biclique_map
+        )
 
         # Before calculating positions, let's add debug logging
         print("\nDebugging node positions:")
