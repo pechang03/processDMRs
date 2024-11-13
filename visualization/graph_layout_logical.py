@@ -10,7 +10,7 @@ def calculate_node_positions(
     """Calculate base positions for nodes in the graph."""
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
-    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes)
+    spacing = calculate_vertical_spacing()
     current_y = 0
     
     # Position nodes biclique by biclique
@@ -186,7 +186,7 @@ def position_nodes_evenly(
     return positions
 
 
-def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
+def calculate_vertical_spacing() -> float:
     """Calculate base vertical spacing between nodes within a biclique."""
     return 0.2  # Fixed spacing constant between nodes
 
