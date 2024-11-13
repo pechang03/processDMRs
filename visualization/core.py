@@ -106,6 +106,14 @@ def create_biclique_visualization(
     # Create layout
     layout = create_visual_layout(node_positions, node_info)
 
+    # Add biclique boxes first (so they appear behind other elements)
+    biclique_box_traces = create_biclique_boxes(
+        bicliques,
+        node_positions,
+        biclique_colors
+    )
+    traces.extend(biclique_box_traces)
+
     # Create figure and convert to JSON
     fig = {"data": traces, "layout": layout}
     return json.dumps(fig, cls=PlotlyJSONEncoder)
