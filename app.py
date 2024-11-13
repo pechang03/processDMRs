@@ -163,14 +163,19 @@ def component_detail(component_id):
             print(f"Component {component_id} not found")
             return render_template("error.html", message=f"Component {component_id} not found")
 
-        print(f"Found component with {len(component.get('bicliques', []))} bicliques")
-        print(f"Component data keys: {component.keys()}")
+        print("\nComponent data:")
+        print(f"Size: {component.get('size')}")
+        print(f"DMRs: {component.get('dmrs')}")
+        print(f"Genes: {component.get('genes')}")
+        print(f"Bicliques: {len(component.get('bicliques', []))}")
+        print(f"Split genes: {len(component.get('split_genes', []))}")
+        print(f"Total edges: {component.get('total_edges')}")
         
         return render_template(
             "components.html",
             component=component,
-            dmr_metadata=results["dmr_metadata"],
-            gene_metadata=results["gene_metadata"],
+            dmr_metadata=results.get("dmr_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {}),
         )
     except Exception as e:
         import traceback
