@@ -77,38 +77,35 @@
                                         {% endfor %}
                                     </ul>
                                 </div>
-                    
-                                <!-- Regular Genes section -->
-                                <div class="col-md-4">
-                                    <h5>Genes</h5>
-                                    <ul class="list-unstyled">
-                                        {% for gene in biclique.details.genes %}
-                                            {% if not gene.is_split %}
-                                            <li>{{ gene.name }}
-                                                {% if gene.description != "N/A" %}
-                                                <br><small class="text-muted">{{ gene.description }}</small>
-                                                {% endif %}
-                                            </li>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                    
-                                <!-- Split Genes section -->
-                                <div class="col-md-4">
-                                    <h5>Split Genes</h5>
-                                    <ul class="list-unstyled">
-                                        {% for gene in biclique.details.genes %}
-                                            {% if gene.is_split %}
-                                            <li><strong class="text-primary">{{ gene.name }}</strong>
-                                                {% if gene.description != "N/A" %}
-                                                <br><small class="text-muted">{{ gene.description }}</small>
-                                                {% endif %}
-                                            </li>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                                <div class="row">
+                                  <div class="col-md-6">
+                                      <h5>regular genes</h5>
+                                      <ul class="list-unstyled">
+                                          {% for gene in biclique.details.genes %}
+                                              {% if not gene.is_split %}
+                                              <li>{{ gene.name }}
+                                                  {% if gene.description != "n/a" %}
+                                                  <br><small class="text-muted">{{ gene.description }}</small>
+                                                  {% endif %}
+                                              </li>
+                                              {% endif %}
+                                          {% endfor %}
+                                      </ul>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <h5>split genes</h5>
+                                      <ul class="list-unstyled">
+                                          {% for gene in biclique.details.genes %}
+                                              {% if gene.is_split %}
+                                              <li><strong class="text-primary">{{ gene.name }}</strong>
+                                                  {% if gene.description != "n/a" %}
+                                                  <br><small class="text-muted">{{ gene.description }}</small>
+                                                  {% endif %}
+                                              </li>
+                                              {% endif %}
+                                          {% endfor %}
+                                      </ul>
+                                  </div>
                             </div>
                         </div>
                     </div>
