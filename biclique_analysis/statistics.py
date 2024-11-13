@@ -110,13 +110,6 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     dmr_dist = {}
     gene_dist = {}
     
-    # Initialize all possible counts to 0
-    max_count = max(max(dmr_participation.values(), default=0), 
-                   max(gene_participation.values(), default=0))
-    for i in range(1, max_count + 1):
-        dmr_dist[i] = 0
-        gene_dist[i] = 0
-    
     # Count occurrences of each participation count
     for count in dmr_participation.values():
         dmr_dist[count] = dmr_dist.get(count, 0) + 1
@@ -136,23 +129,25 @@ def calculate_edge_coverage(bicliques: List[Tuple[Set[int], Set[int]]], graph: n
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                if graph.has_edge(dmr, gene):
-                    edge = tuple(sorted([dmr, gene]))
-                    edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+                edge = tuple(sorted([dmr, gene]))
+                edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
     # Count edges by coverage
-    single = 0
-    multiple = 0
-    covered_edges = set()
-    
-    for edge, count in edge_coverage.items():
-        covered_edges.add(edge)
-        if count == 1:
-            single += 1
-        else:
-            multiple += 1
-            
+    single = sum(1 for count in edge_coverage.values() if count == 1)
+    multiple = sum(1 for count in edge_coverage.values() if count > 1)
+    covered_edges = set(edge_coverage.keys())
     uncovered = len(graph.edges()) - len(covered_edges)
+
+    total_edges = len(graph.edges())
+    return {
+        "single": single,
+        "multiple": multiple, 
+        "uncovered": uncovered,
+        "total": total_edges,
+        "single_percentage": single / total_edges if total_edges > 0 else 0,
+        "multiple_percentage": multiple / total_edges if total_edges > 0 else 0,
+        "uncovered_percentage": uncovered / total_edges if total_edges > 0 else 0
+    }
 
     return {
         "single": single,
