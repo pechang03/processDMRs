@@ -257,6 +257,11 @@ def position_biclique_nodes(
     biclique_idx: int,
 ) -> Dict[int, Tuple[float, float]]:
     """Position nodes for a single biclique and update positions dictionary."""
+    # Debug output
+    print(f"\nPositioning biclique {biclique_idx}:")
+    print(f"DMR nodes to position: {sorted(list(dmr_nodes))}")
+    print(f"Gene nodes to position: {sorted(list(gene_nodes))}")
+    
     # Calculate the height needed for this biclique
     biclique_height = calculate_biclique_height(dmr_nodes, gene_nodes, split_genes)
     
@@ -270,17 +275,23 @@ def position_biclique_nodes(
     
     # Position DMRs
     for i, dmr in enumerate(sorted(dmr_nodes)):
-        if dmr not in positions:  # Only set position if not already set
-            y_pos = current_y + (i + 1) * dmr_spacing
-            positions[dmr] = (0, y_pos)
+        y_pos = current_y + (i + 1) * dmr_spacing
+        positions[dmr] = (0, y_pos)
+        print(f"Positioned DMR {dmr} at (0, {y_pos})")
 
     # Position genes
     for i, gene in enumerate(sorted(gene_nodes)):
-        if gene not in positions:  # Only set position if not already set
-            y_pos = current_y + (i + 1) * gene_spacing
-            x_pos = 1.1 if gene in split_genes else 1
-            positions[gene] = (x_pos, y_pos)
+        y_pos = current_y + (i + 1) * gene_spacing
+        x_pos = 1.1 if gene in split_genes else 1
+        positions[gene] = (x_pos, y_pos)
+        print(f"Positioned gene {gene} at ({x_pos}, {y_pos})")
 
+    # Debug verification
+    print(f"After positioning:")
+    print(f"Total positions: {len(positions)}")
+    print(f"DMRs positioned: {all(dmr in positions for dmr in dmr_nodes)}")
+    print(f"Genes positioned: {all(gene in positions for gene in gene_nodes)}")
+    
     return positions
 
 
