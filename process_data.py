@@ -1,6 +1,22 @@
 # File : process_data.py
 # Author: Peter Shaw
 
+# Author: Peter Shaw
+#
+# This file handles all data processing logic separate from web presentation.
+# It serves as the main orchestrator for data analysis and visualization preparation.
+#
+# Responsibilities:
+# - Read and process Excel data files
+# - Create and analyze bipartite graphs
+# - Process bicliques and their components
+# - Generate visualization data
+# - Create metadata for nodes
+# - Calculate statistics
+#
+# Note: This separation allows the data processing logic to be used independently
+# of the web interface, making it more maintainable and testable.
+
 import os
 import json
 from flask import Flask, render_template
