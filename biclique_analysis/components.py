@@ -10,7 +10,8 @@ def process_components(
     bipartite_graph: nx.Graph, 
     bicliques_result: Dict,
     dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
-    gene_metadata: Dict[str, Dict] = None
+    gene_metadata: Dict[str, Dict] = None,
+    gene_id_mapping: Dict[str, int] = None  # Add this parameter
 ) -> List[Dict]:
     """Process connected components of the graph."""
     print(f"Starting component processing...")  # Debug logging
