@@ -11,6 +11,7 @@ from biclique_analysis import (
     process_enhancer_info,
     create_node_metadata,
     process_components,
+    reporting,  # Add this import
 )
 from visualization import (
     create_node_biclique_map,

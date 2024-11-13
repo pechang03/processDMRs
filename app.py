@@ -4,6 +4,8 @@
 import os
 from flask import Flask, render_template
 from process_data import process_data
+from processDMR import read_excel_file  # Add this import
+from biclique_analysis.processor import process_enhancer_info  # Add this import
 
 app = Flask(__name__)
 
