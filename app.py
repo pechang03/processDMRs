@@ -13,8 +13,7 @@ from biclique_analysis import process_bicliques, process_components, calculate_b
 from visualization import (
     create_node_biclique_map, 
     create_biclique_visualization, 
-    create_component_visualization,
-    calculate_node_positions  # Add this here instead of separate import
+    calculate_node_positions
 )
 from visualization.node_info import NodeInfo
 
