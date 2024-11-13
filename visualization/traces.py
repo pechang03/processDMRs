@@ -167,7 +167,8 @@ def create_biclique_boxes(
             if node in node_positions:
                 positions.append(node_positions[node])
             else:
-                # print(f"Position not found for node {node}")  # Comment out this line
+                continue  # Skip nodes without positions
+                
         if not positions:
             continue  # Skip if no positions are found
         x_coords, y_coords = zip(*positions)
