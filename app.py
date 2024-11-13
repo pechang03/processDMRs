@@ -12,11 +12,12 @@ from biclique_analysis.processor import (
     process_enhancer_info,
     create_node_metadata,  # Add this import
 )
+
+# from processDMR import read_excel_file
 from biclique_analysis import (
-    process_bicliques,
     process_components,
-    calculate_biclique_statistics,
-    classifier,
+    # calculate_biclique_statistics,
+    # classifier,
 )
 from visualization import (
     create_node_biclique_map,
@@ -246,7 +247,6 @@ def process_data():
 
                     traceback.print_exc()
 
-
         # Create summary statistics
         stats = {
             "total_components": len(interesting_components),
@@ -461,7 +461,3 @@ def component_detail(component_id):
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
-
-
-from biclique_analysis.processor import create_node_metadata
-from processDMR import read_excel_file
