@@ -101,6 +101,10 @@ def statistics():
         return render_template("error.html", message=str(e))
 
 
+@app.route('/')
+def index_route():
+    return index()
+
 if __name__ == "__main__":
     app.run(debug=True)
 
