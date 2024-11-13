@@ -93,35 +93,6 @@ def create_metadata(df, gene_id_mapping):
     return dmr_metadata, gene_metadata
 
 
-def create_plotly_graph(
-    component_data,
-    node_labels,
-    node_positions,
-    node_biclique_map,
-    dmr_metadata,
-    gene_metadata,
-):
-    """Create Plotly graph for a component using the visualization function"""
-    bicliques = [
-        (
-            set(component["dmrs"])
-            if isinstance(component["dmrs"], (list, set))
-            else {component["dmrs"]},
-            set(component["genes"])
-            if isinstance(component["genes"], (list, set))
-            else {component["genes"]},
-        )
-        for component in component_data
-    ]
-    # Use the create_biclique_visualization function
-    return create_biclique_visualization(
-        bicliques,
-        node_labels,
-        node_positions,
-        node_biclique_map,
-        dmr_metadata=dmr_metadata,
-        gene_metadata=gene_metadata,
-    )
 
 
 @app.route("/")
