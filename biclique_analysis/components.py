@@ -98,7 +98,8 @@ def process_components(
                 "size": len(component),
                 "dmrs": dmr_count,
                 "genes": gene_count,
-                "bicliques": component_bicliques
+                "bicliques": component_bicliques,
+                "raw_bicliques": [(set(bic["dmrs"]), set(bic["genes"])) for bic in component_bicliques]
             }
             interesting_components.append(component_info)
 
