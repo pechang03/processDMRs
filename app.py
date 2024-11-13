@@ -460,4 +460,5 @@ def component_detail(component_id):
         return render_template("error.html", message=str(e))
 
 
+from biclique_analysis.processor import create_node_metadata
 from processDMR import read_excel_file
