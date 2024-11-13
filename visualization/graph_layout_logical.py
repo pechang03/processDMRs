@@ -10,8 +10,8 @@ def calculate_node_positions(
     """Calculate base positions for nodes in the graph."""
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
-    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, node_info.split_genes)
     current_y = 0
+    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, node_info.split_genes)
     
     # Position nodes biclique by biclique
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
