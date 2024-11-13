@@ -15,3 +15,15 @@ if __name__ == '__main__':
     suite = create_test_suite()
     runner = unittest.TextTestRunner()
     runner.run(suite)
+import unittest
+from test_gene_processing import TestGeneProcessing
+
+def create_test_suite():
+    suite = unittest.TestSuite()
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestGeneProcessing))
+    return suite
+
+if __name__ == '__main__':
+    suite = create_test_suite()
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
