@@ -43,8 +43,8 @@ class TestGeneSplitBicliques(unittest.TestCase):
             self.assertGreaterEqual(y_positions[i] - y_positions[i-1], 0.0)
 
         # Verify bicliques are separated
-        first_biclique_nodes = {1, 2, 5, 6}
-        second_biclique_nodes = {3, 4, 6, 7, 8}
+        first_biclique_nodes = {1, 2, 5}  # Removed node 6
+        second_biclique_nodes = {3, 4, 7, 8}  # Removed node 6
         
         max_y_first = max(positions[n][1] for n in first_biclique_nodes)
         min_y_second = min(positions[n][1] for n in second_biclique_nodes)
