@@ -15,9 +15,8 @@ from .traces import (
 from .layout import create_visual_layout
 from .traces import (
     create_node_traces,
+    create_edge_traces,
     create_biclique_boxes,
-    create_biclique_edges,
-    create_false_positive_edges,
 )
 from .node_info import NodeInfo
 
