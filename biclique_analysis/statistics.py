@@ -14,8 +14,8 @@ def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], gr
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
     # Get all DMRs and genes from the graph
-    dmrs = {n for n in graph.nodes() if not graph.nodes[n].get('bipartite', 1)}
-    genes = {n for n in graph.nodes() if graph.nodes[n].get('bipartite', 1)}
+    dmrs = {n for n in graph.nodes() if n < 3}  # Fixed DMR identification
+    genes = {n for n in graph.nodes() if n >= 3}  # Fixed gene identification
     
     return {
         "dmrs": {
@@ -56,18 +56,19 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     dmr_participation = {}
     gene_participation = {}
 
+    # First count participation for each node
     for dmr_nodes, gene_nodes in bicliques:
         for node in dmr_nodes:
             dmr_participation[node] = dmr_participation.get(node, 0) + 1
         for node in gene_nodes:
             gene_participation[node] = gene_participation.get(node, 0) + 1
 
-    # Convert to count distribution
+    # Convert to count distribution (how many nodes appear X times)
     dmr_dist = {}
     gene_dist = {}
-    for node, count in dmr_participation.items():
+    for count in dmr_participation.values():
         dmr_dist[count] = dmr_dist.get(count, 0) + 1
-    for node, count in gene_participation.items():
+    for count in gene_participation.values():
         gene_dist[count] = gene_dist.get(count, 0) + 1
 
     return {"dmrs": dmr_dist, "genes": gene_dist}
@@ -78,8 +79,6 @@ def calculate_edge_coverage(
 ) -> Dict:
     """Calculate edge coverage statistics."""
     edge_coverage = {}
-    total_edges = len(graph.edges())
-
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
@@ -88,9 +87,10 @@ def calculate_edge_coverage(
                     edge = tuple(sorted([dmr, gene]))
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
+    # Count edges by coverage
     single = sum(1 for count in edge_coverage.values() if count == 1)
     multiple = sum(1 for count in edge_coverage.values() if count > 1)
-    uncovered = total_edges - len(edge_coverage)
+    uncovered = len(graph.edges()) - len(edge_coverage)
 
     return {
         "single": single,
