@@ -112,13 +112,14 @@ def process_data():
         print(f"Sample DMR metadata: {list(dmr_metadata.items())[:2]}")
         print(f"Sample gene metadata: {list(gene_metadata.items())[:2]}")
 
-        # Create node labels and metadata
-        node_labels, dmr_metadata, gene_metadata = (
-            reporting.create_node_labels_and_metadata(
-                df, bicliques_result, gene_id_mapping, node_biclique_map
-            )
+        # Create node labels and metadata using the reporting function
+        node_labels, dmr_metadata, gene_metadata = reporting.create_node_labels_and_metadata(
+            df, 
+            bicliques_result, 
+            gene_id_mapping,
+            node_biclique_map
         )
-
+        
         # Debug output
         print("\nVisualization preparation:")
         print(f"Number of node labels: {len(node_labels)}")
@@ -126,7 +127,7 @@ def process_data():
         print(f"Sample node labels: {list(node_labels.items())[:5]}")
         print(f"Sample DMR metadata: {list(dmr_metadata.items())[:2]}")
         print(f"Sample gene metadata: {list(gene_metadata.items())[:2]}")
-
+        
         # Create visualization
         viz_json = create_biclique_visualization(
             bicliques_result["bicliques"],
