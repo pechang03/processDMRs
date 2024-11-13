@@ -41,6 +41,20 @@ def process_components(
             if biclique_nodes & component_nodes:
                 component_raw_bicliques.append((dmr_nodes, gene_nodes))
         
+        # Find split genes in this component
+        gene_to_bicliques = {}
+        for bidx, (_, gene_nodes) in enumerate(component_raw_bicliques):
+            for gene in gene_nodes:
+                if gene not in gene_to_bicliques:
+                    gene_to_bicliques[gene] = []
+                gene_to_bicliques[gene].append(bidx + 1)  # Store 1-based biclique index
+        
+        split_genes = {
+            gene: bicliques 
+            for gene, bicliques in gene_to_bicliques.items() 
+            if len(bicliques) > 1
+        }
+
         # Skip if component isn't interesting
         if not is_interesting_component(component_raw_bicliques):
             # Process as simple connection
@@ -81,7 +95,8 @@ def process_components(
                                 "description": gene_metadata.get(
                                     reverse_gene_mapping.get(gene, f"Gene_{gene}"), 
                                     {}
-                                ).get("description", "N/A")
+                                ).get("description", "N/A"),
+                                "is_split": gene in split_genes
                             }
                             for gene in gene_nodes
                         ]
@@ -93,11 +108,25 @@ def process_components(
             dmr_count = len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 0])
             gene_count = len([n for n in subgraph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 1])
             
+            # Add split genes information
+            split_genes_info = [
+                {
+                    "gene_name": reverse_gene_mapping.get(gene, f"Gene_{gene}"),
+                    "description": gene_metadata.get(
+                        reverse_gene_mapping.get(gene, f"Gene_{gene}"), 
+                        {}
+                    ).get("description", "N/A"),
+                    "bicliques": bicliques
+                }
+                for gene, bicliques in split_genes.items()
+            ]
+            
             component_info = {
                 "id": idx + 1,
                 "size": len(component),
                 "dmrs": dmr_count,
                 "genes": gene_count,
+                "split_genes": split_genes_info,
                 "bicliques": component_bicliques,
                 "raw_bicliques": [(set(bic["dmrs"]), set(bic["genes"])) for bic in component_bicliques]
             }
