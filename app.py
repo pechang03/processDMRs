@@ -246,20 +246,6 @@ def process_data():
 
                     traceback.print_exc()
 
-        # Update the full visualization creation
-        full_viz = create_biclique_visualization(
-            bicliques_result["bicliques"],
-            node_labels,
-            node_positions,
-            node_biclique_map,
-            dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata,
-            bipartite_graph=bipartite_graph,  # Add this parameter
-        )
-
-        # Save full visualization
-        with open("biclique_visualization.json", "w") as f:
-            f.write(full_viz)
 
         # Create summary statistics
         stats = {
