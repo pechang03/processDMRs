@@ -16,7 +16,7 @@ from biclique_analysis import (
     process_bicliques,
     process_components,
     calculate_biclique_statistics,
-    classifier
+    classifier,
 )
 from visualization import (
     create_node_biclique_map,
@@ -391,8 +391,13 @@ def index():
 
         # Print results for debugging
         print("Results structure:", results.keys())
-        print("Number of interesting components:", len(results.get("interesting_components", [])))
-        print("Number of simple connections:", len(results.get("simple_connections", [])))
+        print(
+            "Number of interesting components:",
+            len(results.get("interesting_components", [])),
+        )
+        print(
+            "Number of simple connections:", len(results.get("simple_connections", []))
+        )
 
         # Ensure we have all required data
         for component in results.get("interesting_components", []):
@@ -406,10 +411,13 @@ def index():
             gene_metadata=results.get("gene_metadata", {}),
             statistics=results.get("stats", {}),
             coverage=results.get("coverage", {}),
-            node_labels=results.get("node_labels", {}),  # Pass node_labels to the template
+            node_labels=results.get(
+                "node_labels", {}
+            ),  # Pass node_labels to the template
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
@@ -448,8 +456,10 @@ def component_detail(component_id):
             return render_template("error.html", message=results["error"])
 
         component = next(
-            (c for c in results["interesting_components"] if c["id"] == component_id),  # Changed from components
-            None
+            (
+                c for c in results["interesting_components"] if c["id"] == component_id
+            ),  # Changed from components
+            None,
         )
 
         if not component:
