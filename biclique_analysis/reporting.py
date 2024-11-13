@@ -184,10 +184,19 @@ def create_node_labels_and_metadata(df: pd.DataFrame,
     dmr_metadata = {}
     gene_metadata = {}
     
+    print("\nDebugging node label creation:")
+    
     # Process DMR metadata and labels
+    print("\nProcessing DMR labels:")
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
         dmr_label = f"DMR_{row['DMR_No.']}"
+        
+        # Debug output for first few DMRs
+        if dmr_id < 5:
+            print(f"Creating label for DMR {dmr_id}: {dmr_label}")
+            print(f"  Area: {row['Area_Stat'] if 'Area_Stat' in df.columns else 'N/A'}")
+            print(f"  Description: {row['Gene_Description'] if 'Gene_Description' in df.columns else 'N/A'}")
         
         dmr_metadata[dmr_label] = {
             "area": row["Area_Stat"] if "Area_Stat" in df.columns else "N/A",
@@ -197,20 +206,57 @@ def create_node_labels_and_metadata(df: pd.DataFrame,
         node_labels[dmr_id] = dmr_label
 
     # Process gene metadata and labels
+    print("\nProcessing gene labels:")
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
-    for gene_id in set().union(*[genes for _, genes in bicliques_result["bicliques"]]):
-        if gene_id >= len(df):  # This is a gene node
-            gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+    
+    # Debug gene mapping
+    print(f"\nGene mapping sample (first 5):")
+    sample_genes = list(gene_id_mapping.items())[:5]
+    for gene_name, gene_id in sample_genes:
+        print(f"Gene '{gene_name}' mapped to ID {gene_id}")
+    
+    # Get all genes from bicliques
+    all_biclique_genes = set()
+    for _, genes in bicliques_result["bicliques"]:
+        all_biclique_genes.update(genes)
+    
+    print(f"\nTotal genes in bicliques: {len(all_biclique_genes)}")
+    print(f"Sample biclique genes (first 5): {sorted(list(all_biclique_genes))[:5]}")
+    
+    for gene_id in all_biclique_genes:
+        gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+        
+        # Debug output for first few genes
+        if len(gene_metadata) < 5:
+            print(f"\nProcessing gene {gene_id}:")
+            print(f"  Mapped name: {gene_name}")
             
-            gene_desc = "N/A"
-            gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
-            if len(gene_matches) > 0 and "Gene_Description" in gene_matches.columns:
-                gene_desc = gene_matches.iloc[0]["Gene_Description"]
-            
-            gene_metadata[gene_name] = {
-                "description": gene_desc,
-                "bicliques": node_biclique_map.get(gene_id, [])
-            }
-            node_labels[gene_id] = gene_name
-            
+        gene_desc = "N/A"
+        gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+        if len(gene_matches) > 0 and "Gene_Description" in gene_matches.columns:
+            gene_desc = gene_matches.iloc[0]["Gene_Description"]
+        
+        gene_metadata[gene_name] = {
+            "description": gene_desc,
+            "bicliques": node_biclique_map.get(gene_id, [])
+        }
+        node_labels[gene_id] = gene_name
+        
+        # Debug output for first few genes
+        if len(gene_metadata) < 5:
+            print(f"  Description: {gene_desc}")
+            print(f"  Bicliques: {node_biclique_map.get(gene_id, [])}")
+    
+    # Validation summary
+    print("\nLabel creation summary:")
+    print(f"Total node labels created: {len(node_labels)}")
+    print(f"Total DMR metadata entries: {len(dmr_metadata)}")
+    print(f"Total gene metadata entries: {len(gene_metadata)}")
+    
+    # Sample of created labels
+    print("\nSample of created labels (first 5):")
+    sample_labels = list(node_labels.items())[:5]
+    for node_id, label in sample_labels:
+        print(f"Node {node_id}: '{label}'")
+        
     return node_labels, dmr_metadata, gene_metadata
