@@ -14,8 +14,8 @@ def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], gr
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
     # Get all DMRs and genes from the graph
-    dmrs = {n for n, d in graph.nodes(data=True) if not d.get('bipartite', 1)}
-    genes = {n for n, d in graph.nodes(data=True) if d.get('bipartite', 1)}
+    dmrs = {n for n in graph.nodes() if not graph.nodes[n].get('bipartite', 1)}
+    genes = {n for n in graph.nodes() if graph.nodes[n].get('bipartite', 1)}
     
     return {
         "dmrs": {
@@ -65,9 +65,9 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     # Convert to count distribution
     dmr_dist = {}
     gene_dist = {}
-    for count in dmr_participation.values():
+    for node, count in dmr_participation.items():
         dmr_dist[count] = dmr_dist.get(count, 0) + 1
-    for count in gene_participation.values():
+    for node, count in gene_participation.items():
         gene_dist[count] = gene_dist.get(count, 0) + 1
 
     return {"dmrs": dmr_dist, "genes": gene_dist}
