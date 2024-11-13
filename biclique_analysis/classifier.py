@@ -40,12 +40,3 @@ def get_biclique_type_counts(
         classification = classify_biclique(dmr_nodes, gene_nodes)
         counts[classification] += 1
     return counts
-def is_interesting_component(bicliques: List[Tuple[Set[int], Set[int]]]) -> bool:
-    """
-    Determine if a component contains any interesting bicliques.
-    A component is interesting if it has at least one biclique with ≥3 DMRs and ≥3 genes.
-    """
-    for dmr_nodes, gene_nodes in bicliques:
-        if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3:
-            return True
-    return False

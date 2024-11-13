@@ -2,7 +2,6 @@ from typing import Dict, List, Tuple
 import pandas as pd
 import networkx as nx
 
-from biclique_analysis.classifier import classify_biclique
 
 
 def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) -> None:

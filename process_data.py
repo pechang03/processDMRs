@@ -23,7 +23,7 @@ from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis import (
-    process_bicliques,
+    processor.process_bicliques,
     process_enhancer_info,
     create_node_metadata,
     process_components,

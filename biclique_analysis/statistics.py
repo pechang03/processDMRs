@@ -165,12 +165,3 @@ def calculate_edge_coverage(
         "uncovered_percentage": uncovered / total_edges if total_edges > 0 else 0,
     }
 
-    return {
-        "single": single,
-        "multiple": multiple,
-        "uncovered": uncovered,
-        "total": len(graph.edges()),
-        "single_percentage": single / len(graph.edges()),
-        "multiple_percentage": multiple / len(graph.edges()),
-        "uncovered_percentage": uncovered / len(graph.edges()),
-    }

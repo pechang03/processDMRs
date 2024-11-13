@@ -1,7 +1,6 @@
 # File: graph_utils.py
 # Auther : Peter Shaw
 
-import pandas as pd
 import networkx as nx
 
 
