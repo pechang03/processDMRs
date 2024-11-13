@@ -101,10 +101,19 @@ def create_node_traces(
 
 def create_edge_traces(
     bicliques: List[Tuple[Set[int], Set[int]]],
-    node_positions: Dict[Tuple[int, int], Tuple[float, float]],
+    node_positions: Dict[int, Tuple[float, float]],
+    edge_type: str = "biclique",  # Add this parameter
+    edge_style: Dict = None  # Add this parameter
 ) -> List[go.Scatter]:
-    """Create edge traces for all bicliques."""
+    """Create edge traces with configurable style."""
     traces = []
+    default_style = {
+        "width": 1,
+        "color": "gray",
+        "dash": "solid"
+    }
+    style = {**default_style, **(edge_style or {})}
+    
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         for dmr in dmr_nodes:
             for gene in gene_nodes:
@@ -114,13 +123,11 @@ def create_edge_traces(
                             x=[node_positions[dmr][0], node_positions[gene][0]],
                             y=[node_positions[dmr][1], node_positions[gene][1]],
                             mode="lines",
-                            line=dict(width=1, color="gray"),
+                            line=dict(**style),
                             hoverinfo="none",
                             showlegend=False,
                         )
                     )
-                else:
-                    print(f"Positions not found for nodes {dmr} or {gene}")
     return traces
 
 
