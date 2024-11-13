@@ -10,7 +10,7 @@ def calculate_node_positions(
     """Calculate base positions for nodes in the graph."""
     node_info = collect_node_information(bicliques, node_biclique_map)
     positions = {}
-    spacing = calculate_vertical_spacing()
+    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, node_info.split_genes)
     current_y = 0
     
     # Position nodes biclique by biclique
@@ -31,7 +31,8 @@ def calculate_node_positions(
         current_y += biclique_height + spacing
 
     # Handle any remaining unpositioned nodes
-    position_remaining_nodes(positions, node_info, current_y, spacing)
+    default_spacing = 0.2
+    position_remaining_nodes(positions, node_info, current_y, default_spacing)
     
     validate_positions(positions, node_info.all_nodes)
     return positions
