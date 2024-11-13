@@ -1,3 +1,5 @@
+print("Server starting with updated templates...")
+
 # file App.py
 # Author: Peter Shaw
 
