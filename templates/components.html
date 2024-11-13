@@ -11,6 +11,19 @@
         <h1>Component Details</h1>
         
         {% if component %}
+            <!-- Debug info -->
+            <div class="debug-info" style="display: none;">
+                <p>Component ID: {{ component.id }}</p>
+                <p>Size: {{ component.size }}</p>
+                <p>DMRs: {{ component.dmrs }}</p>
+                <p>Genes: {{ component.genes }}</p>
+                <p>Bicliques: {{ component.bicliques|length }}</p>
+                <p>Split genes: {{ component.split_genes|length }}</p>
+                <p>Total edges: {{ component.total_edges }}</p>
+            </div>
+        {% endif %}
+        
+        {% if component %}
         <div class="card mb-4">
             <div class="card-header">
                 <h2>Component {{ component.id }}</h2>
