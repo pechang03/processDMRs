@@ -245,9 +245,11 @@ def calculate_biclique_height(
     split_genes: Set[int]
 ) -> float:
     """Calculate the height needed for a single biclique."""
-    spacing = calculate_vertical_spacing(dmr_nodes, gene_nodes, split_genes)
+    # Get counts instead of passing sets
     num_dmrs = len(dmr_nodes)
     num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
+    
+    spacing = calculate_vertical_spacing(num_dmrs, num_genes, split_genes)
     return max(num_dmrs, num_genes) * spacing
 
 def position_biclique_nodes(
