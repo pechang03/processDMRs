@@ -8,12 +8,15 @@ from flask import Flask, render_template
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis import reporting
 from biclique_analysis.processor import process_enhancer_info
-from biclique_analysis.processor import process_enhancer_info
-from biclique_analysis import process_bicliques, process_components, calculate_biclique_statistics
+from biclique_analysis import (
+    process_bicliques,
+    process_components,
+    calculate_biclique_statistics,
+)
 from visualization import (
-    create_node_biclique_map, 
-    create_biclique_visualization, 
-    calculate_node_positions
+    create_node_biclique_map,
+    create_biclique_visualization,
+    calculate_node_positions,
 )
 from visualization.node_info import NodeInfo
 
@@ -35,29 +38,30 @@ def process_data():
 
         # Process DSS1 dataset using the new function
         df = read_excel_file(DSS1_FILE)
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
         # Create gene ID mapping
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].dropna())
         all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-        gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
+        gene_id_mapping = {
+            gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
+        }
 
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
-        
+
         # Process bicliques
         print("Processing bicliques...")
         bicliques_result = process_bicliques(
-            bipartite_graph, 
-            BICLIQUES_FILE, 
-            max(df["DMR_No."]), 
-            "DSS1"
+            bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
         )
-        
+
         # Process components
         print("Processing components...")
         component_data = process_components(bipartite_graph, bicliques_result)
-        
+
         # Create metadata
         print("Creating metadata...")
         dmr_metadata, gene_metadata = create_metadata(df, gene_id_mapping)
@@ -79,7 +83,9 @@ def process_data():
         print(f"Total unique nodes: {len(all_nodes)}")
 
         # Calculate positions
-        node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
+        node_positions = calculate_node_positions(
+            bicliques_result["bicliques"], node_biclique_map
+        )
         print(f"Number of calculated positions: {len(node_positions)}")
 
         # Verify position coverage
@@ -89,11 +95,10 @@ def process_data():
             print(f"Sample missing nodes: {list(missing_nodes)[:5]}")
 
         # Create node labels and metadata
-        node_labels, dmr_metadata, gene_metadata = reporting.create_node_labels_and_metadata(
-            df,
-            bicliques_result,
-            gene_id_mapping,
-            node_biclique_map
+        node_labels, dmr_metadata, gene_metadata = (
+            reporting.create_node_labels_and_metadata(
+                df, bicliques_result, gene_id_mapping, node_biclique_map
+            )
         )
 
         # Create visualization with the labels and metadata
@@ -104,7 +109,7 @@ def process_data():
             node_biclique_map,
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
-            gene_id_mapping=gene_id_mapping
+            gene_id_mapping=gene_id_mapping,
         )
 
         # Add visualization to each component
@@ -117,19 +122,20 @@ def process_data():
                 # Add DMR labels
                 for dmr_id in range(len(df)):
                     node_labels[dmr_id] = f"DMR_{dmr_id+1}"
-            
+
                 # Add gene labels using actual gene names
                 for gene_name, gene_id in gene_id_mapping.items():
                     node_labels[gene_id] = gene_name  # Use gene name as label
-            
+
                 for biclique in component["bicliques"]:
                     if isinstance(biclique, dict):
                         # Extract DMR IDs
                         dmr_nodes = set(
-                            dmr["id"] for dmr in biclique.get("details", {}).get("dmrs", [])
+                            dmr["id"]
+                            for dmr in biclique.get("details", {}).get("dmrs", [])
                             if isinstance(dmr, dict) and "id" in dmr
                         )
-                
+
                         # Extract gene IDs while maintaining name mapping
                         gene_nodes = set()
                         for gene in biclique.get("details", {}).get("genes", []):
@@ -140,7 +146,7 @@ def process_data():
                                     gene_nodes.add(gene_id)
                                     # Ensure the label is set
                                     node_labels[gene_id] = gene_name
-                
+
                         # Only add if we have valid nodes
                         if dmr_nodes and gene_nodes:
                             formatted_bicliques.append((dmr_nodes, gene_nodes))
@@ -152,7 +158,9 @@ def process_data():
 
                 # Recalculate node_biclique_map and node_positions for each component
                 node_biclique_map = create_node_biclique_map(formatted_bicliques)
-                node_positions = calculate_node_positions(formatted_bicliques, node_biclique_map)
+                node_positions = calculate_node_positions(
+                    formatted_bicliques, node_biclique_map
+                )
 
                 # Now create the visualization using the component-specific data
                 try:
@@ -166,8 +174,11 @@ def process_data():
                     )
                     component["plotly_graph"] = json.loads(component_viz)
                 except Exception as e:
-                    print(f"Error creating visualization for component {component['id']}: {e}")
+                    print(
+                        f"Error creating visualization for component {component['id']}: {e}"
+                    )
                     import traceback
+
                     traceback.print_exc()
 
         # Create full visualization
@@ -192,8 +203,9 @@ def process_data():
             ),
             "total_bicliques": len(bicliques_result["bicliques"]),
             "non_trivial_bicliques": sum(
-                1 for comp in component_data 
-                if comp.get("bicliques") 
+                1
+                for comp in component_data
+                if comp.get("bicliques")
                 for bic in comp["bicliques"]
             ),
         }
@@ -210,6 +222,7 @@ def process_data():
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
@@ -241,6 +254,7 @@ def read_and_prepare_data(dss1_path=None):
     except Exception as e:
         print(f"Error in read_and_prepare_data: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -310,7 +324,7 @@ def index():
         # Print results for debugging
         print("Results structure:", results.keys())
         print("Number of components:", len(results.get("components", [])))
-        
+
         # Ensure we have all required data
         for component in results.get("components", []):
             if "plotly_graph" not in component:
@@ -322,10 +336,11 @@ def index():
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             statistics=results.get("stats", {}),
-            coverage=results.get("coverage", {})
+            coverage=results.get("coverage", {}),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
@@ -342,13 +357,11 @@ def statistics():
             "size_distribution": results.get("size_distribution", {}),
             "coverage": results.get("coverage", {}),
             "node_participation": results.get("node_participation", {}),
-            "edge_coverage": results.get("edge_coverage", {})
+            "edge_coverage": results.get("edge_coverage", {}),
         }
 
         return render_template(
-            "statistics.html", 
-            statistics=detailed_stats,
-            bicliques_result=results
+            "statistics.html", statistics=detailed_stats, bicliques_result=results
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
@@ -356,27 +369,32 @@ def statistics():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 @app.route("/component/<int:component_id>")
 def component_detail(component_id):
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
-            
+
         component = next(
-            (c for c in results["components"] if c["id"] == component_id), 
-            None
+            (c for c in results["components"] if c["id"] == component_id), None
         )
-        
+
         if not component:
-            return render_template("error.html", message=f"Component {component_id} not found")
-            
+            return render_template(
+                "error.html", message=f"Component {component_id} not found"
+            )
+
         return render_template(
             "components.html",
             component=component,
             dmr_metadata=results["dmr_metadata"],
-            gene_metadata=results["gene_metadata"]
+            gene_metadata=results["gene_metadata"],
         )
     except Exception as e:
         return render_template("error.html", message=str(e))
+
+
 from processDMR import read_excel_file
