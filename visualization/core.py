@@ -14,11 +14,6 @@ from .traces import (
 )
 
 from .layout import create_visual_layout
-from .traces import (
-    create_node_traces,
-    create_edge_traces,
-    create_biclique_boxes,
-)
 from .node_info import NodeInfo
 
 
