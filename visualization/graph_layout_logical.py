@@ -183,24 +183,20 @@ def position_nodes_evenly(
 
 
 def calculate_vertical_spacing(bicliques: List[Tuple[Set[int], Set[int]]]) -> float:
-    """Calculate vertical spacing between nodes."""
-    # For a single biclique with one node on each side, use 0.5
-    if len(bicliques) == 1:
-        if len(bicliques[0][0]) == 1 and len(bicliques[0][1]) == 1:
-            return 0.5
-        # For single biclique with multiple nodes, use smaller spacing
-        return 0.2
+    """Calculate base vertical spacing between nodes within a biclique."""
+    return 0.2  # Fixed spacing constant between nodes
 
-    # For overlapping bicliques, use 0.0 spacing to stack nodes
-    overlapping = any(len(set.intersection(b1[0], b2[0]) | set.intersection(b1[1], b2[1])) > 0 
-                     for i, b1 in enumerate(bicliques) 
-                     for b2 in bicliques[i+1:])
-    if overlapping:
-        return 0.0
 
-    # Default spacing for multiple non-overlapping bicliques
-    return 0.2
-
+def calculate_biclique_height(
+    dmr_nodes: Set[int],
+    gene_nodes: Set[int],
+    split_genes: Set[int]
+) -> float:
+    """Calculate the height needed for a single biclique."""
+    spacing = calculate_vertical_spacing(bicliques)
+    num_dmrs = len(dmr_nodes)
+    num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
+    return max(num_dmrs, num_genes) * spacing
 
 def position_biclique_nodes(
     dmr_nodes: Set[int],
@@ -212,25 +208,29 @@ def position_biclique_nodes(
     biclique_idx: int,
 ) -> Dict[int, Tuple[float, float]]:
     """Position nodes for a single biclique and update positions dictionary."""
-    sorted_dmrs = sorted(dmr_nodes)
-    sorted_genes = sorted(gene_nodes)
-
-    # For overlapping nodes or split genes, use the same y-coordinate
-    if split_genes & gene_nodes or any(dmr in positions for dmr in dmr_nodes):
-        y_coord = current_y
-    else:
-        y_coord = current_y + (spacing * biclique_idx)
-
+    # Calculate the height needed for this biclique
+    biclique_height = calculate_biclique_height(dmr_nodes, gene_nodes, split_genes)
+    
+    # Calculate number of positions needed for each side
+    num_dmrs = len(dmr_nodes)
+    num_genes = len(gene_nodes)
+    
+    # Calculate spacing within this biclique
+    dmr_spacing = biclique_height / (num_dmrs + 1) if num_dmrs > 0 else biclique_height
+    gene_spacing = biclique_height / (num_genes + 1) if num_genes > 0 else biclique_height
+    
     # Position DMRs
-    for dmr in sorted_dmrs:
+    for i, dmr in enumerate(sorted(dmr_nodes)):
         if dmr not in positions:  # Only set position if not already set
-            positions[dmr] = (0, y_coord)
+            y_pos = current_y + (i + 1) * dmr_spacing
+            positions[dmr] = (0, y_pos)
 
     # Position genes
-    for gene in sorted_genes:
+    for i, gene in enumerate(sorted(gene_nodes)):
         if gene not in positions:  # Only set position if not already set
+            y_pos = current_y + (i + 1) * gene_spacing
             x_pos = 1.1 if gene in split_genes else 1
-            positions[gene] = (x_pos, y_coord)
+            positions[gene] = (x_pos, y_pos)
 
     return positions
 
