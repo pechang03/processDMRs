@@ -110,11 +110,13 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     dmr_dist = {}
     gene_dist = {}
     
-    # Count how many nodes appear exactly k times
-    for k in set(dmr_participation.values()):
-        dmr_dist[k] = sum(1 for count in dmr_participation.values() if count == k)
-    for k in set(gene_participation.values()):
-        gene_dist[k] = sum(1 for count in gene_participation.values() if count == k)
+    # Initialize with 0 for all possible counts
+    max_dmr_count = max(dmr_participation.values()) if dmr_participation else 0
+    max_gene_count = max(gene_participation.values()) if gene_participation else 0
+    
+    for i in range(1, max(max_dmr_count, max_gene_count) + 1):
+        dmr_dist[i] = sum(1 for count in dmr_participation.values() if count == i)
+        gene_dist[i] = sum(1 for count in gene_participation.values() if count == i)
 
     return {"dmrs": dmr_dist, "genes": gene_dist}
 
