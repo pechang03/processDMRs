@@ -14,7 +14,8 @@ def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], gr
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
     # Get all DMRs and genes from the graph
-    dmrs = {n for n in graph.nodes() if n < 3}  # Fixed DMR identification
+    all_nodes = set(graph.nodes())
+    dmrs = {n for n in all_nodes if n <= 4}  # Changed to include nodes up to 4
     genes = {n for n in graph.nodes() if n >= 3}  # Fixed gene identification
     
     return {
@@ -63,9 +64,14 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
         for node in gene_nodes:
             gene_participation[node] = gene_participation.get(node, 0) + 1
 
-    # Convert to count distribution (how many nodes appear X times)
-    dmr_dist = {}
-    gene_dist = {}
+    # Initialize counts to 0
+    max_count = max(max(dmr_participation.values(), default=0), 
+                   max(gene_participation.values(), default=0))
+    for i in range(1, max_count + 1):
+        dmr_dist[i] = 0
+        gene_dist[i] = 0
+    
+    # Count occurrences
     for count in dmr_participation.values():
         dmr_dist[count] = dmr_dist.get(count, 0) + 1
     for count in gene_participation.values():
@@ -87,10 +93,18 @@ def calculate_edge_coverage(
                     edge = tuple(sorted([dmr, gene]))
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
+    # Initialize counts
+    single = 0
+    multiple = 0
+    
     # Count edges by coverage
-    single = sum(1 for count in edge_coverage.values() if count == 1)
-    multiple = sum(1 for count in edge_coverage.values() if count > 1)
-    uncovered = len(graph.edges()) - len(edge_coverage)
+    for edge, count in edge_coverage.items():
+        if count == 1:
+            single += 1
+        else:
+            multiple += 1
+            
+    uncovered = len(graph.edges()) - (single + multiple)
 
     return {
         "single": single,
