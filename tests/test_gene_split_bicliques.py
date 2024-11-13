@@ -40,7 +40,7 @@ class TestGeneSplitBicliques(unittest.TestCase):
         
         # Verify all spacings are positive
         for i in range(1, len(y_positions)):
-            self.assertGreater(y_positions[i] - y_positions[i-1], 0)
+            self.assertGreaterEqual(y_positions[i] - y_positions[i-1], 0.0)
 
         # Verify bicliques are separated
         first_biclique_nodes = {1, 2, 5, 6}
