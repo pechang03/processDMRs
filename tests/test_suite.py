@@ -17,10 +17,12 @@ if __name__ == '__main__':
     runner.run(suite)
 import unittest
 from test_gene_processing import TestGeneProcessing
+from test_classifier import TestClassifier
 
 def create_test_suite():
     suite = unittest.TestSuite()
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestGeneProcessing))
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestClassifier))
     return suite
 
 if __name__ == '__main__':
