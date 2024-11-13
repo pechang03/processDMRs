@@ -1,7 +1,6 @@
 import unittest
 from visualization.traces import create_node_traces
 from visualization.core import create_biclique_visualization
-from visualization.component import create_component_visualization
 from visualization.node_info import NodeInfo
 
 class TestVisualization(unittest.TestCase):
