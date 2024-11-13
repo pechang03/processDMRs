@@ -74,7 +74,7 @@
 
       <!-- Components with Bicliques -->
       <h2 class="mb-3">Components with Non-trivial Bicliques</h2>
-      {% for component in results.components %}
+      {% for component in results.interesting_components %}
       <div class="component-section">
         <div class="card">
           <div class="card-header">
@@ -159,3 +159,34 @@
         margin-bottom: 0.5em;
     }
 </style>
+{% if results.simple_connections %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>Simple DMR-Gene Connections</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Gene</th>
+                        <th>Gene Description</th>
+                        <th>DMR</th>
+                        <th>DMR Area</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conn in results.simple_connections %}
+                    <tr>
+                        <td>{{ conn.gene_name }}</td>
+                        <td>{{ conn.gene_description }}</td>
+                        <td>{{ conn.dmr_name }}</td>
+                        <td>{{ conn.dmr_area }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
