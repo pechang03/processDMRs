@@ -28,11 +28,13 @@ def calculate_coverage_statistics(bicliques: List[Tuple[Set[int], Set[int]]], gr
 
 def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate comprehensive biclique statistics."""
+    node_participation = calculate_node_participation(bicliques)
+    edge_coverage = calculate_edge_coverage(bicliques, graph)
     return {
         "size_distribution": calculate_size_distribution(bicliques),
         "coverage": calculate_coverage_statistics(bicliques, graph),
-        "node_participation": calculate_node_participation(bicliques),
-        "edge_coverage": calculate_edge_coverage(bicliques, graph),
+        "node_participation": node_participation,
+        "edge_coverage": edge_coverage,
     }
 
 
@@ -64,6 +66,14 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
     for count in gene_participation.values():
         gene_dist[count] = gene_dist.get(count, 0) + 1
 
+    # Convert to count distribution
+    dmr_dist = {}
+    gene_dist = {}
+    for count in dmr_participation.values():
+        dmr_dist[count] = dmr_dist.get(count, 0) + 1
+    for count in gene_participation.values():
+        gene_dist[count] = gene_dist.get(count, 0) + 1
+
     return {"dmrs": dmr_dist, "genes": gene_dist}
 
 
@@ -81,6 +91,10 @@ def calculate_edge_coverage(
                 if graph.has_edge(dmr, gene):
                     edge = tuple(sorted([dmr, gene]))
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+
+    single = sum(1 for count in edge_coverage.values() if count == 1)
+    multiple = sum(1 for count in edge_coverage.values() if count > 1)
+    uncovered = total_edges - len(edge_coverage)
 
     single = sum(1 for count in edge_coverage.values() if count == 1)
     multiple = sum(1 for count in edge_coverage.values() if count > 1)
