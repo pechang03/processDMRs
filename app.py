@@ -102,16 +102,15 @@ def process_data():
         print(f"Total unique nodes: {len(all_nodes)}")
 
         # Calculate positions
-        node_positions = calculate_node_positions(
-            bicliques_result["bicliques"], node_biclique_map
-        )
-        print(f"Number of calculated positions: {len(node_positions)}")
-
-        # Verify position coverage
-        missing_nodes = all_nodes - set(node_positions.keys())
-        if missing_nodes:
-            print(f"Missing positions for {len(missing_nodes)} nodes")
-            print(f"Sample missing nodes: {list(missing_nodes)[:5]}")
+        node_positions = calculate_node_positions(bicliques_result["bicliques"], node_biclique_map)
+        
+        # Debug output
+        print("\nVisualization preparation:")
+        print(f"Number of node labels: {len(node_labels)}")
+        print(f"Number of node positions: {len(node_positions)}")
+        print(f"Sample node labels: {list(node_labels.items())[:5]}")
+        print(f"Sample DMR metadata: {list(dmr_metadata.items())[:2]}")
+        print(f"Sample gene metadata: {list(gene_metadata.items())[:2]}")
 
         # Create node labels and metadata
         node_labels, dmr_metadata, gene_metadata = (
