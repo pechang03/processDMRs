@@ -23,7 +23,8 @@ from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis import (
-    processor.process_bicliques,
+    processor,
+    process_bicliques,
     process_enhancer_info,
     create_node_metadata,
     process_components,
@@ -122,13 +123,18 @@ def process_data():
                         dmr_metadata=dmr_metadata,
                         gene_metadata=gene_metadata,
                         gene_id_mapping=gene_id_mapping,
-                        bipartite_graph=bipartite_graph
+                        bipartite_graph=bipartite_graph,
                     )
                     component["plotly_graph"] = json.loads(component_viz)
-                    print(f"Successfully created visualization for component {component['id']}")
+                    print(
+                        f"Successfully created visualization for component {component['id']}"
+                    )
                 except Exception as e:
-                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
+                    print(
+                        f"Error creating visualization for component {component['id']}: {str(e)}"
+                    )
                     import traceback
+
                     traceback.print_exc()
 
         # Create summary statistics
