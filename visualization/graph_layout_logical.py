@@ -259,7 +259,7 @@ def calculate_vertical_spacing(
     """
     Calculate vertical spacing based on node counts.
     Returns a spacing value that is proportional to the maximum number of nodes
-    on either side, with a minimum spacing of 0.2.
+    on either side, with a smaller minimum spacing.
     """
     if split_genes is None:
         split_genes = set()
@@ -267,8 +267,8 @@ def calculate_vertical_spacing(
     # Use the counts directly
     max_nodes = max(max_dmr_count, max_gene_count)
 
-    # Base spacing of 0.2, increased proportionally with node count
-    spacing = max(0.2, 0.2 * (1 + max_nodes / 10))
+    # Further reduce base spacing and scaling factor
+    spacing = max(0.05, 0.05 * (1 + max_nodes / 30))
 
     return spacing
 
@@ -277,12 +277,13 @@ def calculate_biclique_height(
     dmr_nodes: Set[int], gene_nodes: Set[int], split_genes: Set[int]
 ) -> float:
     """Calculate the height needed for a single biclique."""
-    # Get counts instead of passing sets
+    # Get counts
     num_dmrs = len(dmr_nodes)
-    num_genes = len(gene_nodes) + len(gene_nodes & split_genes)  # Count split genes
+    num_genes = len(gene_nodes)
 
     spacing = calculate_vertical_spacing(num_dmrs, num_genes, split_genes)
-    return max(num_dmrs, num_genes) * spacing
+    # Reduce the multiplier to bring bicliques closer together
+    return max(num_dmrs, num_genes) * spacing * 0.8  # Added 0.8 multiplier
 
 
 def position_biclique_nodes(
