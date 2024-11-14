@@ -90,13 +90,13 @@
               <div class="col-md-12">
                 <div class="card biclique-card">
                   <div class="card-header">
-                    <h5 class="mb-0">Biclique {{ loop.index }} ({{ biclique.size }})</h5>
+                    <h5 class="mb-0">Biclique {{ biclique.id }} (DMRs: {{ biclique.size.dmrs }}, Genes: {{ biclique.size.genes }}, Split Genes: {{ biclique.size.split_genes }})</h5>
                   </div>
                   <div class="card-body">
                     <div class="dmr-section">
                       <h6>DMRs:</h6>
                       <ul class="list-unstyled">
-                        {% for dmr in biclique.details.dmrs %}
+                        {% for dmr in biclique.dmrs %}
                         <li>
                           {{ dmr.id }} - Area: {{ dmr.area }} - {{ dmr.description }}
                         </li>
@@ -104,14 +104,24 @@
                       </ul>
                     </div>
                     <div class="gene-section">
-                      <h6>Genes:</h6>
+                      <h6>Regular Genes:</h6>
                       <ul class="list-unstyled">
-                        {% for gene in biclique.details.genes %}
+                        {% for gene in biclique.genes %}
                         <li>
                           {{ gene.name }} - {{ gene.description }}
                         </li>
                         {% endfor %}
                       </ul>
+                      {% if biclique.split_genes %}
+                      <h6>Split Genes:</h6>
+                      <ul class="list-unstyled">
+                        {% for gene in biclique.split_genes %}
+                        <li>
+                          {{ gene.name }} - {{ gene.description }}
+                        </li>
+                        {% endfor %}
+                      </ul>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -122,7 +132,7 @@
               <h6>Biclique Visualization:</h6>
               <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
               <script>
-                var graph = {{ component.plotly_graph | safe }};
+                var graph = {{ component.visualization | safe }};
                 Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
               </script>
             </div>
