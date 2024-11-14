@@ -145,12 +145,16 @@ def calculate_node_degrees(
 
 
 def find_min_gene_id(bicliques: List[Tuple[Set[int], Set[int]]]) -> int:
-    """Find the minimum gene ID to separate DMRs from genes."""
-    min_gene_id = -1  # float("inf")
+    """Find the minimum gene ID to separate DMRs from genes.
+    
+    Note: For DSS1 dataset, this should return 2108 since all nodes
+    with ID >= 2108 are genes, regardless of gaps in the ID sequence.
+    """
+    min_gene_id = float("inf")
     for _, gene_nodes in bicliques:
         if gene_nodes:
             min_gene_id = min(min_gene_id, min(gene_nodes))
-    return min_gene_id
+    return min_gene_id if min_gene_id != float("inf") else 2108  # Default for DSS1
 
 
 def categorize_nodes(

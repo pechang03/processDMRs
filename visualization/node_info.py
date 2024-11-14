@@ -14,8 +14,14 @@ class NodeInfo:
         regular_genes: Set[int],
         split_genes: Set[int],
         node_degrees: Dict[int, int],
-        min_gene_id: int,
+        min_gene_id: int,  # This is 2108 for DSS1 dataset
     ):
+        """Initialize node categorization.
+        
+        Note: min_gene_id is used as threshold between DMR and gene nodes.
+        Any node ID >= min_gene_id is considered a gene, regardless of
+        how high the actual ID value is. This handles non-sequential gene IDs.
+        """
         self.all_nodes = all_nodes
         self.dmr_nodes = dmr_nodes
         self.regular_genes = regular_genes
@@ -24,8 +30,8 @@ class NodeInfo:
         self.min_gene_id = min_gene_id
 
     def is_dmr(self, node: int) -> bool:
-        """Check if a node is a DMR."""
-        return node in self.dmr_nodes
+        """Check if a node is a DMR based on ID threshold."""
+        return node < self.min_gene_id
 
     def is_split_gene(self, node: int) -> bool:
         """Check if a node is a split gene."""
