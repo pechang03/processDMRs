@@ -6,6 +6,7 @@ import time
 import psutil
 from typing import Dict, Tuple
 
+from biclique_analysis.processor import process_enhancer_info
 from visualization import calculate_node_positions  # Import from package root
 from graph_utils import validate_bipartite_graph
 from rb_domination import (
