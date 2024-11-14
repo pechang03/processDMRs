@@ -96,13 +96,28 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     # Add genes from enhancer info
     all_genes.update(g.lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g)
     
+    n_genes = len(all_genes)
+    max_valid_gene_id = n_dmrs + n_genes - 1
+    
     print(f"\nGene Analysis:")
-    print(f"Number of unique genes: {len(all_genes)}")
+    print(f"Number of unique genes: {n_genes}")
+    print(f"Valid gene ID range: {n_dmrs} to {max_valid_gene_id}")
+    
+    # Validation function
+    def validate_gene_id(gene_id: int, gene_name: str):
+        if gene_id > max_valid_gene_id:
+            print(f"\nERROR: Invalid gene ID detected!")
+            print(f"Gene: {gene_name}")
+            print(f"ID: {gene_id}")
+            print(f"Maximum valid ID: {max_valid_gene_id}")
+            print(f"Current gene mapping size: {len(gene_id_mapping)}")
+            raise ValueError(f"Invalid gene ID {gene_id} > {max_valid_gene_id}")
     
     # Clear and recreate gene mapping with sequential IDs after DMRs
     gene_id_mapping.clear()
     for idx, gene in enumerate(sorted(all_genes)):
         gene_id = n_dmrs + idx  # Start gene IDs after last DMR
+        validate_gene_id(gene_id, gene)
         gene_id_mapping[gene] = gene_id
         
     print(f"Gene ID range: {n_dmrs} to {n_dmrs + len(all_genes) - 1}")
@@ -130,10 +145,11 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
             enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
             associated_genes.update(enhancer_genes)
 
-        # Add edges
+        # Add edges with validation
         for gene in associated_genes:
             if gene in gene_id_mapping:  # Safety check
                 gene_id = gene_id_mapping[gene]
+                validate_gene_id(gene_id, gene)  # Validate before adding edge
                 edge = tuple(sorted([dmr_id, gene_id]))
                 if edge not in edges_seen:
                     B.add_node(gene_id, bipartite=1)
