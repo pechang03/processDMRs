@@ -99,6 +99,14 @@ def statistics():
         return render_template("error.html", message=str(e))
 
 
+from routes import index, statistics  # Add statistics to imports
+
+# ... other code ...
+
+@app.route("/statistics")
+def statistics_route():
+    return statistics()
+
 @app.route('/')
 def index_route():
     return index()
