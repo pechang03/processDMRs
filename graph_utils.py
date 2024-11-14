@@ -4,6 +4,7 @@
 import networkx as nx
 import pandas as pd
 from typing import Dict
+from biclique_analysis.processor import process_enhancer_info
 
 
 def validate_bipartite_graph(B):
