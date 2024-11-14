@@ -51,10 +51,18 @@ def statistics():
         # Create a properly structured statistics dictionary
         detailed_stats = {
             "size_distribution": {},  # Will be populated from bicliques if available
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0}
-            }),
+            "coverage": {
+                "dmrs": {
+                    "covered": results.get("coverage", {}).get("dmrs", {}).get("covered", 0),
+                    "total": results.get("coverage", {}).get("dmrs", {}).get("total", 0),
+                    "percentage": results.get("coverage", {}).get("dmrs", {}).get("percentage", 0)
+                },
+                "genes": {
+                    "covered": results.get("coverage", {}).get("genes", {}).get("covered", 0),
+                    "total": results.get("coverage", {}).get("genes", {}).get("total", 0),
+                    "percentage": results.get("coverage", {}).get("genes", {}).get("percentage", 0)
+                }
+            },
             "node_participation": {
                 "dmrs": {},
                 "genes": {}
@@ -70,15 +78,36 @@ def statistics():
             }
         }
 
-        # If we have bicliques data, calculate detailed statistics
+        # If we have interesting components, calculate size distribution
         if "interesting_components" in results:
-            # Calculate size distribution
             size_dist = {}
-            for comp in results["interesting_components"]:
-                for bic in comp.get("bicliques", []):
-                    size_key = (len(bic.get("dmrs", [])), len(bic.get("genes", [])))
+            for component in results["interesting_components"]:
+                for biclique in component.get("raw_bicliques", []):
+                    # biclique is a tuple of (dmr_nodes, gene_nodes)
+                    dmr_nodes, gene_nodes = biclique
+                    size_key = (len(dmr_nodes), len(gene_nodes))
                     size_dist[size_key] = size_dist.get(size_key, 0) + 1
             detailed_stats["size_distribution"] = size_dist
+
+            # Calculate node participation
+            dmr_participation = {}
+            gene_participation = {}
+            for component in results["interesting_components"]:
+                for dmr_nodes, gene_nodes in component.get("raw_bicliques", []):
+                    for dmr in dmr_nodes:
+                        dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
+                    for gene in gene_nodes:
+                        gene_participation[gene] = gene_participation.get(gene, 0) + 1
+
+            # Convert to count distribution
+            for count in set(dmr_participation.values()):
+                detailed_stats["node_participation"]["dmrs"][count] = len(
+                    [n for n, c in dmr_participation.items() if c == count]
+                )
+            for count in set(gene_participation.values()):
+                detailed_stats["node_participation"]["genes"][count] = len(
+                    [n for n, c in gene_participation.items() if c == count]
+                )
 
         return render_template(
             "statistics.html", 
