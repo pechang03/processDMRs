@@ -13,12 +13,34 @@ def index():
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
 
+        # Create properly structured statistics dictionary
+        detailed_stats = {
+            "size_distribution": {},  # Initialize empty if not available
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0}
+            }),
+            "node_participation": {
+                "dmrs": {},
+                "genes": {}
+            },
+            "edge_coverage": {
+                "single": 0,
+                "multiple": 0,
+                "uncovered": 0,
+                "total": 0,
+                "single_percentage": 0,
+                "multiple_percentage": 0,
+                "uncovered_percentage": 0
+            }
+        }
+
         return render_template(
             "index.html",
             results=results,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            statistics=results.get("stats", {}),
+            statistics=detailed_stats,  # Pass the properly structured statistics
             coverage=results.get("coverage", {}),
             node_labels=results.get("node_labels", {})
         )

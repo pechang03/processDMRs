@@ -42,24 +42,28 @@
                 <h3>Biclique Size Distribution</h3>
             </div>
             <div class="card-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>DMRs</th>
-                            <th>Genes</th>
-                            <th>Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for (dmrs, genes), count in statistics.size_distribution.items() %}
-                        <tr>
-                            <td>{{ dmrs }}</td>
-                            <td>{{ genes }}</td>
-                            <td>{{ count }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                {% if statistics and statistics.size_distribution %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>DMRs</th>
+                                <th>Genes</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for (dmrs, genes), count in statistics.size_distribution.items() %}
+                            <tr>
+                                <td>{{ dmrs }}</td>
+                                <td>{{ genes }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No size distribution data available.</p>
+                {% endif %}
             </div>
         </div>
         
@@ -69,26 +73,30 @@
                 <h3>Coverage Statistics</h3>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>DMR Coverage</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item">
-                                Covered: {{ statistics.coverage.dmrs.covered }}/{{ statistics.coverage.dmrs.total }}
-                                ({{ "%.1f"|format(statistics.coverage.dmrs.percentage * 100) }}%)
-                            </li>
-                        </ul>
+                {% if statistics and statistics.coverage %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>DMR Coverage</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Covered: {{ statistics.coverage.dmrs.covered }}/{{ statistics.coverage.dmrs.total }}
+                                    ({{ "%.1f"|format(statistics.coverage.dmrs.percentage * 100) }}%)
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Gene Coverage</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Covered: {{ statistics.coverage.genes.covered }}/{{ statistics.coverage.genes.total }}
+                                    ({{ "%.1f"|format(statistics.coverage.genes.percentage * 100) }}%)
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5>Gene Coverage</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item">
-                                Covered: {{ statistics.coverage.genes.covered }}/{{ statistics.coverage.genes.total }}
-                                ({{ "%.1f"|format(statistics.coverage.genes.percentage * 100) }}%)
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                {% else %}
+                    <p>No coverage data available.</p>
+                {% endif %}
             </div>
         </div>
         
@@ -98,46 +106,50 @@
                 <h3>Node Participation</h3>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>DMR Participation</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Bicliques</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for count, nodes in statistics.node_participation.dmrs.items() %}
-                                <tr>
-                                    <td>{{ count }}</td>
-                                    <td>{{ nodes }}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
+                {% if statistics and statistics.node_participation %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>DMR Participation</h5>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Bicliques</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for count, nodes in statistics.node_participation.dmrs.items() %}
+                                    <tr>
+                                        <td>{{ count }}</td>
+                                        <td>{{ nodes }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Gene Participation</h5>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Bicliques</th>
+                                        <th>Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for count, nodes in statistics.node_participation.genes.items() %}
+                                    <tr>
+                                        <td>{{ count }}</td>
+                                        <td>{{ nodes }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5>Gene Participation</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Bicliques</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for count, nodes in statistics.node_participation.genes.items() %}
-                                <tr>
-                                    <td>{{ count }}</td>
-                                    <td>{{ nodes }}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                {% else %}
+                    <p>No node participation data available.</p>
+                {% endif %}
             </div>
         </div>
         
@@ -147,32 +159,36 @@
                 <h3>Edge Coverage</h3>
             </div>
             <div class="card-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Coverage Type</th>
-                            <th>Count</th>
-                            <th>Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Single Coverage</td>
-                            <td>{{ statistics.edge_coverage.single }}</td>
-                            <td>{{ "%.1f"|format(statistics.edge_coverage.single_percentage * 100) }}%</td>
-                        </tr>
-                        <tr>
-                            <td>Multiple Coverage</td>
-                            <td>{{ statistics.edge_coverage.multiple }}</td>
-                            <td>{{ "%.1f"|format(statistics.edge_coverage.multiple_percentage * 100) }}%</td>
-                        </tr>
-                        <tr>
-                            <td>Uncovered</td>
-                            <td>{{ statistics.edge_coverage.uncovered }}</td>
-                            <td>{{ "%.1f"|format(statistics.edge_coverage.uncovered_percentage * 100) }}%</td>
-                        </tr>
-                    </tbody>
-                </table>
+                {% if statistics and statistics.edge_coverage %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Coverage Type</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Single Coverage</td>
+                                <td>{{ statistics.edge_coverage.single }}</td>
+                                <td>{{ "%.1f"|format(statistics.edge_coverage.single_percentage * 100) }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Multiple Coverage</td>
+                                <td>{{ statistics.edge_coverage.multiple }}</td>
+                                <td>{{ "%.1f"|format(statistics.edge_coverage.multiple_percentage * 100) }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Uncovered</td>
+                                <td>{{ statistics.edge_coverage.uncovered }}</td>
+                                <td>{{ "%.1f"|format(statistics.edge_coverage.uncovered_percentage * 100) }}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No edge coverage data available.</p>
+                {% endif %}
             </div>
         </div>
         </div>
