@@ -48,20 +48,37 @@ def statistics():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Calculate statistics using the bicliques result
-        bipartite_graph = results.get("bipartite_graph")
-        bicliques = results.get("bicliques", [])
-        
-        if bipartite_graph and bicliques:
-            detailed_stats = calculate_biclique_statistics(bicliques, bipartite_graph)
-        else:
-            detailed_stats = {
-                "size_distribution": {},
-                "coverage": results.get("coverage", {}),
-                "node_participation": {"dmrs": {}, "genes": {}},
-                "edge_coverage": {"single": 0, "multiple": 0, "uncovered": 0, "total": 0,
-                                "single_percentage": 0, "multiple_percentage": 0, "uncovered_percentage": 0}
+        # Create a properly structured statistics dictionary
+        detailed_stats = {
+            "size_distribution": {},  # Will be populated from bicliques if available
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0}
+            }),
+            "node_participation": {
+                "dmrs": {},
+                "genes": {}
+            },
+            "edge_coverage": {
+                "single": 0,
+                "multiple": 0,
+                "uncovered": 0,
+                "total": 0,
+                "single_percentage": 0,
+                "multiple_percentage": 0,
+                "uncovered_percentage": 0
             }
+        }
+
+        # If we have bicliques data, calculate detailed statistics
+        if "interesting_components" in results:
+            # Calculate size distribution
+            size_dist = {}
+            for comp in results["interesting_components"]:
+                for bic in comp.get("bicliques", []):
+                    size_key = (len(bic.get("dmrs", [])), len(bic.get("genes", [])))
+                    size_dist[size_key] = size_dist.get(size_key, 0) + 1
+            detailed_stats["size_distribution"] = size_dist
 
         return render_template(
             "statistics.html", 
