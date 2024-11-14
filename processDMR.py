@@ -146,16 +146,6 @@ def create_bipartite_graph(
 def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]):
     """Write bipartite graph to file using consistent gene IDs."""
     try:
-        with open(output_file, "w") as file:
-            # Write header: number of DMRs and genes
-            n_dmrs = len(df["DMR_No."].unique())
-            n_genes = len(gene_id_mapping)
-            file.write(f"{n_dmrs} {n_genes}\n")
-            
-            print(f"\nWriting bipartite graph to {output_file}")
-            print(f"Number of DMRs: {n_dmrs}")
-            print(f"Number of genes: {n_genes}")
-
         # Get unique edges (DMR first, gene second)
         unique_edges = set()
         for edge in graph.edges():
