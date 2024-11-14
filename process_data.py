@@ -61,14 +61,24 @@ def process_data():
 
         # Create gene ID mapping
         all_genes = set()
-        all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+        # Add genes from gene column (case-insensitive)
+        all_genes.update(df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower())
+        # Add genes from enhancer info (case-insensitive)
+        all_genes.update([g.strip().lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g])
 
         # Create gene mapping starting after max DMR number
         max_dmr = df["DMR_No."].max()
         gene_id_mapping = {
-            gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted(all_genes))
+            gene: idx + max_dmr + 1 
+            for idx, gene in enumerate(sorted(all_genes))  # Sort for deterministic assignment
         }
+    
+        print("\nGene ID Mapping Statistics:")
+        print(f"Total unique genes: {len(all_genes)}")
+        print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
+        print("\nFirst 5 gene mappings:")
+        for gene in sorted(list(all_genes))[:5]:
+            print(f"{gene}: {gene_id_mapping[gene]}")
 
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 

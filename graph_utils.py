@@ -86,52 +86,78 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
         dmr_id = dmr - 1  # Convert 1-based to 0-based
         B.add_node(dmr_id, bipartite=0)
     
-    # Track edge addition
-    edges_added = 0
-    edges_skipped = 0
+    # Track unique edges and genes
     edges_seen = set()
+    genes_seen = set()
     
+    print("\nCreating bipartite graph:")
+    print(f"Input rows: {len(df)}")
+    print(f"Available gene mappings: {len(gene_id_mapping)}")
+    
+    # Add DMR nodes (0-based)
+    dmr_nodes = set(df["DMR_No."].values)
+    for dmr in dmr_nodes:
+        dmr_id = dmr - 1  # Convert to 0-based
+        B.add_node(dmr_id, bipartite=0)
+    
+    # Process each row
     for idx, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Convert to 0-based
         associated_genes = set()
-
+        
         # Add closest gene if it exists
         if pd.notna(row[closest_gene_col]):
             gene_name = str(row[closest_gene_col]).strip().lower()
-            if gene_name:  # Only add if non-empty
+            if gene_name:
                 associated_genes.add(gene_name)
-
+        
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
+            enhancer_genes = {g.strip().lower() for g in row["Processed_Enhancer_Info"] if g}
             associated_genes.update(enhancer_genes)
-
-        # Debug output for first few rows
+        
+        # Debug first few rows
         if idx < 5:
-            print(f"\nProcessing DMR {dmr_id + 1}:")
+            print(f"\nDMR {dmr_id + 1}:")
             print(f"Associated genes: {associated_genes}")
-            print(f"Gene IDs: {[gene_id_mapping.get(g) for g in associated_genes]}")
-
+        
         # Add edges
-        for gene in associated_genes:
-            if gene in gene_id_mapping:
-                gene_id = gene_id_mapping[gene]
-                edge = tuple(sorted([dmr_id, gene_id]))
+        for gene_name in associated_genes:
+            if gene_name in gene_id_mapping:
+                gene_id = gene_id_mapping[gene_name]
+                
+                # Create unique edge tuple (always DMR first)
+                edge = (dmr_id, gene_id)
                 
                 if edge not in edges_seen:
-                    # Add gene node if it doesn't exist
-                    if not B.has_node(gene_id):
+                    # Add gene node if new
+                    if gene_id not in genes_seen:
                         B.add_node(gene_id, bipartite=1)
+                        genes_seen.add(gene_id)
                     
-                    B.add_edge(dmr_id, gene_id)
+                    # Add edge
+                    B.add_edge(*edge)
                     edges_seen.add(edge)
-                    edges_added += 1
                     
-                    # Debug output for first few edges
-                    if edges_added < 5:
-                        print(f"Added edge: DMR_{dmr_id + 1} -> Gene_{gene_id} ({gene})")
-                else:
-                    edges_skipped += 1
+                    # Debug first few edges
+                    if len(edges_seen) <= 5:
+                        print(f"Added edge: DMR_{dmr_id + 1} -> Gene_{gene_id} ({gene_name})")
+    
+    # Validation
+    print("\nGraph Statistics:")
+    print(f"DMR nodes: {len([n for n, d in B.nodes(data=True) if d['bipartite'] == 0])}")
+    print(f"Gene nodes: {len([n for n, d in B.nodes(data=True) if d['bipartite'] == 1])}")
+    print(f"Total edges: {len(B.edges())}")
+    
+    # Verify first few genes have edges
+    gene_nodes = sorted([n for n, d in B.nodes(data=True) if d['bipartite'] == 1])[:5]
+    print("\nFirst 5 gene nodes and their connections:")
+    for gene_id in gene_nodes:
+        gene_name = [k for k, v in gene_id_mapping.items() if v == gene_id][0]
+        neighbors = list(B.neighbors(gene_id))
+        print(f"Gene {gene_id} ({gene_name}): connected to DMRs {[n+1 for n in neighbors]}")
+    
+    return B
 
     print("\nGraph Creation Summary:")
     print(f"Total edges added: {edges_added}")
