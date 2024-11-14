@@ -1,7 +1,9 @@
 # File: graph_utils.py
-# Auther : Peter Shaw
+# Author: Peter Shaw
 
 import networkx as nx
+import pandas as pd
+from typing import Dict
 
 
 def validate_bipartite_graph(B):
@@ -65,3 +67,62 @@ def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
         print(f"Warning: Invalid gene ID {gene_id}")
         return False
     return True
+
+def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
+    """Create a bipartite graph from DataFrame."""
+    B = nx.Graph()
+    
+    # Get all unique genes first
+    all_genes = set()
+    # Add genes from gene column
+    all_genes.update(df[closest_gene_col].dropna().str.strip().str.lower())
+    # Add genes from enhancer info
+    all_genes.update(g.lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g)
+    
+    # Create sequential gene mapping starting after last DMR
+    n_dmrs = len(df["DMR_No."].unique())
+    gene_id_mapping.clear()  # Clear any existing mappings
+    for idx, gene in enumerate(sorted(all_genes)):
+        gene_id_mapping[gene] = n_dmrs + idx  # This ensures IDs start after DMRs
+    
+    # Add DMR nodes (0-based)
+    for dmr in df["DMR_No."].values:
+        B.add_node(dmr - 1, bipartite=0)  # Convert 1-based to 0-based
+
+    print(f"\nDebugging create_bipartite_graph:")
+    print(f"Number of unique DMRs: {n_dmrs}")
+    print(f"Number of unique genes: {len(all_genes)}")
+    print(f"Gene ID range: {n_dmrs} to {n_dmrs + len(all_genes) - 1}")
+
+    # Add edges
+    edges_added = 0
+    edges_seen = set()
+    
+    for _, row in df.iterrows():
+        dmr_id = row["DMR_No."] - 1  # Convert to 0-based
+        associated_genes = set()
+
+        # Add closest gene
+        if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
+            gene_name = str(row[closest_gene_col]).strip().lower()
+            associated_genes.add(gene_name)
+
+        # Add enhancer genes
+        if isinstance(row["Processed_Enhancer_Info"], (set, list)):
+            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
+            associated_genes.update(enhancer_genes)
+
+        # Add edges
+        for gene in associated_genes:
+            gene_id = gene_id_mapping[gene]
+            edge = tuple(sorted([dmr_id, gene_id]))
+            if edge not in edges_seen:
+                B.add_node(gene_id, bipartite=1)
+                B.add_edge(dmr_id, gene_id)
+                edges_seen.add(edge)
+                edges_added += 1
+
+    print(f"Total edges added: {edges_added}")
+    print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
+    
+    return B
