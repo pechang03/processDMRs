@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 import pandas as pd
 import networkx as nx
+from .classifier import classify_biclique
 
 
 
