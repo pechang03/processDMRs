@@ -102,58 +102,15 @@ def statistics():
         return render_template("error.html", message=str(e))
 
 
-from routes import index, statistics  # Add statistics to imports
+from flask import Flask
+from routes import index_route, statistics_route, component_detail_route
 
-# ... other code ...
+app = Flask(__name__)
 
-@app.route("/statistics")
-def statistics_route():
-    return statistics()
-
-@app.route('/')
-def index_route():
-    return index()
+# Register routes
+app.add_url_rule('/', 'index_route', index_route)
+app.add_url_rule('/statistics', 'statistics_route', statistics_route)
+app.add_url_rule('/component/<int:component_id>', 'component_detail', component_detail_route)
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-@app.route("/component/<int:component_id>")
-def component_detail(component_id):
-    try:
-        print(f"\nAccessing component {component_id}")
-        results = process_data()
-        if "error" in results:
-            print(f"Error in results: {results['error']}")
-            return render_template("error.html", message=results["error"])
-
-        component = next(
-            (
-                c for c in results["interesting_components"] if c["id"] == component_id
-            ),  # Changed from components
-            None,
-        )
-
-        if not component:
-            print(f"Component {component_id} not found")
-            return render_template("error.html", message=f"Component {component_id} not found")
-
-        print("\nComponent data:")
-        print(f"Size: {component.get('size')}")
-        print(f"DMRs: {component.get('dmrs')}")
-        print(f"Genes: {component.get('genes')}")
-        print(f"Bicliques: {len(component.get('bicliques', []))}")
-        print(f"Split genes: {len(component.get('split_genes', []))}")
-        print(f"Total edges: {component.get('total_edges')}")
-        
-        return render_template(
-            "components.html",
-            component=component,
-            dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {}),
-        )
-    except Exception as e:
-        import traceback
-        print(f"Error in component_detail: {str(e)}")
-        traceback.print_exc()
-        return render_template("error.html", message=str(e))
