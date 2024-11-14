@@ -322,7 +322,7 @@ def position_biclique_nodes(
         y_pos = current_y + (i + 1) * gene_spacing
         x_pos = 1.1 if gene in split_genes else 1
         positions[gene] = (x_pos, y_pos)
-        print(f"Positioned gene {gene} at ({x_pos}, {y_pos})")
+        # print(f"Positioned gene {gene} at ({x_pos}, {y_pos})")
 
     # Debug verification
     print(f"After positioning:")
