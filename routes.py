@@ -41,6 +41,7 @@ def index():
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             statistics=detailed_stats,  # Pass the properly structured statistics
+            bicliques_result=results,  # Add this line to pass component data
             coverage=results.get("coverage", {}),
             node_labels=results.get("node_labels", {})
         )
