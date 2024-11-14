@@ -69,7 +69,11 @@ def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
     return True
 
 def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
-    """Create a bipartite graph from DataFrame with proper 0-based indexing.
+    """Create a bipartite graph from DataFrame.
+    
+    NOTE: Currently produces non-sequential gene IDs. This is a known issue
+    that needs to be fixed in a future update. For now, any node ID >= n_dmrs
+    should be treated as a gene node, regardless of the actual ID value.
     
     Args:
         df: DataFrame containing DMR data
@@ -78,8 +82,8 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
         
     Returns:
         NetworkX bipartite graph with:
-        - DMR nodes: 0 to n_dmrs-1
-        - Gene nodes: n_dmrs to n_dmrs+n_genes-1
+        - DMR nodes: 0 to n_dmrs-1 
+        - Gene nodes: IDs >= n_dmrs (may be non-sequential)
     """
     B = nx.Graph()
     
