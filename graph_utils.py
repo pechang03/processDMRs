@@ -73,13 +73,12 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
     
-    # Get number of DMRs (convert from 1-based to 0-based)
-    n_dmrs = len(df["DMR_No."].unique())
-    max_dmr = n_dmrs - 1
+    # Get the first gene ID (should be max_dmr + 1)
+    max_dmr = df["DMR_No."].max()
+    first_gene_id = max_dmr + 1
+    first_gene_name = [k for k, v in gene_id_mapping.items() if v == first_gene_id][0]
     
-    print("\nDEBUG: Bipartite Graph Creation")
-    print(f"Number of unique DMRs: {n_dmrs}")
-    print(f"DMR ID range: 0 to {max_dmr}")
+    print(f"\nTracking first gene (ID {first_gene_id}, name: {first_gene_name}):")
     
     # Add DMR nodes (0-based)
     for dmr in df["DMR_No."].values:
@@ -89,6 +88,8 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     # Track unique edges and genes
     edges_seen = set()
     genes_seen = set()
+    edges_added = 0
+    first_gene_edges = []
     
     print("\nCreating bipartite graph:")
     print(f"Input rows: {len(df)}")
@@ -110,16 +111,15 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name:
                 associated_genes.add(gene_name)
+                if gene_name == first_gene_name:
+                    print(f"Found first gene as closest gene for DMR_{dmr_id + 1}")
         
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
             enhancer_genes = {g.strip().lower() for g in row["Processed_Enhancer_Info"] if g}
             associated_genes.update(enhancer_genes)
-        
-        # Debug first few rows
-        if idx < 5:
-            print(f"\nDMR {dmr_id + 1}:")
-            print(f"Associated genes: {associated_genes}")
+            if first_gene_name in enhancer_genes:
+                print(f"Found first gene in enhancer info for DMR_{dmr_id + 1}")
         
         # Add edges
         for gene_name in associated_genes:
@@ -138,10 +138,27 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
                     # Add edge
                     B.add_edge(*edge)
                     edges_seen.add(edge)
+                    edges_added += 1
                     
-                    # Debug first few edges
-                    if len(edges_seen) <= 5:
-                        print(f"Added edge: DMR_{dmr_id + 1} -> Gene_{gene_id} ({gene_name})")
+                    # Track edges for first gene
+                    if gene_id == first_gene_id:
+                        first_gene_edges.append(dmr_id)
+        
+    print(f"\nEdges added for first gene (ID {first_gene_id}):")
+    if first_gene_edges:
+        print(f"Connected to DMRs: {[dmr_id + 1 for dmr_id in first_gene_edges]}")
+    else:
+        print("No edges found!")
+        
+    # Verify the edges in the final graph
+    if B.has_node(first_gene_id):
+        print(f"\nVerifying edges for first gene in final graph:")
+        neighbors = list(B.neighbors(first_gene_id))
+        print(f"Connected to DMRs: {[n + 1 for n in neighbors]}")
+    else:
+        print(f"\nERROR: First gene (ID {first_gene_id}) not in final graph!")
+    
+    return B
     
     # Validation
     print("\nGraph Statistics:")
