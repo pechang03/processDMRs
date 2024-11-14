@@ -1,5 +1,6 @@
-from flask import Flask
+from flask import Flask, render_template
 from routes import index_route, statistics_route, component_detail_route
+from process_data import process_data
 
 app = Flask(__name__)
 
