@@ -7,27 +7,31 @@ from typing import Dict, List, Set, Tuple
 from .reader import read_bicliques_file
 
 
-def process_enhancer_info(enhancer_info):
-    """Process enhancer interaction information.
+def process_enhancer_info(interaction_info):
+    """Process enhancer/promoter interaction information.
     
     Args:
-        enhancer_info: String containing semicolon-separated gene names
+        interaction_info: String containing semicolon-separated gene/enrichment pairs
         
     Returns:
-        Set of valid gene names (excluding '.' entries)
+        Set of valid gene names (excluding '.' entries, only gene part before /)
     """
-    if pd.isna(enhancer_info) or not enhancer_info:
+    if pd.isna(interaction_info) or not interaction_info:
         return set()
         
     genes = set()
-    for gene in str(enhancer_info).split(";"):
-        gene = gene.strip()
+    for entry in str(interaction_info).split(";"):
+        entry = entry.strip()
         # Skip '.' entries
-        if gene == '.':
+        if entry == '.':
             continue
             
-        if "/" in gene:
-            gene = gene.split("/")[0].strip()  # Strip suffix after '/'
+        # Split on / and take only the gene part
+        if "/" in entry:
+            gene = entry.split("/")[0].strip()
+        else:
+            gene = entry.strip()
+            
         if gene:  # Only add non-empty genes
             genes.add(gene)
             

@@ -85,10 +85,20 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     # First add all genes from Gene_Symbol_Nearby (these are always valid)
     all_genes.update(df[closest_gene_col].dropna().str.strip().str.lower())
     
-    # Then add valid enhancer genes (excluding '.')
-    for genes in df["Processed_Enhancer_Info"]:
-        if isinstance(genes, set):  # Check if it's a valid set
-            all_genes.update(g.lower() for g in genes)  # genes already excludes '.'
+    # Add genes from enhancer interactions
+    enhancer_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+    if enhancer_col in df.columns:
+        for genes in df["Processed_Enhancer_Info"]:
+            if isinstance(genes, set):
+                all_genes.update(g.lower() for g in genes)
+                
+    # Add genes from promoter interactions
+    promoter_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
+    if promoter_col in df.columns:
+        df["Processed_Promoter_Info"] = df[promoter_col].apply(process_enhancer_info)
+        for genes in df["Processed_Promoter_Info"]:
+            if isinstance(genes, set):
+                all_genes.update(g.lower() for g in genes)
     
     n_genes = len(all_genes)
     max_valid_gene_id = max_dmr + n_genes
