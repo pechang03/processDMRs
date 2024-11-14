@@ -8,16 +8,29 @@ from .reader import read_bicliques_file
 
 
 def process_enhancer_info(enhancer_info):
-    """Process enhancer interaction information."""
+    """Process enhancer interaction information.
+    
+    Args:
+        enhancer_info: String containing semicolon-separated gene names
+        
+    Returns:
+        Set of valid gene names (excluding '.' entries)
+    """
     if pd.isna(enhancer_info) or not enhancer_info:
         return set()
+        
     genes = set()
     for gene in str(enhancer_info).split(";"):
         gene = gene.strip()
+        # Skip '.' entries
+        if gene == '.':
+            continue
+            
         if "/" in gene:
             gene = gene.split("/")[0].strip()  # Strip suffix after '/'
-        if gene:
+        if gene:  # Only add non-empty genes
             genes.add(gene)
+            
     return genes
 
 

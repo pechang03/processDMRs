@@ -69,63 +69,41 @@ def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
     return True
 
 def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
-    """Create a bipartite graph from DataFrame.
-    
-    NOTE: Currently produces non-sequential gene IDs. This is a known issue
-    that needs to be fixed in a future update. For now, any node ID >= n_dmrs
-    should be treated as a gene node, regardless of the actual ID value.
-    
-    Args:
-        df: DataFrame containing DMR data
-        gene_id_mapping: Dictionary to store gene name to ID mappings
-        closest_gene_col: Column name for closest gene
-        
-    Returns:
-        NetworkX bipartite graph with:
-        - DMR nodes: 0 to n_dmrs-1 
-        - Gene nodes: IDs >= n_dmrs (may be non-sequential)
-    """
+    """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
     
     # Get number of DMRs (convert from 1-based to 0-based)
     n_dmrs = len(df["DMR_No."].unique())
-    max_dmr = n_dmrs - 1  # This is the highest DMR ID
+    max_dmr = n_dmrs - 1
     print(f"\nDMR Analysis:")
     print(f"Number of unique DMRs: {n_dmrs}")
     print(f"DMR ID range: 0 to {max_dmr}")
     
     # Get all unique genes (case-insensitive)
     all_genes = set()
-    # Add genes from gene column
+    
+    # First add all genes from Gene_Symbol_Nearby (these are always valid)
     all_genes.update(df[closest_gene_col].dropna().str.strip().str.lower())
-    # Add genes from enhancer info
-    all_genes.update(g.lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g)
+    
+    # Then add valid enhancer genes (excluding '.')
+    for genes in df["Processed_Enhancer_Info"]:
+        if isinstance(genes, set):  # Check if it's a valid set
+            all_genes.update(g.lower() for g in genes)  # genes already excludes '.'
     
     n_genes = len(all_genes)
-    max_valid_gene_id = max_dmr + n_genes  # Changed from n_dmrs + n_genes - 1
+    max_valid_gene_id = max_dmr + n_genes
     
     print(f"\nGene Analysis:")
     print(f"Number of unique genes: {n_genes}")
-    print(f"Valid gene ID range: {max_dmr} to {max_valid_gene_id}")  # Changed from n_dmrs
+    print(f"Valid gene ID range: {max_dmr} to {max_valid_gene_id}")
     
-    # Validation function
-    def validate_gene_id(gene_id: int, gene_name: str):
-        if gene_id > max_valid_gene_id:
-            print(f"\nERROR: Invalid gene ID detected!")
-            print(f"Gene: {gene_name}")
-            print(f"ID: {gene_id}")
-            print(f"Maximum valid ID: {max_valid_gene_id}")
-            print(f"Current gene mapping size: {len(gene_id_mapping)}")
-            raise ValueError(f"Invalid gene ID {gene_id} > {max_valid_gene_id}")
-    
-    # Clear and recreate gene mapping with sequential IDs starting at max_dmr
+    # Create gene mapping starting at max_dmr
     gene_id_mapping.clear()
     for idx, gene in enumerate(sorted(all_genes)):
-        gene_id = max_dmr + idx  # Changed from n_dmrs + idx
-        validate_gene_id(gene_id, gene)
+        gene_id = max_dmr + idx
         gene_id_mapping[gene] = gene_id
         
-    print(f"Gene ID range: {max_dmr} to {max_dmr + len(all_genes) - 1}")  # Changed from n_dmrs
+    print(f"Gene ID range: {max_dmr} to {max_dmr + len(all_genes) - 1}")
     
     # Add DMR nodes (0-based)
     for dmr in df["DMR_No."].values:
@@ -137,32 +115,29 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     edges_seen = set()
     
     for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Convert to 0-based
+        dmr_id = row["DMR_No."] - 1
         associated_genes = set()
 
-        # Add closest gene if it exists
-        if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
+        # Always add the closest gene if it exists
+        if pd.notna(row[closest_gene_col]):
             gene_name = str(row[closest_gene_col]).strip().lower()
             associated_genes.add(gene_name)
 
-        # Add enhancer genes if they exist
-        if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
+        # Add valid enhancer genes
+        if isinstance(row["Processed_Enhancer_Info"], set):
+            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"]}
             associated_genes.update(enhancer_genes)
 
-        # Add edges with validation
+        # Add edges
         for gene in associated_genes:
-            if gene in gene_id_mapping:  # Safety check
+            if gene in gene_id_mapping:
                 gene_id = gene_id_mapping[gene]
-                validate_gene_id(gene_id, gene)  # Validate before adding edge
                 edge = tuple(sorted([dmr_id, gene_id]))
                 if edge not in edges_seen:
                     B.add_node(gene_id, bipartite=1)
                     B.add_edge(dmr_id, gene_id)
                     edges_seen.add(edge)
                     edges_added += 1
-            else:
-                print(f"Warning: Gene {gene} not found in mapping")
 
     print(f"\nGraph Summary:")
     print(f"Total edges added: {edges_added}")
