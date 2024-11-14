@@ -18,6 +18,9 @@ HOME1_FILE = os.path.join(DATA_DIR, "HOME1.xlsx")
 BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
 
 
+from processDMR import read_excel_file
+from biclique_analysis.processor import process_enhancer_info
+
 def read_and_prepare_data(dss1_path=None):
     """Read and prepare the data from the Excel files"""
     try:
