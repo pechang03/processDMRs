@@ -124,6 +124,26 @@
     display: none;
 }
 
-.tab-pane.active {
-    display: block;
+.tab-pane.active,
+.tab-pane.show {
+    display: block !important;
+}
+
+/* Component Selector Styles */
+.component-selector {
+    margin-bottom: 2rem;
+}
+
+.form-select {
+    min-width: 300px;
+    padding: 0.5rem;
+}
+
+/* Statistics specific styles */
+.statistics-container {
+    padding: 1rem;
+}
+
+.statistics-header {
+    margin-bottom: 2rem;
 }
