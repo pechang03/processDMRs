@@ -89,9 +89,10 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     
     # Get number of DMRs (convert from 1-based to 0-based)
     n_dmrs = len(df["DMR_No."].unique())
+    max_dmr = n_dmrs - 1  # This is the highest DMR ID
     print(f"\nDMR Analysis:")
     print(f"Number of unique DMRs: {n_dmrs}")
-    print(f"DMR ID range: 0 to {n_dmrs-1}")
+    print(f"DMR ID range: 0 to {max_dmr}")
     
     # Get all unique genes (case-insensitive)
     all_genes = set()
@@ -101,11 +102,11 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     all_genes.update(g.lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g)
     
     n_genes = len(all_genes)
-    max_valid_gene_id = n_dmrs + n_genes - 1
+    max_valid_gene_id = max_dmr + n_genes  # Changed from n_dmrs + n_genes - 1
     
     print(f"\nGene Analysis:")
     print(f"Number of unique genes: {n_genes}")
-    print(f"Valid gene ID range: {n_dmrs} to {max_valid_gene_id}")
+    print(f"Valid gene ID range: {max_dmr} to {max_valid_gene_id}")  # Changed from n_dmrs
     
     # Validation function
     def validate_gene_id(gene_id: int, gene_name: str):
@@ -117,14 +118,14 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
             print(f"Current gene mapping size: {len(gene_id_mapping)}")
             raise ValueError(f"Invalid gene ID {gene_id} > {max_valid_gene_id}")
     
-    # Clear and recreate gene mapping with sequential IDs after DMRs
+    # Clear and recreate gene mapping with sequential IDs starting at max_dmr
     gene_id_mapping.clear()
     for idx, gene in enumerate(sorted(all_genes)):
-        gene_id = n_dmrs + idx  # Start gene IDs after last DMR
+        gene_id = max_dmr + idx  # Changed from n_dmrs + idx
         validate_gene_id(gene_id, gene)
         gene_id_mapping[gene] = gene_id
         
-    print(f"Gene ID range: {n_dmrs} to {n_dmrs + len(all_genes) - 1}")
+    print(f"Gene ID range: {max_dmr} to {max_dmr + len(all_genes) - 1}")  # Changed from n_dmrs
     
     # Add DMR nodes (0-based)
     for dmr in df["DMR_No."].values:
