@@ -143,46 +143,43 @@ def create_bipartite_graph(
     return B  # Return just the graph instead of a tuple
 
 
-def write_bipartite_graph(
-    graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]
-):
-    """Write bipartite graph to file using consistent gene IDs.
-
-    Args:
-        graph: NetworkX bipartite graph
-        output_file: Path to output file
-        df: DataFrame containing DMR data
-        gene_id_mapping: Dictionary mapping gene names to IDs
-    """
+def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]):
+    """Write bipartite graph to file using consistent gene IDs."""
     try:
         with open(output_file, "w") as file:
             # Write header: number of DMRs and genes
             n_dmrs = len(df["DMR_No."].unique())
             n_genes = len(gene_id_mapping)
             file.write(f"{n_dmrs} {n_genes}\n")
+            
+            print(f"\nWriting bipartite graph to {output_file}")
+            print(f"Number of DMRs: {n_dmrs}")
+            print(f"Number of genes: {n_genes}")
 
             # Collect and sort edges for deterministic output
             edges = []
             for dmr, gene in graph.edges():
-                # Ensure we're using the correct gene ID from mapping
-                if isinstance(gene, str):
-                    gene_id = gene_id_mapping[
-                        gene.lower()
-                    ]  # Convert to lowercase for matching
-                    edges.append((dmr, gene_id))
-                else:
+                # Ensure DMR is first and gene is second in each edge
+                if graph.nodes[dmr]['bipartite'] == 0:
                     edges.append((dmr, gene))
+                else:
+                    edges.append((gene, dmr))
 
             # Sort edges for deterministic output
             sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-
+            
             # Write edges
             for dmr, gene_id in sorted_edges:
                 file.write(f"{dmr} {gene_id}\n")
 
-        print(f"\nBipartite graph written to {output_file}")
-        print(f"Graph contains {n_dmrs} DMRs and {n_genes} genes")
-        print(f"Total edges written: {len(sorted_edges)}")
+            print(f"Wrote {len(sorted_edges)} edges")
+            
+            # Debug: Check first few edges
+            print("\nFirst 5 edges written:")
+            for dmr, gene_id in sorted_edges[:5]:
+                gene_name = [k for k, v in gene_id_mapping.items() if v == gene_id][0]
+                print(f"DMR_{dmr + 1} -> Gene_{gene_id} ({gene_name})")
+
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
         raise
