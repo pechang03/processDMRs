@@ -180,6 +180,12 @@ def write_gene_mappings(gene_id_mapping: Dict[str, int], output_file: str, datas
     """Write gene ID mappings to CSV file for a specific dataset."""
     try:
         print(f"\nWriting gene mappings for {dataset_name}:")
+        print(f"Number of genes to write: {len(gene_id_mapping)}")
+        print(f"ID range: {min(gene_id_mapping.values())} to {max(gene_id_mapping.values())}")
+        print("\nFirst few mappings:")
+        for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
+            print(f"{gene}: {gene_id}")
+            
         with open(output_file, "w", newline="") as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(["Gene", "ID"])
