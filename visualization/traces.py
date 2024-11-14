@@ -16,7 +16,7 @@ def create_node_traces(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     dominating_set: Set[int] = None,
-    dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
+    dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
@@ -26,18 +26,21 @@ def create_node_traces(
     dmr_x = []
     dmr_y = []
     dmr_text = []
+    dmr_hover_text = []  # Separate hover text from display text
     dmr_colors = []
 
     # Create gene nodes trace
     gene_x = []
     gene_y = []
     gene_text = []
+    gene_hover_text = []  # Separate hover text from display text
     gene_colors = []
 
     for node_id, (x, y) in node_positions.items():
         color = "gray"
         label = node_labels.get(node_id, str(node_id))
-        hover_text = label
+        display_text = label  # This will be shown on the graph
+        hover_text = label   # This will be shown on hover
         
         # Add metadata to hover text
         if node_id in node_info.dmr_nodes and dmr_metadata:
@@ -49,28 +52,27 @@ def create_node_traces(
                 meta = gene_metadata[gene_name]
                 hover_text = f"{gene_name}<br>Description: {meta.get('description', 'N/A')}"
 
-        if (
-            node_id in node_biclique_map and biclique_colors
-        ):  # Check if colors list is not empty
-            biclique_idx = node_biclique_map[node_id][0]  # Use the first biclique index
-            if biclique_idx < len(biclique_colors):  # Check if index is valid
+        if node_id in node_biclique_map and biclique_colors:
+            biclique_idx = node_biclique_map[node_id][0]
+            if biclique_idx < len(biclique_colors):
                 color = biclique_colors[biclique_idx]
             else:
-                color = "gray"  # Use gray for invalid biclique numbers
+                color = "gray"
 
-        # Highlight dominating set nodes
         if dominating_set and node_id in dominating_set:
-            color = "red"  # Or any other distinctive color for dominating set nodes
+            color = "red"
 
         if node_id in node_info.dmr_nodes:
             dmr_x.append(x)
             dmr_y.append(y)
-            dmr_text.append(hover_text)
+            dmr_text.append(display_text)  # Use display text for node label
+            dmr_hover_text.append(hover_text)  # Use hover text for hover info
             dmr_colors.append(color)
         else:
             gene_x.append(x)
             gene_y.append(y)
-            gene_text.append(hover_text)
+            gene_text.append(display_text)  # Use display text for node label
+            gene_hover_text.append(hover_text)  # Use hover text for hover info
             gene_colors.append(color)
 
     # Add DMR nodes
@@ -86,7 +88,8 @@ def create_node_traces(
                     symbol="circle",
                     line=dict(color="black", width=1),
                 ),
-                text=dmr_text,
+                text=dmr_text,  # Use text for display
+                hovertext=dmr_hover_text,  # Use hovertext for hover
                 textposition="middle left",
                 hoverinfo="text",
                 name="DMRs",
@@ -107,7 +110,8 @@ def create_node_traces(
                     symbol="diamond",
                     line=dict(color="black", width=1),
                 ),
-                text=gene_text,
+                text=gene_text,  # Use text for display
+                hovertext=gene_hover_text,  # Use hovertext for hover
                 textposition="middle right",
                 hoverinfo="text",
                 name="Genes",
