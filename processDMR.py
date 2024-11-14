@@ -135,52 +135,42 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     return B  # Return just the graph instead of a tuple
 
 
-def write_bipartite_graph(graph, output_file, df, gene_id_mapping):
-    """Write bipartite graph to file."""
-
-    def validate_edge(dmr, gene_id):
-        return graph.has_edge(dmr, gene_id)
-
+def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]):
+    """Write bipartite graph to file using consistent gene IDs.
+    
+    Args:
+        graph: NetworkX bipartite graph
+        output_file: Path to output file
+        df: DataFrame containing DMR data
+        gene_id_mapping: Dictionary mapping gene names to IDs
+    """
     try:
         with open(output_file, "w") as file:
-            unique_dmrs = df["DMR_No."].nunique()
-            all_genes = set()
-
-            # Add genes from enhancer info
-            enhancer_genes = df["Processed_Enhancer_Info"].explode().dropna().unique()
-            all_genes.update(enhancer_genes)
-
-            # Add genes from gene symbol column (using the correct column name)
-            gene_col = (
-                "Gene_Symbol_Nearby"
-                if "Gene_Symbol_Nearby" in df.columns
-                else "Gene_Symbol"
-            )
-            symbol_genes = df[gene_col].dropna().unique()
-            all_genes.update(symbol_genes)
-
-            unique_genes = len(all_genes)
-
-            file.write(f"{unique_dmrs} {unique_genes}\n")
-
+            # Write header: number of DMRs and genes
+            n_dmrs = len(df["DMR_No."].unique())
+            n_genes = len(gene_id_mapping)
+            file.write(f"{n_dmrs} {n_genes}\n")
+            
+            # Collect and sort edges for deterministic output
             edges = []
             for dmr, gene in graph.edges():
+                # Ensure we're using the correct gene ID from mapping
                 if isinstance(gene, str):
-                    gene_id = gene_id_mapping[gene]
+                    gene_id = gene_id_mapping[gene.lower()]  # Convert to lowercase for matching
                     edges.append((dmr, gene_id))
                 else:
                     edges.append((dmr, gene))
-
-            sorted_edges = sorted(
-                [
-                    (dmr, gene)
-                    for dmr, gene in graph.edges()
-                    if validate_edge(dmr, gene)
-                ],
-                key=lambda x: (x[0], x[1]),
-            )
+            
+            # Sort edges for deterministic output
+            sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
+            
+            # Write edges
             for dmr, gene_id in sorted_edges:
                 file.write(f"{dmr} {gene_id}\n")
+                
+        print(f"\nBipartite graph written to {output_file}")
+        print(f"Graph contains {n_dmrs} DMRs and {n_genes} genes")
+        print(f"Total edges written: {len(sorted_edges)}")
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
         raise
