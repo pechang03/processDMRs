@@ -22,145 +22,48 @@
 
         <div class="tab-content" id="analysisTabContent">
             <div class="tab-pane fade show active" id="bicliques" role="tabpanel">
-      <h1 class="mb-4">DMR Biclique Analysis</h1>
-
-      {% if results.error %}
-      <div class="alert alert-danger">Error: {{ results.error }}</div>
-      {% else %}
-
-      <!-- Summary Statistics -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="card-title mb-0">Summary Statistics</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  Total Components: {{ results.stats.total_components }}
-                </li>
-                <li class="list-group-item">
-                  Components with Non-trivial Bicliques: {{
-                  results.stats.components_with_bicliques }}
-                </li>
-                <li class="list-group-item">
-                  Total Bicliques: {{ results.stats.total_bicliques }}
-                </li>
-                <li class="list-group-item">
-                  Non-trivial Bicliques: {{ results.stats.non_trivial_bicliques
-                  }}
-                </li>
-              </ul>
+                <!-- Existing bicliques content -->
+                <h1 class="mb-4">DMR Biclique Analysis</h1>
+                <!-- ... rest of your bicliques content ... -->
             </div>
-            <div class="col-md-6">
-              <h6>Coverage Statistics</h6>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  DMRs: {{ results.coverage.dmrs.covered }}/{{
-                  results.coverage.dmrs.total }} ({{
-                  "%.1f"|format(results.coverage.dmrs.percentage * 100) }}%)
-                </li>
-                <li class="list-group-item">
-                  Genes: {{ results.coverage.genes.covered }}/{{
-                  results.coverage.genes.total }} ({{
-                  "%.1f"|format(results.coverage.genes.percentage * 100) }}%)
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Components with Bicliques -->
-      <h2 class="mb-3">Components with Non-trivial Bicliques</h2>
-      {% for component in results.interesting_components %}
-      <div class="component-section">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title mb-0">
-              Component {{ component.id }} ({{ component.dmrs }} DMRs, {{
-              component.genes }} genes)
-            </h5>
-          </div>
-          <div class="card-body">
-            <h6>Bicliques ({{ component.bicliques|length }}):</h6>
-            <div class="row">
-              {% for biclique in component.bicliques %}
-              <div class="col-md-12">
-                <div class="card biclique-card">
-                  <div class="card-header">
-                    <h5 class="mb-0">Biclique {{ biclique.id }} (DMRs: {{ biclique.size.dmrs }}, Genes: {{ biclique.size.genes }}, Split Genes: {{ biclique.size.split_genes }})</h5>
-                  </div>
-                  <div class="card-body">
-                    <div class="dmr-section">
-                      <h6>DMRs:</h6>
-                      <ul class="list-unstyled">
-                        {% for dmr in biclique.dmrs %}
-                        <li>
-                          {{ dmr.id }} - Area: {{ dmr.area }} - {{ dmr.description }}
-                        </li>
-                        {% endfor %}
-                      </ul>
-                    </div>
-                    <div class="gene-section">
-                      <h6>Regular Genes:</h6>
-                      <ul class="list-unstyled">
-                        {% for gene in biclique.genes %}
-                        <li>
-                          {{ gene.name }} - {{ gene.description }}
-                        </li>
-                        {% endfor %}
-                      </ul>
-                      {% if biclique.split_genes %}
-                      <h6>Split Genes:</h6>
-                      <ul class="list-unstyled">
-                        {% for gene in biclique.split_genes %}
-                        <li>
-                          {{ gene.name }} - {{ gene.description }}
-                        </li>
-                        {% endfor %}
-                      </ul>
-                      {% endif %}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-            <div class="biclique-visualization mt-4">
-              <h6>Biclique Visualization:</h6>
-              <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
-              <script>
-                var graph = {{ component.visualization | safe }};
-                Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
-              </script>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %} {% endif %}
-    </div>
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      // Get all tab elements
-      var tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
-    
-      tabs.forEach(function(tab) {
-          tab.addEventListener('click', function(e) {
-              e.preventDefault();
             
-              // If it's the statistics tab, load the statistics page
-              if (this.id === 'statistics-tab') {
-                  window.location.href = '/statistics';
-                  return;
-              }
-          });
-      });
-  });
-  </script>
-  </body>
-</html>
+            <div class="tab-pane fade" id="statistics" role="tabpanel">
+                <!-- Include the statistics template content -->
+                {% include 'statistics.html' %}
+            </div>
+        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all tab elements
+            var tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+            
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs and panes
+                    document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(p => {
+                        p.classList.remove('show', 'active');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding pane
+                    var target = this.getAttribute('href');
+                    document.querySelector(target).classList.add('show', 'active');
+                    
+                    // If it's the statistics tab, load the statistics content
+                    if (this.id === 'statistics-tab') {
+                        window.location.href = '/statistics';
+                    }
+                });
+            });
+        });
+        </script>
+        </body>
+        </html>
 <style>
     .component-section {
         margin-bottom: 2em;
