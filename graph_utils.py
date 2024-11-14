@@ -108,13 +108,22 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
     print(f"Number of unique genes: {n_genes}")
     print(f"Valid gene ID range: {max_dmr} to {max_valid_gene_id}")
     
-    # Create gene mapping starting at max_dmr
+    # Create gene mapping with continuous IDs
     gene_id_mapping.clear()
+    start_id = max_dmr + 1  # Start right after last DMR
     for idx, gene in enumerate(sorted(all_genes)):
-        gene_id = max_dmr + idx
+        gene_id = start_id + idx  # Ensure continuous IDs
         gene_id_mapping[gene] = gene_id
         
-    print(f"Gene ID range: {max_dmr} to {max_dmr + len(all_genes) - 1}")
+    print(f"\nGene ID Assignment:")
+    print(f"Starting ID: {start_id}")
+    print(f"Number of genes: {len(all_genes)}")
+    print(f"ID range: {start_id} to {start_id + len(all_genes) - 1}")
+    
+    # Debug: Print first few mappings
+    print("\nFirst few gene mappings:")
+    for gene, gene_id in list(sorted(gene_id_mapping.items()))[:5]:
+        print(f"{gene}: {gene_id}")
     
     # Add DMR nodes (0-based)
     for dmr in df["DMR_No."].values:
