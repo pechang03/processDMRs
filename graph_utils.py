@@ -69,31 +69,49 @@ def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
     return True
 
 def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
-    """Create a bipartite graph from DataFrame."""
+    """Create a bipartite graph from DataFrame with proper 0-based indexing.
+    
+    Args:
+        df: DataFrame containing DMR data
+        gene_id_mapping: Dictionary to store gene name to ID mappings
+        closest_gene_col: Column name for closest gene
+        
+    Returns:
+        NetworkX bipartite graph with:
+        - DMR nodes: 0 to n_dmrs-1
+        - Gene nodes: n_dmrs to n_dmrs+n_genes-1
+    """
     B = nx.Graph()
     
-    # Get all unique genes first
+    # Get number of DMRs (convert from 1-based to 0-based)
+    n_dmrs = len(df["DMR_No."].unique())
+    print(f"\nDMR Analysis:")
+    print(f"Number of unique DMRs: {n_dmrs}")
+    print(f"DMR ID range: 0 to {n_dmrs-1}")
+    
+    # Get all unique genes (case-insensitive)
     all_genes = set()
     # Add genes from gene column
     all_genes.update(df[closest_gene_col].dropna().str.strip().str.lower())
     # Add genes from enhancer info
     all_genes.update(g.lower() for genes in df["Processed_Enhancer_Info"] for g in genes if g)
     
-    # Create sequential gene mapping starting after last DMR
-    n_dmrs = len(df["DMR_No."].unique())
-    gene_id_mapping.clear()  # Clear any existing mappings
+    print(f"\nGene Analysis:")
+    print(f"Number of unique genes: {len(all_genes)}")
+    
+    # Clear and recreate gene mapping with sequential IDs after DMRs
+    gene_id_mapping.clear()
     for idx, gene in enumerate(sorted(all_genes)):
-        gene_id_mapping[gene] = n_dmrs + idx  # This ensures IDs start after DMRs
+        gene_id = n_dmrs + idx  # Start gene IDs after last DMR
+        gene_id_mapping[gene] = gene_id
+        
+    print(f"Gene ID range: {n_dmrs} to {n_dmrs + len(all_genes) - 1}")
     
     # Add DMR nodes (0-based)
     for dmr in df["DMR_No."].values:
-        B.add_node(dmr - 1, bipartite=0)  # Convert 1-based to 0-based
-
-    print(f"\nDebugging create_bipartite_graph:")
-    print(f"Number of unique DMRs: {n_dmrs}")
-    print(f"Number of unique genes: {len(all_genes)}")
-    print(f"Gene ID range: {n_dmrs} to {n_dmrs + len(all_genes) - 1}")
-
+        dmr_id = dmr - 1  # Convert 1-based to 0-based
+        B.add_node(dmr_id, bipartite=0)
+    
     # Add edges
     edges_added = 0
     edges_seen = set()
@@ -102,27 +120,36 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
         dmr_id = row["DMR_No."] - 1  # Convert to 0-based
         associated_genes = set()
 
-        # Add closest gene
+        # Add closest gene if it exists
         if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
             gene_name = str(row[closest_gene_col]).strip().lower()
             associated_genes.add(gene_name)
 
-        # Add enhancer genes
+        # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
             enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
             associated_genes.update(enhancer_genes)
 
         # Add edges
         for gene in associated_genes:
-            gene_id = gene_id_mapping[gene]
-            edge = tuple(sorted([dmr_id, gene_id]))
-            if edge not in edges_seen:
-                B.add_node(gene_id, bipartite=1)
-                B.add_edge(dmr_id, gene_id)
-                edges_seen.add(edge)
-                edges_added += 1
+            if gene in gene_id_mapping:  # Safety check
+                gene_id = gene_id_mapping[gene]
+                edge = tuple(sorted([dmr_id, gene_id]))
+                if edge not in edges_seen:
+                    B.add_node(gene_id, bipartite=1)
+                    B.add_edge(dmr_id, gene_id)
+                    edges_seen.add(edge)
+                    edges_added += 1
+            else:
+                print(f"Warning: Gene {gene} not found in mapping")
 
+    print(f"\nGraph Summary:")
     print(f"Total edges added: {edges_added}")
     print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")
+    
+    # Validation
+    max_gene_id = max(gene_id_mapping.values())
+    if max_gene_id >= n_dmrs + len(all_genes):
+        print(f"WARNING: Maximum gene ID {max_gene_id} exceeds expected range!")
     
     return B
