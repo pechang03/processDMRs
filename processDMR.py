@@ -275,18 +275,31 @@ def main():
                 else "Gene_Symbol"
             )
 
-            # Add genes from gene column
-            gene_symbols = df[gene_col].dropna().str.strip().str.lower()
-            all_genes.update(gene_symbols)
-
-            # Add genes from enhancer info
-            enhancer_genes = {
-                gene
-                for genes in df["Processed_Enhancer_Info"]
-                for gene in genes
-                if gene
+            # Add genes from gene column (case-insensitive)
+            gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+            all_genes.update(gene_names)
+        
+            # Add genes from enhancer info (case-insensitive)
+            for genes in df["Processed_Enhancer_Info"]:
+                if genes:  # Check if not None/empty
+                    all_genes.update(g.strip().lower() for g in genes)
+        
+            # Sort genes alphabetically for deterministic assignment
+            sorted_genes = sorted(all_genes)
+        
+            # Create gene mapping starting after max DMR number
+            max_dmr = df["DMR_No."].max()
+            gene_id_mapping = {
+                gene: idx + max_dmr + 1 
+                for idx, gene in enumerate(sorted_genes)
             }
-            all_genes.update(enhancer_genes)
+        
+            print("\nGene ID Mapping Statistics:")
+            print(f"Total unique genes (case-insensitive): {len(all_genes)}")
+            print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
+            print("\nFirst 5 gene mappings:")
+            for gene in sorted_genes[:5]:
+                print(f"{gene}: {gene_id_mapping[gene]}")
 
             # Create mapping starting after this dataset's max DMR
             sorted_genes = sorted(all_genes)
