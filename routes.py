@@ -114,7 +114,35 @@ def component_detail_route(component_id):
         if "interesting_components" in results:
             for comp in results["interesting_components"]:
                 if comp["id"] == component_id:
-                    component = comp
+                    # Format the bicliques data structure
+                    formatted_comp = comp.copy()
+                    if "bicliques" in formatted_comp:
+                        formatted_bicliques = []
+                        for idx, biclique in enumerate(formatted_comp["bicliques"]):
+                            # Create the expected structure
+                            formatted_biclique = {
+                                "size": f"{len(biclique[0])}x{len(biclique[1])}",
+                                "details": {
+                                    "dmrs": [
+                                        {
+                                            "id": f"DMR_{dmr}",
+                                            "area": results.get("dmr_metadata", {}).get(str(dmr), {}).get("area", "N/A")
+                                        }
+                                        for dmr in biclique[0]
+                                    ],
+                                    "genes": [
+                                        {
+                                            "name": results.get("gene_metadata", {}).get(str(gene), {}).get("name", f"Gene_{gene}"),
+                                            "description": results.get("gene_metadata", {}).get(str(gene), {}).get("description", "n/a"),
+                                            "is_split": gene in formatted_comp.get("split_genes", [])
+                                        }
+                                        for gene in biclique[1]
+                                    ]
+                                }
+                            }
+                            formatted_bicliques.append(formatted_biclique)
+                        formatted_comp["bicliques"] = formatted_bicliques
+                    component = formatted_comp
                     break
 
         if component is None:
