@@ -26,12 +26,12 @@ def read_excel_file(filepath):
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Excel file not found: {filepath}")
-            
+
         print(f"Reading Excel file from: {filepath}")
         df = pd.read_excel(filepath, header=0)
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
-        
+
         # Determine which columns to display based on what's available
         if "Gene_Symbol_Nearby" in df.columns:
             gene_col = "Gene_Symbol_Nearby"
@@ -60,7 +60,11 @@ def read_excel_file(filepath):
         raise
 
 
-def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], closest_gene_col: str = "Gene_Symbol_Nearby") -> nx.Graph:
+def create_bipartite_graph(
+    df: pd.DataFrame,
+    gene_id_mapping: Dict[str, int],
+    closest_gene_col: str = "Gene_Symbol_Nearby",
+) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
     dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
@@ -89,7 +93,9 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
 
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}  # Standardize to lowercase
+            enhancer_genes = {
+                g.lower() for g in row["Processed_Enhancer_Info"] if g
+            }  # Standardize to lowercase
             associated_genes.update(enhancer_genes)
 
         # Debugging output for associated genes
@@ -108,7 +114,7 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
             # Add gene node if it doesn't exist
             if not B.has_node(gene_id):
                 B.add_node(gene_id, bipartite=1)  # Mark as gene node
-                    # print(f"Added gene node: {gene_id} for gene: {gene}")
+                # print(f"Added gene node: {gene_id} for gene: {gene}")
 
                 # Ensure all associated genes are processed
                 # print(f"Processing gene: {gene} with ID: {gene_id}")
@@ -130,14 +136,18 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
 
     print(f"Total edges added: {edges_added}")  # Log total edges added
     print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
-    print(f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges")  # Log final graph size
+    print(
+        f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges"
+    )  # Log final graph size
 
     return B  # Return just the graph instead of a tuple
 
 
-def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]):
+def write_bipartite_graph(
+    graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]
+):
     """Write bipartite graph to file using consistent gene IDs.
-    
+
     Args:
         graph: NetworkX bipartite graph
         output_file: Path to output file
@@ -150,24 +160,26 @@ def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, g
             n_dmrs = len(df["DMR_No."].unique())
             n_genes = len(gene_id_mapping)
             file.write(f"{n_dmrs} {n_genes}\n")
-            
+
             # Collect and sort edges for deterministic output
             edges = []
             for dmr, gene in graph.edges():
                 # Ensure we're using the correct gene ID from mapping
                 if isinstance(gene, str):
-                    gene_id = gene_id_mapping[gene.lower()]  # Convert to lowercase for matching
+                    gene_id = gene_id_mapping[
+                        gene.lower()
+                    ]  # Convert to lowercase for matching
                     edges.append((dmr, gene_id))
                 else:
                     edges.append((dmr, gene))
-            
+
             # Sort edges for deterministic output
             sorted_edges = sorted(edges, key=lambda x: (x[0], x[1]))
-            
+
             # Write edges
             for dmr, gene_id in sorted_edges:
                 file.write(f"{dmr} {gene_id}\n")
-                
+
         print(f"\nBipartite graph written to {output_file}")
         print(f"Graph contains {n_dmrs} DMRs and {n_genes} genes")
         print(f"Total edges written: {len(sorted_edges)}")
@@ -176,16 +188,20 @@ def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, g
         raise
 
 
-def write_gene_mappings(gene_id_mapping: Dict[str, int], output_file: str, dataset_name: str):
+def write_gene_mappings(
+    gene_id_mapping: Dict[str, int], output_file: str, dataset_name: str
+):
     """Write gene ID mappings to CSV file for a specific dataset."""
     try:
         print(f"\nWriting gene mappings for {dataset_name}:")
         print(f"Number of genes to write: {len(gene_id_mapping)}")
-        print(f"ID range: {min(gene_id_mapping.values())} to {max(gene_id_mapping.values())}")
+        print(
+            f"ID range: {min(gene_id_mapping.values())} to {max(gene_id_mapping.values())}"
+        )
         print("\nFirst few mappings:")
         for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
             print(f"{gene}: {gene_id}")
-            
+
         with open(output_file, "w", newline="") as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(["Gene", "ID"])
@@ -198,6 +214,7 @@ def write_gene_mappings(gene_id_mapping: Dict[str, int], output_file: str, datas
 
 
 import json
+
 
 def main():
     try:
@@ -233,6 +250,7 @@ def main():
         all_genes.update(df["Processed_Enhancer_Info"].explode().dropna())
         all_genes.update(df[dss1_gene_col].dropna())
 
+        """
         # Add genes from HOME1
         home1_gene_col = (
             "Gene_Symbol_Nearby"
@@ -241,9 +259,10 @@ def main():
         )
         all_genes.update(df_home1["Processed_Enhancer_Info"].explode().dropna())
         all_genes.update(df_home1[home1_gene_col].dropna())
+        """
 
         def create_gene_id_mapping(df: pd.DataFrame, dmr_max: int) -> Dict[str, int]:
-            """Create gene ID mapping using dataset's own max DMR number"""
+            # Create gene ID mapping using dataset's own max DMR number
             all_genes = set()
             gene_col = (
                 "Gene_Symbol_Nearby"
@@ -270,18 +289,18 @@ def main():
 
         # Create separate mappings for each dataset
         dss1_max_dmr = max(df["DMR_No."])
-        home1_max_dmr = max(df_home1["DMR_No."])
+        # home1_max_dmr = max(df_home1["DMR_No."])
 
         dss1_gene_mapping = create_gene_id_mapping(df, dss1_max_dmr)
-        home1_gene_mapping = create_gene_id_mapping(df_home1, home1_max_dmr)
+        # home1_gene_mapping = create_gene_id_mapping(df_home1, home1_max_dmr)
 
         # Create bipgraphs with their respective mappings and column names
         bipartite_graph = create_bipartite_graph(
             df, dss1_gene_mapping, closest_gene_col="Gene_Symbol_Nearby"
         )
-        bipartite_graph_home1 = create_bipartite_graph(
-            df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol"
-        )
+        # bipartite_graph_home1 = create_bipartite_graph(
+        #    df_home1, home1_gene_mapping, closest_gene_col="Gene_Symbol"
+        # )
     except Exception as e:
         print(f"Error in initialization: {e}")
         raise
@@ -290,16 +309,18 @@ def main():
     print("\n=== DSS1 Graph Statistics ===")
     validate_bipartite_graph(bipartite_graph)
 
-    print("\n=== HOME1 Graph Statistics ===")
-    validate_bipartite_graph(bipartite_graph_home1)
+    # print("\n=== HOME1 Graph Statistics ===")
+    # validate_bipartite_graph(bipartite_graph_home1)
 
     # Write DSS1 outputs
-    write_bipartite_graph(bipartite_graph, "bipartite_graph_output.txt", df, dss1_gene_mapping)
+    write_bipartite_graph(
+        bipartite_graph, "bipartite_graph_output.txt", df, dss1_gene_mapping
+    )
     write_gene_mappings(dss1_gene_mapping, "dss1_gene_ids.csv", "DSS1")
 
-    # Write HOME1 outputs 
-    write_bipartite_graph(bipartite_graph_home1, "bipartite_graph_home1_output.txt", df_home1, home1_gene_mapping)
-    write_gene_mappings(home1_gene_mapping, "home1_gene_ids.csv", "HOME1")
+    # Write HOME1 outputs
+    # write_bipartite_graph(bipartite_graph_home1, "bipartite_graph_home1_output.txt", df_home1, home1_gene_mapping)
+    # write_gene_mappings(home1_gene_mapping, "home1_gene_ids.csv", "HOME1")
 
     # Process bicliques after they've been generated by external tool
 
@@ -363,24 +384,33 @@ def main():
             for _, row in df.iterrows():
                 dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
                 dmr_metadata[f"DMR_{dmr_id+1}"] = {
-                    "area": str(row["Area_Stat"]) if "Area_Stat" in df.columns else "N/A",
-                    "description": str(row["Gene_Description"]) if "Gene_Description" in df.columns else "N/A",
+                    "area": str(row["Area_Stat"])
+                    if "Area_Stat" in df.columns
+                    else "N/A",
+                    "description": str(row["Gene_Description"])
+                    if "Gene_Description" in df.columns
+                    else "N/A",
                     "name": f"DMR_{row['DMR_No.']}",
-                    "bicliques": node_biclique_map.get(dmr_id, [])
+                    "bicliques": node_biclique_map.get(dmr_id, []),
                 }
 
             gene_metadata = {}
             for gene_name, gene_id in dss1_gene_mapping.items():
-                gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+                gene_matches = df[
+                    df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()
+                ]
                 description = "N/A"
-                if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
+                if (
+                    not gene_matches.empty
+                    and "Gene_Description" in gene_matches.columns
+                ):
                     description = str(gene_matches.iloc[0]["Gene_Description"])
-        
+
                 gene_metadata[gene_name] = {
                     "description": description,
                     "id": gene_id,
                     "bicliques": node_biclique_map.get(gene_id, []),
-                    "name": gene_name
+                    "name": gene_name,
                 }
 
             # Calculate dominating set before visualization
