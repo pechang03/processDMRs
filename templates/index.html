@@ -141,6 +141,24 @@
       </div>
       {% endfor %} {% endif %}
     </div>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Get all tab elements
+      var tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+    
+      tabs.forEach(function(tab) {
+          tab.addEventListener('click', function(e) {
+              e.preventDefault();
+            
+              // If it's the statistics tab, load the statistics page
+              if (this.id === 'statistics-tab') {
+                  window.location.href = '/statistics';
+                  return;
+              }
+          });
+      });
+  });
+  </script>
   </body>
 </html>
 <style>
