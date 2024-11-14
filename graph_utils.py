@@ -135,8 +135,11 @@ def create_bipartite_graph(df: pd.DataFrame, gene_id_mapping: Dict[str, int], cl
 
         # Add valid enhancer genes
         if isinstance(row["Processed_Enhancer_Info"], set):
-            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"]}
-            associated_genes.update(enhancer_genes)
+            associated_genes.update(g.lower() for g in row["Processed_Enhancer_Info"])
+            
+        # Add promoter genes if they exist
+        if "Processed_Promoter_Info" in row and isinstance(row["Processed_Promoter_Info"], set):
+            associated_genes.update(g.lower() for g in row["Processed_Promoter_Info"])
 
         # Add edges
         for gene in associated_genes:
