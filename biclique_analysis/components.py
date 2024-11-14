@@ -72,9 +72,16 @@ def visualize_component(
     node_labels = {}
     for node in component_info["component"]:
         if bipartite_graph.nodes[node]["bipartite"] == 0:
-            node_labels[node] = f"DMR_{node+1}"
+            # For DMRs, use DMR_1 format
+            dmr_label = f"DMR_{node+1}"
+            node_labels[node] = dmr_label
         else:
-            node_labels[node] = reverse_gene_mapping.get(node, f"Gene_{node}")
+            # For genes, use actual gene name from reverse mapping
+            gene_name = reverse_gene_mapping.get(node)
+            if gene_name:
+                node_labels[node] = gene_name
+            else:
+                node_labels[node] = f"Gene_{node}"
     
     # Create visualization
     node_biclique_map = create_node_biclique_map(component_info["raw_bicliques"])
