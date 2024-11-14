@@ -7,6 +7,13 @@
 </head>
 <body>
     <div class="container mt-5">
+        <!-- Add navigation back to main page -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index_route') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Statistics</li>
+            </ol>
+        </nav>
         <h1>Detailed Biclique Analysis Statistics</h1>
 
         <!-- Add this right after the <h1> tag -->

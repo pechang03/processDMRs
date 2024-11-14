@@ -8,6 +8,13 @@
 </head>
 <body>
     <div class="container mt-5">
+        <!-- Add navigation -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index_route') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Component {{ component.id }}</li>
+            </ol>
+        </nav>
         <h1>Component Details</h1>
         
         {% if component %}
@@ -135,8 +142,10 @@
                     <h3>Visualization</h3>
                     <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
                     <script>
-                        var graph = {{ component.plotly_graph|safe }};
-                        Plotly.newPlot('plotly-graph-{{ component.id }}', graph.data, graph.layout);
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var graphData = {{ component.plotly_graph|safe }};
+                            Plotly.newPlot('plotly-graph-{{ component.id }}', graphData.data, graphData.layout);
+                        });
                     </script>
                 </div>
                 {% endif %}
