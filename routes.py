@@ -1,9 +1,7 @@
-from flask import render_template
+from flask import render_template, request
 from process_data import process_data
-from biclique_analysis.statistics import calculate_biclique_statistics
 
-
-def index():
+def index_route():
     try:
         results = process_data()
         if "error" in results:
@@ -13,35 +11,12 @@ def index():
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
 
-        # Create properly structured statistics dictionary
-        detailed_stats = {
-            "size_distribution": {},  # Initialize empty if not available
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0}
-            }),
-            "node_participation": {
-                "dmrs": {},
-                "genes": {}
-            },
-            "edge_coverage": {
-                "single": 0,
-                "multiple": 0,
-                "uncovered": 0,
-                "total": 0,
-                "single_percentage": 0,
-                "multiple_percentage": 0,
-                "uncovered_percentage": 0
-            }
-        }
-
         return render_template(
             "index.html",
             results=results,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            statistics=detailed_stats,  # Pass the properly structured statistics
-            bicliques_result=results,  # Add this line to pass component data
+            bicliques_result=results,
             coverage=results.get("coverage", {}),
             node_labels=results.get("node_labels", {})
         )
@@ -50,35 +25,20 @@ def index():
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
-from flask import render_template, request  # Add this at the top
-from process_data import process_data
-from biclique_analysis.statistics import calculate_biclique_statistics
-
-def statistics():
-    """Handle the statistics route"""
+def statistics_route():
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Get selected component ID from query parameters
         selected_component_id = request.args.get('component_id', type=int)
         
-        # Create a properly structured statistics dictionary
         detailed_stats = {
             "size_distribution": {},
-            "coverage": {
-                "dmrs": {
-                    "covered": results.get("coverage", {}).get("dmrs", {}).get("covered", 0),
-                    "total": results.get("coverage", {}).get("dmrs", {}).get("total", 0),
-                    "percentage": results.get("coverage", {}).get("dmrs", {}).get("percentage", 0)
-                },
-                "genes": {
-                    "covered": results.get("coverage", {}).get("genes", {}).get("covered", 0),
-                    "total": results.get("coverage", {}).get("genes", {}).get("total", 0),
-                    "percentage": results.get("coverage", {}).get("genes", {}).get("percentage", 0)
-                }
-            },
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0}
+            }),
             "node_participation": {
                 "dmrs": {},
                 "genes": {}
@@ -137,6 +97,34 @@ def statistics():
             statistics=detailed_stats,
             bicliques_result=results,
             selected_component_id=selected_component_id
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template("error.html", message=str(e))
+
+def component_detail_route(component_id):
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        # Find the requested component
+        component = None
+        if "interesting_components" in results:
+            for comp in results["interesting_components"]:
+                if comp["id"] == component_id:
+                    component = comp
+                    break
+
+        if component is None:
+            return render_template("error.html", message=f"Component {component_id} not found")
+
+        return render_template(
+            "components.html",
+            component=component,
+            dmr_metadata=results.get("dmr_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {})
         )
     except Exception as e:
         import traceback
