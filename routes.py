@@ -1,5 +1,6 @@
 from flask import render_template
 from process_data import process_data
+from biclique_analysis.statistics import calculate_biclique_statistics
 
 
 def index():
@@ -37,5 +38,37 @@ def index():
     except Exception as e:
         import traceback
 
+        traceback.print_exc()
+        return render_template("error.html", message=str(e))
+
+def statistics():
+    """Handle the statistics route"""
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        # Calculate statistics using the bicliques result
+        bipartite_graph = results.get("bipartite_graph")
+        bicliques = results.get("bicliques", [])
+        
+        if bipartite_graph and bicliques:
+            detailed_stats = calculate_biclique_statistics(bicliques, bipartite_graph)
+        else:
+            detailed_stats = {
+                "size_distribution": {},
+                "coverage": results.get("coverage", {}),
+                "node_participation": {"dmrs": {}, "genes": {}},
+                "edge_coverage": {"single": 0, "multiple": 0, "uncovered": 0, "total": 0,
+                                "single_percentage": 0, "multiple_percentage": 0, "uncovered_percentage": 0}
+            }
+
+        return render_template(
+            "statistics.html", 
+            statistics=detailed_stats,
+            bicliques_result=results
+        )
+    except Exception as e:
+        import traceback
         traceback.print_exc()
         return render_template("error.html", message=str(e))
