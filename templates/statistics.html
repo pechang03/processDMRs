@@ -152,45 +152,44 @@
                 {% endif %}
             </div>
         </div>
-        
-        <!-- Edge Coverage -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3>Edge Coverage</h3>
-            </div>
-            <div class="card-body">
-                {% if statistics and statistics.edge_coverage %}
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Coverage Type</th>
-                                <th>Count</th>
-                                <th>Percentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Single Coverage</td>
-                                <td>{{ statistics.edge_coverage.single }}</td>
-                                <td>{{ "%.1f"|format(statistics.edge_coverage.single_percentage * 100) }}%</td>
-                            </tr>
-                            <tr>
-                                <td>Multiple Coverage</td>
-                                <td>{{ statistics.edge_coverage.multiple }}</td>
-                                <td>{{ "%.1f"|format(statistics.edge_coverage.multiple_percentage * 100) }}%</td>
-                            </tr>
-                            <tr>
-                                <td>Uncovered</td>
-                                <td>{{ statistics.edge_coverage.uncovered }}</td>
-                                <td>{{ "%.1f"|format(statistics.edge_coverage.uncovered_percentage * 100) }}%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>No edge coverage data available.</p>
-                {% endif %}
-            </div>
-        </div>
+          <!-- Edge Coverage -->
+          <div class="card mb-4">
+              <div class="card-header">
+                  <h3>Edge Coverage</h3>
+              </div>
+              <div class="card-body">
+                  {% if statistics and statistics.edge_coverage %}
+                      <table class="table">
+                          <thead>
+                              <tr>
+                                  <th>Coverage Type</th>
+                                  <th>Count</th>
+                                  <th>Percentage</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <tr>
+                                  <td>Single Coverage</td>
+                                  <td>{{ statistics.edge_coverage.single }}</td>
+                                  <td>{{ "%.1f"|format(statistics.edge_coverage.single_percentage * 100) }}%</td>
+                              </tr>
+                              <tr>
+                                  <td>Multiple Coverage</td>
+                                  <td>{{ statistics.edge_coverage.multiple }}</td>
+                                  <td>{{ "%.1f"|format(statistics.edge_coverage.multiple_percentage * 100) }}%</td>
+                              </tr>
+                              <tr>
+                                  <td>Uncovered</td>
+                                  <td>{{ statistics.edge_coverage.uncovered }}</td>
+                                  <td>{{ "%.1f"|format(statistics.edge_coverage.uncovered_percentage * 100) }}%</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  {% else %}
+                      <p>No edge coverage data available.</p>
+                  {% endif %}
+              </div>
+          </div>
         </div>
         <div class="tab-pane fade" id="statistics" role="tabpanel">
             <!-- Statistics content -->
