@@ -48,9 +48,9 @@ def parse_arguments():
     )
     parser.add_argument(
         '--format',
-        choices=['id', 'gene_name'],
-        default='gene_name',
-        help='Format for biclique file parsing'
+        choices=['gene-name', 'number'],
+        default='gene-name',
+        help='Format for biclique file parsing (gene-name or number)'
     )
     parser.add_argument(
         '--debug',

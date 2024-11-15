@@ -13,9 +13,8 @@ def read_bicliques_file(
     file_format: str = "gene_name"  # Add format parameter, default to gene_name format
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
-    print("\nReading bicliques file:")
+    print(f"\nReading bicliques file in {file_format} format")
     print(f"Expected DMR range: 0 to {max_DMR_id-1}")
-    print(f"File format: {file_format}")
 
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -32,7 +31,7 @@ def read_bicliques_file(
     for gene in test_genes:
         print(f"'{gene}' in mapping: {gene in gene_id_mapping}")
 
-    bicliques, line_idx = parse_bicliques(lines, max_DMR_id, gene_id_mapping)
+    bicliques, line_idx = parse_bicliques(lines, max_DMR_id, gene_id_mapping, file_format=file_format)
 
     # Calculate coverage information
     coverage_info = calculate_coverage(bicliques, original_graph)
