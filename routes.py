@@ -119,24 +119,34 @@ def component_detail_route(component_id):
                     if "bicliques" in formatted_comp:
                         formatted_bicliques = []
                         for idx, biclique in enumerate(formatted_comp["bicliques"]):
+                            # Check the structure of the biclique
+                            if isinstance(biclique, tuple) and len(biclique) == 2:
+                                dmrs, genes = biclique
+                            elif isinstance(biclique, dict) and 'dmrs' in biclique and 'genes' in biclique:
+                                dmrs = biclique['dmrs']
+                                genes = biclique['genes']
+                            else:
+                                print(f"Warning: Unexpected biclique structure: {biclique}")
+                                continue
+
                             # Create the expected structure
                             formatted_biclique = {
-                                "size": f"{len(biclique[0])}x{len(biclique[1])}",
+                                "size": f"{len(dmrs)}x{len(genes)}",
                                 "details": {
                                     "dmrs": [
                                         {
                                             "id": f"DMR_{dmr}",
                                             "area": results.get("dmr_metadata", {}).get(str(dmr), {}).get("area", "N/A")
                                         }
-                                        for dmr in biclique[0]
+                                        for dmr in dmrs
                                     ],
                                     "genes": [
                                         {
                                             "name": results.get("gene_metadata", {}).get(str(gene), {}).get("name", f"Gene_{gene}"),
-                                            "description": results.get("gene_metadata", {}).get(str(gene), {}).get("description", "n/a"),
+                                            "description": results.get("gene_metadata", {}).get(str(gene), {}).get("description", "N/A"),
                                             "is_split": gene in formatted_comp.get("split_genes", [])
                                         }
-                                        for gene in biclique[1]
+                                        for gene in genes
                                     ]
                                 }
                             }
