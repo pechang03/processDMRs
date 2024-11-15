@@ -109,7 +109,12 @@ def process_data():
         # Process bicliques
         print("Processing bicliques...")
         bicliques_result = process_bicliques(
-            bipartite_graph, BICLIQUES_FILE, max(df["DMR_No."]), "DSS1"
+            bipartite_graph, 
+            BICLIQUES_FILE, 
+            max(df["DMR_No."]), 
+            "DSS1",
+            gene_id_mapping=gene_id_mapping,
+            file_format="name"  # Specify the new format
         )
 
         # Create node_biclique_map
