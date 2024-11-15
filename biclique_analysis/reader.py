@@ -22,6 +22,16 @@ def read_bicliques_file(
 
     # Process file contents
     statistics = parse_header_statistics(lines)
+    # Debug prints for gene_id_mapping
+    print("\nFirst 10 entries in gene_id_mapping:")
+    for gene, id in list(gene_id_mapping.items())[:10]:
+        print(f"'{gene}': {id}")
+
+    print("\nChecking for specific genes:")
+    test_genes = ['oprk1', 'sgk3', 'xkr9', 'col9a1']
+    for gene in test_genes:
+        print(f"'{gene}' in mapping: {gene in gene_id_mapping}")
+
     bicliques, line_idx = parse_bicliques(lines, max_DMR_id, gene_id_mapping)
 
     # Calculate coverage information
