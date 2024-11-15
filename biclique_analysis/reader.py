@@ -10,7 +10,7 @@ def read_bicliques_file(
     max_DMR_id: int, 
     original_graph: nx.Graph,
     gene_id_mapping: Dict[str, int] = None,  # Make optional
-    file_format: str = "id"  # Add format parameter, default to old format
+    file_format: str = "gene_name"  # Add format parameter, default to gene_name format
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
     print("\nReading bicliques file:")
