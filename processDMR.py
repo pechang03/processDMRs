@@ -25,39 +25,33 @@ from typing import Dict
 # Add version constant at top of file
 __version__ = "1.0.0"
 
+
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Process DMR data and generate biclique analysis",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        '--version',
-        action='version',
-        version=f'%(prog)s {__version__}'
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument(
-        '--input',
-        default='./data/DSS1.xlsx',
-        help='Path to input Excel file'
+        "--input", default="./data/DSS1.xlsx", help="Path to input Excel file"
     )
     parser.add_argument(
-        '--output',
-        default='bipartite_graph_output.txt',
-        help='Path to output graph file'
+        "--output",
+        default="bipartite_graph_output.txt",
+        help="Path to output graph file",
     )
     parser.add_argument(
-        '--format',
-        choices=['gene-name', 'number'],
-        default='gene-name',
-        help='Format for biclique file parsing (gene-name or number)'
+        "--format",
+        choices=["gene-name", "number"],
+        default="gene-name",
+        help="Format for biclique file parsing (gene-name or number)",
     )
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Enable debug output'
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
     return parser.parse_args()
+
 
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
@@ -181,35 +175,37 @@ def create_bipartite_graph(
     return B  # Return just the graph instead of a tuple
 
 
-def write_bipartite_graph(graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]):
+def write_bipartite_graph(
+    graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]
+):
     """Write bipartite graph to file using consistent gene IDs."""
     try:
         # Get unique edges (DMR first, gene second)
         unique_edges = set()
         for edge in graph.edges():
-            dmr_node = edge[0] if graph.nodes[edge[0]]['bipartite'] == 0 else edge[1]
-            gene_node = edge[1] if graph.nodes[edge[0]]['bipartite'] == 0 else edge[0]
+            dmr_node = edge[0] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[1]
+            gene_node = edge[1] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[0]
             unique_edges.add((dmr_node, gene_node))
-        
+
         # Sort edges for deterministic output
         sorted_edges = sorted(unique_edges)
-        
+
         with open(output_file, "w") as file:
             # Write header
             n_dmrs = len(df["DMR_No."].unique())
             n_genes = len(gene_id_mapping)
             file.write(f"{n_dmrs} {n_genes}\n")
-            
+
             # Write edges
             for dmr_id, gene_id in sorted_edges:
                 file.write(f"{dmr_id} {gene_id}\n")
-        
+
         # Validation output
         print(f"\nWrote graph to {output_file}:")
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
         print(f"Edges: {len(sorted_edges)}")
-        
+
         # Debug first few edges
         print("\nFirst 5 edges written:")
         for dmr_id, gene_id in sorted_edges[:5]:
@@ -251,7 +247,7 @@ import json
 
 def main():
     args = parse_arguments()
-    
+
     # Update main function to use arguments
     try:
         # Add logging
@@ -309,22 +305,21 @@ def main():
             # Add genes from gene column (case-insensitive)
             gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
             all_genes.update(gene_names)
-        
+
             # Add genes from enhancer info (case-insensitive)
             for genes in df["Processed_Enhancer_Info"]:
                 if genes:  # Check if not None/empty
                     all_genes.update(g.strip().lower() for g in genes)
-        
+
             # Sort genes alphabetically for deterministic assignment
             sorted_genes = sorted(all_genes)
-        
+
             # Create gene mapping starting after max DMR number
             max_dmr = df["DMR_No."].max()
             gene_id_mapping = {
-                gene: idx + max_dmr + 1 
-                for idx, gene in enumerate(sorted_genes)
+                gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
             }
-        
+
             print("\nGene ID Mapping Statistics:")
             print(f"Total unique genes (case-insensitive): {len(all_genes)}")
             print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
@@ -362,9 +357,7 @@ def main():
     # validate_bipartite_graph(bipartite_graph_home1)
 
     # Write DSS1 outputs
-    write_bipartite_graph(
-        bipartite_graph, args.output, df, dss1_gene_mapping
-    )
+    write_bipartite_graph(bipartite_graph, args.output, df, dss1_gene_mapping)
     write_gene_mappings(dss1_gene_mapping, "dss1_gene_ids.csv", "DSS1")
 
     # Write HOME1 outputs
@@ -373,7 +366,9 @@ def main():
 
     # Process bicliques after they've been generated by external tool
 
-    def process_bicliques(graph, filename, max_dmr_id, dataset_name):
+    def process_bicliques(
+        graph, filename, max_dmr_id, dataset_name, gene_id_mapping, file_format
+    ):
         """Helper function to process bicliques for a given graph"""
 
         if not nx.is_bipartite(graph):
@@ -386,7 +381,9 @@ def main():
             bicliques_result = read_bicliques_file(
                 filename,
                 max_DMR_id=max_dmr_id,
-                original_graph=graph,  # Remove validate_fn parameter
+                original_graph=graph,
+                gene_id_mapping=gene_id_mapping,
+                file_format="gene_name",
             )
             if bicliques_result:
                 print_bicliques_summary(bicliques_result, graph)
@@ -397,11 +394,14 @@ def main():
 
     # Process DSS1 bicliques
     try:
+        file_format = "gene_name" if args.format == "gene-name" else "id"
         bicliques_result = process_bicliques(
             bipartite_graph,
             os.path.join("./data", "bipartite_graph_output.txt.biclusters"),
             max(df["DMR_No."]),
             "DSS1",
+            gene_id_mapping=dss1_gene_mapping,
+            file_format=file_format,
         )
 
         if bicliques_result:

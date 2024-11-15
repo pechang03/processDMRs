@@ -2,6 +2,8 @@
 
 import networkx as nx
 from heapq import heapify, heappush, heappop
+import networkx as nx
+import pandas as pd
 
 
 def greedy_rb_domination(graph, df, area_col=None):
