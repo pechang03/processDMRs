@@ -44,7 +44,7 @@ def process_bicliques(
     max_dmr_id: int, 
     dataset_name: str,
     gene_id_mapping: Dict[str, int] = None,  # Add parameter
-    file_format: str = "name"  # Change default to "name"
+    file_format: str = "gene_name"  # Change default to "gene_name"
 ) -> Dict:
     """Process bicliques and add detailed information."""
     bicliques_result = read_bicliques_file(
