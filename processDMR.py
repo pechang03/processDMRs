@@ -1,3 +1,5 @@
+import argparse
+import sys
 import os
 import pandas as pd
 import networkx as nx
@@ -20,6 +22,42 @@ from visualization.core import create_biclique_visualization
 from visualization import create_node_biclique_map
 from typing import Dict
 
+# Add version constant at top of file
+__version__ = "1.0.0"
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Process DMR data and generate biclique analysis",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'%(prog)s {__version__}'
+    )
+    parser.add_argument(
+        '--input',
+        default='./data/DSS1.xlsx',
+        help='Path to input Excel file'
+    )
+    parser.add_argument(
+        '--output',
+        default='bipartite_graph_output.txt',
+        help='Path to output graph file'
+    )
+    parser.add_argument(
+        '--format',
+        choices=['id', 'gene_name'],
+        default='gene_name',
+        help='Format for biclique file parsing'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug output'
+    )
+    return parser.parse_args()
 
 def read_excel_file(filepath):
     """Read and validate an Excel file."""
@@ -212,6 +250,9 @@ import json
 
 
 def main():
+    args = parse_arguments()
+    
+    # Update main function to use arguments
     try:
         # Add logging
         import logging
@@ -221,7 +262,7 @@ def main():
         )
 
         # Read DSS1 data
-        df = read_excel_file("./data/DSS1.xlsx")
+        df = read_excel_file(args.input)
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
@@ -322,7 +363,7 @@ def main():
 
     # Write DSS1 outputs
     write_bipartite_graph(
-        bipartite_graph, "bipartite_graph_output.txt", df, dss1_gene_mapping
+        bipartite_graph, args.output, df, dss1_gene_mapping
     )
     write_gene_mappings(dss1_gene_mapping, "dss1_gene_ids.csv", "DSS1")
 

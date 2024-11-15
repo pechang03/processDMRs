@@ -1,8 +1,37 @@
+import argparse
+import sys
 from flask import Flask, render_template
 from routes import index_route, statistics_route, component_detail_route
 from process_data import process_data
 
 app = Flask(__name__)
+
+# Add version constant at top of file
+__version__ = "1.0.0"
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="DMR Analysis Web Application",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'%(prog)s {__version__}'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=5000,
+        help='Port to run the web server on'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Run in debug mode'
+    )
+    return parser.parse_args()
 
 # Register routes
 app.add_url_rule('/', 'index_route', index_route)
@@ -10,7 +39,8 @@ app.add_url_rule('/statistics', 'statistics_route', statistics_route)
 app.add_url_rule('/component/<int:component_id>', 'component_detail', component_detail_route)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    args = parse_arguments()
+    app.run(debug=args.debug, port=args.port)
 
 
 
