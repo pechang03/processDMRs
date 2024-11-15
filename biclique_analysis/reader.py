@@ -113,19 +113,19 @@ def parse_bicliques(
                 token = token.strip().lower()  # Normalize token
                 
                 # First check if it's a valid gene name
-                if token in gene_id_mapping:
+                if gene_id_mapping and token in gene_id_mapping:
                     gene_ids.add(gene_id_mapping[token])
                     continue
                     
-                # Then try to convert to DMR ID and validate
+                # Then try to parse as DMR ID
                 try:
                     dmr_id = int(token)
                     if dmr_id in valid_dmr_ids:
                         dmr_ids.add(dmr_id)
                     else:
-                        print(f"Warning: Invalid DMR ID {dmr_id} on line {line_idx + 1}")
+                        print(f"Warning: DMR ID {dmr_id} out of valid range on line {line_idx + 1}")
                 except ValueError:
-                    print(f"Warning: Token '{token}' is neither a valid gene name nor DMR ID on line {line_idx + 1}")
+                    print(f"Warning: Token '{token}' not found in gene mapping on line {line_idx + 1}")
         else:
             # Handle original ID format
             try:
