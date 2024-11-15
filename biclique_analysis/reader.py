@@ -86,6 +86,11 @@ def parse_bicliques(
     bicliques = []
     line_idx = 0
     
+    # Add debug print for gene_id_mapping
+    print(f"\nGene ID mapping size: {len(gene_id_mapping) if gene_id_mapping else 0}")
+    if gene_id_mapping:
+        print(f"Sample of gene names: {list(gene_id_mapping.keys())[:5]}")
+    
     # Create set of valid DMR IDs (0 to max_DMR_id-1)
     valid_dmr_ids = set(range(max_DMR_id))
 
