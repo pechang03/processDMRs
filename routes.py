@@ -116,41 +116,37 @@ def component_detail_route(component_id):
                 if comp["id"] == component_id:
                     # Format the bicliques data structure
                     formatted_comp = comp.copy()
-                    if "bicliques" in formatted_comp:
+                    if "raw_bicliques" in formatted_comp:
                         formatted_bicliques = []
-                        for idx, biclique in enumerate(formatted_comp["bicliques"]):
-                            # Check the structure of the biclique
-                            if isinstance(biclique, tuple) and len(biclique) == 2:
-                                dmrs, genes = biclique
-                            elif isinstance(biclique, dict) and 'dmrs' in biclique and 'genes' in biclique:
-                                dmrs = biclique['dmrs']
-                                genes = biclique['genes']
-                            else:
-                                print(f"Warning: Unexpected biclique structure: {biclique}")
-                                continue
+                        for idx, biclique in enumerate(formatted_comp["raw_bicliques"]):
+                            dmr_nodes, gene_nodes = biclique
+                            
+                            # Format DMR details
+                            dmr_details = []
+                            for dmr in dmr_nodes:
+                                dmr_label = f"DMR_{dmr+1}"
+                                dmr_details.append({
+                                    "id": dmr_label,
+                                    "area": results.get("dmr_metadata", {}).get(dmr_label, {}).get("area", "N/A")
+                                })
 
-                            # Create the expected structure
-                            formatted_biclique = {
-                                "size": f"{len(dmrs)}x{len(genes)}",
+                            # Format gene details
+                            gene_details = []
+                            for gene in gene_nodes:
+                                gene_name = results.get("node_labels", {}).get(gene, f"Gene_{gene}")
+                                gene_details.append({
+                                    "name": gene_name,
+                                    "description": results.get("gene_metadata", {}).get(gene_name, {}).get("description", "N/A"),
+                                    "is_split": gene in formatted_comp.get("split_genes", [])
+                                })
+
+                            formatted_bicliques.append({
+                                "size": f"{len(dmr_nodes)}x{len(gene_nodes)}",
                                 "details": {
-                                    "dmrs": [
-                                        {
-                                            "id": f"DMR_{dmr}",
-                                            "area": results.get("dmr_metadata", {}).get(str(dmr), {}).get("area", "N/A")
-                                        }
-                                        for dmr in dmrs
-                                    ],
-                                    "genes": [
-                                        {
-                                            "name": results.get("gene_metadata", {}).get(str(gene), {}).get("name", f"Gene_{gene}"),
-                                            "description": results.get("gene_metadata", {}).get(str(gene), {}).get("description", "N/A"),
-                                            "is_split": gene in formatted_comp.get("split_genes", [])
-                                        }
-                                        for gene in genes
-                                    ]
+                                    "dmrs": dmr_details,
+                                    "genes": gene_details
                                 }
-                            }
-                            formatted_bicliques.append(formatted_biclique)
+                            })
                         formatted_comp["bicliques"] = formatted_bicliques
                     component = formatted_comp
                     break
@@ -162,7 +158,8 @@ def component_detail_route(component_id):
             "components.html",
             component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {})
+            gene_metadata=results.get("gene_metadata", {}),
+            node_labels=results.get("node_labels", {})
         )
     except Exception as e:
         import traceback
