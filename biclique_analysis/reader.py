@@ -93,16 +93,19 @@ def parse_bicliques(
         tokens = line.split()
         
         if file_format == "name":
-            # Handle name format
+            # Handle name format - all tokens are either gene names or DMR IDs
             gene_names = []
             dmr_ids = []
             for token in tokens:
+                # Try to convert to integer for DMR IDs
                 try:
                     dmr_id = int(token)
                     dmr_ids.append(dmr_id)
                 except ValueError:
-                    gene_names.append(token.lower())
+                    # If not an integer, it's a gene name
+                    gene_names.append(token.lower())  # Convert to lowercase for case-insensitive matching
             
+            # Convert gene names to IDs using mapping
             gene_ids = set()
             for gene_name in gene_names:
                 if gene_name in gene_id_mapping:
@@ -118,16 +121,18 @@ def parse_bicliques(
                     line_idx += 1
                     continue
                     
-                dmr_ids = [int(x) for x in parts[1].split()]
                 gene_ids = {int(x) for x in parts[0].split()}
+                dmr_ids = [int(x) for x in parts[1].split()]
                 
             except ValueError as e:
                 print(f"Warning: Error parsing line {line_idx + 1}: {e}")
                 line_idx += 1
                 continue
 
-        dmr_nodes = set(dmr_ids)
-        bicliques.append((dmr_nodes, gene_ids))
+        if dmr_ids:  # Only add if we have DMR IDs
+            dmr_nodes = set(dmr_ids)
+            bicliques.append((dmr_nodes, gene_ids))
+        
         line_idx += 1
 
     return bicliques, line_idx
