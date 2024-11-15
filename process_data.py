@@ -114,7 +114,7 @@ def process_data():
             max(df["DMR_No."]), 
             "DSS1",
             gene_id_mapping=gene_id_mapping,
-            file_format="name"  # Specify the new format
+            file_format="name"  # Set default to "name"
         )
 
         # Create node_biclique_map
