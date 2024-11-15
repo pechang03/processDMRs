@@ -6,7 +6,7 @@ import networkx as nx
 
 
 def read_bicliques_file(
-    filename: str, max_DMR_id: int, original_graph: nx.Graph
+    filename: str, max_DMR_id: int, original_graph: nx.Graph, gene_id_mapping: Dict[str, int]
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
     print("\nReading bicliques file:")
@@ -17,7 +17,7 @@ def read_bicliques_file(
 
     # Process file contents
     statistics = parse_header_statistics(lines)
-    bicliques, line_idx = parse_bicliques(lines, max_DMR_id)
+    bicliques, line_idx = parse_bicliques(lines, max_DMR_id, gene_id_mapping)
 
     # Calculate coverage information
     coverage_info = calculate_coverage(bicliques, original_graph)
@@ -62,7 +62,7 @@ def parse_header_statistics(lines: List[str]) -> Dict:
 
 
 def parse_bicliques(
-    lines: List[str], max_DMR_id: int
+    lines: List[str], max_DMR_id: int, gene_id_mapping: Dict[str, int]
 ) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
     """Parse bicliques from file lines."""
     bicliques = []
@@ -81,10 +81,31 @@ def parse_bicliques(
             line_idx += 1
             continue
 
-        nodes = [int(x) for x in line.split()]
-        dmr_nodes = {n for n in nodes if n < max_DMR_id}
-        gene_nodes = {n for n in nodes if n >= max_DMR_id}
-        bicliques.append((dmr_nodes, gene_nodes))
+        # Split line into tokens
+        tokens = line.split()
+        
+        # Separate gene names and DMR IDs
+        gene_names = []
+        dmr_ids = []
+        for token in tokens:
+            # Try to convert to integer for DMR IDs
+            try:
+                dmr_id = int(token)
+                dmr_ids.append(dmr_id)
+            except ValueError:
+                # If conversion fails, it's a gene name
+                gene_names.append(token.lower())  # Convert to lowercase for case-insensitive matching
+        
+        # Convert gene names to IDs using mapping
+        gene_ids = set()
+        for gene_name in gene_names:
+            if gene_name in gene_id_mapping:
+                gene_ids.add(gene_id_mapping[gene_name])
+            else:
+                print(f"Warning: Gene {gene_name} not found in mapping")
+        
+        dmr_nodes = set(dmr_ids)
+        bicliques.append((dmr_nodes, gene_ids))
         line_idx += 1
 
     return bicliques, line_idx
