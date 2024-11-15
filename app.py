@@ -31,6 +31,12 @@ def parse_arguments():
         action='store_true',
         help='Run in debug mode'
     )
+    parser.add_argument(
+        '--format',
+        choices=['gene-name', 'number'],
+        default='gene-name',
+        help='Format for biclique file parsing (gene-name or number)'
+    )
     return parser.parse_args()
 
 # Register routes
@@ -40,6 +46,8 @@ app.add_url_rule('/component/<int:component_id>', 'component_detail', component_
 
 if __name__ == "__main__":
     args = parse_arguments()
+    # Store format in app config so it's accessible to the processing functions
+    app.config['BICLIQUE_FORMAT'] = args.format
     app.run(debug=args.debug, port=args.port)
 
 

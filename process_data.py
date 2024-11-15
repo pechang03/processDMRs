@@ -114,7 +114,7 @@ def process_data():
             max(df["DMR_No."]), 
             "DSS1",
             gene_id_mapping=gene_id_mapping,
-            file_format="gene_name"  # Set default to "gene_name"
+            file_format=app.config.get('BICLIQUE_FORMAT', 'gene_name')  # Get format from app config
         )
 
         # Create node_biclique_map
