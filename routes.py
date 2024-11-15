@@ -116,6 +116,47 @@ def component_detail_route(component_id):
                 if comp["id"] == component_id:
                     # Format the bicliques data structure
                     formatted_comp = comp.copy()
+                    
+                    # Create visualization if it doesn't exist
+                    if "raw_bicliques" in formatted_comp and not formatted_comp.get("plotly_graph"):
+                        try:
+                            from visualization import (
+                                create_biclique_visualization,
+                                create_node_biclique_map,
+                                calculate_node_positions
+                            )
+                            
+                            # Create node_biclique_map for this component
+                            node_biclique_map = create_node_biclique_map(formatted_comp["raw_bicliques"])
+                            
+                            # Calculate positions
+                            node_positions = calculate_node_positions(
+                                formatted_comp["raw_bicliques"],
+                                node_biclique_map
+                            )
+                            
+                            # Create visualization
+                            viz_data = create_biclique_visualization(
+                                formatted_comp["raw_bicliques"],
+                                results.get("node_labels", {}),
+                                node_positions,
+                                node_biclique_map,
+                                dmr_metadata=results.get("dmr_metadata", {}),
+                                gene_metadata=results.get("gene_metadata", {}),
+                                gene_id_mapping=results.get("gene_id_mapping", {})
+                            )
+                            
+                            # Store visualization data
+                            import json
+                            formatted_comp["plotly_graph"] = json.loads(viz_data)
+                            print("Successfully created visualization data")  # Debug print
+                            
+                        except Exception as viz_error:
+                            print(f"Error creating visualization: {str(viz_error)}")
+                            import traceback
+                            traceback.print_exc()
+                    
+                    # Format bicliques for display
                     if "raw_bicliques" in formatted_comp:
                         formatted_bicliques = []
                         for idx, biclique in enumerate(formatted_comp["raw_bicliques"]):
@@ -153,6 +194,12 @@ def component_detail_route(component_id):
 
         if component is None:
             return render_template("error.html", message=f"Component {component_id} not found")
+
+        # Debug print to check visualization data
+        if component.get("plotly_graph"):
+            print("Visualization data present in component")
+        else:
+            print("No visualization data found in component")
 
         return render_template(
             "components.html",
