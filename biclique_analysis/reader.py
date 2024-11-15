@@ -6,11 +6,16 @@ import networkx as nx
 
 
 def read_bicliques_file(
-    filename: str, max_DMR_id: int, original_graph: nx.Graph, gene_id_mapping: Dict[str, int]
+    filename: str, 
+    max_DMR_id: int, 
+    original_graph: nx.Graph,
+    gene_id_mapping: Dict[str, int] = None,  # Make optional
+    file_format: str = "id"  # Add format parameter, default to old format
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
     print("\nReading bicliques file:")
     print(f"Expected DMR range: 0 to {max_DMR_id-1}")
+    print(f"File format: {file_format}")
 
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -62,7 +67,10 @@ def parse_header_statistics(lines: List[str]) -> Dict:
 
 
 def parse_bicliques(
-    lines: List[str], max_DMR_id: int, gene_id_mapping: Dict[str, int]
+    lines: List[str], 
+    max_DMR_id: int,
+    gene_id_mapping: Dict[str, int] = None,
+    file_format: str = "id"
 ) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
     """Parse bicliques from file lines."""
     bicliques = []
@@ -84,26 +92,40 @@ def parse_bicliques(
         # Split line into tokens
         tokens = line.split()
         
-        # Separate gene names and DMR IDs
-        gene_names = []
-        dmr_ids = []
-        for token in tokens:
-            # Try to convert to integer for DMR IDs
+        if file_format == "name":
+            # Handle name format
+            gene_names = []
+            dmr_ids = []
+            for token in tokens:
+                try:
+                    dmr_id = int(token)
+                    dmr_ids.append(dmr_id)
+                except ValueError:
+                    gene_names.append(token.lower())
+            
+            gene_ids = set()
+            for gene_name in gene_names:
+                if gene_name in gene_id_mapping:
+                    gene_ids.add(gene_id_mapping[gene_name])
+                else:
+                    print(f"Warning: Gene {gene_name} not found in mapping")
+        else:
+            # Handle original ID format
             try:
-                dmr_id = int(token)
-                dmr_ids.append(dmr_id)
-            except ValueError:
-                # If conversion fails, it's a gene name
-                gene_names.append(token.lower())  # Convert to lowercase for case-insensitive matching
-        
-        # Convert gene names to IDs using mapping
-        gene_ids = set()
-        for gene_name in gene_names:
-            if gene_name in gene_id_mapping:
-                gene_ids.add(gene_id_mapping[gene_name])
-            else:
-                print(f"Warning: Gene {gene_name} not found in mapping")
-        
+                # Split into two parts at first space
+                parts = line.split(None, 1)
+                if len(parts) != 2:
+                    line_idx += 1
+                    continue
+                    
+                dmr_ids = [int(x) for x in parts[1].split()]
+                gene_ids = {int(x) for x in parts[0].split()}
+                
+            except ValueError as e:
+                print(f"Warning: Error parsing line {line_idx + 1}: {e}")
+                line_idx += 1
+                continue
+
         dmr_nodes = set(dmr_ids)
         bicliques.append((dmr_nodes, gene_ids))
         line_idx += 1

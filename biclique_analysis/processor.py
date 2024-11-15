@@ -39,10 +39,21 @@ def process_enhancer_info(interaction_info):
 
 
 def process_bicliques(
-    bipartite_graph: nx.Graph, bicliques_file: str, max_dmr_id: int, dataset_name: str
+    bipartite_graph: nx.Graph, 
+    bicliques_file: str, 
+    max_dmr_id: int, 
+    dataset_name: str,
+    gene_id_mapping: Dict[str, int] = None,  # Add parameter
+    file_format: str = "id"  # Add format parameter
 ) -> Dict:
     """Process bicliques and add detailed information."""
-    bicliques_result = read_bicliques_file(bicliques_file, max_dmr_id, bipartite_graph)
+    bicliques_result = read_bicliques_file(
+        bicliques_file, 
+        max_dmr_id, 
+        bipartite_graph,
+        gene_id_mapping=gene_id_mapping,
+        file_format=file_format
+    )
 
     return bicliques_result
 
