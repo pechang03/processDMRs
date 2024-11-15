@@ -47,6 +47,7 @@ def process_bicliques(
     file_format: str = "gene_name"  # Change default to "gene_name"
 ) -> Dict:
     """Process bicliques and add detailed information."""
+    print(f"Processing bicliques using format: {file_format}")
     bicliques_result = read_bicliques_file(
         bicliques_file, 
         max_dmr_id, 
