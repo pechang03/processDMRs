@@ -110,7 +110,7 @@ def parse_bicliques(
         # Split line into tokens
         tokens = line.split()
         
-        if file_format == "name":
+        if file_format == "gene_name":
             gene_ids = set()
             dmr_ids = set()
             
