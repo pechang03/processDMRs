@@ -75,6 +75,9 @@ def parse_bicliques(
     """Parse bicliques from file lines."""
     bicliques = []
     line_idx = 0
+    
+    # Create set of valid DMR IDs (0 to max_DMR_id-1)
+    valid_dmr_ids = set(range(max_DMR_id))
 
     # Skip to first biclique
     while line_idx < len(lines) and (
@@ -93,45 +96,47 @@ def parse_bicliques(
         tokens = line.split()
         
         if file_format == "name":
-            # Handle name format - all tokens are either gene names or DMR IDs
-            gene_names = []
-            dmr_ids = []
+            gene_ids = set()
+            dmr_ids = set()
+            
             for token in tokens:
-                # Try to convert to integer for DMR IDs
+                token = token.strip().lower()  # Normalize token
+                
+                # First check if it's a valid gene name
+                if token in gene_id_mapping:
+                    gene_ids.add(gene_id_mapping[token])
+                    continue
+                    
+                # Then try to convert to DMR ID and validate
                 try:
                     dmr_id = int(token)
-                    dmr_ids.append(dmr_id)
+                    if dmr_id in valid_dmr_ids:
+                        dmr_ids.add(dmr_id)
+                    else:
+                        print(f"Warning: Invalid DMR ID {dmr_id} on line {line_idx + 1}")
                 except ValueError:
-                    # If not an integer, it's a gene name
-                    gene_names.append(token.lower())  # Convert to lowercase for case-insensitive matching
-            
-            # Convert gene names to IDs using mapping
-            gene_ids = set()
-            for gene_name in gene_names:
-                if gene_name in gene_id_mapping:
-                    gene_ids.add(gene_id_mapping[gene_name])
-                else:
-                    print(f"Warning: Gene {gene_name} not found in mapping")
+                    print(f"Warning: Token '{token}' is neither a valid gene name nor DMR ID on line {line_idx + 1}")
         else:
             # Handle original ID format
             try:
-                # Split into two parts at first space
                 parts = line.split(None, 1)
                 if len(parts) != 2:
                     line_idx += 1
                     continue
                     
                 gene_ids = {int(x) for x in parts[0].split()}
-                dmr_ids = [int(x) for x in parts[1].split()]
+                dmr_ids = {int(x) for x in parts[1].split()}
                 
             except ValueError as e:
                 print(f"Warning: Error parsing line {line_idx + 1}: {e}")
                 line_idx += 1
                 continue
 
-        if dmr_ids:  # Only add if we have DMR IDs
-            dmr_nodes = set(dmr_ids)
-            bicliques.append((dmr_nodes, gene_ids))
+        # Only add valid bicliques
+        if dmr_ids and gene_ids:  # Require both parts to be non-empty
+            bicliques.append((dmr_ids, gene_ids))
+        else:
+            print(f"Warning: Skipping line {line_idx + 1} - missing DMRs or genes")
         
         line_idx += 1
 
