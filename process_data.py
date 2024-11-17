@@ -50,10 +50,11 @@ BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
 
 _cached_data = None
 
+
 def process_data():
     """Process the DMR data and return results"""
     global _cached_data
-    
+
     # Return cached data if available
     if _cached_data is not None:
         return _cached_data
@@ -152,7 +153,7 @@ def process_data():
 
         # Process components
         print("Processing components...")
-        interesting_components, simple_connections = process_components(
+        interesting_components, simple_connections, _ = process_components(
             bipartite_graph,
             bicliques_result,
             dmr_metadata=dmr_metadata,
@@ -203,11 +204,15 @@ def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
     result = []
     for biclique in bicliques_data:
         try:
-            if isinstance(biclique, dict) and 'details' in biclique:
+            if isinstance(biclique, dict) and "details" in biclique:
                 # Handle processed biclique format
-                dmrs = {int(d['id'].split('_')[1]) - 1 if isinstance(d['id'], str) else d['id'] 
-                       for d in biclique['details']['dmrs']}
-                genes = {g['name'] for g in biclique['details']['genes']}
+                dmrs = {
+                    int(d["id"].split("_")[1]) - 1
+                    if isinstance(d["id"], str)
+                    else d["id"]
+                    for d in biclique["details"]["dmrs"]
+                }
+                genes = {g["name"] for g in biclique["details"]["genes"]}
                 result.append((dmrs, genes))
             elif isinstance(biclique, tuple) and len(biclique) == 2:
                 # Handle raw biclique format
@@ -217,15 +222,15 @@ def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
             else:
                 print(f"Warning: Unexpected biclique format: {type(biclique)}")
                 continue
-                
+
         except Exception as e:
             print(f"Error processing biclique: {str(e)}")
             continue
-            
+
     print(f"Processed {len(result)} bicliques")
     if result:
         print("Sample biclique sizes:")
         for i, (dmrs, genes) in enumerate(result[:3]):
             print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
-            
+
     return result
