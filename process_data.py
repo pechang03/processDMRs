@@ -205,6 +205,7 @@ def process_data():
             "gene_id_mapping": gene_id_mapping,
             "node_positions": node_positions,
             "node_labels": node_labels,
+            "bipartite_graph": bipartite_graph,  # Add this line
         }
         return _cached_data
     except Exception as e:
