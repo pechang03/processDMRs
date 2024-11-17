@@ -63,9 +63,6 @@ def statistics_route():
 
         selected_component_id = request.args.get("component_id", type=int)
 
-        # Get the bicliques result directly from the processed data
-        bicliques_result = results.get("bicliques_result", {})
-        
         # Create detailed statistics dictionary
         detailed_stats = {
             "size_distribution": {},
@@ -86,60 +83,62 @@ def statistics_route():
                 "dmrs": {},
                 "genes": {}
             },
-            "edge_coverage": {
-                "single": 0,
-                "multiple": 0,
-                "uncovered": 0,
-                "total": 0,
-                "single_percentage": 0,
-                "multiple_percentage": 0,
-                "uncovered_percentage": 0
-            },
             "total_bicliques": len(results.get("bicliques", [])),
             "graph_info": results.get("graph_info", {})
         }
 
-        # Process all bicliques for size distribution
-        size_dist = {}
+        # Process all bicliques for participation statistics
         dmr_participation = {}
         gene_participation = {}
 
+        # First pass: Count participation for each node
         for biclique in results.get("bicliques", []):
             dmr_nodes, gene_nodes = biclique
-            size_key = (len(dmr_nodes), len(gene_nodes))
-            size_dist[size_key] = size_dist.get(size_key, 0) + 1
-
-            # Track node participation
+            
+            # Count DMR participation
             for dmr in dmr_nodes:
                 dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
+                
+            # Count gene participation
             for gene in gene_nodes:
                 gene_participation[gene] = gene_participation.get(gene, 0) + 1
 
-        detailed_stats["size_distribution"] = size_dist
+        # Second pass: Create distribution of participation counts
+        # For DMRs
+        for participation_count in range(1, max(dmr_participation.values()) + 1):
+            count = sum(1 for count in dmr_participation.values() if count == participation_count)
+            if count > 0:  # Only add non-zero entries
+                detailed_stats["node_participation"]["dmrs"][participation_count] = count
 
-        # Calculate participation distributions
-        for count in set(dmr_participation.values()):
-            detailed_stats["node_participation"]["dmrs"][count] = len(
-                [n for n, c in dmr_participation.items() if c == count]
-            )
-        for count in set(gene_participation.values()):
-            detailed_stats["node_participation"]["genes"][count] = len(
-                [n for n, c in gene_participation.items() if c == count]
-            )
+        # For genes
+        for participation_count in range(1, max(gene_participation.values()) + 1):
+            count = sum(1 for count in gene_participation.values() if count == participation_count)
+            if count > 0:  # Only add non-zero entries
+                detailed_stats["node_participation"]["genes"][participation_count] = count
 
-        # Add graph statistics
+        # Process size distribution
+        for biclique in results.get("bicliques", []):
+            dmr_nodes, gene_nodes = biclique
+            size_key = (len(dmr_nodes), len(gene_nodes))
+            detailed_stats["size_distribution"][size_key] = detailed_stats["size_distribution"].get(size_key, 0) + 1
+
+        # Add coverage information
+        if "coverage" in results:
+            detailed_stats["coverage"] = results["coverage"]
+
+        # Add graph information
         if "graph_info" in results:
             detailed_stats["graph_info"] = results["graph_info"]
 
-        # Add debug information if available
-        if "debug" in results:
-            detailed_stats["debug"] = results["debug"]
-
-        print("\nStatistics Summary:")
-        print(f"Total bicliques: {detailed_stats['total_bicliques']}")
-        print(f"Size distribution entries: {len(detailed_stats['size_distribution'])}")
+        print("\nNode Participation Statistics:")
         print(f"DMR participation categories: {len(detailed_stats['node_participation']['dmrs'])}")
         print(f"Gene participation categories: {len(detailed_stats['node_participation']['genes'])}")
+        print("\nSample DMR participation:")
+        for count, nodes in list(detailed_stats['node_participation']['dmrs'].items())[:5]:
+            print(f"  {nodes} DMRs participate in {count} bicliques")
+        print("\nSample gene participation:")
+        for count, nodes in list(detailed_stats['node_participation']['genes'].items())[:5]:
+            print(f"  {nodes} genes participate in {count} bicliques")
 
         return render_template(
             "statistics.html",
