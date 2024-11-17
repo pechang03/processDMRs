@@ -219,3 +219,4 @@ def create_biclique_boxes(
 
 
 
+import networkx as nx
