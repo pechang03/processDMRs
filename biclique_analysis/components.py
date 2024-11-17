@@ -31,9 +31,13 @@ def find_interesting_components(
         # Collect component's bicliques
         component_raw_bicliques = []
         for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]:
-            biclique_nodes = dmr_nodes_bic | gene_nodes_bic
+            # Convert node IDs to integers if they're strings
+            dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
+            gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
+            
+            biclique_nodes = dmr_set | gene_set
             if biclique_nodes & set(component):
-                component_raw_bicliques.append((dmr_nodes_bic, gene_nodes_bic))
+                component_raw_bicliques.append((dmr_set, gene_set))
 
         # Only process if component has interesting bicliques
         interesting_bicliques = [
@@ -43,6 +47,11 @@ def find_interesting_components(
         ]
         
         if interesting_bicliques:
+            # Debug print
+            print(f"\nComponent {idx + 1}:")
+            print(f"DMRs: {len(dmr_nodes)}, Genes: {len(gene_nodes)}")
+            print(f"Interesting bicliques: {len(interesting_bicliques)}")
+            
             component_info = {
                 "id": idx + 1,
                 "size": len(component),
