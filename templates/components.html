@@ -146,9 +146,8 @@
                 {% for gene in component.split_genes %}
                 <tr>
                   <td>{{ gene.gene_name }}</td>
-                  <td>
-                    {{ gene.description if gene.description != "N/A" else "" }}
-                  </td>
+                  <td>{{ gene.description if gene.description != "N/A" else "" }}</td>
+                  <td>{{ gene.type }}</td>
                   <td>{{ gene.bicliques|join(', ') }}</td>
                 </tr>
                 {% endfor %}
