@@ -48,10 +48,18 @@ HOME1_FILE = os.path.join(DATA_DIR, "HOME1.xlsx")
 BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
 
 
+_cached_data = None
+
 def process_data():
     """Process the DMR data and return results"""
+    global _cached_data
+    
+    # Return cached data if available
+    if _cached_data is not None:
+        return _cached_data
+
     try:
-        print("Starting data processing...")
+        print("Starting initial data processing...")
         print(f"Using data directory: {DATA_DIR}")
 
         # Process DSS1 dataset
@@ -197,7 +205,7 @@ def process_data():
             ),
         }
 
-        return {
+        _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
             "simple_connections": simple_connections,
@@ -208,6 +216,7 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
         }
+        return _cached_data
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
         import traceback

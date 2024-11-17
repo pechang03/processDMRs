@@ -115,83 +115,33 @@ def component_detail_route(component_id):
         if "interesting_components" in results:
             for comp in results["interesting_components"]:
                 if comp["id"] == component_id:
-                    # Create a serializable version of the component
-                    formatted_comp = {
-                        "id": comp["id"],
-                        "dmrs": comp.get("dmrs", 0),
-                        "genes": comp.get("genes", 0),
-                        "total_edges": comp.get("total_edges", 0),
-                        "split_genes": [{"gene_name": g.get("gene_name", ""), 
-                                       "description": g.get("description", ""),
-                                       "bicliques": g.get("bicliques", [])} 
-                                      for g in comp.get("split_genes", [])],
-                        "bicliques": [{
-                            "id": idx,
-                            "details": {
-                                "dmrs": [{"id": d, "area": results.get("dmr_metadata", {}).get(str(d), {}).get("area", "N/A")} 
-                                        for d in b[0]] if isinstance(b, tuple) else [],
-                                "genes": [{"name": str(g), 
-                                          "description": results.get("gene_metadata", {}).get(str(g), {}).get("description", "N/A")}
-                                        for g in b[1]] if isinstance(b, tuple) else []
-                            }
-                        } for idx, b in enumerate(comp.get("bicliques", []))],
-                    }
-                    
-                    # Handle plotly_graph data separately
-                    if "plotly_graph" in comp:
+                    # Only create visualization if not already present
+                    if "plotly_graph" not in comp:
                         try:
-                            # Ensure plotly_graph is proper JSON
-                            if isinstance(comp["plotly_graph"], str):
-                                formatted_comp["plotly_graph"] = json.loads(comp["plotly_graph"])
-                            else:
-                                formatted_comp["plotly_graph"] = comp["plotly_graph"]
-                        except json.JSONDecodeError as je:
-                            print(f"Error parsing plotly_graph JSON: {str(je)}")
-                            formatted_comp["plotly_graph"] = None
-                    
-                    component = formatted_comp
+                            component_viz = create_biclique_visualization(
+                                comp["raw_bicliques"],
+                                results["node_labels"],
+                                results["node_positions"],
+                                create_node_biclique_map(comp["raw_bicliques"]),
+                                dmr_metadata=results["dmr_metadata"],
+                                gene_metadata=results["gene_metadata"],
+                                gene_id_mapping=results["gene_id_mapping"]
+                            )
+                            comp["plotly_graph"] = json.loads(component_viz)
+                        except Exception as e:
+                            print(f"Error creating visualization: {str(e)}")
+                            
+                    component = comp
                     break
 
         if component is None:
             return render_template("error.html", message=f"Component {component_id} not found")
 
-        # Debug print
-        print("Component data structure:")
-        print(json.dumps(component, indent=2, default=str))
-
-        # Add these debug prints
-        print("\nComponent structure:")
-        print(json.dumps({
-            "id": component["id"],
-            "dmrs": component.get("dmrs"),
-            "genes": component.get("genes"),
-            "total_edges": component.get("total_edges"),
-            "has_plotly_graph": "plotly_graph" in component,
-            "num_bicliques": len(component.get("bicliques", [])),
-            "num_split_genes": len(component.get("split_genes", [])),
-        }, indent=2))
-
-        if "plotly_graph" in component:
-            print("\nPlotly graph structure:")
-            graph_data = component["plotly_graph"]
-            print(f"Type: {type(graph_data)}")
-            if isinstance(graph_data, str):
-                try:
-                    parsed = json.loads(graph_data)
-                    print("Data keys:", list(parsed.keys()))
-                    print("Number of traces:", len(parsed.get("data", [])))
-                except json.JSONDecodeError as e:
-                    print("Error parsing plotly_graph JSON:", str(e))
-            elif isinstance(graph_data, dict):
-                print("Data keys:", list(graph_data.keys()))
-                print("Number of traces:", len(graph_data.get("data", [])))
-
         return render_template(
             "components.html",
             component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {}),
-            node_labels=results.get("node_labels", {})
+            gene_metadata=results.get("gene_metadata", {})
         )
     except Exception as e:
         import traceback
