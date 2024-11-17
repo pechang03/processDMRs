@@ -214,22 +214,32 @@ def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     # Get connected components
     components = list(nx.connected_components(graph))
     
-    # Count component types
-    single_node = sum(1 for comp in components if len(comp) == 1)
-    small = sum(1 for comp in components if 1 < len(comp) <= 3)
-    interesting = sum(1 for comp in components if len(comp) > 3)
+    # Count component types using same definition as components.py
+    interesting_comps = []
+    single_node = 0
+    small = 0
     
-    # Calculate averages for interesting components
-    interesting_comps = [comp for comp in components if len(comp) > 3]
+    for comp in components:
+        # Count DMRs and genes in component
+        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
+        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
+        
+        if len(comp) == 1:
+            single_node += 1
+        elif len(dmrs) <= 1 and len(genes) <= 1:
+            small += 1
+        else:
+            interesting_comps.append((comp, dmrs, genes))
+    
+    interesting = len(interesting_comps)
+    
+    # Calculate statistics for interesting components
     total_dmrs = 0
     total_genes = 0
     total_bicliques = 0
     split_genes = set()
     
-    for comp in interesting_comps:
-        # Count DMRs and genes in component
-        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
-        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
+    for comp, dmrs, genes in interesting_comps:
         total_dmrs += len(dmrs)
         total_genes += len(genes)
         
@@ -251,7 +261,7 @@ def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
         "interesting": interesting,
         "avg_dmrs": total_dmrs / interesting if interesting else 0,
         "avg_genes": total_genes / interesting if interesting else 0,
-        "with_split_genes": len([c for c in interesting_comps if any(g in split_genes for g in c)]),
+        "with_split_genes": len([c for c, _, _ in interesting_comps if any(g in split_genes for g in c)]),
         "total_split_genes": len(split_genes),
         "total_bicliques": total_bicliques
     }

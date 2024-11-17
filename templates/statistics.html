@@ -212,6 +212,50 @@ rel="stylesheet">
             <!-- Statistics content -->
         </div>
     </div>
+
+    <!-- Interesting Components Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Interesting Components</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Component ID</th>
+                            <th>DMRs</th>
+                            <th>Genes</th>
+                            <th>Split Genes</th>
+                            <th>Total Bicliques</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if bicliques_result and bicliques_result.interesting_components %}
+                            {% for component in bicliques_result.interesting_components %}
+                                <tr>
+                                    <td>{{ component.id }}</td>
+                                    <td>{{ component.dmrs }}</td>
+                                    <td>{{ component.total_genes }}</td>
+                                    <td>{{ component.split_genes|length }}</td>
+                                    <td>{{ component.raw_bicliques|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('component_detail', component_id=component.id) }}" 
+                                           class="btn btn-sm btn-primary">View Details</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6">No interesting components found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 <script
 src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
