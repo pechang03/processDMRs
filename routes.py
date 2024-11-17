@@ -159,6 +159,33 @@ def component_detail_route(component_id):
         print("Component data structure:")
         print(json.dumps(component, indent=2, default=str))
 
+        # Add these debug prints
+        print("\nComponent structure:")
+        print(json.dumps({
+            "id": component["id"],
+            "dmrs": component.get("dmrs"),
+            "genes": component.get("genes"),
+            "total_edges": component.get("total_edges"),
+            "has_plotly_graph": "plotly_graph" in component,
+            "num_bicliques": len(component.get("bicliques", [])),
+            "num_split_genes": len(component.get("split_genes", [])),
+        }, indent=2))
+
+        if "plotly_graph" in component:
+            print("\nPlotly graph structure:")
+            graph_data = component["plotly_graph"]
+            print(f"Type: {type(graph_data)}")
+            if isinstance(graph_data, str):
+                try:
+                    parsed = json.loads(graph_data)
+                    print("Data keys:", list(parsed.keys()))
+                    print("Number of traces:", len(parsed.get("data", [])))
+                except json.JSONDecodeError as e:
+                    print("Error parsing plotly_graph JSON:", str(e))
+            elif isinstance(graph_data, dict):
+                print("Data keys:", list(graph_data.keys()))
+                print("Number of traces:", len(graph_data.get("data", [])))
+
         return render_template(
             "components.html",
             component=component,

@@ -77,7 +77,13 @@
                 try {
                     // Get the graph data
                     var graphData = {{ component.plotly_graph|tojson|safe }};
-                    console.log("Graph data:", graphData);
+                    console.log("Graph data structure:", {
+                        hasData: Boolean(graphData && graphData.data),
+                        hasLayout: Boolean(graphData && graphData.layout),
+                        numTraces: graphData && graphData.data ? graphData.data.length : 0,
+                        dataKeys: graphData ? Object.keys(graphData) : [],
+                        layoutKeys: graphData && graphData.layout ? Object.keys(graphData.layout) : []
+                    });
 
                     if (!graphData || !graphData.data || !graphData.layout) {
                         console.error("Invalid graph data structure:", graphData);
