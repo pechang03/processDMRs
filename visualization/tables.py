@@ -3,7 +3,7 @@
 #
 """Table creation functionality"""
 
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple
 import plotly.graph_objs as go
 
 
