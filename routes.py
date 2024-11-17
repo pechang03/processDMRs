@@ -135,6 +135,7 @@ def component_detail_route(component_id):
                                 results["node_labels"],
                                 results["node_positions"],
                                 create_node_biclique_map(comp["raw_bicliques"]),
+                                original_graph=bipartite_graph,  # Add this line
                                 dmr_metadata=results["dmr_metadata"],
                                 gene_metadata=results["gene_metadata"],
                                 gene_id_mapping=results["gene_id_mapping"],
