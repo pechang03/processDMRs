@@ -138,6 +138,12 @@ def create_edge_traces(
     edge_style: Dict = None  # Add this parameter
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
+    print("\nEdge trace creation debug:")
+    print(f"Number of bicliques: {len(bicliques)}")
+    print("Sample biclique sizes:")
+    for i, (dmrs, genes) in enumerate(bicliques[:3]):
+        print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
+
     traces = []
     default_style = {
         "width": 1,
