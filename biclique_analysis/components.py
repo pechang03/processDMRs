@@ -17,35 +17,44 @@ def find_interesting_components(
     """Find and analyze interesting components without visualization."""
 
     components = list(nx.connected_components(bipartite_graph))
-    print(f"Found {len(components)} total components")
+    total_components = len(components)
+    print(f"\nFound {total_components} total components")
+    print(f"Processing components for analysis...")
 
     interesting_components = []
     reverse_gene_mapping = (
         {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
     )
 
+    # Track component statistics
+    small_components = 0
+    single_node_components = 0
+    processed_components = 0
+
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
 
-        # Only consider components with multiple nodes
+        # Count single node components
         if len(component) < 2:
+            single_node_components += 1
             continue
 
         # Get unique DMRs and genes
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
-        gene_nodes = {
-            n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1
-        }
+        gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
 
         # Only consider components with both DMRs and genes
         if not dmr_nodes or not gene_nodes:
+            small_components += 1
             continue
 
-        component_bicliques = []  # Move this initialization here
-        # Track all genes and their biclique participation
+        processed_components += 1
+        if processed_components % 100 == 0:
+            print(f"Processed {processed_components} components...")
+
+        component_bicliques = []
         gene_participation = {}
 
-        # Single loop for processing bicliques
         for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
             bicliques_result["bicliques"]
         ):
@@ -54,13 +63,11 @@ def find_interesting_components(
 
             if (dmr_set | gene_set) & set(component):
                 component_bicliques.append((dmr_set, gene_set))
-                # Track gene participation
                 for gene_id in gene_set:
                     if gene_id not in gene_participation:
                         gene_participation[gene_id] = set()
                     gene_participation[gene_id].add(biclique_idx)
 
-        # Identify regular and split genes
         regular_genes = []
         split_genes = []
 
@@ -68,9 +75,7 @@ def find_interesting_components(
             gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
             gene_info = {
                 "gene_name": gene_name,
-                "description": gene_metadata.get(gene_name, {}).get(
-                    "description", "N/A"
-                ),
+                "description": gene_metadata.get(gene_name, {}).get("description", "N/A"),
                 "bicliques": sorted(list(bicliques)),
             }
 
@@ -90,9 +95,16 @@ def find_interesting_components(
                 "raw_bicliques": component_bicliques,
                 "total_edges": len(subgraph.edges()),
                 "split_genes": split_genes,
-                "total_genes": len(regular_genes) + len(split_genes),  # Add this
+                "total_genes": len(regular_genes) + len(split_genes),
             }
             interesting_components.append(component_info)
+
+    # Print summary statistics
+    print(f"\nComponent Analysis Summary:")
+    print(f"Total components found: {total_components}")
+    print(f"Single node components: {single_node_components}")
+    print(f"Small components (no DMRs or genes): {small_components}")
+    print(f"Interesting components: {len(interesting_components)}")
 
     return interesting_components
 
