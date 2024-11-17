@@ -1,4 +1,5 @@
 from flask import render_template, request
+import json
 from process_data import process_data
 from visualization import (
     create_biclique_visualization,
@@ -115,12 +116,16 @@ def statistics_route():
 
 
 def component_detail_route(component_id):
-    import json  # Make sure this is at the top
-
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
+
+        bipartite_graph = results.get("bipartite_graph")
+        if not bipartite_graph:
+            return render_template(
+                "error.html", message="Bipartite graph not found in results"
+            )
 
         # Find the requested component
         component = None
@@ -135,7 +140,7 @@ def component_detail_route(component_id):
                                 results["node_labels"],
                                 results["node_positions"],
                                 create_node_biclique_map(comp["raw_bicliques"]),
-                                original_graph=bipartite_graph,  # Add this line
+                                original_graph=bipartite_graph,
                                 dmr_metadata=results["dmr_metadata"],
                                 gene_metadata=results["gene_metadata"],
                                 gene_id_mapping=results["gene_id_mapping"],
