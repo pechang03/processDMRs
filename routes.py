@@ -18,9 +18,30 @@ def index_route():
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
 
+        # Create statistics dictionary for the index page
+        detailed_stats = {
+            "size_distribution": {},
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }),
+            "total_bicliques": len(results.get("bicliques", [])),
+            "graph_info": results.get("graph_info", {})
+        }
+
         return render_template(
             "index.html",
             results=results,
+            statistics=detailed_stats,  # Add this line
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             bicliques_result=results,
