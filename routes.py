@@ -104,6 +104,7 @@ def statistics_route():
         return render_template("error.html", message=str(e))
 
 def component_detail_route(component_id):
+    import json  # Add this import
     try:
         results = process_data()
         if "error" in results:
