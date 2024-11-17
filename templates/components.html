@@ -63,30 +63,26 @@
           <script>
               document.addEventListener('DOMContentLoaded', function() {
                   console.log("DOM loaded, initializing visualization...");
-                  
+        
                   // Get the container element
                   var container = document.getElementById('plotly-graph-{{ component.id }}');
                   console.log("Container element:", container);
-                  
+        
                   try {
-                      // Log the raw data
-                      console.log("Raw component data:", {{ component|tojson|safe }});
-                      
-                      // Parse the graph data
-                      var graphData = {{ component.plotly_graph|safe }};
-                      console.log("Parsed graph data:", graphData);
-                      
-                      // Verify data structure
-                      if (!graphData || !graphData.data || !graphData.layout) {
-                          console.error("Invalid graph data structure:", graphData);
+                      // Get the graph data
+                      var graphData = {{ component.plotly_graph|default('null')|tojson|safe }};
+                      console.log("Graph data type:", typeof graphData);
+            
+                      if (!graphData) {
+                          console.error("No graph data available");
                           return;
                       }
-                      
+            
                       // Set container size
                       container.style.height = '600px';
                       container.style.width = '100%';
                       console.log("Container dimensions:", container.offsetWidth, "x", container.offsetHeight);
-                      
+            
                       // Create the plot
                       Plotly.newPlot(container,
                           graphData.data,
@@ -103,7 +99,7 @@
                       }).catch(function(err) {
                           console.error("Error in plot creation:", err);
                       });
-                      
+            
                   } catch (error) {
                       console.error("Error in visualization creation:", error);
                       console.error("Error stack:", error.stack);
