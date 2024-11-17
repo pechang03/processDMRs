@@ -227,7 +227,7 @@ def process_components(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-) -> Tuple[List[Dict], List[Dict]]:
+) -> Tuple[List[Dict], List[Dict], Dict]:  # Update return type annotation
     """Process connected components of the graph."""
 
     interesting_components = find_interesting_components(
@@ -245,4 +245,11 @@ def process_components(
         )
         interesting_components[0].update(component_data)
 
-    return interesting_components, []  # Empty list for simple_connections
+    # Create basic statistics about components
+    statistics = {
+        "total_components": len(interesting_components),
+        "total_bicliques": sum(len(comp.get("raw_bicliques", [])) for comp in interesting_components),
+        "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
+    }
+
+    return interesting_components, [], statistics  # Return empty list for simple_connections and add statistics
