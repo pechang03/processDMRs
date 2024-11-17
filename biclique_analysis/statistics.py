@@ -208,3 +208,49 @@ def calculate_edge_coverage(
         "uncovered_percentage": uncovered / total_edges if total_edges > 0 else 0,
     }
 
+def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
+    """Calculate statistics about components in the graph."""
+    # Get connected components
+    components = list(nx.connected_components(graph))
+    
+    # Count component types
+    single_node = sum(1 for comp in components if len(comp) == 1)
+    small = sum(1 for comp in components if 1 < len(comp) <= 3)
+    interesting = sum(1 for comp in components if len(comp) > 3)
+    
+    # Calculate averages for interesting components
+    interesting_comps = [comp for comp in components if len(comp) > 3]
+    total_dmrs = 0
+    total_genes = 0
+    total_bicliques = 0
+    split_genes = set()
+    
+    for comp in interesting_comps:
+        # Count DMRs and genes in component
+        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
+        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
+        total_dmrs += len(dmrs)
+        total_genes += len(genes)
+        
+        # Count bicliques in component
+        comp_bicliques = [b for b in bicliques if any(n in comp for n in b[0])]
+        total_bicliques += len(comp_bicliques)
+        
+        # Identify split genes (genes in multiple bicliques)
+        gene_participation = {}
+        for _, gene_nodes in comp_bicliques:
+            for gene in gene_nodes:
+                gene_participation[gene] = gene_participation.get(gene, 0) + 1
+        split_genes.update(g for g, count in gene_participation.items() if count > 1)
+
+    return {
+        "total": len(components),
+        "single_node": single_node,
+        "small": small,
+        "interesting": interesting,
+        "avg_dmrs": total_dmrs / interesting if interesting else 0,
+        "avg_genes": total_genes / interesting if interesting else 0,
+        "with_split_genes": len([c for c in interesting_comps if any(g in split_genes for g in c)]),
+        "total_split_genes": len(split_genes),
+        "total_bicliques": total_bicliques
+    }
