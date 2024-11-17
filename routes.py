@@ -18,8 +18,14 @@ def index_route():
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
 
+        bicliques = []
+        if "interesting_components" in results:
+            for component in results["interesting_components"]:
+                if "raw_bicliques" in component:
+                    bicliques.extend(component["raw_bicliques"])
+
         detailed_stats = calculate_biclique_statistics(
-            results.get("bicliques", []), 
+            bicliques, 
             results.get("bipartite_graph")
         )
 
@@ -44,9 +50,15 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        bicliques = []
+        if "interesting_components" in results:
+            for component in results["interesting_components"]:
+                if "raw_bicliques" in component:
+                    bicliques.extend(component["raw_bicliques"])
+
         selected_component_id = request.args.get("component_id", type=int)
         detailed_stats = calculate_biclique_statistics(
-            results.get("bicliques", []), 
+            bicliques, 
             results.get("bipartite_graph")
         )
 
@@ -55,7 +67,7 @@ def statistics_route():
             statistics=detailed_stats,
             bicliques_result=results,
             selected_component_id=selected_component_id,
-            total_bicliques=len(results.get("bicliques", []))
+            total_bicliques=len(bicliques)
         )
     except Exception as e:
         import traceback
