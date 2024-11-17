@@ -76,23 +76,27 @@
 
                 try {
                     // Get the graph data
-                    var graphData = {{ component.plotly_graph|default('null')|tojson|safe }};
-                    console.log("Graph data type:", typeof graphData);
+                    var graphData = {{ component.plotly_graph|tojson|safe }};
+                    console.log("Graph data:", graphData);
 
-                    if (!graphData) {
-                        console.error("No graph data available");
+                    if (!graphData || !graphData.data || !graphData.layout) {
+                        console.error("Invalid graph data structure:", graphData);
                         return;
                     }
 
-                    // Set container size
+                    // Ensure minimum dimensions
                     container.style.height = '600px';
                     container.style.width = '100%';
-                    console.log("Container dimensions:", container.offsetWidth, "x", container.offsetHeight);
 
                     // Create the plot
                     Plotly.newPlot(container,
                         graphData.data,
-                        graphData.layout,
+                        {
+                            ...graphData.layout,
+                            height: 600,  // Force minimum height
+                            width: null,  // Allow responsive width
+                            autosize: true
+                        },
                         {
                             responsive: true,
                             displayModeBar: true,
