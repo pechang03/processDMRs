@@ -154,17 +154,18 @@ def process_data():
         # Add visualization to each component
         for component in interesting_components:
             if component.get("bicliques") or component.get("raw_bicliques"):
+                print(f"\nProcessing visualization for component {component['id']}:")
                 try:
-                    # Use raw_bicliques if available, otherwise use processed bicliques
-                    bicliques_to_process = component.get("raw_bicliques", component.get("bicliques", []))
-                    processed_bicliques = extract_biclique_sets(bicliques_to_process)
-            
-                    if not processed_bicliques:
-                        print(f"Warning: No valid bicliques found for component {component['id']}")
-                        continue
-                
+                    # Use the existing bicliques directly
+                    bicliques_to_visualize = component.get("raw_bicliques", [])
+                    
+                    print(f"Bicliques to visualize: {len(bicliques_to_visualize)}")
+                    if bicliques_to_visualize:
+                        dmrs, genes = bicliques_to_visualize[0]
+                        print(f"Sample biclique - DMRs: {len(dmrs)}, Genes: {len(genes)}")
+                    
                     component_viz = create_biclique_visualization(
-                        processed_bicliques,
+                        bicliques_to_visualize,  # Use raw_bicliques directly
                         node_labels,
                         node_positions,
                         node_biclique_map,
