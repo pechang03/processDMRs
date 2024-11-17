@@ -131,6 +131,7 @@ def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
         "coverage": calculate_coverage_statistics(bicliques, graph),
         "node_participation": node_participation,
         "edge_coverage": edge_coverage,
+        "components": calculate_component_statistics(bicliques, graph),  # Add this line
     }
 
 
