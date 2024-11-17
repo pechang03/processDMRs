@@ -125,16 +125,19 @@ def component_detail_route(component_id):
                                 create_node_biclique_map,
                                 calculate_node_positions
                             )
-                            
+        
+                            print(f"\nProcessing visualization for component {component_id}:")
+                            print(f"Number of bicliques: {len(formatted_comp['raw_bicliques'])}")
+        
                             # Create node_biclique_map for this component
                             node_biclique_map = create_node_biclique_map(formatted_comp["raw_bicliques"])
-                            
+        
                             # Calculate positions
                             node_positions = calculate_node_positions(
                                 formatted_comp["raw_bicliques"],
                                 node_biclique_map
                             )
-                            
+        
                             # Create visualization
                             viz_data = create_biclique_visualization(
                                 formatted_comp["raw_bicliques"],
@@ -145,12 +148,20 @@ def component_detail_route(component_id):
                                 gene_metadata=results.get("gene_metadata", {}),
                                 gene_id_mapping=results.get("gene_id_mapping", {})
                             )
-                            
-                            # Store visualization data
-                            import json
-                            formatted_comp["plotly_graph"] = json.loads(viz_data)
-                            print("Successfully created visualization data")  # Debug print
-                            
+        
+                            # Store visualization data - ensure it's properly parsed JSON
+                            try:
+                                formatted_comp["plotly_graph"] = json.loads(viz_data)
+                                print(f"Successfully created visualization for component {component_id}")
+            
+                                # Debug - check the structure
+                                if isinstance(formatted_comp["plotly_graph"], dict):
+                                    print("Visualization data is properly formatted as dictionary")
+                                    if "data" in formatted_comp["plotly_graph"]:
+                                        print(f"Number of traces: {len(formatted_comp['plotly_graph']['data'])}")
+                            except json.JSONDecodeError as je:
+                                print(f"Error parsing visualization JSON: {str(je)}")
+                                formatted_comp["plotly_graph"] = None
                         except Exception as viz_error:
                             print(f"Error creating visualization: {str(viz_error)}")
                             import traceback
