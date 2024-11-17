@@ -42,6 +42,9 @@ def find_interesting_components(
             continue
 
         component_bicliques = []  # Move this initialization here
+        # Track all genes and their biclique participation
+        gene_participation = {}
+
         for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
             bicliques_result["bicliques"]
         ):
