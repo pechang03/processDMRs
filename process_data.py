@@ -189,22 +189,7 @@ def process_data():
             f"Component stats show {component_stats['components']['interesting']} interesting"
         )
 
-        _cached_data = {
-            "stats": stats,
-            "interesting_components": interesting_components,  # Verify this contains all componen
-            "simple_connections": simple_connections,
-            "coverage": bicliques_result.get("coverage", {}),
-            "dmr_metadata": dmr_metadata,
-            "gene_metadata": gene_metadata,
-            "gene_id_mapping": gene_id_mapping,
-            "node_positions": node_positions,
-            "node_labels": node_labels,
-            "bipartite_graph": bipartite_graph,
-        }
-        # Remove the visualization loop - we'll do this on-demand instead
-        # Just store the basic component data
-
-        # Create summary statistics
+        # Create summary statistics first
         stats = {
             "total_components": len(interesting_components),
             "components_with_bicliques": len(
@@ -219,6 +204,7 @@ def process_data():
             ),
         }
 
+        # Create cached data only once
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
@@ -229,8 +215,10 @@ def process_data():
             "gene_id_mapping": gene_id_mapping,
             "node_positions": node_positions,
             "node_labels": node_labels,
-            "bipartite_graph": bipartite_graph,  # Add this line
+            "bipartite_graph": bipartite_graph,
+            "component_stats": component_stats  # Add component statistics
         }
+        return _cached_data
         return _cached_data
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
