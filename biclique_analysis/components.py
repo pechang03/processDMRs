@@ -201,10 +201,11 @@ def visualize_component(
         node_labels,
         node_positions,
         node_biclique_map,
+        original_graph=bipartite_graph,  # Original full graph
+        bipartite_graph=subgraph,  # Graph from component bicliques
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
         gene_id_mapping=gene_id_mapping,
-        bipartite_graph=subgraph,
     )
 
     return {
