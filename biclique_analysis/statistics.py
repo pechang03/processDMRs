@@ -49,6 +49,8 @@ def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
     return dmr_nodes, gene_nodes
 
 
+from collections import Counter
+
 def calculate_coverage_statistics(
     bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph
 ) -> Dict:
@@ -56,23 +58,62 @@ def calculate_coverage_statistics(
     # Validate graph structure first
     dmrs, genes = validate_graph(graph)
 
+    # Initialize coverage sets
     dmr_coverage = set()
     gene_coverage = set()
+
+    # Track participation counts
+    dmr_participation = {}
+    gene_participation = {}
+
+    # Process each biclique
     for dmr_nodes, gene_nodes in bicliques:
+        # Update coverage
         dmr_coverage.update(dmr_nodes)
         gene_coverage.update(gene_nodes)
+
+        # Update participation counts
+        for dmr in dmr_nodes:
+            dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
+        for gene in gene_nodes:
+            gene_participation[gene] = gene_participation.get(gene, 0) + 1
+
+    # Calculate edge coverage
+    covered_edges = set()
+    multiple_covered = set()
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
+            for gene in gene_nodes:
+                edge = (min(dmr, gene), max(dmr, gene))
+                if edge in covered_edges:
+                    multiple_covered.add(edge)
+                covered_edges.add(edge)
+
+    total_edges = len(graph.edges())
+    single_covered = covered_edges - multiple_covered
 
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
             "total": len(dmrs),
-            "percentage": len(dmr_coverage) / len(dmrs),
+            "percentage": len(dmr_coverage) / len(dmrs) if dmrs else 0,
+            "participation": {k: v for k, v in sorted(Counter(dmr_participation.values()).items())}
         },
         "genes": {
             "covered": len(gene_coverage),
             "total": len(genes),
-            "percentage": len(gene_coverage) / len(genes),
+            "percentage": len(gene_coverage) / len(genes) if genes else 0,
+            "participation": {k: v for k, v in sorted(Counter(gene_participation.values()).items())}
         },
+        "edges": {
+            "single_coverage": len(single_covered),
+            "multiple_coverage": len(multiple_covered),
+            "uncovered": total_edges - len(covered_edges),
+            "total": total_edges,
+            "single_percentage": len(single_covered) / total_edges if total_edges else 0,
+            "multiple_percentage": len(multiple_covered) / total_edges if total_edges else 0,
+            "uncovered_percentage": (total_edges - len(covered_edges)) / total_edges if total_edges else 0
+        }
     }
 
 
