@@ -52,6 +52,8 @@ def statistics_route():
 
         bicliques = []
         if "interesting_components" in results:
+            # Add debug logging
+            print(f"Number of interesting components: {len(results['interesting_components'])}")
             for component in results["interesting_components"]:
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
@@ -61,6 +63,10 @@ def statistics_route():
             bicliques, 
             results.get("bipartite_graph")
         )
+
+        # Add debug logging
+        print(f"Statistics show {detailed_stats['components']['interesting']} interesting components")
+        print(f"Results contain {len(results.get('interesting_components', []))} components")
 
         return render_template(
             "statistics.html",
