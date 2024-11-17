@@ -153,7 +153,7 @@
           {% for biclique in component.bicliques %}
           <div class="card mb-3">
             <div class="card-header">
-              <h4>Biclique {{ loop.index }} ({{ biclique.size }})</h4>
+              <h4>Biclique {{ biclique.id + 1 }} ({{ biclique.details.dmrs|length }} DMRs, {{ biclique.details.genes|length }} genes)</h4>
             </div>
             <div class="card-body">
               <div class="row">

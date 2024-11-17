@@ -125,7 +125,16 @@ def component_detail_route(component_id):
                                        "description": g.get("description", ""),
                                        "bicliques": g.get("bicliques", [])} 
                                       for g in comp.get("split_genes", [])],
-                        "bicliques": comp.get("bicliques", []),
+                        "bicliques": [{
+                            "id": idx,
+                            "details": {
+                                "dmrs": [{"id": d, "area": dmr_metadata.get(str(d), {}).get("area", "N/A")} 
+                                        for d in b[0]] if isinstance(b, tuple) else [],
+                                "genes": [{"name": str(g), 
+                                          "description": gene_metadata.get(str(g), {}).get("description", "N/A")}
+                                        for g in b[1]] if isinstance(b, tuple) else []
+                            }
+                        } for idx, b in enumerate(comp.get("bicliques", []))],
                     }
                     
                     # Handle plotly_graph data separately
