@@ -7,6 +7,7 @@
 import os
 from typing import Dict, List, Set, Tuple
 import plotly.graph_objs as go
+import networkx as nx  # Add this line
 from .node_info import NodeInfo
 
 
