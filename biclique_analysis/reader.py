@@ -52,11 +52,12 @@ def parse_header_statistics(lines: List[str]) -> Dict:
     """Parse header statistics from file lines."""
     statistics = {
         "size_distribution": {},
-        "dmr_coverage": {},
-        "gene_coverage": {},
-        "dmr_participation": {},
-        "gene_participation": {},
-        "edge_coverage": {}
+        "coverage": {
+            "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+            "genes": {"covered": 0, "total": 0, "percentage": 0}
+        },
+        "node_participation": {"dmrs": {}, "genes": {}},
+        "edge_coverage": {"single": 0, "multiple": 0, "uncovered": 0}
     }
     
     line_idx = 0
@@ -86,7 +87,7 @@ def parse_header_statistics(lines: List[str]) -> Dict:
             
         if line == "Edge Coverage":
             section = "edge"
-            line_idx += 2  # Skip header row
+            line_idx += 1
             continue
 
         if section == "size_dist":
@@ -99,13 +100,29 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                 
         elif section == "coverage":
             if line.startswith("DMR Coverage"):
-                line = next(lines[i] for i in range(line_idx+1, len(lines)) if lines[i].strip().startswith("Covered:"))
-                covered, total = map(int, line.split(":")[1].split("/")[0:2])
-                statistics["dmr_coverage"] = {"covered": covered, "total": total}
+                line_idx += 1
+                coverage_line = lines[line_idx].strip()
+                if coverage_line.startswith("Covered:"):
+                    parts = coverage_line.split()
+                    covered, total = map(int, parts[1].split("/"))
+                    percentage = float(parts[2].strip("()%")) / 100
+                    statistics["coverage"]["dmrs"] = {
+                        "covered": covered,
+                        "total": total,
+                        "percentage": percentage
+                    }
             elif line.startswith("Gene Coverage"):
-                line = next(lines[i] for i in range(line_idx+1, len(lines)) if lines[i].strip().startswith("Covered:"))
-                covered, total = map(int, line.split(":")[1].split("/")[0:2])
-                statistics["gene_coverage"] = {"covered": covered, "total": total}
+                line_idx += 1
+                coverage_line = lines[line_idx].strip()
+                if coverage_line.startswith("Covered:"):
+                    parts = coverage_line.split()
+                    covered, total = map(int, parts[1].split("/"))
+                    percentage = float(parts[2].strip("()%")) / 100
+                    statistics["coverage"]["genes"] = {
+                        "covered": covered,
+                        "total": total,
+                        "percentage": percentage
+                    }
                 
         elif section == "participation":
             if line.startswith("DMR Participation"):
@@ -113,23 +130,25 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                 while line_idx < len(lines) and lines[line_idx].strip():
                     parts = lines[line_idx].strip().split()
                     if len(parts) == 2:
-                        statistics["dmr_participation"][int(parts[0])] = int(parts[1])
+                        statistics["node_participation"]["dmrs"][int(parts[0])] = int(parts[1])
                     line_idx += 1
             elif line.startswith("Gene Participation"):
                 line_idx += 2  # Skip header
                 while line_idx < len(lines) and lines[line_idx].strip():
                     parts = lines[line_idx].strip().split()
                     if len(parts) == 2:
-                        statistics["gene_participation"][int(parts[0])] = int(parts[1])
+                        statistics["node_participation"]["genes"][int(parts[0])] = int(parts[1])
                     line_idx += 1
                     
         elif section == "edge":
             parts = line.split()
             if len(parts) >= 3:
-                coverage_type = " ".join(parts[:-2])
-                count = int(parts[-2])
-                percentage = float(parts[-1].strip("%"))
-                statistics["edge_coverage"][coverage_type] = {"count": count, "percentage": percentage}
+                if parts[0] == "Single":
+                    statistics["edge_coverage"]["single"] = int(parts[1])
+                elif parts[0] == "Multiple":
+                    statistics["edge_coverage"]["multiple"] = int(parts[1])
+                elif parts[0] == "Uncovered":
+                    statistics["edge_coverage"]["uncovered"] = int(parts[1])
 
         line_idx += 1
 
