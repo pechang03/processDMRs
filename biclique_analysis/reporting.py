@@ -31,11 +31,9 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
     # Edge coverage
     edge_cov = bicliques_result["coverage"]["edges"]
     print(f"\nEdge Coverage:")
-    print(f"Single coverage: {edge_cov['single_coverage']} edges")
-    print(f"Multiple coverage: {edge_cov['multiple_coverage']} edges")
-    print(
-        f"Uncovered: {edge_cov['uncovered']} edges ({edge_cov['uncovered']/edge_cov['total']:.1%})"
-    )
+    print(f"Single coverage: {edge_cov['single_coverage']} edges ({edge_cov['single_percentage']:.1%})")
+    print(f"Multiple coverage: {edge_cov['multiple_coverage']} edges ({edge_cov['multiple_percentage']:.1%})")
+    print(f"Uncovered: {edge_cov['uncovered']} edges ({edge_cov['uncovered_percentage']:.1%})")
 
     if edge_cov["uncovered"] > 0:
         print("\nSample of uncovered edges:")
