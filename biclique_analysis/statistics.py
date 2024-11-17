@@ -113,7 +113,8 @@ def calculate_coverage_statistics(
             "single_percentage": len(single_covered) / total_edges if total_edges else 0,
             "multiple_percentage": len(multiple_covered) / total_edges if total_edges else 0,
             "uncovered_percentage": (total_edges - len(covered_edges)) / total_edges if total_edges else 0
-        }
+        },
+        "size_distribution": size_distribution
     }
 
 

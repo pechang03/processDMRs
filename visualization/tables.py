@@ -37,3 +37,33 @@ def create_gene_table(
         for gene, metadata in gene_metadata.items()
     ]
     return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
+def create_statistics_table(statistics: Dict) -> go.Table:
+    """Create a Plotly table for statistics summary."""
+    headers = ["Metric", "Value"]
+    rows = []
+    
+    # Coverage statistics
+    dmr_cov = statistics["coverage"]["dmrs"]
+    gene_cov = statistics["coverage"]["genes"]
+    edge_cov = statistics["coverage"]["edges"]
+    
+    rows.extend([
+        ["DMR Coverage", f"{dmr_cov['covered']}/{dmr_cov['total']} ({dmr_cov['percentage']:.1%})"],
+        ["Gene Coverage", f"{gene_cov['covered']}/{gene_cov['total']} ({gene_cov['percentage']:.1%})"],
+        ["Single Edge Coverage", f"{edge_cov['single_coverage']} ({edge_cov['single_percentage']:.1%})"],
+        ["Multiple Edge Coverage", f"{edge_cov['multiple_coverage']} ({edge_cov['multiple_percentage']:.1%})"],
+        ["Uncovered Edges", f"{edge_cov['uncovered']} ({edge_cov['uncovered_percentage']:.1%})"],
+    ])
+    
+    # Size distribution summary
+    size_dist = statistics["coverage"]["size_distribution"]
+    if size_dist:
+        rows.append(["", ""])  # Blank row for spacing
+        rows.append(["Biclique Sizes", "Count"])
+        for (dmrs, genes), count in sorted(size_dist.items()):
+            rows.append([f"{dmrs} DMRs × {genes} genes", str(count)])
+    
+    return go.Table(
+        header=dict(values=headers),
+        cells=dict(values=list(zip(*rows)))
+    )
