@@ -24,10 +24,18 @@ def find_interesting_components(
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
         
-        # Get unique DMRs and genes in this component
+        # Only consider components with multiple nodes
+        if len(component) < 2:
+            continue
+            
+        # Get unique DMRs and genes
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
-
+        
+        # Only consider components with both DMRs and genes
+        if not dmr_nodes or not gene_nodes:
+            continue
+            
         # Create node_biclique_map for this component
         component_bicliques = []
         node_biclique_map = {}

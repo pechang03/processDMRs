@@ -20,14 +20,15 @@ def create_node_traces(
     gene_metadata: Dict[str, Dict] = None
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
-    print("\nNode trace creation debug:")
-    print(f"Total nodes to position: {len(node_positions)}")
-    print(f"DMR nodes: {len(node_info.dmr_nodes)}")
-    print(f"Regular genes: {len(node_info.regular_genes)}")
-    print(f"Split genes: {len(node_info.split_genes)}")
-    print(f"Sample DMR IDs: {sorted(list(node_info.dmr_nodes))[:5]}")
-    print(f"Sample gene IDs: {sorted(list(node_info.regular_genes))[:5]}")
-    print(f"Sample split gene IDs: {sorted(list(node_info.split_genes))[:5]}")
+    if os.getenv('DEBUG'):
+        print("\nNode trace creation debug:")
+        print(f"Total nodes to position: {len(node_positions)}")
+        print(f"DMR nodes: {len(node_info.dmr_nodes)}")
+        print(f"Regular genes: {len(node_info.regular_genes)}")
+        print(f"Split genes: {len(node_info.split_genes)}")
+        print(f"Sample DMR IDs: {sorted(list(node_info.dmr_nodes))[:5]}")
+        print(f"Sample gene IDs: {sorted(list(node_info.regular_genes))[:5]}")
+        print(f"Sample split gene IDs: {sorted(list(node_info.split_genes))[:5]}")
     
     traces = []
 
