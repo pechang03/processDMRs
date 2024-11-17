@@ -42,16 +42,29 @@ def statistics_route():
 
         selected_component_id = request.args.get("component_id", type=int)
 
+        # Get the bicliques result directly from the processed data
+        bicliques_result = results.get("bicliques_result", {})
+        
+        # Create detailed statistics dictionary
         detailed_stats = {
             "size_distribution": {},
-            "coverage": results.get(
-                "coverage",
-                {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                },
-            ),
-            "node_participation": {"dmrs": {}, "genes": {}},
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }),
+            "node_participation": {
+                "dmrs": {},
+                "genes": {}
+            },
             "edge_coverage": {
                 "single": 0,
                 "multiple": 0,
@@ -59,36 +72,27 @@ def statistics_route():
                 "total": 0,
                 "single_percentage": 0,
                 "multiple_percentage": 0,
-                "uncovered_percentage": 0,
+                "uncovered_percentage": 0
             },
+            "total_bicliques": len(results.get("bicliques", [])),
+            "graph_info": results.get("graph_info", {})
         }
 
-        # Filter components based on selection
-        components_to_process = []
-        if selected_component_id and "interesting_components" in results:
-            components_to_process = [
-                comp
-                for comp in results["interesting_components"]
-                if comp["id"] == selected_component_id
-            ]
-        elif "interesting_components" in results:
-            components_to_process = results["interesting_components"]
-
-        # Calculate statistics for selected component(s)
+        # Process all bicliques for size distribution
         size_dist = {}
         dmr_participation = {}
         gene_participation = {}
 
-        for component in components_to_process:
-            for biclique in component.get("raw_bicliques", []):
-                dmr_nodes, gene_nodes = biclique
-                size_key = (len(dmr_nodes), len(gene_nodes))
-                size_dist[size_key] = size_dist.get(size_key, 0) + 1
+        for biclique in results.get("bicliques", []):
+            dmr_nodes, gene_nodes = biclique
+            size_key = (len(dmr_nodes), len(gene_nodes))
+            size_dist[size_key] = size_dist.get(size_key, 0) + 1
 
-                for dmr in dmr_nodes:
-                    dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
-                for gene in gene_nodes:
-                    gene_participation[gene] = gene_participation.get(gene, 0) + 1
+            # Track node participation
+            for dmr in dmr_nodes:
+                dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
+            for gene in gene_nodes:
+                gene_participation[gene] = gene_participation.get(gene, 0) + 1
 
         detailed_stats["size_distribution"] = size_dist
 
@@ -102,15 +106,30 @@ def statistics_route():
                 [n for n, c in gene_participation.items() if c == count]
             )
 
+        # Add graph statistics
+        if "graph_info" in results:
+            detailed_stats["graph_info"] = results["graph_info"]
+
+        # Add debug information if available
+        if "debug" in results:
+            detailed_stats["debug"] = results["debug"]
+
+        print("\nStatistics Summary:")
+        print(f"Total bicliques: {detailed_stats['total_bicliques']}")
+        print(f"Size distribution entries: {len(detailed_stats['size_distribution'])}")
+        print(f"DMR participation categories: {len(detailed_stats['node_participation']['dmrs'])}")
+        print(f"Gene participation categories: {len(detailed_stats['node_participation']['genes'])}")
+
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=results,
             selected_component_id=selected_component_id,
+            total_bicliques=detailed_stats['total_bicliques']
         )
+
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
