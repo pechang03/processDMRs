@@ -227,14 +227,13 @@ def visualize_component(
         },
     }
 
-
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-) -> Tuple[List[Dict], List[Dict], Dict]:  # Update return type annotation
+) -> Tuple[List[Dict], List[Dict], Dict]:
     """Process connected components of the graph."""
 
     interesting_components = find_interesting_components(
@@ -252,11 +251,25 @@ def process_components(
         )
         interesting_components[0].update(component_data)
 
-    # Create basic statistics about components
+    # Calculate detailed component statistics
+    components = list(nx.connected_components(bipartite_graph))
+    total_components = len(components)
+    single_node_components = sum(1 for comp in components if len(comp) == 1)
+    small_components = total_components - len(interesting_components) - single_node_components
+
     statistics = {
-        "total_components": len(interesting_components),
-        "total_bicliques": sum(len(comp.get("raw_bicliques", [])) for comp in interesting_components),
-        "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
+        "components": {
+            "total": total_components,
+            "single_node": single_node_components,
+            "small": small_components,
+            "interesting": len(interesting_components),
+            "avg_dmrs": sum(c['dmrs'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
+            "avg_genes": sum(c['total_genes'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
+            "with_split_genes": sum(1 for c in interesting_components if c.get('split_genes'))
+            "total_split_genes": sum(len(c.get('split_genes', [])) for c in interesting_components),
+            "total_bicliques": sum(len(c.get('raw_bicliques', [])) for c in interesting_components)
+        }
     }
 
-    return interesting_components, [], statistics  # Return empty list for simple_connections and add statistics
+    return interesting_components, [], statistics
+
