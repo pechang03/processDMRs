@@ -160,35 +160,8 @@ def process_data():
             gene_id_mapping=gene_id_mapping,
         )
 
-        # Add visualization to each component
-        for component in interesting_components:
-            if component.get("bicliques") or component.get("raw_bicliques"):
-                print(f"\nProcessing visualization for component {component['id']}:")
-                try:
-                    # Use the existing bicliques directly
-                    bicliques_to_visualize = component.get("raw_bicliques", [])
-                    
-                    print(f"Bicliques to visualize: {len(bicliques_to_visualize)}")
-                    if bicliques_to_visualize:
-                        dmrs, genes = bicliques_to_visualize[0]
-                        print(f"Sample biclique - DMRs: {len(dmrs)}, Genes: {len(genes)}")
-                    
-                    component_viz = create_biclique_visualization(
-                        bicliques_to_visualize,  # Use raw_bicliques directly
-                        node_labels,
-                        node_positions,
-                        node_biclique_map,
-                        dmr_metadata=dmr_metadata,
-                        gene_metadata=gene_metadata,
-                        gene_id_mapping=gene_id_mapping,
-                        bipartite_graph=bipartite_graph,
-                    )
-                    component["plotly_graph"] = json.loads(component_viz)
-                    print(f"Successfully created visualization for component {component['id']}")
-                except Exception as e:
-                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
-                    import traceback
-                    traceback.print_exc()
+        # Remove the visualization loop - we'll do this on-demand instead
+        # Just store the basic component data
 
         # Create summary statistics
         stats = {
