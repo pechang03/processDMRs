@@ -154,8 +154,16 @@ def process_data():
                 print(f"\nProcessing visualization for component {component['id']}:")
                 print(f"Number of bicliques: {len(component['bicliques'])}")
                 try:
+                    # Extract proper biclique sets
+                    processed_bicliques = extract_biclique_sets(component['bicliques'])
+                    print(f"Processed bicliques: {len(processed_bicliques)}")
+                    print("First biclique sizes:")
+                    if processed_bicliques:
+                        dmrs, genes = processed_bicliques[0]
+                        print(f"DMRs: {len(dmrs)}, Genes: {len(genes)}")
+    
                     component_viz = create_biclique_visualization(
-                        component["raw_bicliques"],  # Use raw_bicliques here
+                        processed_bicliques,  # Use processed bicliques instead of raw
                         node_labels,
                         node_positions,
                         node_biclique_map,
