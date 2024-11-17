@@ -6,7 +6,7 @@ from visualization import (
     create_node_biclique_map,
     calculate_node_positions,
 )
-
+from biclique_analysis.statistics import calculate_biclique_statistics
 
 def index_route():
     try:
@@ -18,42 +18,25 @@ def index_route():
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
 
-        # Create statistics dictionary for the index page
-        detailed_stats = {
-            "size_distribution": {},
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {
-                    "single_coverage": 0,
-                    "multiple_coverage": 0,
-                    "uncovered": 0,
-                    "total": 0,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0
-                }
-            }),
-            "total_bicliques": len(results.get("bicliques", [])),
-            "graph_info": results.get("graph_info", {})
-        }
+        detailed_stats = calculate_biclique_statistics(
+            results.get("bicliques", []), 
+            results.get("bipartite_graph")
+        )
 
         return render_template(
             "index.html",
             results=results,
-            statistics=detailed_stats,  # Add this line
+            statistics=detailed_stats,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             bicliques_result=results,
             coverage=results.get("coverage", {}),
-            node_labels=results.get("node_labels", {}),
+            node_labels=results.get("node_labels", {})
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
-
 
 def statistics_route():
     try:
@@ -62,114 +45,22 @@ def statistics_route():
             return render_template("error.html", message=results["error"])
 
         selected_component_id = request.args.get("component_id", type=int)
-
-        # Create detailed statistics dictionary
-        detailed_stats = {
-            "size_distribution": {},
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {
-                    "single_coverage": 0,
-                    "multiple_coverage": 0,
-                    "uncovered": 0,
-                    "total": 0,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0
-                }
-            }),
-            "node_participation": {
-                "dmrs": {},
-                "genes": {}
-            },
-            "total_bicliques": len(results.get("bicliques", [])),
-            "graph_info": results.get("graph_info", {})
-        }
-
-        # Process all bicliques for participation statistics
-        dmr_participation = {}
-        gene_participation = {}
-
-        print("\nProcessing bicliques for participation statistics...")
-        # First pass: Count participation for each node
-        for biclique in results.get("bicliques", []):
-            if not isinstance(biclique, tuple) or len(biclique) != 2:
-                print(f"Skipping invalid biclique format: {biclique}")
-                continue
-                
-            dmr_nodes, gene_nodes = biclique
-            
-            # Count DMR participation
-            for dmr in dmr_nodes:
-                dmr_participation[dmr] = dmr_participation.get(dmr, 0) + 1
-                
-            # Count gene participation
-            for gene in gene_nodes:
-                gene_participation[gene] = gene_participation.get(gene, 0) + 1
-
-        print(f"Found {len(dmr_participation)} DMRs and {len(gene_participation)} genes participating in bicliques")
-
-        # Second pass: Create distribution of participation counts
-        # For DMRs
-        if dmr_participation:
-            max_dmr_participation = max(dmr_participation.values())
-            for participation_count in range(1, max_dmr_participation + 1):
-                count = sum(1 for count in dmr_participation.values() if count == participation_count)
-                if count > 0:  # Only add non-zero entries
-                    detailed_stats["node_participation"]["dmrs"][participation_count] = count
-
-        # For genes
-        if gene_participation:
-            max_gene_participation = max(gene_participation.values())
-            for participation_count in range(1, max_gene_participation + 1):
-                count = sum(1 for count in gene_participation.values() if count == participation_count)
-                if count > 0:  # Only add non-zero entries
-                    detailed_stats["node_participation"]["genes"][participation_count] = count
-
-        # Process size distribution
-        for biclique in results.get("bicliques", []):
-            if not isinstance(biclique, tuple) or len(biclique) != 2:
-                continue
-            dmr_nodes, gene_nodes = biclique
-            size_key = (len(dmr_nodes), len(gene_nodes))
-            detailed_stats["size_distribution"][size_key] = detailed_stats["size_distribution"].get(size_key, 0) + 1
-
-        # Add coverage information
-        if "coverage" in results:
-            detailed_stats["coverage"] = results["coverage"]
-
-        # Add graph information
-        if "graph_info" in results:
-            detailed_stats["graph_info"] = results["graph_info"]
-
-        print("\nNode Participation Statistics:")
-        print(f"DMR participation categories: {len(detailed_stats['node_participation']['dmrs'])}")
-        print(f"Gene participation categories: {len(detailed_stats['node_participation']['genes'])}")
-        
-        if detailed_stats['node_participation']['dmrs']:
-            print("\nSample DMR participation:")
-            for count, nodes in list(detailed_stats['node_participation']['dmrs'].items())[:5]:
-                print(f"  {nodes} DMRs participate in {count} bicliques")
-                
-        if detailed_stats['node_participation']['genes']:
-            print("\nSample gene participation:")
-            for count, nodes in list(detailed_stats['node_participation']['genes'].items())[:5]:
-                print(f"  {nodes} genes participate in {count} bicliques")
+        detailed_stats = calculate_biclique_statistics(
+            results.get("bicliques", []), 
+            results.get("bipartite_graph")
+        )
 
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=results,
             selected_component_id=selected_component_id,
-            total_bicliques=detailed_stats['total_bicliques']
+            total_bicliques=len(results.get("bicliques", []))
         )
-
     except Exception as e:
         import traceback
         traceback.print_exc()
         return render_template("error.html", message=str(e))
-
 
 def component_detail_route(component_id):
     try:
@@ -179,23 +70,27 @@ def component_detail_route(component_id):
 
         bipartite_graph = results.get("bipartite_graph")
         if not bipartite_graph:
-            return render_template(
-                "error.html", message="Bipartite graph not found in results"
-            )
+            return render_template("error.html", message="Bipartite graph not found in results")
 
         # Find the requested component
         component = None
         if "interesting_components" in results:
             for comp in results["interesting_components"]:
                 if comp["id"] == component_id:
-                    # Only create visualization if not already present
+                    component = comp
+                    # Create visualization if not already present
                     if "plotly_graph" not in comp:
                         try:
+                            node_biclique_map = create_node_biclique_map(comp["raw_bicliques"])
+                            node_positions = calculate_node_positions(
+                                comp["raw_bicliques"], 
+                                node_biclique_map
+                            )
                             component_viz = create_biclique_visualization(
                                 comp["raw_bicliques"],
                                 results["node_labels"],
-                                results["node_positions"],
-                                create_node_biclique_map(comp["raw_bicliques"]),
+                                node_positions,
+                                node_biclique_map,
                                 original_graph=bipartite_graph,
                                 dmr_metadata=results["dmr_metadata"],
                                 gene_metadata=results["gene_metadata"],
@@ -204,50 +99,18 @@ def component_detail_route(component_id):
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:
                             print(f"Error creating visualization: {str(e)}")
-
-                    component = comp
                     break
 
         if component is None:
-            return render_template(
-                "error.html", message=f"Component {component_id} not found"
-            )
-
-        # Create visualization only for the requested component
-        try:
-            # Create node_biclique_map for this specific component
-            node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
-
-            # Calculate positions for this component
-            node_positions = calculate_node_positions(
-                component["raw_bicliques"], node_biclique_map
-            )
-
-            component_viz = create_biclique_visualization(
-                component["raw_bicliques"],
-                results["node_labels"],
-                node_positions,  # Use component-specific positions
-                node_biclique_map,  # Use component-specific mapping
-                original_graph=bipartite_graph,  # Add this line
-                dmr_metadata=results["dmr_metadata"],
-                gene_metadata=results["gene_metadata"],
-                gene_id_mapping=results["gene_id_mapping"],
-            )
-            component["plotly_graph"] = json.loads(component_viz)
-        except Exception as e:
-            print(f"Error creating visualization: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
+            return render_template("error.html", message=f"Component {component_id} not found")
 
         return render_template(
             "components.html",
             component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {})
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
