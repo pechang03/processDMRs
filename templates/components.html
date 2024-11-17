@@ -61,19 +61,54 @@
         <div class="card-body">
           <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
           <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log("Initializing visualization...");
-                try {
-                    var graphData = {{ component.plotly_graph|safe }};
-                    console.log("Graph data loaded:", graphData);
-                    Plotly.newPlot('plotly-graph-{{ component.id }}',
-                                 graphData.data,
-                                 graphData.layout,
-                                 {responsive: true});
-                } catch (error) {
-                    console.error("Error creating visualization:", error);
-                }
-            });
+              document.addEventListener('DOMContentLoaded', function() {
+                  console.log("DOM loaded, initializing visualization...");
+                  
+                  // Get the container element
+                  var container = document.getElementById('plotly-graph-{{ component.id }}');
+                  console.log("Container element:", container);
+                  
+                  try {
+                      // Log the raw data
+                      console.log("Raw component data:", {{ component|tojson|safe }});
+                      
+                      // Parse the graph data
+                      var graphData = {{ component.plotly_graph|safe }};
+                      console.log("Parsed graph data:", graphData);
+                      
+                      // Verify data structure
+                      if (!graphData || !graphData.data || !graphData.layout) {
+                          console.error("Invalid graph data structure:", graphData);
+                          return;
+                      }
+                      
+                      // Set container size
+                      container.style.height = '600px';
+                      container.style.width = '100%';
+                      console.log("Container dimensions:", container.offsetWidth, "x", container.offsetHeight);
+                      
+                      // Create the plot
+                      Plotly.newPlot(container,
+                          graphData.data,
+                          graphData.layout,
+                          {
+                              responsive: true,
+                              displayModeBar: true,
+                              scrollZoom: true,
+                              displaylogo: false,
+                              modeBarButtonsToAdd: ['select2d', 'lasso2d']
+                          }
+                      ).then(function() {
+                          console.log("Plot successfully created");
+                      }).catch(function(err) {
+                          console.error("Error in plot creation:", err);
+                      });
+                      
+                  } catch (error) {
+                      console.error("Error in visualization creation:", error);
+                      console.error("Error stack:", error.stack);
+                  }
+              });
           </script>
         </div>
       </div>
