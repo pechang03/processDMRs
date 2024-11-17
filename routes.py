@@ -128,10 +128,10 @@ def component_detail_route(component_id):
                         "bicliques": [{
                             "id": idx,
                             "details": {
-                                "dmrs": [{"id": d, "area": dmr_metadata.get(str(d), {}).get("area", "N/A")} 
+                                "dmrs": [{"id": d, "area": results.get("dmr_metadata", {}).get(str(d), {}).get("area", "N/A")} 
                                         for d in b[0]] if isinstance(b, tuple) else [],
                                 "genes": [{"name": str(g), 
-                                          "description": gene_metadata.get(str(g), {}).get("description", "N/A")}
+                                          "description": results.get("gene_metadata", {}).get(str(g), {}).get("description", "N/A")}
                                         for g in b[1]] if isinstance(b, tuple) else []
                             }
                         } for idx, b in enumerate(comp.get("bicliques", []))],
