@@ -20,6 +20,11 @@ def create_node_traces(
     gene_metadata: Dict[str, Dict] = None
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
+    print("\nNode trace creation debug:")
+    print(f"Total nodes to position: {len(node_positions)}")
+    print(f"DMR nodes: {len(node_info.dmr_nodes)}")
+    print(f"Gene nodes: {len(node_info.regular_genes) + len(node_info.split_genes)}")
+    
     traces = []
 
     # Create DMR nodes trace
