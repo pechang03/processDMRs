@@ -62,7 +62,9 @@ def find_interesting_components(
                 "id": idx + 1,
                 "size": len(component),
                 "dmrs": len(dmr_nodes),
-                "genes": len(gene_nodes),
+                "genes": len(regular_genes),
+                "regular_genes": regular_genes,  # Add this
+                "total_genes": len(regular_genes) + len(split_genes)  # Add this
                 "component": component,
                 "raw_bicliques": component_bicliques,
                 "total_edges": len(subgraph.edges()),
