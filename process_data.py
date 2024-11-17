@@ -63,26 +63,25 @@ def process_data():
         all_genes = set()
         # First pass: Collect and normalize all gene names
         all_genes = set()
-        
+
         # Add genes from gene column (case-insensitive)
         gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
         all_genes.update(gene_names)
-        
+
         # Add genes from enhancer info (case-insensitive)
         for genes in df["Processed_Enhancer_Info"]:
             if genes:  # Check if not None/empty
                 all_genes.update(g.strip().lower() for g in genes)
-        
+
         # Sort genes alphabetically for deterministic assignment
         sorted_genes = sorted(all_genes)
-        
+
         # Create gene mapping starting after max DMR number
         max_dmr = df["DMR_No."].max()
         gene_id_mapping = {
-            gene: idx + max_dmr + 1 
-            for idx, gene in enumerate(sorted_genes)
+            gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
         }
-        
+
         print("\nGene ID Mapping Statistics:")
         print(f"Total unique genes (case-insensitive): {len(all_genes)}")
         print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
@@ -93,10 +92,12 @@ def process_data():
         # Create gene mapping starting after max DMR number
         max_dmr = df["DMR_No."].max()
         gene_id_mapping = {
-            gene: idx + max_dmr + 1 
-            for idx, gene in enumerate(sorted(all_genes))  # Sort for deterministic assignment
+            gene: idx + max_dmr + 1
+            for idx, gene in enumerate(
+                sorted(all_genes)
+            )  # Sort for deterministic assignment
         }
-    
+
         print("\nGene ID Mapping Statistics:")
         print(f"Total unique genes: {len(all_genes)}")
         print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
@@ -109,12 +110,14 @@ def process_data():
         # Process bicliques
         print("Processing bicliques...")
         bicliques_result = process_bicliques(
-            bipartite_graph, 
-            BICLIQUES_FILE, 
-            max(df["DMR_No."]), 
+            bipartite_graph,
+            BICLIQUES_FILE,
+            max(df["DMR_No."]),
             "DSS1",
             gene_id_mapping=gene_id_mapping,
-            file_format=app.config.get('BICLIQUE_FORMAT', 'gene_name')  # Get format from app config
+            file_format=app.config.get(
+                "BICLIQUE_FORMAT", "gene_name"
+            ),  # Get format from app config
         )
 
         # Create node_biclique_map
@@ -155,13 +158,13 @@ def process_data():
                 print(f"Number of bicliques: {len(component['bicliques'])}")
                 try:
                     # Extract proper biclique sets
-                    processed_bicliques = extract_biclique_sets(component['bicliques'])
+                    processed_bicliques = extract_biclique_sets(component["bicliques"])
                     print(f"Processed bicliques: {len(processed_bicliques)}")
                     print("First biclique sizes:")
                     if processed_bicliques:
                         dmrs, genes = processed_bicliques[0]
                         print(f"DMRs: {len(dmrs)}, Genes: {len(genes)}")
-    
+
                     component_viz = create_biclique_visualization(
                         processed_bicliques,  # Use processed bicliques instead of raw
                         node_labels,
@@ -216,3 +219,16 @@ def process_data():
 
         traceback.print_exc()
         return {"error": str(e)}
+
+
+def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
+    """Extract DMR and gene sets from processed biclique data."""
+    result = []
+    for biclique in bicliques_data:
+        if isinstance(biclique, dict) and "details" in biclique:
+            dmrs = {d["id"] for d in biclique["details"]["dmrs"]}
+            genes = {g["name"] for g in biclique["details"]["genes"]}
+            result.append((dmrs, genes))
+        elif isinstance(biclique, tuple) and len(biclique) == 2:
+            result.append((set(biclique[0]), set(biclique[1])))
+    return result
