@@ -28,41 +28,51 @@ def find_interesting_components(
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
 
-        # Collect component's bicliques
-        component_raw_bicliques = []
-        for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]:
-            # Convert node IDs to integers if they're strings
+        # Create node_biclique_map for this component
+        component_bicliques = []
+        node_biclique_map = {}
+        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(bicliques_result["bicliques"]):
             dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
             gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
             
-            biclique_nodes = dmr_set | gene_set
-            if biclique_nodes & set(component):
-                component_raw_bicliques.append((dmr_set, gene_set))
+            if (dmr_set | gene_set) & set(component):
+                component_bicliques.append((dmr_set, gene_set))
+                for node in (dmr_set | gene_set):
+                    if node not in node_biclique_map:
+                        node_biclique_map[node] = []
+                    node_biclique_map[node].append(biclique_idx)
 
-        # Only process if component has interesting bicliques
-        interesting_bicliques = [
-            (dmr_nodes_bic, gene_nodes_bic) 
-            for dmr_nodes_bic, gene_nodes_bic in component_raw_bicliques
-            if len(dmr_nodes_bic) >= 3 and len(gene_nodes_bic) >= 3
-        ]
-        
-        if interesting_bicliques:
-            # Debug print
-            print(f"\nComponent {idx + 1}:")
-            print(f"DMRs: {len(dmr_nodes)}, Genes: {len(gene_nodes)}")
-            print(f"Interesting bicliques: {len(interesting_bicliques)}")
-            
+        # Identify split genes for the whole component
+        split_genes = {
+            node: node_biclique_map[node]
+            for node in gene_nodes 
+            if len(node_biclique_map.get(node, [])) > 1
+        }
+
+        if len(component_bicliques) >= 1:
             component_info = {
                 "id": idx + 1,
                 "size": len(component),
                 "dmrs": len(dmr_nodes),
                 "genes": len(gene_nodes),
                 "component": component,
-                "raw_bicliques": interesting_bicliques,
+                "raw_bicliques": component_bicliques,
                 "total_edges": len(subgraph.edges()),
+                "split_genes": [
+                    {
+                        "gene_name": reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}"),
+                        "description": gene_metadata.get(
+                            reverse_gene_mapping.get(gene_id, ""), 
+                            {}
+                        ).get("description", "N/A"),
+                        "bicliques": bicliques,
+                        "type": "split"
+                    }
+                    for gene_id, bicliques in split_genes.items()
+                ]
             }
             interesting_components.append(component_info)
-            
+
     return interesting_components
 
 def visualize_component(
