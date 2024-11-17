@@ -138,12 +138,16 @@ def process_data():
             print("\nValidating against header statistics:")
             dmr_stats = header_stats["coverage"]["dmrs"]
             gene_stats = header_stats["coverage"]["genes"]
-            print(f"DMR Coverage - Header: {dmr_stats['covered']}/{dmr_stats['total']} ({dmr_stats['percentage']:.1%})")
-            print(f"Gene Coverage - Header: {gene_stats['covered']}/{gene_stats['total']} ({gene_stats['percentage']:.1%})")
-    
+            print(
+                f"DMR Coverage - Header: {dmr_stats['covered']}/{dmr_stats['total']} ({dmr_stats['percentage']:.1%})"
+            )
+            print(
+                f"Gene Coverage - Header: {gene_stats['covered']}/{gene_stats['total']} ({gene_stats['percentage']:.1%})"
+            )
+
             # Compare size distribution
             print("\nBiclique size distribution from header:")
-            for (dmrs, genes), count in header_stats['size_distribution'].items():
+            for (dmrs, genes), count in header_stats["size_distribution"].items():
                 print(f"{dmrs} DMRs, {genes} genes: {count} bicliques")
 
         # Create node_biclique_map
@@ -169,14 +173,34 @@ def process_data():
 
         # Process components
         print("Processing components...")
-        interesting_components, simple_connections, _ = process_components(
-            bipartite_graph,
-            bicliques_result,
-            dmr_metadata=dmr_metadata,
-            gene_metadata=gene_metadata,
-            gene_id_mapping=gene_id_mapping,
+        interesting_components, simple_connections, component_stats = (
+            process_components(
+                bipartite_graph,
+                bicliques_result,
+                dmr_metadata=dmr_metadata,
+                gene_metadata=gene_metadata,
+                gene_id_mapping=gene_id_mapping,
+            )
         )
 
+        # Add debug logging
+        print(f"Found {len(interesting_components)} interesting components")
+        print(
+            f"Component stats show {component_stats['components']['interesting']} interesting"
+        )
+
+        _cached_data = {
+            "stats": stats,
+            "interesting_components": interesting_components,  # Verify this contains all componen
+            "simple_connections": simple_connections,
+            "coverage": bicliques_result.get("coverage", {}),
+            "dmr_metadata": dmr_metadata,
+            "gene_metadata": gene_metadata,
+            "gene_id_mapping": gene_id_mapping,
+            "node_positions": node_positions,
+            "node_labels": node_labels,
+            "bipartite_graph": bipartite_graph,
+        }
         # Remove the visualization loop - we'll do this on-demand instead
         # Just store the basic component data
 
