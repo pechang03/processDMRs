@@ -43,8 +43,12 @@ def find_interesting_components(
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
 
-        # Only consider components with both DMRs and genes
-        if not dmr_nodes or not gene_nodes:
+        # Consider a component small if:
+        # - It has no DMRs or no genes
+        # - It has only 1 DMR and 1 gene
+        # - It has only 1 DMR or only 1 gene
+        if (not dmr_nodes or not gene_nodes or 
+            len(dmr_nodes) <= 1 or len(gene_nodes) <= 1):
             small_components += 1
             continue
 
@@ -99,12 +103,18 @@ def find_interesting_components(
             }
             interesting_components.append(component_info)
 
-    # Print summary statistics
+    # Print detailed summary statistics
     print(f"\nComponent Analysis Summary:")
     print(f"Total components found: {total_components}")
     print(f"Single node components: {single_node_components}")
-    print(f"Small components (no DMRs or genes): {small_components}")
-    print(f"Interesting components: {len(interesting_components)}")
+    print(f"Small components (≤1 DMR or ≤1 gene): {small_components}")
+    print(f"Interesting components (>1 DMR and >1 gene): {len(interesting_components)}")
+    
+    if interesting_components:
+        print("\nInteresting Component Statistics:")
+        print(f"Average DMRs per component: {sum(c['dmrs'] for c in interesting_components)/len(interesting_components):.1f}")
+        print(f"Average genes per component: {sum(c['total_genes'] for c in interesting_components)/len(interesting_components):.1f}")
+        print(f"Components with split genes: {sum(1 for c in interesting_components if c['split_genes'])}")
 
     return interesting_components
 
