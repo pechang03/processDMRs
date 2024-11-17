@@ -265,7 +265,7 @@ def process_components(
             "interesting": len(interesting_components),
             "avg_dmrs": sum(c['dmrs'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
             "avg_genes": sum(c['total_genes'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
-            "with_split_genes": sum(1 for c in interesting_components if c.get('split_genes'))
+            "with_split_genes": sum(1 for c in interesting_components if c.get('split_genes')),
             "total_split_genes": sum(len(c.get('split_genes', [])) for c in interesting_components),
             "total_bicliques": sum(len(c.get('raw_bicliques', [])) for c in interesting_components)
         }
