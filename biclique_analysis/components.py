@@ -41,9 +41,7 @@ def find_interesting_components(
         if not dmr_nodes or not gene_nodes:
             continue
 
-        # Create node_biclique_map for this component
-        component_bicliques = []
-        node_biclique_map = {}
+        component_bicliques = []  # Move this initialization here
         for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
             bicliques_result["bicliques"]
         ):
@@ -52,10 +50,11 @@ def find_interesting_components(
 
             if (dmr_set | gene_set) & set(component):
                 component_bicliques.append((dmr_set, gene_set))
-                for node in dmr_set | gene_set:
-                    if node not in node_biclique_map:
-                        node_biclique_map[node] = []
-                    node_biclique_map[node].append(biclique_idx)
+                # Track gene participation
+                for gene_id in gene_set:
+                    if gene_id not in gene_participation:
+                        gene_participation[gene_id] = set()
+                    gene_participation[gene_id].add(biclique_idx)
 
         # Track all genes and their biclique participation
         gene_participation = {}
