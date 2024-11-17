@@ -72,8 +72,8 @@ def statistics_route():
         print(f"Results contain {len(results.get('interesting_components', []))} components")
 
         # Debug statements
-        print(f"Debug - Components in bicliques_result: {len(bicliques_result.get('interesting_components', []))}")
-        print(f"Debug - First component data: {bicliques_result['interesting_components'][0] if bicliques_result.get('interesting_components') else 'None'}")
+        print(f"Debug - Components in results: {len(results.get('interesting_components', []))}")
+        print(f"Debug - First component data: {results['interesting_components'][0] if results.get('interesting_components') else 'None'}")
 
         return render_template(
             "statistics.html",
