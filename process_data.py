@@ -153,20 +153,18 @@ def process_data():
 
         # Add visualization to each component
         for component in interesting_components:
-            if component.get("bicliques") and component.get("raw_bicliques"):
-                print(f"\nProcessing visualization for component {component['id']}:")
-                print(f"Number of bicliques: {len(component['bicliques'])}")
+            if component.get("bicliques") or component.get("raw_bicliques"):
                 try:
-                    # Extract proper biclique sets
-                    processed_bicliques = extract_biclique_sets(component["bicliques"])
-                    print(f"Processed bicliques: {len(processed_bicliques)}")
-                    print("First biclique sizes:")
-                    if processed_bicliques:
-                        dmrs, genes = processed_bicliques[0]
-                        print(f"DMRs: {len(dmrs)}, Genes: {len(genes)}")
-
+                    # Use raw_bicliques if available, otherwise use processed bicliques
+                    bicliques_to_process = component.get("raw_bicliques", component.get("bicliques", []))
+                    processed_bicliques = extract_biclique_sets(bicliques_to_process)
+            
+                    if not processed_bicliques:
+                        print(f"Warning: No valid bicliques found for component {component['id']}")
+                        continue
+                
                     component_viz = create_biclique_visualization(
-                        processed_bicliques,  # Use processed bicliques instead of raw
+                        processed_bicliques,
                         node_labels,
                         node_positions,
                         node_biclique_map,
@@ -176,15 +174,10 @@ def process_data():
                         bipartite_graph=bipartite_graph,
                     )
                     component["plotly_graph"] = json.loads(component_viz)
-                    print(
-                        f"Successfully created visualization for component {component['id']}"
-                    )
+                    print(f"Successfully created visualization for component {component['id']}")
                 except Exception as e:
-                    print(
-                        f"Error creating visualization for component {component['id']}: {str(e)}"
-                    )
+                    print(f"Error creating visualization for component {component['id']}: {str(e)}")
                     import traceback
-
                     traceback.print_exc()
 
         # Create summary statistics
@@ -225,10 +218,30 @@ def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
     """Extract DMR and gene sets from processed biclique data."""
     result = []
     for biclique in bicliques_data:
-        if isinstance(biclique, dict) and "details" in biclique:
-            dmrs = {d["id"] for d in biclique["details"]["dmrs"]}
-            genes = {g["name"] for g in biclique["details"]["genes"]}
-            result.append((dmrs, genes))
-        elif isinstance(biclique, tuple) and len(biclique) == 2:
-            result.append((set(biclique[0]), set(biclique[1])))
+        try:
+            if isinstance(biclique, dict) and 'details' in biclique:
+                # Handle processed biclique format
+                dmrs = {int(d['id'].split('_')[1]) - 1 if isinstance(d['id'], str) else d['id'] 
+                       for d in biclique['details']['dmrs']}
+                genes = {g['name'] for g in biclique['details']['genes']}
+                result.append((dmrs, genes))
+            elif isinstance(biclique, tuple) and len(biclique) == 2:
+                # Handle raw biclique format
+                dmrs = {int(d) if isinstance(d, str) else d for d in biclique[0]}
+                genes = {int(g) if isinstance(g, str) else g for g in biclique[1]}
+                result.append((dmrs, genes))
+            else:
+                print(f"Warning: Unexpected biclique format: {type(biclique)}")
+                continue
+                
+        except Exception as e:
+            print(f"Error processing biclique: {str(e)}")
+            continue
+            
+    print(f"Processed {len(result)} bicliques")
+    if result:
+        print("Sample biclique sizes:")
+        for i, (dmrs, genes) in enumerate(result[:3]):
+            print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
+            
     return result
