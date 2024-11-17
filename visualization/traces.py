@@ -4,6 +4,7 @@
 
 """Node trace creation functionality"""
 
+import os
 from typing import Dict, List, Set, Tuple
 import plotly.graph_objs as go
 from .node_info import NodeInfo
