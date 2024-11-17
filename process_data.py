@@ -136,9 +136,11 @@ def process_data():
         # Validate against header statistics
         if header_stats:
             print("\nValidating against header statistics:")
-            print(f"DMR Coverage - Header: {header_stats['dmr_coverage']['covered']}/{header_stats['dmr_coverage']['total']}")
-            print(f"Gene Coverage - Header: {header_stats['gene_coverage']['covered']}/{header_stats['gene_coverage']['total']}")
-            
+            dmr_stats = header_stats["coverage"]["dmrs"]
+            gene_stats = header_stats["coverage"]["genes"]
+            print(f"DMR Coverage - Header: {dmr_stats['covered']}/{dmr_stats['total']} ({dmr_stats['percentage']:.1%})")
+            print(f"Gene Coverage - Header: {gene_stats['covered']}/{gene_stats['total']} ({gene_stats['percentage']:.1%})")
+    
             # Compare size distribution
             print("\nBiclique size distribution from header:")
             for (dmrs, genes), count in header_stats['size_distribution'].items():
