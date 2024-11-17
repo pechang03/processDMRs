@@ -104,7 +104,7 @@ def statistics_route():
         return render_template("error.html", message=str(e))
 
 def component_detail_route(component_id):
-    import json  # Add this import
+    import json  # Make sure this is at the top
     try:
         results = process_data()
         if "error" in results:
@@ -115,103 +115,40 @@ def component_detail_route(component_id):
         if "interesting_components" in results:
             for comp in results["interesting_components"]:
                 if comp["id"] == component_id:
-                    # Format the bicliques data structure
-                    formatted_comp = comp.copy()
+                    # Create a serializable version of the component
+                    formatted_comp = {
+                        "id": comp["id"],
+                        "dmrs": comp.get("dmrs", 0),
+                        "genes": comp.get("genes", 0),
+                        "total_edges": comp.get("total_edges", 0),
+                        "split_genes": [{"gene_name": g.get("gene_name", ""), 
+                                       "description": g.get("description", ""),
+                                       "bicliques": g.get("bicliques", [])} 
+                                      for g in comp.get("split_genes", [])],
+                        "bicliques": comp.get("bicliques", []),
+                    }
                     
-                    # Create visualization if it doesn't exist
-                    if "raw_bicliques" in formatted_comp and not formatted_comp.get("plotly_graph"):
+                    # Handle plotly_graph data separately
+                    if "plotly_graph" in comp:
                         try:
-                            from visualization import (
-                                create_biclique_visualization,
-                                create_node_biclique_map,
-                                calculate_node_positions
-                            )
-        
-                            print(f"\nProcessing visualization for component {component_id}:")
-                            print(f"Number of bicliques: {len(formatted_comp['raw_bicliques'])}")
-        
-                            # Create node_biclique_map for this component
-                            node_biclique_map = create_node_biclique_map(formatted_comp["raw_bicliques"])
-        
-                            # Calculate positions
-                            node_positions = calculate_node_positions(
-                                formatted_comp["raw_bicliques"],
-                                node_biclique_map
-                            )
-        
-                            # Create visualization
-                            viz_data = create_biclique_visualization(
-                                formatted_comp["raw_bicliques"],
-                                results.get("node_labels", {}),
-                                node_positions,
-                                node_biclique_map,
-                                dmr_metadata=results.get("dmr_metadata", {}),
-                                gene_metadata=results.get("gene_metadata", {}),
-                                gene_id_mapping=results.get("gene_id_mapping", {})
-                            )
-        
-                            # Store visualization data - ensure it's properly parsed JSON
-                            try:
-                                formatted_comp["plotly_graph"] = json.loads(viz_data)
-                                print(f"Successfully created visualization for component {component_id}")
-            
-                                # Debug - check the structure
-                                if isinstance(formatted_comp["plotly_graph"], dict):
-                                    print("Visualization data is properly formatted as dictionary")
-                                    if "data" in formatted_comp["plotly_graph"]:
-                                        print(f"Number of traces: {len(formatted_comp['plotly_graph']['data'])}")
-                            except json.JSONDecodeError as je:
-                                print(f"Error parsing visualization JSON: {str(je)}")
-                                formatted_comp["plotly_graph"] = None
-                        except Exception as viz_error:
-                            print(f"Error creating visualization: {str(viz_error)}")
-                            import traceback
-                            traceback.print_exc()
+                            # Ensure plotly_graph is proper JSON
+                            if isinstance(comp["plotly_graph"], str):
+                                formatted_comp["plotly_graph"] = json.loads(comp["plotly_graph"])
+                            else:
+                                formatted_comp["plotly_graph"] = comp["plotly_graph"]
+                        except json.JSONDecodeError as je:
+                            print(f"Error parsing plotly_graph JSON: {str(je)}")
+                            formatted_comp["plotly_graph"] = None
                     
-                    # Format bicliques for display
-                    if "raw_bicliques" in formatted_comp:
-                        formatted_bicliques = []
-                        for idx, biclique in enumerate(formatted_comp["raw_bicliques"]):
-                            dmr_nodes, gene_nodes = biclique
-                            
-                            # Format DMR details
-                            dmr_details = []
-                            for dmr in dmr_nodes:
-                                dmr_label = f"DMR_{dmr+1}"
-                                dmr_details.append({
-                                    "id": dmr_label,
-                                    "area": results.get("dmr_metadata", {}).get(dmr_label, {}).get("area", "N/A")
-                                })
-
-                            # Format gene details
-                            gene_details = []
-                            for gene in gene_nodes:
-                                gene_name = results.get("node_labels", {}).get(gene, f"Gene_{gene}")
-                                gene_details.append({
-                                    "name": gene_name,
-                                    "description": results.get("gene_metadata", {}).get(gene_name, {}).get("description", "N/A"),
-                                    "is_split": gene in formatted_comp.get("split_genes", [])
-                                })
-
-                            formatted_bicliques.append({
-                                "size": f"{len(dmr_nodes)}x{len(gene_nodes)}",
-                                "details": {
-                                    "dmrs": dmr_details,
-                                    "genes": gene_details
-                                }
-                            })
-                        formatted_comp["bicliques"] = formatted_bicliques
                     component = formatted_comp
                     break
 
         if component is None:
             return render_template("error.html", message=f"Component {component_id} not found")
 
-        # Debug print to check visualization data
-        if component.get("plotly_graph"):
-            print("Visualization data present in component")
-        else:
-            print("No visualization data found in component")
+        # Debug print
+        print("Component data structure:")
+        print(json.dumps(component, indent=2, default=str))
 
         return render_template(
             "components.html",
