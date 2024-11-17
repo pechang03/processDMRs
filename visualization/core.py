@@ -30,7 +30,8 @@ def create_biclique_visualization(
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
-    original_graph: nx.Graph,  # Add original graph
+    original_graph: nx.Graph,  # Original full graph
+    bipartite_graph: nx.Graph = None,  # Graph from bicliques (optional)
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
