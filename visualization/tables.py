@@ -37,7 +37,11 @@ def create_gene_table(
         for gene, metadata in gene_metadata.items()
     ]
     return go.Table(header=dict(values=headers), cells=dict(values=list(zip(*rows))))
-def create_statistics_table(statistics: Dict) -> go.Table:
+def create_statistics_table(
+    statistics: Dict,
+    false_positive_edges: Set[Tuple[int, int]] = None,
+    false_negative_edges: Set[Tuple[int, int]] = None
+) -> go.Table:
     """Create a Plotly table for statistics summary."""
     headers = ["Metric", "Value"]
     rows = []
@@ -53,6 +57,8 @@ def create_statistics_table(statistics: Dict) -> go.Table:
         ["Single Edge Coverage", f"{edge_cov['single_coverage']} ({edge_cov['single_percentage']:.1%})"],
         ["Multiple Edge Coverage", f"{edge_cov['multiple_coverage']} ({edge_cov['multiple_percentage']:.1%})"],
         ["Uncovered Edges", f"{edge_cov['uncovered']} ({edge_cov['uncovered_percentage']:.1%})"],
+        ["False Positive Edges", str(len(false_positive_edges)) if false_positive_edges else "0"],
+        ["False Negative Edges", str(len(false_negative_edges)) if false_negative_edges else "0"]
     ])
     
     # Size distribution summary

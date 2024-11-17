@@ -53,10 +53,13 @@ def create_biclique_visualization(
     )
     traces.extend(biclique_box_traces)
 
-    # Add edges for bicliques
+    # Add edges with validation information
     edge_traces = create_edge_traces(
         bicliques,
         node_positions,
+        original_graph,
+        false_positive_edges,
+        false_negative_edges,
         edge_type="biclique",
         edge_style={"color": "black", "width": 1, "dash": "solid"}
     )
