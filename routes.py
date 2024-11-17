@@ -58,21 +58,28 @@ def statistics_route():
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
-        selected_component_id = request.args.get("component_id", type=int)
         detailed_stats = calculate_biclique_statistics(
             bicliques, 
             results.get("bipartite_graph")
         )
 
+        # Merge component stats from results into detailed_stats
+        if "component_stats" in results:
+            detailed_stats["components"] = results["component_stats"]
+
         # Add debug logging
         print(f"Statistics show {detailed_stats['components']['interesting']} interesting components")
         print(f"Results contain {len(results.get('interesting_components', []))} components")
 
+        # Debug statements
+        print(f"Debug - Components in bicliques_result: {len(bicliques_result.get('interesting_components', []))}")
+        print(f"Debug - First component data: {bicliques_result['interesting_components'][0] if bicliques_result.get('interesting_components') else 'None'}")
+
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
-            bicliques_result=results,
-            selected_component_id=selected_component_id,
+            bicliques_result=results,  # Pass the full results
+            selected_component_id=request.args.get("component_id", type=int),
             total_bicliques=len(bicliques)
         )
     except Exception as e:
