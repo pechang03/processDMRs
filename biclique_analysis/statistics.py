@@ -210,58 +210,74 @@ def calculate_edge_coverage(
     }
 
 def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
-    """Calculate statistics about components in the graph."""
-    # Get connected components
-    components = list(nx.connected_components(graph))
+    """Calculate statistics about components in both original and biclique graphs."""
+    # Get connected components from original graph
+    original_components = list(nx.connected_components(graph))
     
-    # Count component types using same definition as components.py
-    interesting_comps = []
-    single_node = 0
-    small = 0
-    
-    for comp in components:
-        # Count DMRs and genes in component
-        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
-        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
-        
-        if len(comp) == 1:
-            single_node += 1
-        elif len(dmrs) <= 1 and len(genes) <= 1:
-            small += 1
-        else:
-            interesting_comps.append((comp, dmrs, genes))
-    
-    interesting = len(interesting_comps)
-    
-    # Calculate statistics for interesting components
-    total_dmrs = 0
-    total_genes = 0
-    total_bicliques = 0
-    split_genes = set()
-    
-    for comp, dmrs, genes in interesting_comps:
-        total_dmrs += len(dmrs)
-        total_genes += len(genes)
-        
-        # Count bicliques in component
-        comp_bicliques = [b for b in bicliques if any(n in comp for n in b[0])]
-        total_bicliques += len(comp_bicliques)
-        
-        # Identify split genes (genes in multiple bicliques)
-        gene_participation = {}
-        for _, gene_nodes in comp_bicliques:
+    # Create biclique graph
+    biclique_graph = nx.Graph()
+    for dmr_nodes, gene_nodes in bicliques:
+        for dmr in dmr_nodes:
             for gene in gene_nodes:
-                gene_participation[gene] = gene_participation.get(gene, 0) + 1
-        split_genes.update(g for g, count in gene_participation.items() if count > 1)
-
+                biclique_graph.add_edge(dmr, gene)
+                biclique_graph.nodes[dmr]['bipartite'] = 0
+                biclique_graph.nodes[gene]['bipartite'] = 1
+    
+    # Get connected components from biclique graph
+    biclique_components = list(nx.connected_components(biclique_graph))
+    
+    def analyze_components(components, g):
+        """Helper function to analyze components of a graph."""
+        interesting_comps = []
+        single_node = 0
+        small = 0
+        
+        for comp in components:
+            dmrs = {n for n in comp if g.nodes[n].get('bipartite') == 0}
+            genes = {n for n in comp if g.nodes[n].get('bipartite') == 1}
+            
+            if len(comp) == 1:
+                single_node += 1
+            elif len(dmrs) <= 1 or len(genes) <= 1:
+                small += 1
+            else:
+                interesting_comps.append((comp, dmrs, genes))
+        
+        interesting = len(interesting_comps)
+        
+        # Calculate averages for interesting components
+        total_dmrs = sum(len(dmrs) for _, dmrs, _ in interesting_comps)
+        total_genes = sum(len(genes) for _, _, genes in interesting_comps)
+        
+        return {
+            "total": len(components),
+            "single_node": single_node,
+            "small": small,
+            "interesting": interesting,
+            "avg_dmrs": total_dmrs / interesting if interesting else 0,
+            "avg_genes": total_genes / interesting if interesting else 0
+        }
+    
+    # Analyze both graphs
+    original_stats = analyze_components(original_components, graph)
+    biclique_stats = analyze_components(biclique_components, biclique_graph)
+    
+    # Additional statistics for biclique graph
+    split_genes = set()
+    total_bicliques = len(bicliques)
+    
+    # Count split genes
+    gene_participation = {}
+    for _, gene_nodes in bicliques:
+        for gene in gene_nodes:
+            gene_participation[gene] = gene_participation.get(gene, 0) + 1
+    split_genes = {g for g, count in gene_participation.items() if count > 1}
+    
     return {
-        "total": len(components),
-        "single_node": single_node,
-        "small": small,
-        "interesting": interesting,
-        "avg_dmrs": total_dmrs / interesting if interesting else 0,
-        "avg_genes": total_genes / interesting if interesting else 0,
-        "with_split_genes": len([c for c, _, _ in interesting_comps if any(g in split_genes for g in c)]),
+        "original": original_stats,
+        "biclique": biclique_stats,
+        "with_split_genes": sum(1 for comp in biclique_components 
+                              if any(g in split_genes for g in comp)),
         "total_split_genes": len(split_genes),
         "total_bicliques": total_bicliques
     }
