@@ -298,15 +298,19 @@ def create_result_dict(
     uncovered_edges = set(original_graph.edges()) - set(edge_distribution.keys())
     uncovered_nodes = {node for edge in uncovered_edges for node in edge}
 
+    # Calculate edge coverage percentages
+    total_edges = len(original_graph.edges())
+    single_coverage = len([e for e, b in edge_distribution.items() if len(b) == 1])
+    multiple_coverage = len([e for e, b in edge_distribution.items() if len(b) > 1])
+    
     coverage_info["edges"] = {
-        "single_coverage": len(
-            [e for e, b in edge_distribution.items() if len(b) == 1]
-        ),
-        "multiple_coverage": len(
-            [e for e, b in edge_distribution.items() if len(b) > 1]
-        ),
+        "single_coverage": single_coverage,
+        "multiple_coverage": multiple_coverage,
         "uncovered": len(uncovered_edges),
-        "total": len(original_graph.edges()),
+        "total": total_edges,
+        "single_percentage": single_coverage / total_edges if total_edges > 0 else 0,
+        "multiple_percentage": multiple_coverage / total_edges if total_edges > 0 else 0,
+        "uncovered_percentage": len(uncovered_edges) / total_edges if total_edges > 0 else 0
     }
 
     return {
