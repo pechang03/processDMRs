@@ -45,23 +45,7 @@ def find_interesting_components(
         # Track all genes and their biclique participation
         gene_participation = {}
 
-        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
-            bicliques_result["bicliques"]
-        ):
-            dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
-            gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
-
-            if (dmr_set | gene_set) & set(component):
-                component_bicliques.append((dmr_set, gene_set))
-                # Track gene participation
-                for gene_id in gene_set:
-                    if gene_id not in gene_participation:
-                        gene_participation[gene_id] = set()
-                    gene_participation[gene_id].add(biclique_idx)
-
-        # Track all genes and their biclique participation
-        gene_participation = {}
-
+        # Single loop for processing bicliques
         for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
             bicliques_result["bicliques"]
         ):
