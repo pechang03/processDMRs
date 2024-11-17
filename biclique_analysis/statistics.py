@@ -92,6 +92,7 @@ def calculate_coverage_statistics(
     total_edges = len(graph.edges())
     single_covered = covered_edges - multiple_covered
 
+    size_distribution = calculate_size_distribution(bicliques)
     return {
         "dmrs": {
             "covered": len(dmr_coverage),
