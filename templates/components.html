@@ -67,60 +67,18 @@
         <div class="card-body">
           <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
           <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log("DOM loaded, initializing visualization...");
-
-                // Get the container element
-                var container = document.getElementById('plotly-graph-{{ component.id }}');
-                console.log("Container element:", container);
-
-                try {
-                    // Get the graph data
-                    var graphData = {{ component.plotly_graph|tojson|safe }};
-                    console.log("Graph data structure:", {
-                        hasData: Boolean(graphData && graphData.data),
-                        hasLayout: Boolean(graphData && graphData.layout),
-                        numTraces: graphData && graphData.data ? graphData.data.length : 0,
-                        dataKeys: graphData ? Object.keys(graphData) : [],
-                        layoutKeys: graphData && graphData.layout ? Object.keys(graphData.layout) : []
-                    });
-
-                    if (!graphData || !graphData.data || !graphData.layout) {
-                        console.error("Invalid graph data structure:", graphData);
-                        return;
-                    }
-
-                    // Ensure minimum dimensions
-                    container.style.height = '600px';
-                    container.style.width = '100%';
-
-                    // Create the plot
-                    Plotly.newPlot(container,
-                        graphData.data,
-                        {
-                            ...graphData.layout,
-                            height: 600,  // Force minimum height
-                            width: null,  // Allow responsive width
-                            autosize: true
-                        },
-                        {
-                            responsive: true,
-                            displayModeBar: true,
-                            scrollZoom: true,
-                            displaylogo: false,
-                            modeBarButtonsToAdd: ['select2d', 'lasso2d']
-                        }
-                    ).then(function() {
-                        console.log("Plot successfully created");
-                    }).catch(function(err) {
-                        console.error("Error in plot creation:", err);
-                    });
-
-                } catch (error) {
-                    console.error("Error in visualization creation:", error);
-                    console.error("Error stack:", error.stack);
+            var graphData = {{ component.plotly_graph|tojson|safe }};
+            Plotly.newPlot('plotly-graph-{{ component.id }}',
+                graphData.data,
+                graphData.layout,
+                {
+                    responsive: true,
+                    displayModeBar: true,
+                    scrollZoom: true,
+                    displaylogo: false,
+                    modeBarButtonsToAdd: ['select2d', 'lasso2d']
                 }
-            });
+            );
           </script>
         </div>
       </div>
@@ -146,8 +104,9 @@
                 {% for gene in component.split_genes %}
                 <tr>
                   <td>{{ gene.gene_name }}</td>
-                  <td>{{ gene.description if gene.description != "N/A" else "" }}</td>
-                  <td>{{ gene.type }}</td>
+                  <td>
+                    {{ gene.description if gene.description != "N/A" else "" }}
+                  </td>
                   <td>{{ gene.bicliques|join(', ') }}</td>
                 </tr>
                 {% endfor %}
@@ -159,18 +118,18 @@
       {% endif %}
 
       <!-- Bicliques Section -->
-      {% if component.bicliques %}
+      {% if component.raw_bicliques %}
       <div class="card mb-4">
         <div class="card-header">
           <h3>Bicliques</h3>
         </div>
         <div class="card-body">
-          {% for biclique in component.bicliques %}
+          {% for biclique_idx, biclique in enumerate(component.raw_bicliques) %}
           <div class="card mb-3">
             <div class="card-header">
               <h4>
-                Biclique {{ biclique.id + 1 }} ({{ biclique.details.dmrs|length
-                }} DMRs, {{ biclique.details.genes|length }} genes)
+                Biclique {{ biclique_idx + 1 }} ({{ biclique[0]|length }} DMRs,
+                { biclique[1]|length }} genes)
               </h4>
             </div>
             <div class="card-body">
@@ -187,10 +146,14 @@
                         </tr>
                       </thead>
                       <tbody>
-                        {% for dmr in biclique.details.dmrs %}
+                        {% for dmr_id in biclique[0]|sort %} {% set dmr_key =
+                        "DMR_" ~ (dmr_id + 1) %}
                         <tr>
-                          <td>{{ dmr.id }}</td>
-                          <td>{{ dmr.area }}</td>
+                          <td>DMR_{{ dmr_id + 1 }}</td>
+                          <td>
+                            {{ dmr_metadata[dmr_key].area if dmr_key
+                            dmr_metadata else "N/A" }}
+                          </td>
                         </tr>
                         {% endfor %}
                       </tbody>
@@ -206,16 +169,16 @@
                         <tr>
                           <th>Name</th>
                           <th>Description</th>
-                          <th>Type</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {% for gene in biclique.details.genes %}
+                        {% for gene_id in biclique[1]|sort %} {% set gene_name =
+                        gene_metadata.keys()|select("equalto", gene_id)|first %}
                         <tr>
-                          <td>{{ gene.name }}</td>
+                          <td>{{ gene_name }}</td>
                           <td>
-                            {{ gene.description if gene.description != "N/A"
-                            else "" }}
+                            {{ gene_metadata[gene_name].description gene_name in
+                            gene_metadata else "N/A" }}
                           </td>
                         </tr>
                         {% endfor %}
