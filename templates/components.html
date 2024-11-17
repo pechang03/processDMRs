@@ -124,12 +124,12 @@
           <h3>Bicliques</h3>
         </div>
         <div class="card-body">
-          {% for biclique_idx, biclique in enumerate(component.raw_bicliques) %}
+          {% for biclique in component.raw_bicliques %}
           <div class="card mb-3">
             <div class="card-header">
               <h4>
-                Biclique {{ biclique_idx + 1 }} ({{ biclique[0]|length }} DMRs,
-                { biclique[1]|length }} genes)
+                Biclique {{ loop.index }} ({{ biclique[0]|length }} DMRs, {{
+                biclique[1]|length }} genes)
               </h4>
             </div>
             <div class="card-body">
@@ -151,7 +151,7 @@
                         <tr>
                           <td>DMR_{{ dmr_id + 1 }}</td>
                           <td>
-                            {{ dmr_metadata[dmr_key].area if dmr_key
+                            {{ dmr_metadata[dmr_key].area if dmr_key in
                             dmr_metadata else "N/A" }}
                           </td>
                         </tr>
@@ -177,8 +177,8 @@
                         <tr>
                           <td>{{ gene_name }}</td>
                           <td>
-                            {{ gene_metadata[gene_name].description gene_name in
-                            gene_metadata else "N/A" }}
+                            {{ gene_metadata[gene_name].description if gene_name
+                            in gene_metadata else "N/A" }}
                           </td>
                         </tr>
                         {% endfor %}
