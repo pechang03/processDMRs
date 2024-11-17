@@ -3,59 +3,95 @@ from typing import List, Dict, Tuple
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
-    calculate_node_positions
+    calculate_node_positions,
 )
 
+
 def find_interesting_components(
-    bipartite_graph: nx.Graph, 
+    bipartite_graph: nx.Graph,
     bicliques_result: Dict,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
-    gene_id_mapping: Dict[str, int] = None
+    gene_id_mapping: Dict[str, int] = None,
 ) -> List[Dict]:
     """Find and analyze interesting components without visualization."""
-    
+
     components = list(nx.connected_components(bipartite_graph))
     print(f"Found {len(components)} total components")
-    
+
     interesting_components = []
-    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
+    reverse_gene_mapping = (
+        {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
+    )
 
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
-        
+
         # Only consider components with multiple nodes
         if len(component) < 2:
             continue
-            
+
         # Get unique DMRs and genes
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
-        gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
-        
+        gene_nodes = {
+            n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1
+        }
+
         # Only consider components with both DMRs and genes
         if not dmr_nodes or not gene_nodes:
             continue
-            
+
         # Create node_biclique_map for this component
         component_bicliques = []
         node_biclique_map = {}
-        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(bicliques_result["bicliques"]):
+        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
+            bicliques_result["bicliques"]
+        ):
             dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
             gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
-            
+
             if (dmr_set | gene_set) & set(component):
                 component_bicliques.append((dmr_set, gene_set))
-                for node in (dmr_set | gene_set):
+                for node in dmr_set | gene_set:
                     if node not in node_biclique_map:
                         node_biclique_map[node] = []
                     node_biclique_map[node].append(biclique_idx)
 
-        # Identify split genes for the whole component
-        split_genes = {
-            node: node_biclique_map[node]
-            for node in gene_nodes 
-            if len(node_biclique_map.get(node, [])) > 1
-        }
+        # Track all genes and their biclique participation
+        gene_participation = {}
+
+        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
+            bicliques_result["bicliques"]
+        ):
+            dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
+            gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
+
+            if (dmr_set | gene_set) & set(component):
+                component_bicliques.append((dmr_set, gene_set))
+                # Track gene participation
+                for gene_id in gene_set:
+                    if gene_id not in gene_participation:
+                        gene_participation[gene_id] = set()
+                    gene_participation[gene_id].add(biclique_idx)
+
+        # Identify regular and split genes
+        regular_genes = []
+        split_genes = []
+
+        for gene_id, bicliques in gene_participation.items():
+            gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+            gene_info = {
+                "gene_name": gene_name,
+                "description": gene_metadata.get(gene_name, {}).get(
+                    "description", "N/A"
+                ),
+                "bicliques": sorted(list(bicliques)),
+            }
+
+            if len(bicliques) > 1:
+                split_genes.append(gene_info)
+            else:
+                regular_genes.append(gene_info)
 
         if len(component_bicliques) >= 1:
             component_info = {
@@ -63,40 +99,30 @@ def find_interesting_components(
                 "size": len(component),
                 "dmrs": len(dmr_nodes),
                 "genes": len(regular_genes),
-                "regular_genes": regular_genes,  # Add this
-                "total_genes": len(regular_genes) + len(split_genes)  # Add this
+                "regular_genes": regular_genes,
                 "component": component,
                 "raw_bicliques": component_bicliques,
                 "total_edges": len(subgraph.edges()),
-                "split_genes": [
-                    {
-                        "gene_name": reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}"),
-                        "description": gene_metadata.get(
-                            reverse_gene_mapping.get(gene_id, ""), 
-                            {}
-                        ).get("description", "N/A"),
-                        "bicliques": bicliques,
-                        "type": "split"
-                    }
-                    for gene_id, bicliques in split_genes.items()
-                ]
+                "split_genes": split_genes,
+                "total_genes": len(regular_genes) + len(split_genes),  # Add this
             }
             interesting_components.append(component_info)
 
     return interesting_components
+
 
 def visualize_component(
     component_info: Dict,
     bipartite_graph: nx.Graph,
     dmr_metadata: Dict[str, Dict],
     gene_metadata: Dict[str, Dict],
-    gene_id_mapping: Dict[str, int]
+    gene_id_mapping: Dict[str, int],
 ) -> Dict:  # Change return type to Dict to include both visualization and data
     """Create visualization and data summary for a specific component."""
-    
+
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
     subgraph = bipartite_graph.subgraph(component_info["component"])
-    
+
     # Create node labels
     node_labels = {}
     for node in component_info["component"]:
@@ -111,11 +137,13 @@ def visualize_component(
                 node_labels[node] = gene_name
             else:
                 node_labels[node] = f"Gene_{node}"
-    
+
     # Create visualization
     node_biclique_map = create_node_biclique_map(component_info["raw_bicliques"])
-    node_positions = calculate_node_positions(component_info["raw_bicliques"], node_biclique_map)
-    
+    node_positions = calculate_node_positions(
+        component_info["raw_bicliques"], node_biclique_map
+    )
+
     # Generate biclique summary data
     biclique_data = []
     for idx, (dmr_nodes, gene_nodes) in enumerate(component_info["raw_bicliques"]):
@@ -124,11 +152,15 @@ def visualize_component(
         for dmr_id in sorted(dmr_nodes):
             dmr_label = f"DMR_{dmr_id+1}"
             if dmr_label in dmr_metadata:
-                dmrs.append({
-                    "id": dmr_label,
-                    "area": dmr_metadata[dmr_label].get("area", "N/A"),
-                    "description": dmr_metadata[dmr_label].get("description", "N/A")
-                })
+                dmrs.append(
+                    {
+                        "id": dmr_label,
+                        "area": dmr_metadata[dmr_label].get("area", "N/A"),
+                        "description": dmr_metadata[dmr_label].get(
+                            "description", "N/A"
+                        ),
+                    }
+                )
 
         # Get gene details
         genes = []
@@ -137,7 +169,9 @@ def visualize_component(
             gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
             gene_info = {
                 "name": gene_name,
-                "description": gene_metadata.get(gene_name, {}).get("description", "N/A")
+                "description": gene_metadata.get(gene_name, {}).get(
+                    "description", "N/A"
+                ),
             }
             # Check if it's a split gene (appears in multiple bicliques)
             if len(node_biclique_map.get(gene_id, [])) > 1:
@@ -145,17 +179,19 @@ def visualize_component(
             else:
                 genes.append(gene_info)
 
-        biclique_data.append({
-            "id": idx + 1,
-            "dmrs": dmrs,
-            "genes": genes,
-            "split_genes": split_genes,
-            "size": {
-                "dmrs": len(dmr_nodes),
-                "genes": len(gene_nodes),
-                "split_genes": len(split_genes)
+        biclique_data.append(
+            {
+                "id": idx + 1,
+                "dmrs": dmrs,
+                "genes": genes,
+                "split_genes": split_genes,
+                "size": {
+                    "dmrs": len(dmr_nodes),
+                    "genes": len(gene_nodes),
+                    "split_genes": len(split_genes),
+                },
             }
-        })
+        )
 
     # Create visualization
     plotly_graph = create_biclique_visualization(
@@ -166,7 +202,7 @@ def visualize_component(
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
         gene_id_mapping=gene_id_mapping,
-        bipartite_graph=subgraph
+        bipartite_graph=subgraph,
     )
 
     return {
@@ -178,27 +214,24 @@ def visualize_component(
             "total_dmrs": component_info["dmrs"],
             "total_genes": component_info["genes"],
             "total_edges": component_info["total_edges"],
-            "total_bicliques": len(component_info["raw_bicliques"])
-        }
+            "total_bicliques": len(component_info["raw_bicliques"]),
+        },
     }
 
+
 def process_components(
-    bipartite_graph: nx.Graph, 
+    bipartite_graph: nx.Graph,
     bicliques_result: Dict,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
-    gene_id_mapping: Dict[str, int] = None
+    gene_id_mapping: Dict[str, int] = None,
 ) -> Tuple[List[Dict], List[Dict]]:
     """Process connected components of the graph."""
-    
+
     interesting_components = find_interesting_components(
-        bipartite_graph, 
-        bicliques_result,
-        dmr_metadata,
-        gene_metadata,
-        gene_id_mapping
+        bipartite_graph, bicliques_result, dmr_metadata, gene_metadata, gene_id_mapping
     )
-    
+
     # Only visualize first component initially
     if interesting_components:
         component_data = visualize_component(
@@ -206,8 +239,8 @@ def process_components(
             bipartite_graph,
             dmr_metadata,
             gene_metadata,
-            gene_id_mapping
+            gene_id_mapping,
         )
         interesting_components[0].update(component_data)
-    
+
     return interesting_components, []  # Empty list for simple_connections
