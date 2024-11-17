@@ -30,12 +30,13 @@ def create_biclique_visualization(
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
+    original_graph: nx.Graph,  # Add original graph
     false_positive_edges: Set[Tuple[int, int]] = None,
+    false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
-    dmr_metadata: Dict[str, Dict] = None,  # Add these parameters
+    dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-    bipartite_graph: nx.Graph = None,  # Add this parameter
 ) -> str:
     """Create interactive Plotly visualization with colored bicliques."""
     print(f"\nCreating visualization for {len(bicliques)} bicliques")  # Debug logging

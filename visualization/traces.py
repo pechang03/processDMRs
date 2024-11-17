@@ -136,8 +136,11 @@ def create_node_traces(
 def create_edge_traces(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_positions: Dict[int, Tuple[float, float]],
-    edge_type: str = "biclique",  # Add this parameter
-    edge_style: Dict = None  # Add this parameter
+    original_graph: nx.Graph,  # Add original graph
+    false_positive_edges: Set[Tuple[int, int]] = None,  # Add false positives
+    false_negative_edges: Set[Tuple[int, int]] = None,  # Add false negatives
+    edge_type: str = "biclique",
+    edge_style: Dict = None
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
     print("\nEdge trace creation debug:")
