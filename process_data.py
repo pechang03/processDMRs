@@ -130,6 +130,20 @@ def process_data():
             ),  # Get format from app config
         )
 
+        # Get header statistics from bicliques file
+        header_stats = bicliques_result.get("statistics", {})
+
+        # Validate against header statistics
+        if header_stats:
+            print("\nValidating against header statistics:")
+            print(f"DMR Coverage - Header: {header_stats['dmr_coverage']['covered']}/{header_stats['dmr_coverage']['total']}")
+            print(f"Gene Coverage - Header: {header_stats['gene_coverage']['covered']}/{header_stats['gene_coverage']['total']}")
+            
+            # Compare size distribution
+            print("\nBiclique size distribution from header:")
+            for (dmrs, genes), count in header_stats['size_distribution'].items():
+                print(f"{dmrs} DMRs, {genes} genes: {count} bicliques")
+
         # Create node_biclique_map
         node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
 

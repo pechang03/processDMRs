@@ -50,28 +50,89 @@ def read_bicliques_file(
 
 def parse_header_statistics(lines: List[str]) -> Dict:
     """Parse header statistics from file lines."""
-    statistics = {}
+    statistics = {
+        "size_distribution": {},
+        "dmr_coverage": {},
+        "gene_coverage": {},
+        "dmr_participation": {},
+        "gene_participation": {},
+        "edge_coverage": {}
+    }
+    
     line_idx = 0
+    section = None
+    
     while line_idx < len(lines):
         line = lines[line_idx].strip()
-        if not line or line.startswith("#"):
+        
+        if not line:
             line_idx += 1
+            continue
+            
+        if line == "Biclique Size Distribution":
+            section = "size_dist"
+            line_idx += 2  # Skip header row
+            continue
+            
+        if line == "Coverage Statistics":
+            section = "coverage"
+            line_idx += 1
+            continue
+            
+        if line == "Node Participation":
+            section = "participation"
+            line_idx += 1
+            continue
+            
+        if line == "Edge Coverage":
+            section = "edge"
+            line_idx += 2  # Skip header row
             continue
 
-        if line.startswith("- "):
-            line = line[2:]
-            if ":" in line:
-                key, value = line.split(":", 1)
-                key = key.strip()
-                statistics[key] = (
-                    int(value.strip())
-                    if key
-                    in ["Nb operations", "Nb splits", "Nb deletions", "Nb additions"]
-                    else value.strip()
-                )
-            line_idx += 1
-            continue
-        break
+        if section == "size_dist":
+            if line.startswith("DMRs"):
+                line_idx += 1
+                continue
+            parts = line.split()
+            if len(parts) == 3:
+                statistics["size_distribution"][(int(parts[0]), int(parts[1]))] = int(parts[2])
+                
+        elif section == "coverage":
+            if line.startswith("DMR Coverage"):
+                line = next(lines[i] for i in range(line_idx+1, len(lines)) if lines[i].strip().startswith("Covered:"))
+                covered, total = map(int, line.split(":")[1].split("/")[0:2])
+                statistics["dmr_coverage"] = {"covered": covered, "total": total}
+            elif line.startswith("Gene Coverage"):
+                line = next(lines[i] for i in range(line_idx+1, len(lines)) if lines[i].strip().startswith("Covered:"))
+                covered, total = map(int, line.split(":")[1].split("/")[0:2])
+                statistics["gene_coverage"] = {"covered": covered, "total": total}
+                
+        elif section == "participation":
+            if line.startswith("DMR Participation"):
+                line_idx += 2  # Skip header
+                while line_idx < len(lines) and lines[line_idx].strip():
+                    parts = lines[line_idx].strip().split()
+                    if len(parts) == 2:
+                        statistics["dmr_participation"][int(parts[0])] = int(parts[1])
+                    line_idx += 1
+            elif line.startswith("Gene Participation"):
+                line_idx += 2  # Skip header
+                while line_idx < len(lines) and lines[line_idx].strip():
+                    parts = lines[line_idx].strip().split()
+                    if len(parts) == 2:
+                        statistics["gene_participation"][int(parts[0])] = int(parts[1])
+                    line_idx += 1
+                    
+        elif section == "edge":
+            parts = line.split()
+            if len(parts) >= 3:
+                coverage_type = " ".join(parts[:-2])
+                count = int(parts[-2])
+                percentage = float(parts[-1].strip("%"))
+                statistics["edge_coverage"][coverage_type] = {"count": count, "percentage": percentage}
+
+        line_idx += 1
+
     return statistics
 
 
