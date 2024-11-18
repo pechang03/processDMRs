@@ -108,8 +108,9 @@ def create_bipartite_graph(
     print(f"\nDebugging create_bipartite_graph:")
     print(f"Number of DMR nodes added: {len(dmr_nodes)}")
 
-    # Track edges we've already added
+    # Track edges and edge sources
     edges_seen = set()
+    edge_sources = {}  # New dictionary to store edge sources
     duplicate_edges = []
     edges_added = 0
 
@@ -117,11 +118,15 @@ def create_bipartite_graph(
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
         associated_genes = set()  # Initialize a set to collect unique genes
 
+        # Determine sources
+        gene_sources = {}  # Map gene names to their sources for this DMR
+
         # Add closest gene if it exists
         gene_col = closest_gene_col
         if pd.notna(row[gene_col]) and row[gene_col]:
             gene_name = str(row[gene_col]).strip().lower()  # Standardize to lowercase
             associated_genes.add(gene_name)
+            gene_sources[gene_name] = "Gene_Symbol_Nearby"  # Mark source
 
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
@@ -129,6 +134,8 @@ def create_bipartite_graph(
                 g.lower() for g in row["Processed_Enhancer_Info"] if g
             }  # Standardize to lowercase
             associated_genes.update(enhancer_genes)
+            for gene in enhancer_genes:
+                gene_sources[gene] = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
 
         # Debugging output for associated genes
         # print(f"DMR {dmr}: Associated genes: {associated_genes}")
@@ -140,10 +147,15 @@ def create_bipartite_graph(
             if gene not in gene_id_mapping:
                 gene_id = max(gene_id_mapping.values(), default=len(df) - 1) + 1
                 gene_id_mapping[gene] = gene_id
-            else:
+                # Add source to edge_sources dictionary
+                source = gene_sources.get(gene, "")
+                if source:
+                    edge_sources[edge] = {source}
+                else:
+                    edge_sources[edge] = set()
                 gene_id = gene_id_mapping[gene]
 
-            # Add gene node if it doesn't exist
+            # Add edges and gene nodes with sources
             if not B.has_node(gene_id):
                 B.add_node(gene_id, bipartite=1)  # Mark as gene node
                 # print(f"Added gene node: {gene_id} for gene: {gene}")
@@ -172,7 +184,10 @@ def create_bipartite_graph(
         f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges"
     )  # Log final graph size
 
-    return B  # Return just the graph instead of a tuple
+    # Attach edge_sources to the graph
+    B.graph["edge_sources"] = edge_sources
+
+    return B  # Return the graph with edge_sources attached
 
 
 def write_bipartite_graph(

@@ -2,6 +2,7 @@
 
 import json
 from typing import Dict, List, Set, Tuple
+from biclique_analysis.edge_info import EdgeInfo  # Import EdgeInfo
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objs as go
 import plotly.colors
@@ -30,6 +31,7 @@ def create_biclique_visualization(
     node_labels: Dict[int, str],
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
+    edge_classifications: Dict[str, List[EdgeInfo]],  # Add this parameter
     original_graph: nx.Graph,  # Original full graph
     bipartite_graph: nx.Graph = None,  # Graph from bicliques (optional)
     false_positive_edges: Set[Tuple[int, int]] = None,
@@ -54,7 +56,13 @@ def create_biclique_visualization(
     )
     traces.extend(biclique_box_traces)
 
-    # Add edges with validation information
+    # Create edge traces with EdgeInfo
+    edge_traces = create_edge_traces(
+        edge_classifications,
+        node_positions,
+        edge_style={"width": 1},
+    )
+    traces.extend(edge_traces)
     edge_traces = create_edge_traces(
         bicliques,
         node_positions,

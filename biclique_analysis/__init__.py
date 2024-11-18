@@ -1,4 +1,5 @@
 from .reader import read_bicliques_file
+from .edge_info import EdgeInfo  # Import EdgeInfo
 from .components import process_components
 from .classifier import classify_biclique, get_biclique_type_counts
 from .statistics import (
@@ -35,6 +36,7 @@ __all__ = list(
             "calculate_coverage_statistics",
             "calculate_size_distribution",
             # Reporting exports
+            "EdgeInfo",
             "print_bicliques_summary",
             "print_bicliques_detail",
         ]
