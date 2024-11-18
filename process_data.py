@@ -20,6 +20,7 @@
 import os
 import json
 from typing import Dict, List, Set, Tuple
+import networkx as nx
 from flask import Flask, render_template
 
 from processDMR import read_excel_file, create_bipartite_graph
