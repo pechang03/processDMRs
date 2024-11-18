@@ -31,6 +31,7 @@ from biclique_analysis import (
     process_components,
     reporting,  # Add this import
 )
+from biclique_analysis.edge_classification import classify_edges
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
@@ -171,7 +172,15 @@ def process_data():
             )
         )
 
-        # Process components
+        # Build biclique_graph from bicliques
+        biclique_graph = nx.Graph()
+        for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+            biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+
+        # Perform edge classification
+        edge_classifications = classify_edges(bipartite_graph, biclique_graph)
         print("Processing components...")
         interesting_components, simple_connections, component_stats = (
             process_components(
@@ -193,10 +202,10 @@ def process_data():
         # print(f"Component stats show {component_stats['components']['interesting']} interesting components")
         #         print(f"Found {len(interesting_components)} interesting components")
         print(
-            f"Original graph has {component_stats['components']['original']['interesting']} interesting components"
+            f"Original graph has {component_stats['original']['connected']['interesting']} interesting components"
         )
         print(
-            f"Biclique graph has {component_stats['components']['biclique']['interesting']} interesting components"
+            f"Biclique graph has {component_stats['biclique']['connected']['interesting']} interesting components"
         )
 
         # Create summary statistics first
