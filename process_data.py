@@ -186,7 +186,10 @@ def process_data():
         # Add debug logging
         print(f"Found {len(interesting_components)} interesting components")
         print(
-            f"Component stats show {component_stats['components']['interesting']} interesting"
+            f"Original graph has {component_stats['components']['original']['interesting']} interesting components"
+        )
+        print(
+            f"Biclique graph has {component_stats['components']['biclique']['interesting']} interesting components"
         )
 
         # Create summary statistics first
@@ -216,7 +219,7 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
-            "component_stats": component_stats  # Add component statistics
+            "component_stats": component_stats,  # Add component statistics
         }
         return _cached_data
         return _cached_data
