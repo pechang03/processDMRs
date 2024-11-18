@@ -119,6 +119,43 @@ def calculate_coverage_statistics(
     }
 
 
+def analyze_biconnected_components(graph: nx.Graph) -> Dict:
+    """Analyze biconnected components of a graph."""
+    # Get biconnected components
+    biconn_comps = list(nx.biconnected_components(graph))
+    
+    # Initialize counters
+    single_node = 0
+    small = 0
+    interesting = 0
+    total_dmrs = 0
+    total_genes = 0
+    
+    interesting_comps = []
+    
+    for comp in biconn_comps:
+        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
+        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
+        
+        if len(comp) == 1:
+            single_node += 1
+        elif len(dmrs) <= 1 or len(genes) <= 1:
+            small += 1
+        else:
+            interesting += 1
+            interesting_comps.append((comp, dmrs, genes))
+            total_dmrs += len(dmrs)
+            total_genes += len(genes)
+    
+    return {
+        "total": len(biconn_comps),
+        "single_node": single_node,
+        "small": small,
+        "interesting": interesting,
+        "avg_dmrs": total_dmrs / interesting if interesting else 0,
+        "avg_genes": total_genes / interesting if interesting else 0
+    }
+
 def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate comprehensive biclique statistics."""
     # Validate graph structure first
