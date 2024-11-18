@@ -110,6 +110,9 @@ def component_detail_route(component_id):
                 "error.html", message="Bipartite graph not found in results"
             )
 
+        # Define edge_classifications from results
+        edge_classifications = results.get("edge_classifications", {})
+
         # Find the requested component
         component = None
         if "interesting_components" in results:
