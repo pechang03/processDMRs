@@ -136,7 +136,7 @@ def create_node_traces(
 
 
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]],  # Use EdgeInfo objects
+    edge_classifications: Dict[str, List[EdgeInfo]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],  # Add this parameter
     original_graph: nx.Graph,  # Add original graph

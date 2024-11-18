@@ -180,8 +180,11 @@ def process_data():
             biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
             biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
 
+        # Retrieve edge_sources from the graph
+        edge_sources = bipartite_graph.graph.get("edge_sources", {})
+
         # Perform edge classification
-        edge_classifications = classify_edges(bipartite_graph, biclique_graph)
+        edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
         print("Processing components...")
         interesting_components, simple_connections, component_stats = (
             process_components(

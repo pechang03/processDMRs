@@ -4,12 +4,12 @@
 from typing import Dict, List, Tuple, Set
 import networkx as nx
 
-from .edge_info import EdgeInfo  # Import EdgeInfo from biclique_analysis
+from .edge_info import EdgeInfo
 
 def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph,
-    edge_sources: Dict[Tuple[int, int], Set[str]],  # Add this parameter
+    edge_sources: Dict[Tuple[int, int], Set[str]],
 ) -> Dict[str, List[EdgeInfo]]:
     """
     Classify edges by comparing original and biclique graphs.
