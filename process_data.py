@@ -22,10 +22,10 @@ import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template
+import pandas as pd
 
-from processDMR import read_excel_file, create_bipartite_graph
+# from processDMR import read_excel_file,
 from biclique_analysis import (
-    processor,
     process_bicliques,
     process_enhancer_info,
     create_node_metadata,
@@ -35,10 +35,10 @@ from biclique_analysis import (
 from biclique_analysis.edge_classification import classify_edges
 from visualization import (
     create_node_biclique_map,
-    create_biclique_visualization,
     calculate_node_positions,
 )
 from visualization.node_info import NodeInfo
+from graph_utils import read_excel_file, create_bipartite_graph
 
 app = Flask(__name__)
 
@@ -175,16 +175,20 @@ def process_data():
 
         # Build biclique_graph from bicliques
         biclique_graph = nx.Graph()
-        for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
             biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
             biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-            biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+            biclique_graph.add_edges_from(
+                (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
+            )
 
         # Retrieve edge_sources from the graph
         edge_sources = bipartite_graph.graph.get("edge_sources", {})
 
         # Perform edge classification
-        edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
+        edge_classifications = classify_edges(
+            bipartite_graph, biclique_graph, edge_sources
+        )
         print("Processing components...")
         interesting_components, simple_connections, component_stats = (
             process_components(
