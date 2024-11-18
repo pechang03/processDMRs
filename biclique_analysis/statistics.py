@@ -3,6 +3,38 @@ import warnings
 from typing import List, Dict, Tuple, Set
 import networkx as nx
 
+def analyze_components(components, graph):
+    """Helper function to analyze components of a graph."""
+    interesting_comps = []
+    single_node = 0
+    small = 0
+
+    for comp in components:
+        dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
+        genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
+
+        if len(comp) == 1:
+            single_node += 1
+        elif len(dmrs) <= 1 or len(genes) <= 1:
+            small += 1
+        else:
+            interesting_comps.append((comp, dmrs, genes))
+
+    interesting = len(interesting_comps)
+
+    # Calculate averages for interesting components
+    total_dmrs = sum(len(dmrs) for _, dmrs, _ in interesting_comps)
+    total_genes = sum(len(genes) for _, _, genes in interesting_comps)
+
+    return {
+        "total": len(components),
+        "single_node": single_node,
+        "small": small,
+        "interesting": interesting,
+        "avg_dmrs": total_dmrs / interesting if interesting else 0,
+        "avg_genes": total_genes / interesting if interesting else 0
+    }
+
 
 class InvalidGraphError(Exception):
     """Exception raised for invalid graph structures."""
