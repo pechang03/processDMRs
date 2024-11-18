@@ -14,6 +14,7 @@ class GraphVisualization(ABC):
         graph: nx.Graph,
         node_labels: Dict[int, str],
         node_positions: Dict[int, Tuple[float, float]],
+        original_node_positions: Dict[int, Tuple[float, float]] = None,  # Original positions
         edge_classifications: Dict[str, Set[Tuple[int, int]]] = None,
         node_metadata: Dict[int, Dict] = None,
         **kwargs,
