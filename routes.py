@@ -136,9 +136,9 @@ def component_detail_route(component_id):
                                 original_graph=bipartite_graph,
                                 bipartite_graph=bipartite_graph,
                                 node_biclique_map=node_biclique_map,
-                                dmr_metadata=dmr_metadata,
-                                gene_metadata=gene_metadata,
-                                gene_id_mapping=gene_id_mapping
+                                dmr_metadata=results.get("dmr_metadata", {}),
+                                gene_metadata=results.get("gene_metadata", {}),
+                                gene_id_mapping=results.get("gene_id_mapping", {})
                             )
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:
