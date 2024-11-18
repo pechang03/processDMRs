@@ -22,6 +22,7 @@ def create_node_traces(
     gene_metadata: Dict[str, Dict] = None
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
+    node_positions: Dict[int, Tuple[float, float]],
     if os.getenv('DEBUG'):
         print("\nNode trace creation debug:")
         print(f"Total nodes to position: {len(node_positions)}")
@@ -136,7 +137,6 @@ def create_node_traces(
 
 def create_edge_traces(
     edge_classifications: Dict[str, List[EdgeInfo]],  # Use EdgeInfo objects
-    node_positions: Dict[int, Tuple[float, float]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],  # Add this parameter
     original_graph: nx.Graph,  # Add original graph
