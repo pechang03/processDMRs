@@ -9,21 +9,22 @@ import psutil
 from typing import Dict, Tuple
 
 from biclique_analysis.processor import process_enhancer_info
+from biclique_analysis.reader import read_bicliques_file
+from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
 from visualization import calculate_node_positions  # Import from package root
-from graph_utils import validate_bipartite_graph, create_bipartite_graph
+from visualization.core import create_biclique_visualization
+from visualization import create_node_biclique_map
+from graph_utils import validate_bipartite_graph
+from graph_utils import create_bipartite_graph
+from graph_utils import read_excel_file
 from rb_domination import (
-    greedy_rb_domination,
+    # greedy_rb_domination,
     process_components,
     print_domination_statistics,
 )
-from biclique_analysis.reader import read_bicliques_file
-from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
-from visualization.core import create_biclique_visualization
-from visualization import create_node_biclique_map
-from typing import Dict
 
 # Add version constant at top of file
-__version__ = "1.0.0"
+__version__ = "0.0.3-alpha"
 
 
 def parse_arguments():
@@ -51,153 +52,6 @@ def parse_arguments():
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
     return parser.parse_args()
-
-
-def read_excel_file(filepath):
-    """Read and validate an Excel file."""
-    try:
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Excel file not found: {filepath}")
-
-        print(f"Reading Excel file from: {filepath}")
-        df = pd.read_excel(filepath, header=0)
-        print(f"Column names: {df.columns.tolist()}")
-        print("\nSample of input data:")
-
-        # Determine which columns to display based on what's available
-        if "Gene_Symbol_Nearby" in df.columns:
-            gene_col = "Gene_Symbol_Nearby"
-        elif "Gene_Symbol" in df.columns:
-            gene_col = "Gene_Symbol"
-        else:
-            raise KeyError("No gene symbol column found in the file")
-
-        print(
-            df[
-                [
-                    "DMR_No.",
-                    gene_col,
-                    "ENCODE_Enhancer_Interaction(BingRen_Lab)",
-                    "Gene_Description",
-                ]
-            ].head(10)
-        )
-        return df
-    except FileNotFoundError:
-        error_msg = f"Error: The file {filepath} was not found."
-        print(error_msg)
-        raise
-    except Exception as e:
-        print(f"Error reading {filepath}: {e}")
-        raise
-
-
-def create_bipartite_graph(
-    df: pd.DataFrame,
-    gene_id_mapping: Dict[str, int],
-    closest_gene_col: str = "Gene_Symbol_Nearby",
-) -> nx.Graph:
-    """Create a bipartite graph from DataFrame."""
-    B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
-    dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
-
-    # Add DMR nodes with explicit bipartite attribute (0-based indexing)
-    for dmr in dmr_nodes:
-        B.add_node(dmr - 1, bipartite=0)
-
-    print(f"\nDebugging create_bipartite_graph:")
-    print(f"Number of DMR nodes added: {len(dmr_nodes)}")
-
-    # Track edges and edge sources
-    edges_seen = set()
-    edge_sources = {}  # New dictionary to store edge sources
-    duplicate_edges = []
-    edges_added = 0
-
-    for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        associated_genes = set()  # Initialize a set to collect unique genes
-
-        # Determine sources
-        gene_sources = {}  # Map gene names to their sources for this DMR
-
-        # Add closest gene if it exists
-        gene_col = closest_gene_col
-        if pd.notna(row[gene_col]) and row[gene_col]:
-            gene_name = str(row[gene_col]).strip().lower()  # Standardize to lowercase
-            associated_genes.add(gene_name)
-            gene_sources[gene_name] = "Gene_Symbol_Nearby"  # Mark source
-
-        # Add enhancer genes if they exist
-        if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {
-                g.lower() for g in row["Processed_Enhancer_Info"] if g
-            }  # Standardize to lowercase
-            associated_genes.update(enhancer_genes)
-            for gene in enhancer_genes:
-                gene_sources[gene] = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-
-        # Debugging output for associated genes
-        # print(f"DMR {dmr}: Associated genes: {associated_genes}")
-
-        # Add edges and gene nodes
-        for gene in associated_genes:
-            gene = gene.lower()  # Ensure lowercase standardization
-            # Assign a unique ID if gene is not in gene_id_mapping
-            if gene not in gene_id_mapping:
-                gene_id = max(gene_id_mapping.values(), default=len(df) - 1) + 1
-                gene_id_mapping[gene] = gene_id
-            # Add edges and gene nodes with sources
-            if not B.has_node(gene_id):
-                B.add_node(gene_id, bipartite=1)  # Mark as gene node
-
-            # Check if we've seen this edge before
-            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
-            if edge not in edges_seen:
-                B.add_edge(dmr_id, gene_id)
-                edges_seen.add(edge)
-                edges_added += 1
-
-                # Add source to edge_sources dictionary
-                source = gene_sources.get(gene, "")
-                if source:
-                    edge_sources[edge] = {source}
-                else:
-                    edge_sources[edge] = set()
-
-            # Add edges and gene nodes with sources
-            if not B.has_node(gene_id):
-                B.add_node(gene_id, bipartite=1)  # Mark as gene node
-                # print(f"Added gene node: {gene_id} for gene: {gene}")
-
-                # Ensure all associated genes are processed
-                # print(f"Processing gene: {gene} with ID: {gene_id}")
-
-            # Check if we've seen this edge before
-            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
-            if edge not in edges_seen:
-                B.add_edge(dmr_id, gene_id)
-                edges_seen.add(edge)
-                edges_added += 1
-            else:
-                duplicate_edges.append((dmr_id, gene_id, gene))
-
-    # Report duplicate edges
-    if duplicate_edges:
-        print("\nFound duplicate edges that were skipped:")
-        for dmr, gene_id, gene_name in duplicate_edges[:5]:  # Show first 5 duplicates
-            print(f"DMR {dmr} -> Gene {gene_id} [{gene_name}]")
-
-    print(f"Total edges added: {edges_added}")  # Log total edges added
-    print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
-    print(
-        f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges"
-    )  # Log final graph size
-
-    # Attach edge_sources to the graph
-    B.graph["edge_sources"] = edge_sources
-
-    return B  # Return the graph with edge_sources attached
 
 
 def write_bipartite_graph(
