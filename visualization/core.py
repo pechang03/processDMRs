@@ -32,9 +32,9 @@ def create_biclique_visualization(
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
     edge_classifications: Dict[str, List[EdgeInfo]],
-    original_node_positions: Dict[int, Tuple[float, float]] = None,  # New parameter
-    original_graph: nx.Graph,  # Original full graph
-    bipartite_graph: nx.Graph = None,  # Graph from bicliques (optional)
+    original_graph: nx.Graph,  # Required parameter moved up
+    bipartite_graph: nx.Graph,  # Also make this required since it's needed
+    original_node_positions: Dict[int, Tuple[float, float]] = None,  # Optional parameters start here
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
