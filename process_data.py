@@ -195,7 +195,7 @@ def process_data():
         # Update the cached data
         _cached_data = {
             # ... existing data ...
-            "component_stats": component_stats,
+            "component_stats": {"components": component_stats},
         }
 
         # Add debug logging
@@ -203,10 +203,10 @@ def process_data():
         # print(f"Component stats show {component_stats['components']['interesting']} interesting components")
         #         print(f"Found {len(interesting_components)} interesting components")
         print(
-            f"Original graph has {component_stats['original']['connected']['interesting']} interesting components"
+            f"Original graph has {component_stats['components']['original']['connected']['interesting']} interesting components"
         )
         print(
-            f"Biclique graph has {component_stats['biclique']['connected']['interesting']} interesting components"
+            f"Biclique graph has {component_stats['components']['biclique']['connected']['interesting']} interesting components"
         )
 
         # Create summary statistics first
