@@ -6,6 +6,7 @@
 
 import os
 from typing import Dict, List, Set, Tuple
+from biclique_analysis.edge_info import EdgeInfo  # Import EdgeInfo
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
 from .node_info import NodeInfo
@@ -135,7 +136,7 @@ def create_node_traces(
 
 
 def create_edge_traces(
-    bicliques: List[Tuple[Set[int], Set[int]]],
+    edge_classifications: Dict[str, List[EdgeInfo]],  # Use EdgeInfo objects
     node_positions: Dict[int, Tuple[float, float]],
     original_graph: nx.Graph,  # Add original graph
     false_positive_edges: Set[Tuple[int, int]] = None,  # Add false positives
@@ -144,34 +145,47 @@ def create_edge_traces(
     edge_style: Dict = None
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
-    print("\nEdge trace creation debug:")
-    print(f"Number of bicliques: {len(bicliques)}")
-    print("Sample biclique sizes:")
-    for i, (dmrs, genes) in enumerate(bicliques[:3]):
-        print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
-
     traces = []
-    default_style = {
-        "width": 1,
-        "color": "gray",
-        "dash": "solid"
+    edge_style = edge_style or {}
+
+    color_map = {
+        "permanent": "green",
+        "false_positive": "red",
+        "false_negative": "blue",
     }
-    style = {**default_style, **(edge_style or {})}
-    
-    for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                if dmr in node_positions and gene in node_positions:
-                    traces.append(
-                        go.Scatter(
-                            x=[node_positions[dmr][0], node_positions[gene][0]],
-                            y=[node_positions[dmr][1], node_positions[gene][1]],
-                            mode="lines",
-                            line=dict(**style),
-                            hoverinfo="none",
-                            showlegend=False,
-                        )
-                    )
+
+    for label, edges_info in edge_classifications.items():
+        x_coords = []
+        y_coords = []
+        hover_texts = []
+
+        color = color_map.get(label, "gray")
+
+        for edge_info in edges_info:
+            u, v = edge_info.edge
+            if u in node_positions and v in node_positions:
+                x0, y0 = node_positions[u]
+                x1, y1 = node_positions[v]
+                x_coords.extend([x0, x1, None])
+                y_coords.extend([y0, y1, None])
+
+                sources = ', '.join(edge_info.sources) if edge_info.sources else 'Unknown'
+                hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
+                hover_texts.append(hover_text)
+            else:
+                continue  # Skip edges with missing node positions
+
+        if x_coords:
+            trace = go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="lines",
+                line=dict(color=color, width=edge_style.get("width", 1)),
+                hoverinfo="text",
+                text=hover_texts,
+                name=f"Edges ({label})",
+            )
+            traces.append(trace)
     return traces
 
 

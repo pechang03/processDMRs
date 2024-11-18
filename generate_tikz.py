@@ -115,6 +115,37 @@ def main():
     # Create bipartite graph
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 
+    # Retrieve edge_sources from the graph
+    edge_sources = bipartite_graph.graph.get("edge_sources", {})
+
+    # ... existing code for processing bicliques ...
+
+    # Build biclique_graph from bicliques
+    biclique_graph = nx.Graph()
+    for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+        biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+        biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+        biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+
+    # Perform edge classification using EdgeInfo
+    edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
+
+    # ... existing code ...
+
+    # Pass edge_classifications to visualization functions as needed
+    # For example, when creating the visualization:
+    viz_json = create_biclique_visualization(
+        bicliques_result["bicliques"],
+        node_labels,
+        node_positions,
+        node_biclique_map,
+        edge_classifications=edge_classifications,
+        # ... other parameters ...
+    )
+
+    # ... existing code ...
+    bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+
     # Rest of the function remains the same...
     bicliques_result = read_bicliques_file(
         "./data/bipartite_graph_output.txt.biclusters",

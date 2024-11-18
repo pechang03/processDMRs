@@ -1,13 +1,16 @@
 # File : edge_classification.py
 # Description : Edge classification module
 
-from typing import Dict, Set, Tuple
+from typing import Dict, List, Tuple, Set
 import networkx as nx
+
+from .edge_info import EdgeInfo  # Import EdgeInfo from biclique_analysis
 
 def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph
-) -> Dict[str, Set[Tuple[int, int]]]:
+    edge_sources: Dict[Tuple[int, int], Set[str]],  # Add this parameter
+) -> Dict[str, List[EdgeInfo]]:
     """
     Classify edges by comparing original and biclique graphs.
 
@@ -22,9 +25,9 @@ def classify_edges(
             - false_negative: edges in biclique but not in original graph
     """
     # Initialize edge sets
-    permanent_edges = set()
-    false_positive_edges = set()
-    false_negative_edges = set()
+    permanent_edges: List[EdgeInfo] = []
+    false_positive_edges: List[EdgeInfo] = []
+    false_negative_edges: List[EdgeInfo] = []
 
     # Get all nodes (should be same in both graphs)
     nodes = set(original_graph.nodes())
@@ -33,37 +36,21 @@ def classify_edges(
     for u in nodes:
         for v in nodes:
             if u < v:  # Only check each pair once
-                # Normalize edge representation (smaller node ID first)
                 edge = (u, v)
-
-                # Check presence in both graphs
                 in_original = original_graph.has_edge(u, v)
                 in_biclique = biclique_graph.has_edge(u, v)
 
+                sources = edge_sources.get(edge, set())
+
                 if in_original and in_biclique:
-                    permanent_edges.add(edge)
+                    edge_info = EdgeInfo(edge, label="permanent", sources=sources)
+                    permanent_edges.append(edge_info)
                 elif in_original and not in_biclique:
-                    false_positive_edges.add(edge)
+                    edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
+                    false_positive_edges.append(edge_info)
                 elif not in_original and in_biclique:
-                    false_negative_edges.add(edge)
-
-    # Create debug output
-    print("\nEdge Classification Results:")
-    print(f"Permanent edges: {len(permanent_edges)}")
-    print(f"False positive edges: {len(false_positive_edges)}")
-    print(f"False negative edges: {len(false_negative_edges)}")
-
-    # Optional: Print first few edges of each type
-    def print_edge_samples(edge_set: Set[Tuple[int, int]], label: str):
-        if edge_set:
-            sample = sorted(list(edge_set))[:5]
-            print(f"\nSample {label}:")
-            for edge in sample:
-                print(f"  {edge}")
-
-    print_edge_samples(permanent_edges, "permanent edges")
-    print_edge_samples(false_positive_edges, "false positive edges")
-    print_edge_samples(false_negative_edges, "false negative edges")
+                    edge_info = EdgeInfo(edge, label="false_negative", sources=sources)
+                    false_negative_edges.append(edge_info)
 
     return {
         "permanent": permanent_edges,
