@@ -13,6 +13,8 @@ import numpy as np  # Add this import for np.linspace
 from visualization.graph_layout import calculate_node_positions
 from biclique_analysis.reader import read_bicliques_file
 from biclique_analysis.classifier import classify_biclique
+from biclique_analysis.edge_classification import classify_edges
+from visualization.core import create_biclique_visualization
 from processDMR import read_excel_file, create_bipartite_graph
 from biclique_analysis.processor import process_enhancer_info
 from visualization.graph_visualize import create_node_biclique_map
@@ -131,6 +133,9 @@ def main():
         biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
         biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
         biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+
+    # Calculate node positions
+    node_positions = calculate_node_positions(bicliques_result["bicliques"], create_node_biclique_map(bicliques_result["bicliques"]))
 
     # Perform edge classification using EdgeInfo
     edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
