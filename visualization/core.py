@@ -38,20 +38,19 @@ def create_biclique_visualization(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
+    edge_classification: Dict[str, Set[Tuple[int, int]]] = None,
 ) -> str:
     """Create interactive Plotly visualization with colored bicliques."""
     print(f"\nCreating visualization for {len(bicliques)} bicliques")  # Debug logging
-    
+
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
-    
+
     traces = []
 
     # Add biclique boxes first (so they appear behind other elements)
     biclique_box_traces = create_biclique_boxes(
-        bicliques,
-        node_positions,
-        biclique_colors
+        bicliques, node_positions, biclique_colors
     )
     traces.extend(biclique_box_traces)
 
@@ -63,15 +62,19 @@ def create_biclique_visualization(
         false_positive_edges,
         false_negative_edges,
         edge_type="biclique",
-        edge_style={"color": "black", "width": 1, "dash": "solid"}
+        edge_style={"color": "black", "width": 1, "dash": "solid"},
     )
     traces.extend(edge_traces)
 
     # Create NodeInfo object for node categorization
-    all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
+    all_nodes = set().union(
+        *[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques]
+    )
     dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
     gene_nodes = all_nodes - dmr_nodes
-    split_genes = {node for node in gene_nodes if len(node_biclique_map.get(node, [])) > 1}
+    split_genes = {
+        node for node in gene_nodes if len(node_biclique_map.get(node, [])) > 1
+    }
     regular_genes = gene_nodes - split_genes
 
     node_info = NodeInfo(
@@ -92,7 +95,7 @@ def create_biclique_visualization(
         biclique_colors,
         dominating_set,
         dmr_metadata,  # Pass these parameters
-        gene_metadata
+        gene_metadata,
     )
     traces.extend(node_traces)
 
@@ -101,6 +104,6 @@ def create_biclique_visualization(
 
     # Create figure and convert to JSON
     fig = {"data": traces, "layout": layout}
-    
+
     print(f"Created visualization with {len(traces)} traces")  # Debug logging
     return json.dumps(fig, cls=PlotlyJSONEncoder)
