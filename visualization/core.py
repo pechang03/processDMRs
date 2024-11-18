@@ -32,6 +32,7 @@ def create_biclique_visualization(
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
     edge_classifications: Dict[str, List[EdgeInfo]],
+    original_node_positions: Dict[int, Tuple[float, float]] = None,  # New parameter
     original_graph: nx.Graph,  # Original full graph
     bipartite_graph: nx.Graph = None,  # Graph from bicliques (optional)
     false_positive_edges: Set[Tuple[int, int]] = None,
@@ -56,16 +57,19 @@ def create_biclique_visualization(
     )
     traces.extend(biclique_box_traces)
 
-    # Create edge traces with EdgeInfo
+    # Determine which node positions to use
+    positions = original_node_positions if original_node_positions else node_positions
+
+    # Create edge traces with EdgeInfo using the appropriate positions
     edge_traces = create_edge_traces(
         edge_classifications,
-        node_positions,
+        positions,  # Use the selected positions
         edge_style={"width": 1},
     )
     traces.extend(edge_traces)
     edge_traces = create_edge_traces(
         bicliques,
-        node_positions,
+        positions,  # Use the selected positions
         original_graph,
         false_positive_edges,
         false_negative_edges,

@@ -165,6 +165,7 @@ def main():
         node_positions,
         node_biclique_map,
         edge_classifications=edge_classifications,
+        original_node_positions=original_node_positions,  # Original graph positions
         # ... other parameters ...
     )
 

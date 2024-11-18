@@ -148,6 +148,9 @@ def visualize_component(
             else:
                 node_labels[node] = f"Gene_{node}"
 
+    # Calculate node positions for the original graph using spring embedding
+    original_node_positions = nx.spring_layout(bipartite_graph)
+
     # Create visualization
     node_biclique_map = create_node_biclique_map(component_info["raw_bicliques"])
     node_positions = calculate_node_positions(
