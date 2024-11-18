@@ -132,13 +132,13 @@ def component_detail_route(component_id):
                                 comp["raw_bicliques"],
                                 results["node_labels"],
                                 node_positions,
-                                node_biclique_map,
                                 edge_classifications=edge_classifications,
                                 original_graph=bipartite_graph,
                                 bipartite_graph=bipartite_graph,
-                                dmr_metadata=results["dmr_metadata"],
-                                gene_metadata=results["gene_metadata"],
-                                gene_id_mapping=results["gene_id_mapping"],
+                                node_biclique_map=node_biclique_map,
+                                dmr_metadata=dmr_metadata,
+                                gene_metadata=gene_metadata,
+                                gene_id_mapping=gene_id_mapping
                             )
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:
