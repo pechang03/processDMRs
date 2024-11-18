@@ -36,18 +36,68 @@ rel="stylesheet">
                         </ul>
                     </div>
                     <div class="col-md-6">
-                        <h5>Component Statistics</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item">Total Components: {{ statistics.components.total }}</li>
-                            <li class="list-group-item">Single Node Components: {{ statistics.components.single_node }}</li>
-                            <li class="list-group-item">Small Components: {{ statistics.components.small }}</li>
-                            <li class="list-group-item">Interesting Components: {{ statistics.components.interesting }}</li>
-                            <li class="list-group-item">Average DMRs per Interesting Component {{ "%.1f"|format(statistics.components.avg_dmrs) }}</li>
-                            <li class="list-group-item">Average Genes per Interesting Componen {{ "%.1f"|format(statistics.components.avg_genes) }}</li>
-                            <li class="list-group-item">Components with Split Genes: {{ statistics.components.with_split_genes }}</li>
-                            <li class="list-group-item">Total Split Genes: {{ statistics.components.total_split_genes }}</li>
-                            <li class="list-group-item">Total Bicliques in Interesting Components: {{ statistics.components.total_bicliques }}</li>
-                        </ul>
+                        <h5>Component Analysis</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Original Graph Components</h6>
+                                <ul class="list-group mb-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Total Components
+                                        <span class="badge bg-primary rounded-pill">{{ statistics.components.original.total }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Single Node Components
+                                        <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.single_node }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Small Components
+                                        <span class="badge bg-info rounded-pill">{{ statistics.components.original.small }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Interesting Components
+                                        <span class="badge bg-success rounded-pill">{{ statistics.components.original.interesting }}</span>
+                                    </li>
+                                </ul>
+
+                                <h6>Biclique Graph Components</h6>
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Total Components
+                                        <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.total }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Single Node Components
+                                        <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.single_node }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Small Components
+                                        <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.small }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Interesting Components
+                                        <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.interesting }}</span>
+                                    </li>
+                                </ul>
+
+                                <hr>
+
+                                <h6>Additional Insights</h6>
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Components with Split Genes
+                                        <span class="badge bg-warning rounded-pill">{{ statistics.components.with_split_genes }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Total Split Genes
+                                        <span class="badge bg-danger rounded-pill">{{ statistics.components.total_split_genes }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Total Bicliques
+                                        <span class="badge bg-dark rounded-pill">{{ statistics.components.total_bicliques }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
