@@ -8,6 +8,7 @@ from visualization import (
 )
 from biclique_analysis.statistics import calculate_biclique_statistics
 
+
 def index_route():
     try:
         results = process_data()
@@ -25,8 +26,7 @@ def index_route():
                     bicliques.extend(component["raw_bicliques"])
 
         detailed_stats = calculate_biclique_statistics(
-            bicliques, 
-            results.get("bipartite_graph")
+            bicliques, results.get("bipartite_graph")
         )
 
         return render_template(
@@ -37,12 +37,14 @@ def index_route():
             gene_metadata=results.get("gene_metadata", {}),
             bicliques_result=results,
             coverage=results.get("coverage", {}),
-            node_labels=results.get("node_labels", {})
+            node_labels=results.get("node_labels", {}),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
+
 
 def statistics_route():
     try:
@@ -53,14 +55,15 @@ def statistics_route():
         bicliques = []
         if "interesting_components" in results:
             # Add debug logging
-            print(f"Number of interesting components: {len(results['interesting_components'])}")
+            print(
+                f"Number of interesting components: {len(results['interesting_components'])}"
+            )
             for component in results["interesting_components"]:
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
         detailed_stats = calculate_biclique_statistics(
-            bicliques, 
-            results.get("bipartite_graph")
+            bicliques, results.get("bipartite_graph")
         )
 
         # Merge component stats from results into detailed_stats
@@ -68,24 +71,35 @@ def statistics_route():
             detailed_stats["components"] = results["component_stats"]
 
         # Add debug logging
-        print(f"Statistics show {detailed_stats['components']['interesting']} interesting components")
-        print(f"Results contain {len(results.get('interesting_components', []))} components")
+        print(
+            f"Statistics show {detailed_stats['components']['interesting']} interesting components"
+        )
+        print(
+            f"Results contain {len(results.get('interesting_components', []))} components"
+        )
 
-        # Debug statements
-        print(f"Debug - Components in results: {len(results.get('interesting_components', []))}")
-        print(f"Debug - First component data: {results['interesting_components'][0] if results.get('interesting_components') else 'None'}")
+        # Debug output
+        print(f"\nComponent Statistics:")
+        print(
+            f"Original graph components: {detailed_stats['components']['original']['interesting']}"
+        )
+        print(
+            f"Biclique graph components: {detailed_stats['components']['biclique']['interesting']}"
+        )
 
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=results,  # Pass the full results
             selected_component_id=request.args.get("component_id", type=int),
-            total_bicliques=len(bicliques)
+            total_bicliques=len(bicliques),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
+
 
 def component_detail_route(component_id):
     try:
@@ -95,7 +109,9 @@ def component_detail_route(component_id):
 
         bipartite_graph = results.get("bipartite_graph")
         if not bipartite_graph:
-            return render_template("error.html", message="Bipartite graph not found in results")
+            return render_template(
+                "error.html", message="Bipartite graph not found in results"
+            )
 
         # Find the requested component
         component = None
@@ -106,10 +122,11 @@ def component_detail_route(component_id):
                     # Create visualization if not already present
                     if "plotly_graph" not in comp:
                         try:
-                            node_biclique_map = create_node_biclique_map(comp["raw_bicliques"])
+                            node_biclique_map = create_node_biclique_map(
+                                comp["raw_bicliques"]
+                            )
                             node_positions = calculate_node_positions(
-                                comp["raw_bicliques"], 
-                                node_biclique_map
+                                comp["raw_bicliques"], node_biclique_map
                             )
                             component_viz = create_biclique_visualization(
                                 comp["raw_bicliques"],
@@ -127,15 +144,18 @@ def component_detail_route(component_id):
                     break
 
         if component is None:
-            return render_template("error.html", message=f"Component {component_id} not found")
+            return render_template(
+                "error.html", message=f"Component {component_id} not found"
+            )
 
         return render_template(
             "components.html",
             component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {})
+            gene_metadata=results.get("gene_metadata", {}),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
