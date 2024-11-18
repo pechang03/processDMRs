@@ -211,13 +211,13 @@ def visualize_component(
         component_info["raw_bicliques"],
         node_labels,
         node_positions,
-        node_biclique_map,
+        node_biclique_map=node_biclique_map,
+        edge_classifications=edge_classification,  # Fix parameter name
         original_graph=bipartite_graph,  # Original full graph
         bipartite_graph=subgraph,  # Graph from component bicliques
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
-        gene_id_mapping=gene_id_mapping,
-        edge_classification=edge_classification,  # Pass edge classifications
+        gene_id_mapping=gene_id_mapping
     )
 
     return {
