@@ -252,7 +252,9 @@ def process_components(
 
     # Calculate edge classifications
     from biclique_analysis.edge_classification import classify_edges
-    edge_classifications = classify_edges(bipartite_graph, biclique_graph)
+    # Get edge_sources from the graph's attributes
+    edge_sources = bipartite_graph.graph.get('edge_sources', {})
+    edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
 
     interesting_components = find_interesting_components(
         bipartite_graph, bicliques_result, dmr_metadata, gene_metadata, gene_id_mapping
