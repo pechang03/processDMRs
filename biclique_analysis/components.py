@@ -212,6 +212,7 @@ def visualize_component(
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
         gene_id_mapping=gene_id_mapping,
+        edge_classification=edge_classification,  # Pass edge classifications
     )
 
     return {
