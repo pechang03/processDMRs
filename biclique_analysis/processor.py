@@ -5,55 +5,56 @@ import networkx as nx
 import pandas as pd
 from typing import Dict, List, Set, Tuple
 from .reader import read_bicliques_file
+from graph_utils import create_bipartite_graph, read_excel_file
 
 
 def process_enhancer_info(interaction_info):
     """Process enhancer/promoter interaction information.
-    
+
     Args:
         interaction_info: String containing semicolon-separated gene/enrichment pairs
-        
+
     Returns:
         Set of valid gene names (excluding '.' entries, only gene part before /)
     """
     if pd.isna(interaction_info) or not interaction_info:
         return set()
-        
+
     genes = set()
     for entry in str(interaction_info).split(";"):
         entry = entry.strip()
         # Skip '.' entries
-        if entry == '.':
+        if entry == ".":
             continue
-            
+
         # Split on / and take only the gene part
         if "/" in entry:
             gene = entry.split("/")[0].strip()
         else:
             gene = entry.strip()
-            
+
         if gene:  # Only add non-empty genes
             genes.add(gene)
-            
+
     return genes
 
 
 def process_bicliques(
-    bipartite_graph: nx.Graph, 
-    bicliques_file: str, 
-    max_dmr_id: int, 
+    bipartite_graph: nx.Graph,
+    bicliques_file: str,
+    max_dmr_id: int,
     dataset_name: str,
     gene_id_mapping: Dict[str, int] = None,  # Add parameter
-    file_format: str = "gene_name"  # Change default to "gene_name"
+    file_format: str = "gene_name",  # Change default to "gene_name"
 ) -> Dict:
     """Process bicliques and add detailed information."""
     print(f"Processing bicliques using format: {file_format}")
     bicliques_result = read_bicliques_file(
-        bicliques_file, 
-        max_dmr_id, 
+        bicliques_file,
+        max_dmr_id,
         bipartite_graph,
         gene_id_mapping=gene_id_mapping,
-        file_format=file_format  # Pass through the format parameter
+        file_format=file_format,  # Pass through the format parameter
     )
 
     return bicliques_result
@@ -122,7 +123,6 @@ def process_dataset(excel_file: str):
     Returns:
         Tuple of (bipartite_graph, dataframe, gene_id_mapping)
     """
-    from processDMR import read_excel_file, create_bipartite_graph
 
     # Read the Excel file
     df = read_excel_file(excel_file)
