@@ -37,11 +37,31 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 if dmr in pos and gene in pos:  # Only draw if both nodes have positions
-                    plt.plot(
-                        [pos[dmr][0], pos[gene][0]],
-                        [pos[dmr][1], pos[gene][1]],
-                        'k-', alpha=0.5
-                    )
+                    edge = (min(dmr, gene), max(dmr, gene))
+                    if edge_classification and edge in edge_classification["permanent"]:
+                        plt.plot(
+                            [pos[dmr][0], pos[gene][0]],
+                            [pos[dmr][1], pos[gene][1]],
+                            'g-', alpha=0.5  # Green for permanent edges
+                        )
+                    elif edge_classification and edge in edge_classification["false_positive"]:
+                        plt.plot(
+                            [pos[dmr][0], pos[gene][0]],
+                            [pos[dmr][1], pos[gene][1]],
+                            'r-', alpha=0.5  # Red for false positive edges
+                        )
+                    elif edge_classification and edge in edge_classification["false_negative"]:
+                        plt.plot(
+                            [pos[dmr][0], pos[gene][0]],
+                            [pos[dmr][1], pos[gene][1]],
+                            'b-', alpha=0.5  # Blue for false negative edges
+                        )
+                    else:
+                        plt.plot(
+                            [pos[dmr][0], pos[gene][0]],
+                            [pos[dmr][1], pos[gene][1]],
+                            'k-', alpha=0.5  # Default black for other edges
+                        )
 
     # Draw nodes
     dmr_nodes = {n for dmr_nodes, _ in bicliques for n in dmr_nodes if n in pos}  # Only include nodes with positions
