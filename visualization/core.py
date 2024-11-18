@@ -64,13 +64,16 @@ def create_biclique_visualization(
     edge_traces = create_edge_traces(
         edge_classifications,
         positions,  # Use the selected positions
+        node_labels,  # Add this required argument
+        original_graph,  # Add this required argument
         edge_style={"width": 1},
     )
     traces.extend(edge_traces)
     edge_traces = create_edge_traces(
         bicliques,
         positions,  # Use the selected positions
-        original_graph,
+        node_labels,  # Add this required argument
+        original_graph,  # Add this required argument
         false_positive_edges,
         false_negative_edges,
         edge_type="biclique",
