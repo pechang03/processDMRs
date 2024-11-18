@@ -214,10 +214,10 @@ def visualize_component(
         edge_classification,  # Required positional arg
         bipartite_graph,       # Required positional arg
         subgraph,              # Required positional arg
-        node_biclique_map=node_biclique_map,  # Optional named args follow
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
-        gene_id_mapping=gene_id_mapping
+        gene_id_mapping=gene_id_mapping,
+        node_biclique_map=node_biclique_map  # Move to named args
     )
 
     return {
