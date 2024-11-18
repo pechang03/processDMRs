@@ -147,13 +147,23 @@ def create_bipartite_graph(
             if gene not in gene_id_mapping:
                 gene_id = max(gene_id_mapping.values(), default=len(df) - 1) + 1
                 gene_id_mapping[gene] = gene_id
+            # Add edges and gene nodes with sources
+            if not B.has_node(gene_id):
+                B.add_node(gene_id, bipartite=1)  # Mark as gene node
+
+            # Check if we've seen this edge before
+            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
+            if edge not in edges_seen:
+                B.add_edge(dmr_id, gene_id)
+                edges_seen.add(edge)
+                edges_added += 1
+
                 # Add source to edge_sources dictionary
                 source = gene_sources.get(gene, "")
                 if source:
                     edge_sources[edge] = {source}
                 else:
                     edge_sources[edge] = set()
-                gene_id = gene_id_mapping[gene]
 
             # Add edges and gene nodes with sources
             if not B.has_node(gene_id):
