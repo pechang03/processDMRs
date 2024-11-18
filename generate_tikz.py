@@ -31,6 +31,7 @@ def create_tikz_visualization(bicliques: List[Tuple[Set[int], Set[int]]], node_p
     pos = node_positions
 
     # Draw edges
+    edge_classification = edge_classifications if 'edge_classifications' in locals() else None
     for biclique in bicliques:
         dmr_nodes, gene_nodes = biclique
         for dmr in dmr_nodes:
@@ -118,6 +119,11 @@ def main():
     edge_sources = bipartite_graph.graph.get("edge_sources", {})
 
     # ... existing code for processing bicliques ...
+    bicliques_result = read_bicliques_file(
+        "./data/bipartite_graph_output.txt.biclusters",
+        max(df["DMR_No."]),
+        bipartite_graph
+    )
 
     # Build biclique_graph from bicliques
     biclique_graph = nx.Graph()
@@ -131,7 +137,22 @@ def main():
 
     # ... existing code ...
 
+    # Create node labels
+    node_labels = {}
+    for dmr_id in range(len(df)):
+        if dmr_id in node_positions:
+            node_labels[dmr_id] = f"DMR_{dmr_id+1}"
+
+    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
+    for gene_id in node_positions:
+        if gene_id >= len(df):  # Gene nodes
+            gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
+            node_labels[gene_id] = gene_name
+
     # Pass edge_classifications to visualization functions as needed
+    # Create node_biclique_map
+    node_biclique_map = create_node_biclique_map(bicliques_result["bicliques"])
+
     # For example, when creating the visualization:
     viz_json = create_biclique_visualization(
         bicliques_result["bicliques"],

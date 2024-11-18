@@ -14,7 +14,6 @@ from .node_info import NodeInfo
 
 def create_node_traces(
     node_info: NodeInfo,
-    node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
