@@ -39,48 +39,107 @@ rel="stylesheet">
                         <h5>Component Analysis</h5>
                         <div class="card">
                             <div class="card-body">
-                                <h6>Original Graph Components</h6>
-                                <ul class="list-group mb-3">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Total Components
-                                        <span class="badge bg-primary rounded-pill">{{ statistics.components.original.total }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Single Node Components
-                                        <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.single_node }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Small Components
-                                        <span class="badge bg-info rounded-pill">{{ statistics.components.original.small }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Interesting Components
-                                        <span class="badge bg-success rounded-pill">{{ statistics.components.original.interesting }}</span>
-                                    </li>
-                                </ul>
+                                <!-- Original Graph Components -->
+                                <h6>Original Graph</h6>
+                                    
+                                <!-- Connected Components -->
+                                <div class="mb-3">
+                                    <h7 class="text-muted">Connected Components</h7>
+                                    <ul class="list-group mb-2">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Total Components
+                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.original.connected.total }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Single Node Components
+                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.connected.single_node }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Small Components
+                                            <span class="badge bg-info rounded-pill">{{ statistics.components.original.connected.small }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Interesting Components
+                                            <span class="badge bg-success rounded-pill">{{ statistics.components.original.connected.interesting }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                                <h6>Biclique Graph Components</h6>
-                                <ul class="list-group">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Total Components
-                                        <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.total }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Single Node Components
-                                        <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.single_node }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Small Components
-                                        <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.small }}</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Interesting Components
-                                        <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.interesting }}</span>
-                                    </li>
-                                </ul>
+                                <!-- Biconnected Components -->
+                                <div class="mb-3">
+                                    <h7 class="text-muted">Biconnected Components</h7>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Total Components
+                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.original.biconnected.total }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Single Node Components
+                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.biconnected.single_node }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Small Components
+                                            <span class="badge bg-info rounded-pill">{{ statistics.components.original.biconnected.small }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Interesting Components
+                                            <span class="badge bg-success rounded-pill">{{ statistics.components.original.biconnected.interesting }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Biclique Graph -->
+                                <h6>Biclique Graph</h6>
+                                    
+                                <!-- Connected Components -->
+                                <div class="mb-3">
+                                    <h7 class="text-muted">Connected Components</h7>
+                                    <ul class="list-group mb-2">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Total Components
+                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.connected.total }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Single Node Components
+                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.connected.single_node }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Small Components
+                                            <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.connected.small }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Interesting Components
+                                            <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.connected.interesting }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Biconnected Components -->
+                                <div class="mb-3">
+                                    <h7 class="text-muted">Biconnected Components</h7>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Total Components
+                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.biconnected.total }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Single Node Components
+                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.biconnected.single_node }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Small Components
+                                            <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.biconnected.small }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Interesting Components
+                                            <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.biconnected.interesting }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
                                 <hr>
 
+                                <!-- Additional Insights -->
                                 <h6>Additional Insights</h6>
                                 <ul class="list-group">
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
