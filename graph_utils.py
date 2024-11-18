@@ -158,13 +158,16 @@ def create_bipartite_graph(
         # print(f"DMR {dmr}: Associated genes: {associated_genes}")
 
         # Add edges and gene nodes
-        for gene in associated_genes:
-            gene = gene.lower()  # Ensure lowercase standardization
-            # Assign a unique ID if gene is not in gene_id_mapping
-            if gene not in gene_id_mapping:
-                gene_id = max(gene_id_mapping.values(), default=len(df) - 1) + 1
-                gene_id_mapping[gene] = gene_id
-            # Add edges and gene nodes with sources
+        for gene_name in associated_genes:
+            gene_name = gene_name.lower()  # Ensure lowercase standardization
+                
+            # Get or create gene ID
+            if gene_name not in gene_id_mapping:
+                continue  # Skip genes not in mapping
+                
+            gene_id = gene_id_mapping[gene_name]
+                
+            # Add gene node if not already present
             if not B.has_node(gene_id):
                 B.add_node(gene_id, bipartite=1)  # Mark as gene node
 
@@ -176,28 +179,12 @@ def create_bipartite_graph(
                 edges_added += 1
 
                 # Add source to edge_sources dictionary
-                source = gene_sources.get(gene, "")
+                source = gene_sources.get(gene_name, "")
                 if source:
                     edge_sources[edge] = {source}
                 else:
                     edge_sources[edge] = set()
-
-            # Add edges and gene nodes with sources
-            if not B.has_node(gene_id):
-                B.add_node(gene_id, bipartite=1)  # Mark as gene node
-                # print(f"Added gene node: {gene_id} for gene: {gene}")
-
-                # Ensure all associated genes are processed
-                # print(f"Processing gene: {gene} with ID: {gene_id}")
-
-            # Check if we've seen this edge before
-            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
-            if edge not in edges_seen:
-                B.add_edge(dmr_id, gene_id)
-                edges_seen.add(edge)
-                edges_added += 1
             else:
-                duplicate_edges.append((dmr_id, gene_id, gene))
                 num_duplicate_edge += 1
 
     # Report duplicate edges
