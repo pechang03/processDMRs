@@ -80,8 +80,14 @@ def statistics_route():
 
         # Debug output
         print(f"\nComponent Statistics:")
-        print(f"Statistics show {detailed_stats['components']['interesting']} interesting components")
-
+        # print(f"Statistics show {detailed_stats['components']['interesting']} interesting components")
+        # Debug output
+        print(
+            f"Original graph components: {detailed_stats['components']['original']['interesting']}"
+        )
+        print(
+            f"Biclique graph components: {detailed_stats['components']['biclique']['interesting']}"
+        )
         return render_template(
             "statistics.html",
             statistics=detailed_stats,

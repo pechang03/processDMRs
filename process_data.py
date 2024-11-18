@@ -184,8 +184,15 @@ def process_data():
         )
 
         # Add debug logging
-        print(f"Found {len(interesting_components)} interesting components")
-        print(f"Component stats show {component_stats['components']['interesting']} interesting components")
+        # print(f"Found {len(interesting_components)} interesting components")
+        # print(f"Component stats show {component_stats['components']['interesting']} interesting components")
+        #         print(f"Found {len(interesting_components)} interesting components")
+        print(
+            f"Original graph has {component_stats['components']['original']['interesting']} interesting components"
+        )
+        print(
+            f"Biclique graph has {component_stats['components']['biclique']['interesting']} interesting components"
+        )
 
         # Create summary statistics first
         stats = {
