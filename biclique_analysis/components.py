@@ -1,5 +1,6 @@
 import networkx as nx
 from typing import List, Dict, Tuple, Set
+from biclique_analysis.statistics import calculate_biclique_statistics
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
@@ -266,25 +267,8 @@ def process_components(
         )
         interesting_components[0].update(component_data)
 
-    # Calculate detailed component statistics
-    components = list(nx.connected_components(bipartite_graph))
-    total_components = len(components)
-    single_node_components = sum(1 for comp in components if len(comp) == 1)
-    small_components = total_components - len(interesting_components) - single_node_components
-
-    statistics = {
-        "components": {
-            "total": total_components,
-            "single_node": single_node_components,
-            "small": small_components,
-            "interesting": len(interesting_components),
-            "avg_dmrs": sum(c['dmrs'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
-            "avg_genes": sum(c['total_genes'] for c in interesting_components) / len(interesting_components) if interesting_components else 0,
-            "with_split_genes": sum(1 for c in interesting_components if c.get('split_genes')),
-            "total_split_genes": sum(len(c.get('split_genes', [])) for c in interesting_components),
-            "total_bicliques": sum(len(c.get('raw_bicliques', [])) for c in interesting_components)
-        }
-    }
+    # Calculate comprehensive statistics using biclique_analysis.statistics
+    statistics = calculate_biclique_statistics(bicliques_result["bicliques"], bipartite_graph)
 
     return interesting_components, [], statistics
 
