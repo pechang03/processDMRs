@@ -20,9 +20,9 @@ def create_node_traces(
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None
+    node_positions: Dict[int, Tuple[float, float]]
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
-    node_positions: Dict[int, Tuple[float, float]],
     if os.getenv('DEBUG'):
         print("\nNode trace creation debug:")
         print(f"Total nodes to position: {len(node_positions)}")
