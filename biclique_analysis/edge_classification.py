@@ -124,8 +124,7 @@ def validate_edge_classification(
                     len(permanent))
 
     if total_edges != expected_edges:
-        print(f"Error: Not all edges classified. Found {total_edges}, expected
-{expected_edges}")
+        print(f"Error: Not all edges classified. Found {total_edges}, expected {expected_edges}")
         return False
 
     return True
