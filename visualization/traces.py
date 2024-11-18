@@ -138,6 +138,8 @@ def create_node_traces(
 def create_edge_traces(
     edge_classifications: Dict[str, List[EdgeInfo]],  # Use EdgeInfo objects
     node_positions: Dict[int, Tuple[float, float]],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_labels: Dict[int, str],  # Add this parameter
     original_graph: nx.Graph,  # Add original graph
     false_positive_edges: Set[Tuple[int, int]] = None,  # Add false positives
     false_negative_edges: Set[Tuple[int, int]] = None,  # Add false negatives

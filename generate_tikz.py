@@ -1,7 +1,6 @@
-# File: 
-# Author : Peter Shaw
+# Author: Peter Shaw
 # Needs updating
-""""""
+"""
 Script to generate TikZ visualizations of interesting bicliques using tikzplotlib
 """
 import matplotlib.pyplot as plt
