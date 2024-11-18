@@ -125,6 +125,7 @@ def visualize_component(
     dmr_metadata: Dict[str, Dict],
     gene_metadata: Dict[str, Dict],
     gene_id_mapping: Dict[str, int],
+    edge_classification: Dict[str, Set[Tuple[int, int]]] = None,  # Add this parameter
 ) -> Dict:  # Change return type to Dict to include both visualization and data
     """Create visualization and data summary for a specific component."""
 
@@ -237,6 +238,18 @@ def process_components(
 ) -> Tuple[List[Dict], List[Dict], Dict]:
     """Process connected components of the graph."""
 
+    # Create biclique graph for edge classification
+    biclique_graph = nx.Graph()
+    for component in bicliques_result.get("interesting_components", []):
+        for dmr_nodes, gene_nodes in component.get("raw_bicliques", []):
+            for dmr in dmr_nodes:
+                for gene in gene_nodes:
+                    biclique_graph.add_edge(dmr, gene)
+
+    # Calculate edge classifications
+    from biclique_analysis.edge_classification import classify_edges
+    edge_classifications = classify_edges(bipartite_graph, biclique_graph)
+
     interesting_components = find_interesting_components(
         bipartite_graph, bicliques_result, dmr_metadata, gene_metadata, gene_id_mapping
     )
@@ -249,6 +262,7 @@ def process_components(
             dmr_metadata,
             gene_metadata,
             gene_id_mapping,
+            edge_classifications,  # Pass edge classifications
         )
         interesting_components[0].update(component_data)
 
