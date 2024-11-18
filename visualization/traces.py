@@ -19,8 +19,8 @@ def create_node_traces(
     biclique_colors: List[str],
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
-    gene_metadata: Dict[str, Dict] = None
-    node_positions: Dict[int, Tuple[float, float]]
+    gene_metadata: Dict[str, Dict] = None,
+    node_positions: Dict[int, Tuple[float, float]],
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     if os.getenv('DEBUG'):
