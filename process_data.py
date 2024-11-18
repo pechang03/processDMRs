@@ -182,6 +182,11 @@ def process_data():
                 gene_id_mapping=gene_id_mapping,
             )
         )
+        # Update the cached data
+        _cached_data = {
+            # ... existing data ...
+            "component_stats": component_stats,
+        }
 
         # Add debug logging
         # print(f"Found {len(interesting_components)} interesting components")

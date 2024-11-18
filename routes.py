@@ -25,9 +25,7 @@ def index_route():
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
-        detailed_stats = calculate_biclique_statistics(
-            bicliques, results.get("bipartite_graph")
-        )
+        detailed_stats = results.get('component_stats', {})
 
         return render_template(
             "index.html",

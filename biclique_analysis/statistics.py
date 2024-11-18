@@ -249,72 +249,33 @@ def calculate_edge_coverage(
 def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate statistics about components in both original and biclique graphs."""
     # Get connected components from original graph
-    original_components = list(nx.connected_components(graph))
+    original_connected_components = list(nx.connected_components(graph))
+    original_connected_stats = analyze_components(original_connected_components, graph)
+    
+    original_biconn_components = list(nx.biconnected_components(graph))
+    original_biconn_stats = analyze_components(original_biconn_components, graph)
     
     # Create biclique graph
     biclique_graph = nx.Graph()
     for dmr_nodes, gene_nodes in bicliques:
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                biclique_graph.add_edge(dmr, gene)
-                biclique_graph.nodes[dmr]['bipartite'] = 0
-                biclique_graph.nodes[gene]['bipartite'] = 1
-    
+        biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+        biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+        biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+
     # Get connected components from biclique graph
-    biclique_components = list(nx.connected_components(biclique_graph))
+    biclique_connected_components = list(nx.connected_components(biclique_graph))
+    biclique_connected_stats = analyze_components(biclique_connected_components, biclique_graph)
     
-    def analyze_components(components, g):
-        """Helper function to analyze components of a graph."""
-        interesting_comps = []
-        single_node = 0
-        small = 0
-        
-        for comp in components:
-            dmrs = {n for n in comp if g.nodes[n].get('bipartite') == 0}
-            genes = {n for n in comp if g.nodes[n].get('bipartite') == 1}
-            
-            if len(comp) == 1:
-                single_node += 1
-            elif len(dmrs) <= 1 or len(genes) <= 1:
-                small += 1
-            else:
-                interesting_comps.append((comp, dmrs, genes))
-        
-        interesting = len(interesting_comps)
-        
-        # Calculate averages for interesting components
-        total_dmrs = sum(len(dmrs) for _, dmrs, _ in interesting_comps)
-        total_genes = sum(len(genes) for _, _, genes in interesting_comps)
-        
-        return {
-            "total": len(components),
-            "single_node": single_node,
-            "small": small,
-            "interesting": interesting,
-            "avg_dmrs": total_dmrs / interesting if interesting else 0,
-            "avg_genes": total_genes / interesting if interesting else 0
-        }
-    
-    # Analyze both graphs
-    original_stats = analyze_components(original_components, graph)
-    biclique_stats = analyze_components(biclique_components, biclique_graph)
-    
-    # Additional statistics for biclique graph
-    split_genes = set()
-    total_bicliques = len(bicliques)
-    
-    # Count split genes
-    gene_participation = {}
-    for _, gene_nodes in bicliques:
-        for gene in gene_nodes:
-            gene_participation[gene] = gene_participation.get(gene, 0) + 1
-    split_genes = {g for g, count in gene_participation.items() if count > 1}
+    biclique_biconn_components = list(nx.biconnected_components(biclique_graph))
+    biclique_biconn_stats = analyze_components(biclique_biconn_components, biclique_graph)
     
     return {
-        "original": original_stats,
-        "biclique": biclique_stats,
-        "with_split_genes": sum(1 for comp in biclique_components 
-                              if any(g in split_genes for g in comp)),
-        "total_split_genes": len(split_genes),
-        "total_bicliques": total_bicliques
+        "original": {
+            "connected": original_connected_stats,
+            "biconnected": original_biconn_stats,
+        },
+        "biclique": {
+            "connected": biclique_connected_stats,
+            "biconnected": biclique_biconn_stats,
+        },
     }
