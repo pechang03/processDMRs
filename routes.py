@@ -68,7 +68,7 @@ def statistics_route():
 
         # Merge component stats from results into detailed_stats
         if "component_stats" in results:
-            detailed_stats["components"] = results["component_stats"]
+            detailed_stats["components"] = results["component_stats"]["components"]
 
         # Add debug logging
         print(
