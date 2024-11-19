@@ -59,6 +59,19 @@ BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
 _cached_data = None
 
 
+def convert_dict_keys_to_str(d):
+    """Convert dictionary tuple keys to strings recursively."""
+    if isinstance(d, dict):
+        return {
+            '_'.join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
+            for k, v in d.items()
+        }
+    elif isinstance(d, list):
+        return [convert_dict_keys_to_str(i) for i in d]
+    elif isinstance(d, set):
+        return list(d)  # Convert sets to lists for JSON serialization
+    return d
+
 def process_data():
     """Process the DMR data and return results"""
     global _cached_data
