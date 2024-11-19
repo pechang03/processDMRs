@@ -22,7 +22,6 @@ def create_node_traces(
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
-    layout_type: str = "default",
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     traces = []
@@ -31,7 +30,7 @@ def create_node_traces(
     if not biclique_colors:
         biclique_colors = ["gray"]  # Default color
 
-    # Create separate traces for DMRs, regular genes, and split genes
+    # Create traces in order: DMRs, regular genes, split genes
     dmr_trace = create_dmr_trace(
         node_info.dmr_nodes,
         node_positions,
