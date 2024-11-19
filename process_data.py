@@ -63,7 +63,9 @@ def convert_dict_keys_to_str(d):
     """Convert dictionary tuple keys to strings recursively."""
     if isinstance(d, dict):
         return {
-            '_'.join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
+            "_".join(map(str, k))
+            if isinstance(k, tuple)
+            else str(k): convert_dict_keys_to_str(v)
             for k, v in d.items()
         }
     elif isinstance(d, list):
@@ -72,11 +74,14 @@ def convert_dict_keys_to_str(d):
         return list(d)  # Convert sets to lists for JSON serialization
     return d
 
+
 def convert_dict_keys_to_str(d):
     """Convert dictionary tuple keys to strings recursively."""
     if isinstance(d, dict):
         return {
-            '_'.join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
+            "_".join(map(str, k))
+            if isinstance(k, tuple)
+            else str(k): convert_dict_keys_to_str(v)
             for k, v in d.items()
         }
     elif isinstance(d, list):
@@ -84,6 +89,7 @@ def convert_dict_keys_to_str(d):
     elif isinstance(d, set):
         return list(d)  # Convert sets to lists for JSON serialization
     return d
+
 
 def process_data():
     """Process the DMR data and return results"""
@@ -267,64 +273,120 @@ def process_data():
                 "original": {
                     "connected": {
                         "total": len(list(nx.connected_components(bipartite_graph))),
-                        "single_node": sum(1 for comp in nx.connected_components(bipartite_graph) if len(comp) == 1),
-                        "small": sum(1 for comp in nx.connected_components(bipartite_graph) 
-                                   if 1 < len(comp) <= 3),  # Adjust small threshold as needed
-                        "interesting": len([comp for comp in nx.connected_components(bipartite_graph) 
-                                         if len(comp) > 3])  # Adjust interesting threshold as needed
+                        "single_node": sum(
+                            1
+                            for comp in nx.connected_components(bipartite_graph)
+                            if len(comp) == 1
+                        ),
+                        "small": sum(
+                            1
+                            for comp in nx.connected_components(bipartite_graph)
+                            if 1 < len(comp) <= 3
+                        ),  # Adjust small threshold as needed
+                        "interesting": len(
+                            [
+                                comp
+                                for comp in nx.connected_components(bipartite_graph)
+                                if len(comp) > 3
+                            ]
+                        ),  # Adjust interesting threshold as needed
                     },
                     "biconnected": {
                         "total": len(list(nx.biconnected_components(bipartite_graph))),
                         "single_node": 0,  # Biconnected components can't have single nodes
-                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
-                                   if len(comp) <= 3),
-                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) 
-                                         if len(comp) > 3])
-                    }
+                        "small": sum(
+                            1
+                            for comp in nx.biconnected_components(bipartite_graph)
+                            if len(comp) <= 3
+                        ),
+                        "interesting": len(
+                            [
+                                comp
+                                for comp in nx.biconnected_components(bipartite_graph)
+                                if len(comp) > 3
+                            ]
+                        ),
+                    },
                 },
                 "biclique": {
                     "connected": {
                         "total": len(interesting_components),
-                        "single_node": sum(1 for comp in interesting_components 
-                                         if len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) == 1),
-                        "small": sum(1 for comp in interesting_components 
-                                   if 1 < len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) <= 3),
-                        "interesting": sum(1 for comp in interesting_components 
-                                        if len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) > 3)
+                        "single_node": sum(
+                            1
+                            for comp in interesting_components
+                            if len(comp.get("dmr_nodes", []))
+                            + len(comp.get("gene_nodes", []))
+                            == 1
+                        ),
+                        "small": sum(
+                            1
+                            for comp in interesting_components
+                            if 1
+                            < len(comp.get("dmr_nodes", []))
+                            + len(comp.get("gene_nodes", []))
+                            <= 3
+                        ),
+                        "interesting": sum(
+                            1
+                            for comp in interesting_components
+                            if len(comp.get("dmr_nodes", []))
+                            + len(comp.get("gene_nodes", []))
+                            > 3
+                        ),
                     },
                     "biconnected": {
                         "total": len(list(nx.biconnected_components(bipartite_graph))),
                         "single_node": 0,
-                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
-                                   if len(comp) <= 3),
-                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) 
-                                         if len(comp) > 3])
-                    }
-                }
+                        "small": sum(
+                            1
+                            for comp in nx.biconnected_components(bipartite_graph)
+                            if len(comp) <= 3
+                        ),
+                        "interesting": len(
+                            [
+                                comp
+                                for comp in nx.biconnected_components(bipartite_graph)
+                                if len(comp) > 3
+                            ]
+                        ),
+                    },
+                },
             },
-            "with_split_genes": sum(1 for comp in interesting_components if comp.get("split_genes")),
-            "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
-            "total_bicliques": sum(len(comp.get("raw_bicliques", [])) for comp in interesting_components)
+            "with_split_genes": sum(
+                1 for comp in interesting_components if comp.get("split_genes")
+            ),
+            "total_split_genes": sum(
+                len(comp.get("split_genes", [])) for comp in interesting_components
+            ),
+            "total_bicliques": sum(
+                len(comp.get("raw_bicliques", [])) for comp in interesting_components
+            ),
         }
         formatted_component_stats = convert_dict_keys_to_str(formatted_component_stats)
 
         def is_interesting_component(component):
             """Determine if a component is interesting based on size criteria."""
             dmr_count = len(component.get("dmr_nodes", []))
-            gene_count = len(component.get("gene_nodes", [])) + len(component.get("split_genes", []))
+            gene_count = len(component.get("gene_nodes", [])) + len(
+                component.get("split_genes", [])
+            )
             return dmr_count >= 3 and gene_count >= 3
 
         # Filter interesting components
-        interesting_components = [comp for comp in interesting_components 
-                                if (len(comp.get("raw_bicliques", [])) >= 1 and 
-                                    (len(comp.get("dmrs", [])) >= 3 or 
-                                     comp.get("total_genes", 0) >= 3))]
+        interesting_components = [
+            comp
+            for comp in interesting_components
+            if (
+                len(comp.get("raw_bicliques", [])) >= 1
+                and (len(comp.get("dmrs", [])) >= 3 or comp.get("total_genes", 0) >= 3)
+            )
+        ]
 
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
-            "simple_connections": simple_connections, 
+            "simple_connections": simple_connections,
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
@@ -336,7 +398,7 @@ def process_data():
             "dominating_set": dominating_set,
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
-            "edge_coverage": bicliques_result.get("edge_coverage", {})
+            "edge_coverage": bicliques_result.get("edge_coverage", {}),
         }
 
         return _cached_data
