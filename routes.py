@@ -61,37 +61,21 @@ def statistics_route():
                     bicliques.extend(component["raw_bicliques"])
 
         # Initialize detailed stats with proper structure
+        # Create a proper statistics dictionary that includes dominating set info
         detailed_stats = {
-            'components': {
-                'original': {
-                    'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
-                    'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
-                },
-                'biclique': {
-                    'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
-                    'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
-                }
-            },
-            'dominating_set': {
-                'size': 0,
-                'percentage': 0,
-                'genes_dominated': 0,
-                'components_with_ds': 0,
-                'avg_size_per_component': 0
-            }
+            "components": results.get('component_stats', {}).get('components', {}),
+            "dominating_set": results.get('dominating_set', {
+                "size": 0,
+                "percentage": 0,
+                "genes_dominated": 0,
+                "components_with_ds": 0,
+                "avg_size_per_component": 0
+            }),
+            "coverage": results.get('coverage', {}),
+            "size_distribution": results.get('size_distribution', {}),
+            "node_participation": results.get('node_participation', {}),
+            "edge_coverage": results.get('edge_coverage', {})
         }
-
-        # Update with actual stats if available
-        if "component_stats" in results:
-            if "components" in results["component_stats"]:
-                detailed_stats["components"].update(results["component_stats"]["components"])
-            if "dominating_set" in results["component_stats"]:
-                detailed_stats["dominating_set"].update(results["component_stats"]["dominating_set"])
-
-        # Update with component stats from results if available
-        if "component_stats" in results:
-            detailed_stats["components"].update(results["component_stats"]["components"])
-            detailed_stats["dominating_set"].update(results["component_stats"]["dominating_set"])
 
         # Debug logging
         print("\nDetailed stats structure:")
