@@ -136,12 +136,12 @@ def create_node_traces(
 
 
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]],
+    edge_classifications: Dict[str, List[EdgeInfo]] | List[EdgeInfo],  # Update type hint
     node_positions: Dict[int, Tuple[float, float]],
-    node_labels: Dict[int, str],  # Add this parameter
-    original_graph: nx.Graph,  # Add original graph
-    false_positive_edges: Set[Tuple[int, int]] = None,  # Add false positives
-    false_negative_edges: Set[Tuple[int, int]] = None,  # Add false negatives
+    node_labels: Dict[int, str],
+    original_graph: nx.Graph,
+    false_positive_edges: Set[Tuple[int, int]] = None,
+    false_negative_edges: Set[Tuple[int, int]] = None,
     edge_type: str = "biclique",
     edge_style: Dict = None
 ) -> List[go.Scatter]:
@@ -155,14 +155,48 @@ def create_edge_traces(
         "false_negative": "blue",
     }
 
-    for label, edges_info in edge_classifications.items():
+    # Handle both dictionary and list inputs
+    if isinstance(edge_classifications, dict):
+        # Dictionary case - process as before
+        for label, edges_info in edge_classifications.items():
+            x_coords = []
+            y_coords = []
+            hover_texts = []
+
+            color = color_map.get(label, "gray")
+
+            for edge_info in edges_info:
+                u, v = edge_info.edge
+                if u in node_positions and v in node_positions:
+                    x0, y0 = node_positions[u]
+                    x1, y1 = node_positions[v]
+                    x_coords.extend([x0, x1, None])
+                    y_coords.extend([y0, y1, None])
+
+                    sources = ', '.join(edge_info.sources) if edge_info.sources else 'Unknown'
+                    hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
+                    hover_texts.append(hover_text)
+                else:
+                    continue
+
+            if x_coords:
+                trace = go.Scatter(
+                    x=x_coords,
+                    y=y_coords,
+                    mode="lines",
+                    line=dict(color=color, width=edge_style.get("width", 1)),
+                    hoverinfo="text",
+                    text=hover_texts,
+                    name=f"Edges ({label})",
+                )
+                traces.append(trace)
+    else:
+        # List case - treat all edges as permanent
         x_coords = []
         y_coords = []
         hover_texts = []
-
-        color = color_map.get(label, "gray")
-
-        for edge_info in edges_info:
+        
+        for edge_info in edge_classifications:
             u, v = edge_info.edge
             if u in node_positions and v in node_positions:
                 x0, y0 = node_positions[u]
@@ -171,20 +205,18 @@ def create_edge_traces(
                 y_coords.extend([y0, y1, None])
 
                 sources = ', '.join(edge_info.sources) if edge_info.sources else 'Unknown'
-                hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
+                hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Sources: {sources}"
                 hover_texts.append(hover_text)
-            else:
-                continue  # Skip edges with missing node positions
 
         if x_coords:
             trace = go.Scatter(
                 x=x_coords,
                 y=y_coords,
                 mode="lines",
-                line=dict(color=color, width=edge_style.get("width", 1)),
+                line=dict(color="green", width=edge_style.get("width", 1)),
                 hoverinfo="text",
                 text=hover_texts,
-                name=f"Edges ({label})",
+                name="Edges (Permanent)",
             )
             traces.append(trace)
     return traces
