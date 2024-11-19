@@ -1,0 +1,126 @@
+                                                     Expanded Sections
+
+                                                     Core Architecture
+
+ • Modular Design: Explain the benefits of a modular design, such as easier maintenance, scalability, and reusability of
+   components.
+ • Technology Stack: Mention specific versions of libraries (e.g., NetworkX, Plotly, Flask) if they are critical to the
+   system's operation.
+
+                                                      Key Components
+
+ 1 Data Processing
+    • Excel Input Handling: Describe how the system handles different Excel formats and potential errors.
+    • Bipartite Graph Creation: Explain the process of creating the bipartite graph, including how nodes and edges are
+      added.
+ 2 Biclique Analysis
+    • Biclique Identification: Provide a brief overview of the algorithms used to identify bicliques.
+    • Edge Classification: Explain the criteria for classifying edges as permanent, false_positive, or false_negative.
+ 3 Visualization System
+    • Hierarchical Visualization: Describe the hierarchy in more detail, including how components interact.
+    • EdgeInfo Objects: Explain how EdgeInfo objects are used in the visualization process.
+
+                                                      Data Structures
+
+ 1 EdgeInfo
+    • Edge Metadata: Explain the types of metadata tracked (e.g., sources, classifications).
+    • JSON Serialization: Describe the importance of JSON serialization for data exchange.
+ 2 NodeInfo
+    • Node Categorization: Explain how nodes are categorized and why this is important.
+    • Split Genes: Describe the special handling for split genes and its significance.
+
+                                                     Design Decisions
+
+ 1 Edge Classification
+    • Dictionary-Based Classification: Explain why a dictionary-based system was chosen over other methods.
+    • Backward Compatibility: Describe how the system supports both EdgeInfo objects and raw tuples.
+ 2 Layout Strategy
+    • Bipartite Layout: Explain the rationale behind positioning DMRs on the left and genes on the right.
+    • Vertical Spacing: Describe how vertical spacing is calculated and why it is important.
+ 3 Component Organization
+    • Modular Trace Creation: Explain the benefits of modular trace creation, such as easier debugging and testing.
+
+                                                   Future Considerations
+
+ 1 Performance Optimization
+    • Caching: Discuss potential caching strategies and their benefits.
+    • Batch Processing: Explain how batch processing could improve performance.
+ 2 Extensibility
+    • New Edge/Node Types: Provide examples of how new edge/node types could be added.
+    • Visualization System: Discuss potential new features for the visualization system.
+ 3 Data Validation
+    • Basic Validation: Explain the current validation methods.
+    • Robust Error Checking: Discuss potential improvements in error checking.
+
+DMR Analysis System Design
+ =========================
+
+ Core Architecture
+ ----------------
+ - **Modular design** with clear separation between data processing, analysis, and visualization.
+   - Benefits: Easier maintenance, scalability, and reusability of components.
+ - Uses **NetworkX** for graph operations and **Plotly** for interactive visualizations.
+ - **Flask-based web interface** for result display.
+
+ Key Components
+ -------------
+ 1. **Data Processing**
+    - Handles Excel input files containing DMR and gene data.
+    - Creates bipartite graph structure (DMRs to genes).
+    - Manages gene ID mapping system.
+
+ 2. **Biclique Analysis**
+    - Identifies complete bipartite subgraphs.
+    - Classifies bicliques (trivial, small, interesting).
+    - Tracks edge classifications and sources.
+
+ 3. **Visualization System**
+    - Hierarchical visualization components:
+      * Core plotting (create_biclique_visualization)
+      * Trace creation (nodes, edges, biclique boxes)
+      * Layout management
+    - Uses EdgeInfo objects to track edge metadata.
+    - Supports multiple input formats for flexibility.
+
+ Data Structures
+ --------------
+ 1. **EdgeInfo**
+    - Encapsulates edge data and metadata.
+    - Tracks edge sources and classifications.
+    - Supports JSON serialization.
+
+ 2. **NodeInfo**
+    - Manages node categorization (DMR vs gene).
+    - Tracks split genes and node degrees.
+    - Provides type checking methods.
+
+ Design Decisions
+ ---------------
+ 1. **Edge Classification**
+    - Uses dictionary-based classification system.
+    - Categories: permanent, false_positive, false_negative.
+    - Supports both EdgeInfo objects and raw tuples for backward compatibility.
+
+ 2. **Layout Strategy**
+    - Bipartite layout with DMRs on left, genes on right.
+    - Special handling for split genes (positioned slightly offset).
+    - Vertical spacing based on biclique sizes.
+
+ 3. **Component Organization**
+    - Separate modules for different visualization aspects.
+    - Clear hierarchy of functionality.
+    - Modular trace creation for maintainability.
+
+ Future Considerations
+ -------------------
+ 1. **Performance Optimization**
+    - May need caching for large graphs.
+    - Consider batch processing for edge traces.
+
+ 2. **Extensibility**
+    - Design supports adding new edge/node types.
+    - Visualization system can be extended for new features.
+
+ 3. **Data Validation**
+    - Currently implements basic validation.
+    - May need more robust error checking.
