@@ -233,9 +233,17 @@ def process_data():
 
         # Debug print the component_stats structure
         print("\nComponent Statistics received:")
-        print(json.dumps(component_stats, indent=2))
+        print(json.dumps(convert_dict_keys_to_str(component_stats), indent=2))
 
         # Ensure proper structure for component stats
+        def convert_dict_keys_to_str(d):
+            if isinstance(d, dict):
+                return {
+                    str(k) if isinstance(k, tuple) else k: convert_dict_keys_to_str(v)
+                    for k, v in d.items()
+                }
+            return d
+
         formatted_component_stats = {
             "components": {
                 "original": {
@@ -280,6 +288,7 @@ def process_data():
             "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
             "total_bicliques": sum(len(comp.get("raw_bicliques", [])) for comp in interesting_components)
         }
+        formatted_component_stats = convert_dict_keys_to_str(formatted_component_stats)
 
         # Create cached data with all information
         _cached_data = {
