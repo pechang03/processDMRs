@@ -14,21 +14,35 @@ class TestGraphStatistics(unittest.TestCase):
         # Sample DataFrame setup for testing
         data = {
             "DMR_No.": [1, 2, 3],
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneD;GeneE", "GeneF", None],
+            "Gene_Symbol_Nearby": ["genea", "geneb", "genec"],  # Make lowercase
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["gened;genee", "genef", None],
             "Gene_Description": ["Desc1", "Desc2", "Desc3"]
         }
         df = pd.DataFrame(data)
         df["Processed_Enhancer_Info"] = df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
-        # Create gene_id_mapping for testing
+
+        # Create gene_id_mapping for testing - make all lowercase
         all_genes = set()
-        all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes if g])
+        # Add genes from gene column (case-insensitive)
+        all_genes.update(df["Gene_Symbol_Nearby"].str.strip().str.lower())
+        # Add genes from enhancer info (case-insensitive)
+        for genes in df["Processed_Enhancer_Info"]:
+            if genes:
+                all_genes.update(g.strip().lower() for g in genes)
+
         self.gene_id_mapping = {gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))}
         
+        # Create the bipartite graph
         self.bipartite_graph = create_bipartite_graph(df, self.gene_id_mapping)
+
+        # Print debug info
+        print("\nDebug information:")
+        print(f"Number of nodes: {len(self.bipartite_graph.nodes())}")
+        print(f"Number of edges: {len(self.bipartite_graph.edges())}")
+        print(f"Gene mapping: {self.gene_id_mapping}")
+        print(f"Edges: {list(self.bipartite_graph.edges())}")
 
     def test_min_degree(self):
         degrees = dict(self.bipartite_graph.degree())
