@@ -382,6 +382,16 @@ def process_data():
             )
         ]
 
+        # Calculate dominating set statistics
+        dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
+        dominating_set_stats = {
+            "size": len(dominating_set),
+            "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
+            "genes_dominated": len(set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))),
+            "components_with_ds": sum(1 for comp in interesting_components if any(node in dominating_set for node in comp.get("component", []))),
+            "avg_size_per_component": len(dominating_set) / len(interesting_components) if interesting_components else 0
+        }
+
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
@@ -395,7 +405,7 @@ def process_data():
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
             "component_stats": formatted_component_stats,
-            "dominating_set": dominating_set,
+            "dominating_set": dominating_set_stats,
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
             "edge_coverage": bicliques_result.get("edge_coverage", {}),
