@@ -72,6 +72,19 @@ def convert_dict_keys_to_str(d):
         return list(d)  # Convert sets to lists for JSON serialization
     return d
 
+def convert_dict_keys_to_str(d):
+    """Convert dictionary tuple keys to strings recursively."""
+    if isinstance(d, dict):
+        return {
+            '_'.join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
+            for k, v in d.items()
+        }
+    elif isinstance(d, list):
+        return [convert_dict_keys_to_str(i) for i in d]
+    elif isinstance(d, set):
+        return list(d)  # Convert sets to lists for JSON serialization
+    return d
+
 def process_data():
     """Process the DMR data and return results"""
     global _cached_data
@@ -249,14 +262,6 @@ def process_data():
         print(json.dumps(convert_dict_keys_to_str(component_stats), indent=2))
 
         # Ensure proper structure for component stats
-        def convert_dict_keys_to_str(d):
-            if isinstance(d, dict):
-                return {
-                    str(k) if isinstance(k, tuple) else k: convert_dict_keys_to_str(v)
-                    for k, v in d.items()
-                }
-            return d
-
         formatted_component_stats = {
             "components": {
                 "original": {
