@@ -329,7 +329,7 @@ rel="stylesheet">
                         {% if bicliques_result and bicliques_result.interesting_components %}
                             {% for component in bicliques_result.interesting_components %}
                                 {% if component.dmrs >= 3 or component.total_genes >= 3 %}
-                                {% endif %}
+                                {% if component.dmrs >= 3 or component.total_genes >= 3 %}
                                     <tr>
                                         <td>{{ component.id }}</td>
                                         <td>{{ component.dmrs }}</td>
