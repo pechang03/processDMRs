@@ -215,14 +215,14 @@ def process_data():
         }
 
         # Now add dominating set statistics
-        if interesting_components:  # Add this check
+        if _cached_data["interesting_components"]:  # Add this check
             _cached_data["component_stats"]["dominating_set"] = {
                 "size": len(dominating_set),
                 "components_with_ds": len([
-                    c for c in interesting_components  # Use interesting_components directly
+                    c for c in _cached_data["interesting_components"]  # Use interesting_components directly
                     if any(n in dominating_set for n in c["dmr_nodes"])
                 ]),
-                "avg_size_per_component": len(dominating_set) / len(interesting_components)
+                "avg_size_per_component": len(dominating_set) / len(_cached_data["interesting_components"])
             }
         # Retrieve edge_sources from the graph
         edge_sources = bipartite_graph.graph.get("edge_sources", {})
