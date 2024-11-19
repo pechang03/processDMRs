@@ -203,6 +203,8 @@ def print_domination_statistics(
         area = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
         num_dominated = len(list(graph.neighbors(dmr)))
         print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
+from typing import Set
+
 def copy_dominating_set(source_graph: nx.Graph, target_graph: nx.Graph, dominating_set: Set[int]) -> Set[int]:
     """
     Copy dominating set between graphs with same node IDs.
