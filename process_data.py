@@ -231,6 +231,56 @@ def process_data():
             f"Biclique graph has {component_stats['components']['biclique']['connected']['interesting']} interesting components"
         )
 
+        # Debug print the component_stats structure
+        print("\nComponent Statistics received:")
+        print(json.dumps(component_stats, indent=2))
+
+        # Ensure proper structure for component stats
+        formatted_component_stats = {
+            "components": {
+                "original": {
+                    "connected": {
+                        "total": len(list(nx.connected_components(bipartite_graph))),
+                        "single_node": sum(1 for comp in nx.connected_components(bipartite_graph) if len(comp) == 1),
+                        "small": sum(1 for comp in nx.connected_components(bipartite_graph) 
+                                   if 1 < len(comp) <= 3),  # Adjust small threshold as needed
+                        "interesting": len([comp for comp in nx.connected_components(bipartite_graph) 
+                                         if len(comp) > 3])  # Adjust interesting threshold as needed
+                    },
+                    "biconnected": {
+                        "total": len(list(nx.biconnected_components(bipartite_graph))),
+                        "single_node": 0,  # Biconnected components can't have single nodes
+                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
+                                   if len(comp) <= 3),
+                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) 
+                                         if len(comp) > 3])
+                    }
+                },
+                "biclique": {
+                    "connected": {
+                        "total": len(interesting_components),
+                        "single_node": sum(1 for comp in interesting_components 
+                                         if len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) == 1),
+                        "small": sum(1 for comp in interesting_components 
+                                   if 1 < len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) <= 3),
+                        "interesting": sum(1 for comp in interesting_components 
+                                        if len(comp.get("dmr_nodes", [])) + len(comp.get("gene_nodes", [])) > 3)
+                    },
+                    "biconnected": {
+                        "total": len(list(nx.biconnected_components(bipartite_graph))),
+                        "single_node": 0,
+                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
+                                   if len(comp) <= 3),
+                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) 
+                                         if len(comp) > 3])
+                    }
+                }
+            },
+            "with_split_genes": sum(1 for comp in interesting_components if comp.get("split_genes")),
+            "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
+            "total_bicliques": sum(len(comp.get("raw_bicliques", [])) for comp in interesting_components)
+        }
+
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
@@ -244,36 +294,7 @@ def process_data():
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
             "component_stats": {
-                "components": {
-                    "original": {
-                        "connected": component_stats.get("original", {}).get("connected", {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0
-                        }),
-                        "biconnected": component_stats.get("original", {}).get("biconnected", {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0
-                        })
-                    },
-                    "biclique": {
-                        "connected": component_stats.get("biclique", {}).get("connected", {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0
-                        }),
-                        "biconnected": component_stats.get("biclique", {}).get("biconnected", {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0
-                        })
-                    }
-                },
+                "components": formatted_component_stats["components"],
                 "dominating_set": {
                     "size": len(dominating_set),
                     "percentage": len(dominating_set) / len(df) if len(df) > 0 else 0,
