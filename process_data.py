@@ -308,6 +308,18 @@ def process_data():
         }
         formatted_component_stats = convert_dict_keys_to_str(formatted_component_stats)
 
+        def is_interesting_component(component):
+            """Determine if a component is interesting based on size criteria."""
+            dmr_count = len(component.get("dmr_nodes", []))
+            gene_count = len(component.get("gene_nodes", [])) + len(component.get("split_genes", []))
+            return dmr_count >= 3 and gene_count >= 3
+
+        # Filter interesting components
+        interesting_components = [comp for comp in interesting_components 
+                                if (len(comp.get("raw_bicliques", [])) >= 1 and 
+                                    (len(comp.get("dmrs", [])) >= 3 or 
+                                     comp.get("total_genes", 0) >= 3))]
+
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
@@ -320,21 +332,11 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
-            "component_stats": {
-                "components": formatted_component_stats["components"],
-                "dominating_set": {
-                    "size": len(dominating_set),
-                    "percentage": len(dominating_set) / len(df) if len(df) > 0 else 0,
-                    "genes_dominated": len(set().union(*[set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set])),
-                    "components_with_ds": len([c for c in interesting_components 
-                                            if any(n in dominating_set for n in c.get("dmr_nodes", []))]),
-                    "avg_size_per_component": len(dominating_set) / len(interesting_components) 
-                                            if interesting_components else 0,
-                    "genes_dominated_percentage": len(set().union(*[set(bipartite_graph.neighbors(dmr)) 
-                                                for dmr in dominating_set])) / len(gene_id_mapping) * 100
-                }
-            },
-            "dominating_set": dominating_set
+            "component_stats": formatted_component_stats,
+            "dominating_set": dominating_set,
+            "size_distribution": bicliques_result.get("size_distribution", {}),
+            "node_participation": bicliques_result.get("node_participation", {}),
+            "edge_coverage": bicliques_result.get("edge_coverage", {})
         }
 
         return _cached_data
