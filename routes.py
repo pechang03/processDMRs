@@ -60,7 +60,7 @@ def statistics_route():
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
-        # Ensure proper structure
+        # Initialize detailed stats with proper structure
         detailed_stats = {
             'components': {
                 'original': {
@@ -80,6 +80,13 @@ def statistics_route():
                 'avg_size_per_component': 0
             }
         }
+
+        # Update with actual stats if available
+        if "component_stats" in results:
+            if "components" in results["component_stats"]:
+                detailed_stats["components"].update(results["component_stats"]["components"])
+            if "dominating_set" in results["component_stats"]:
+                detailed_stats["dominating_set"].update(results["component_stats"]["dominating_set"])
 
         # Update with component stats from results if available
         if "component_stats" in results:
