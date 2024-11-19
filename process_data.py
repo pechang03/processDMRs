@@ -167,11 +167,13 @@ def process_data():
         )
 
         # Create node labels and metadata
-        node_labels, dmr_metadata, gene_metadata = (
-            reporting.create_node_labels_and_metadata(
+        node_labels, dmr_metadata, gene_metadata = reporting.create_node_labels_and_metadata(
                 df, bicliques_result, gene_id_mapping, node_biclique_map
             )
-        )
+             # Calculate dominating set for original graph
+        print("\nCalculating dominating set...")
+        dominating_set = calculate_dominating_sets(bipartite_graph, df)
+        print(f"Found dominating set of size {len(dominating_set)}") 
 
         # Build biclique_graph from bicliques
         biclique_graph = nx.Graph()
@@ -181,7 +183,19 @@ def process_data():
             biclique_graph.add_edges_from(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
+        # Copy dominating set to biclique graph
+        biclique_dominating_set = copy_dominating_set(
+            bipartite_graph,
+            biclique_graph,
+            dominating_set
+        )
 
+        # Add to statistics
+        component_stats["dominating_set"] = {
+            "size": len(dominating_set),
+            "components_with_ds": len([c for c in interesting_components if any(n in dominating_set for n in c["dmr_nodes"])]
+            "avg_size_per_component": len(dominating_set) / len(interesting_components) if interesting_components else 0
+        }
         # Retrieve edge_sources from the graph
         edge_sources = bipartite_graph.graph.get("edge_sources", {})
 
