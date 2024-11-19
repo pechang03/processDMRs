@@ -120,6 +120,7 @@ def statistics_route():
             f"Biclique graph components: {detailed_stats['components']['biclique']['connected']['interesting']}"
         )
         print("Debug - Dominating Set Stats:", detailed_stats.get('dominating_set', {}))
+        print("\nFull detailed_stats structure:", json.dumps(detailed_stats, indent=2, default=str))
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
