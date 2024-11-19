@@ -29,17 +29,21 @@ def classify_edges(
     false_positive_edges: List[EdgeInfo] = []
     false_negative_edges: List[EdgeInfo] = []
 
-    # Get all nodes (should be same in both graphs)
-    nodes = set(original_graph.nodes())
-
-    # Compare edges using pairwise enumeration
-    for u in nodes:
-        for v in nodes:
-            if u < v:  # Only check each pair once
+    # Process each connected component separately
+    for component in nx.connected_components(original_graph):
+        # Get subgraphs for this component
+        orig_subgraph = original_graph.subgraph(component)
+        bic_subgraph = biclique_graph.subgraph(component)
+        
+        # Process edges within this component
+        nodes = sorted(component)  # Sort for consistent ordering
+        for i, u in enumerate(nodes):
+            # Only check pairs once by using nodes after current node
+            for v in nodes[i+1:]:
                 edge = (u, v)
-                in_original = original_graph.has_edge(u, v)
-                in_biclique = biclique_graph.has_edge(u, v)
-
+                in_original = orig_subgraph.has_edge(u, v)
+                in_biclique = bic_subgraph.has_edge(u, v)
+                
                 sources = edge_sources.get(edge, set())
 
                 if in_original and in_biclique:
