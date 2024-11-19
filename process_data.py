@@ -198,9 +198,9 @@ def process_data():
 
         # Create cached data first
         _cached_data = {
-            "stats": stats,
-            "interesting_components": interesting_components,
-            "simple_connections": simple_connections, 
+            "stats": {},
+            "interesting_components": [],
+            "simple_connections": [], 
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
@@ -209,7 +209,7 @@ def process_data():
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
             "component_stats": {
-                "components": component_stats
+                "components": {}
             },
             "dominating_set": dominating_set
         }
