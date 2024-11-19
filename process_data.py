@@ -290,3 +290,4 @@ def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
             print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
 
     return result
+from biclique_analysis.rb_domination import greedy_rb_domination, minimize_dominating_set
