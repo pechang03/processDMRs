@@ -260,11 +260,11 @@ def process_data():
             ),
         }
 
-        # Create cached data only once
+        # Create cached data
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
-            "simple_connections": simple_connections,
+            "simple_connections": simple_connections, 
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
@@ -272,9 +272,18 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
-            "component_stats": component_stats,  # Add component statistics
+            "component_stats": {
+                "components": component_stats,
+                "dominating_set": {
+                    "size": len(dominating_set),
+                    "components_with_ds": len([c for c in interesting_components 
+                                            if any(n in dominating_set for n in c["dmr_nodes"])]),
+                    "avg_size_per_component": len(dominating_set) / len(interesting_components) 
+                                            if interesting_components else 0
+                }
+            }
         }
-        return _cached_data
+
         return _cached_data
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
