@@ -68,6 +68,135 @@ def create_node_traces(
 
     return traces
 
+def create_gene_trace(
+    gene_nodes: Set[int],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_labels: Dict[int, str],
+    node_biclique_map: Dict[int, List[int]],
+    biclique_colors: List[str],
+    gene_metadata: Dict[str, Dict] = None,
+    textposition: str = "middle right"
+) -> go.Scatter:
+    """Create trace for regular gene nodes."""
+    x = []
+    y = []
+    text = []
+    hover_text = []
+    colors = []
+
+    # Process regular genes
+    for node_id in sorted(gene_nodes):
+        position = node_positions.get(node_id)
+        if not position or not isinstance(position, tuple) or len(position) != 2:
+            continue
+
+        x_pos, y_pos = position
+        x.append(x_pos)
+        y.append(y_pos)
+
+        # Set node color based on biclique membership
+        if node_id in node_biclique_map and biclique_colors:
+            biclique_idx = node_biclique_map[node_id][0]
+            color = biclique_colors[biclique_idx] if biclique_idx < len(biclique_colors) else "gray"
+        else:
+            color = "gray"
+        colors.append(color)
+
+        # Create label and hover text
+        label = node_labels.get(node_id, str(node_id))
+        text.append(label)
+
+        # Add metadata to hover text
+        meta = gene_metadata.get(label, {}) if gene_metadata else {}
+        hover = f"{label}<br>Description: {meta.get('description', 'N/A')}"
+        hover_text.append(hover)
+
+    if not x:  # Return None if no nodes to show
+        return None
+
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="markers+text",
+        marker=dict(
+            size=10,
+            color=colors,
+            symbol="circle",
+            line=dict(color="black", width=1),
+        ),
+        text=text,
+        hovertext=hover_text,
+        textposition=textposition,
+        hoverinfo="text",
+        name="Regular Genes",
+        showlegend=True,
+    )
+
+def create_split_gene_trace(
+    split_genes: Set[int],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_labels: Dict[int, str],
+    node_biclique_map: Dict[int, List[int]],
+    biclique_colors: List[str],
+    gene_metadata: Dict[str, Dict] = None,
+    textposition: str = "middle right"
+) -> go.Scatter:
+    """Create trace for split gene nodes."""
+    x = []
+    y = []
+    text = []
+    hover_text = []
+    colors = []
+
+    # Process split genes
+    for node_id in sorted(split_genes):
+        position = node_positions.get(node_id)
+        if not position or not isinstance(position, tuple) or len(position) != 2:
+            continue
+
+        x_pos, y_pos = position
+        x.append(x_pos)
+        y.append(y_pos)
+
+        # Set node color based on first biclique membership
+        if node_id in node_biclique_map and biclique_colors:
+            biclique_idx = node_biclique_map[node_id][0]
+            color = biclique_colors[biclique_idx] if biclique_idx < len(biclique_colors) else "gray"
+        else:
+            color = "gray"
+        colors.append(color)
+
+        # Create label and hover text
+        label = node_labels.get(node_id, str(node_id))
+        text.append(label)
+
+        # Add metadata to hover text
+        meta = gene_metadata.get(label, {}) if gene_metadata else {}
+        bicliques_str = ", ".join(map(str, node_biclique_map.get(node_id, [])))
+        hover = f"{label}<br>Description: {meta.get('description', 'N/A')}<br>Bicliques: {bicliques_str}"
+        hover_text.append(hover)
+
+    if not x:  # Return None if no nodes to show
+        return None
+
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="markers+text",
+        marker=dict(
+            size=12,  # Slightly larger than regular genes
+            color=colors,
+            symbol="diamond",  # Different symbol for split genes
+            line=dict(color="black", width=2),  # Thicker border
+        ),
+        text=text,
+        hovertext=hover_text,
+        textposition=textposition,
+        hoverinfo="text",
+        name="Split Genes",
+        showlegend=True,
+    )
+
 
 def create_dmr_trace(
     dmr_nodes: Set[int],
