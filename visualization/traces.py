@@ -31,7 +31,7 @@ def create_node_traces(
     if not biclique_colors:
         biclique_colors = ["gray"]  # Default color
 
-    # Create separate traces for DMRs and genes
+    # Create separate traces for DMRs, regular genes, and split genes
     dmr_trace = create_dmr_trace(
         node_info.dmr_nodes,
         node_positions,
