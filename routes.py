@@ -36,6 +36,7 @@ def index_route():
             bicliques_result=results,
             coverage=results.get("coverage", {}),
             node_labels=results.get("node_labels", {}),
+            dominating_set=results.get("dominating_set", {}),
         )
     except Exception as e:
         import traceback
