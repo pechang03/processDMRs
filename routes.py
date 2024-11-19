@@ -64,9 +64,30 @@ def statistics_route():
             bicliques, results.get("bipartite_graph")
         )
 
-        # Merge component stats from results into detailed_stats
+        # Debug logging
+        print("\nDetailed stats structure:")
+        print("Components key exists:", "components" in detailed_stats)
+        if "components" in detailed_stats:
+            print("Biclique key exists:", "biclique" in detailed_stats["components"])
+            if "biclique" in detailed_stats["components"]:
+                print("Connected key exists:", "connected" in detailed_stats["components"]["biclique"])
+                if "connected" in detailed_stats["components"]["biclique"]:
+                    print("Interesting key exists:", "interesting" in detailed_stats["components"]["biclique"]["connected"])
+
+        # Merge component stats more carefully
         if "component_stats" in results:
-            detailed_stats["components"] = results["component_stats"]["components"]
+            if "components" not in detailed_stats:
+                detailed_stats["components"] = {}
+            # Update instead of replace
+            detailed_stats["components"].update(results["component_stats"]["components"])
+
+        # Additional debug logging after merge
+        print("\nFinal stats structure:")
+        print("Keys in detailed_stats:", detailed_stats.keys())
+        if "components" in detailed_stats:
+            print("Keys in components:", detailed_stats["components"].keys())
+            if "biclique" in detailed_stats["components"]:
+                print("Keys in biclique:", detailed_stats["components"]["biclique"].keys")
 
         # Add debug logging
         print(
