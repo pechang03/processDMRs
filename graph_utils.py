@@ -115,91 +115,67 @@ def create_bipartite_graph(
     closest_gene_col: str = "Gene_Symbol_Nearby",
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
-    B = nx.Graph()  # Note: nx.Graph() already prevents multi-edges
+    B = nx.Graph()
     dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
 
     # Add DMR nodes with explicit bipartite attribute (0-based indexing)
     for dmr in dmr_nodes:
-        B.add_node(dmr - 1, bipartite=0)
+        B.add_node(dmr - 1, bipartite=0)  # Zero-based indexing
 
-    print(f"\nDebugging create_bipartite_graph:")
-    print(f"Number of DMR nodes added: {len(dmr_nodes)}")
+    # Add all gene nodes from mapping with bipartite=1 attribute
+    for gene_name, gene_id in gene_id_mapping.items():
+        B.add_node(gene_id, bipartite=1)
 
-    # Track edges and edge sources
+    # Initialize edge sources dictionary in graph
+    B.graph["edge_sources"] = {}
+
+    # Track edges and their sources
     edges_seen = set()
-    edge_sources = {}  # New dictionary to store edge sources
-    duplicate_edges = []
     edges_added = 0
-    num_duplicate_edge = 0
+
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        associated_genes = set()  # Initialize a set to collect unique genes
-
-        # Determine sources
-        gene_sources = {}  # Map gene names to their sources for this DMR
+        associated_genes = set()
+        gene_sources = {}
 
         # Add closest gene if it exists
-        gene_col = closest_gene_col
-        if pd.notna(row[gene_col]) and row[gene_col]:
-            gene_name = str(row[gene_col]).strip().lower()  # Standardize to lowercase
+        if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
+            gene_name = str(row[closest_gene_col]).strip().lower()
             associated_genes.add(gene_name)
-            gene_sources[gene_name] = "Gene_Symbol_Nearby"  # Mark source
+            gene_sources[gene_name] = {"Gene_Symbol_Nearby"}
 
         # Add enhancer genes if they exist
         if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {
-                g.lower() for g in row["Processed_Enhancer_Info"] if g
-            }  # Standardize to lowercase
+            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
             associated_genes.update(enhancer_genes)
             for gene in enhancer_genes:
-                gene_sources[gene] = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-
-        # Debugging output for associated genes
-        # print(f"DMR {dmr}: Associated genes: {associated_genes}")
-
-        # Add edges and gene nodes
-        for gene_name in associated_genes:
-            gene_name = gene_name.lower()  # Ensure lowercase standardization
-                
-            # Get or create gene ID
-            if gene_name not in gene_id_mapping:
-                continue  # Skip genes not in mapping
-                
-            gene_id = gene_id_mapping[gene_name]
-                
-            # Add gene node if not already present
-            if not B.has_node(gene_id):
-                B.add_node(gene_id, bipartite=1)  # Mark as gene node
-
-            # Check if we've seen this edge before
-            edge = tuple(sorted([dmr_id, gene_id]))  # Normalize edge representation
-            if edge not in edges_seen:
-                B.add_edge(dmr_id, gene_id)
-                edges_seen.add(edge)
-                edges_added += 1
-
-                # Add source to edge_sources dictionary
-                source = gene_sources.get(gene_name, "")
-                if source:
-                    edge_sources[edge] = {source}
+                if gene in gene_sources:
+                    gene_sources[gene].add("ENCODE_Enhancer_Interaction(BingRen_Lab)")
                 else:
-                    edge_sources[edge] = set()
-            else:
-                num_duplicate_edge += 1
+                    gene_sources[gene] = {"ENCODE_Enhancer_Interaction(BingRen_Lab)"}
 
-    # Report duplicate edges
-    if duplicate_edges:
-        print("\nFound duplicate edges that were skipped:")
-        for dmr, gene_id, gene_name in duplicate_edges[:5]:  # Show first 5 duplicates
-            print(f"DMR {dmr} -> Gene {gene_id} [{gene_name}]")
+        # Add edges and track their sources
+        for gene_name in associated_genes:
+            gene_name = gene_name.lower()
+            if gene_name in gene_id_mapping:
+                gene_id = gene_id_mapping[gene_name]
+                edge = tuple(sorted([dmr_id, gene_id]))
+                
+                if edge not in edges_seen:
+                    # Add edge to graph
+                    B.add_edge(dmr_id, gene_id)
+                    edges_seen.add(edge)
+                    edges_added += 1
 
-    print(f"Total edges added: {edges_added}")  # Log total edges added
-    print(f"Total duplicate edges skipped: {len(duplicate_edges)}")
-    print(
-        f"Final graph: {len(B.nodes())} nodes, {len(B.edges())} edges"
-    )  # Log final graph size
+                    # Store edge sources in graph attribute
+                    B.graph["edge_sources"][edge] = gene_sources[gene_name]
+                else:
+                    # Update sources for existing edge
+                    B.graph["edge_sources"][edge].update(gene_sources[gene_name])
 
-    # Attach edge_sources to the graph
-    B.graph["edge_sources"] = edge_sources
+    print(f"\nGraph construction summary:")
+    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
+    print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
+    print(f"Total edges added: {edges_added}")
 
-    return B  # Return the graph with edge_sources attached
+    return B
