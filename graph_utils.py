@@ -116,8 +116,7 @@ def create_bipartite_graph(
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
-    dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
-
+    
     # Add DMR nodes (0-based indexing)
     dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
     for dmr in dmr_nodes:
@@ -137,9 +136,8 @@ def create_bipartite_graph(
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
-                if not B.has_edge(dmr_id, gene_id):  # Check if edge exists first
-                    B.add_edge(dmr_id, gene_id)
-                    edges_added += 1
+                B.add_edge(dmr_id, gene_id)
+                edges_added += 1
 
         # Process enhancer genes
         if isinstance(row.get("Processed_Enhancer_Info"), (set, list)):
@@ -147,9 +145,8 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    if not B.has_edge(dmr_id, gene_id):  # Check if edge exists first
-                        B.add_edge(dmr_id, gene_id)
-                        edges_added += 1
+                    B.add_edge(dmr_id, gene_id)
+                    edges_added += 1
 
     # Print summary once
     print(f"\nGraph construction summary:")
