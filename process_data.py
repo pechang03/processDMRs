@@ -375,21 +375,37 @@ def process_data():
         # Filter interesting components
         interesting_components = [
             comp
-            for comp in interesting_components 
+            for comp in interesting_components
             if (
-                len(comp.get("raw_bicliques", [])) >= 1 
+                len(comp.get("raw_bicliques", [])) >= 1
                 and (comp.get("dmrs", 0) >= 3 or comp.get("total_genes", 0) >= 3)
             )
         ]
 
+        # print("\nCalculating dominating set...again")
+        # dominating_set = calculate_dominating_sets(bipartite_graph, df)
+        # print(f"Found dominating set of size {len(dominating_set)}")
+
         # Calculate dominating set statistics
-        dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
+        dmr_nodes = {
+            n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0
+        }
         dominating_set_stats = {
             "size": len(dominating_set),
             "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
-            "genes_dominated": len(set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))),
-            "components_with_ds": sum(1 for comp in interesting_components if any(node in dominating_set for node in comp.get("component", []))),
-            "avg_size_per_component": len(dominating_set) / len(interesting_components) if interesting_components else 0
+            "genes_dominated": len(
+                set().union(
+                    *(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set)
+                )
+            ),
+            "components_with_ds": sum(
+                1
+                for comp in interesting_components
+                if any(node in dominating_set for node in comp.get("component", []))
+            ),
+            "avg_size_per_component": len(dominating_set) / len(interesting_components)
+            if interesting_components
+            else 0,
         }
 
         # Create cached data with all information
