@@ -61,8 +61,8 @@ def statistics_route():
                     bicliques.extend(component["raw_bicliques"])
 
         # Ensure proper structure
-        if "components" not in detailed_stats:
-            detailed_stats["components"] = {
+        detailed_stats = {
+            'components': {
                 'original': {
                     'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
                     'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
@@ -71,23 +71,20 @@ def statistics_route():
                     'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
                     'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
                 }
-            }
-        
-        if "dominating_set" not in detailed_stats:
-            detailed_stats["dominating_set"] = {
+            },
+            'dominating_set': {
                 'size': 0,
                 'percentage': 0,
                 'genes_dominated': 0,
                 'components_with_ds': 0,
                 'avg_size_per_component': 0
             }
+        }
 
         # Update with component stats from results if available
         if "component_stats" in results:
-            if "components" in results["component_stats"]:
-                detailed_stats["components"].update(results["component_stats"]["components"])
-            if "dominating_set" in results["component_stats"]:
-                detailed_stats["dominating_set"].update(results["component_stats"]["dominating_set"])
+            detailed_stats["components"].update(results["component_stats"]["components"])
+            detailed_stats["dominating_set"].update(results["component_stats"]["dominating_set"])
 
         # Debug logging
         print("\nDetailed stats structure:")
