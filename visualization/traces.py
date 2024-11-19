@@ -22,6 +22,7 @@ def create_node_traces(
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
+    layout_type: str = "default",
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     traces = []
@@ -32,17 +33,17 @@ def create_node_traces(
         
     # Create separate traces for DMRs and genes
     dmr_trace = create_dmr_trace(node_info.dmr_nodes, node_positions, node_labels, 
-                                node_biclique_map, biclique_colors, dominating_set)
+                                node_biclique_map, biclique_colors, dominating_set, dmr_metadata)
     if dmr_trace:
         traces.append(dmr_trace)
         
     gene_trace = create_gene_trace(node_info.regular_genes, node_positions, node_labels,
-                                  node_biclique_map, biclique_colors)
+                                  node_biclique_map, biclique_colors, gene_metadata)
     if gene_trace:
         traces.append(gene_trace)
         
     split_gene_trace = create_split_gene_trace(node_info.split_genes, node_positions,
-                                              node_labels, node_biclique_map, biclique_colors)
+                                              node_labels, node_biclique_map, biclique_colors, gene_metadata)
     if split_gene_trace:
         traces.append(split_gene_trace)
     
