@@ -87,7 +87,7 @@ def statistics_route():
         if "components" in detailed_stats:
             print("Keys in components:", detailed_stats["components"].keys())
             if "biclique" in detailed_stats["components"]:
-                print("Keys in biclique:", detailed_stats["components"]["biclique"].keys")
+                print("Keys in biclique:", detailed_stats["components"]["biclique"].keys())
 
         # Add debug logging
         print(
