@@ -91,7 +91,7 @@ def statistics_route():
 
         # Add debug logging
         print(
-            f"Statistics show {detailed_stats['original']['connected']['interesting']} interesting components"
+            f"Statistics show {detailed_stats['components']['original']['connected']['interesting']} interesting components"
         )
         print(
             f"Results contain {len(results.get('interesting_components', []))} components"
@@ -100,10 +100,10 @@ def statistics_route():
         # Debug output
         print(f"\nComponent Statistics:")
         print(
-            f"Original graph components: {detailed_stats['original']['connected']['interesting']}"
+            f"Original graph components: {detailed_stats['components']['original']['connected']['interesting']}"
         )
         print(
-            f"Biclique graph components: {detailed_stats['biclique']['connected']['interesting']}"
+            f"Biclique graph components: {detailed_stats['components']['biclique']['connected']['interesting']}"
         )
         return render_template(
             "statistics.html",
