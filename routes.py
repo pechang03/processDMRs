@@ -136,7 +136,7 @@ def statistics_route():
         )
         return render_template(
             "statistics.html",
-            statistics=detailed_stats,
+            statistics=convert_dict_keys_to_str(detailed_stats),  # Add the conversion here
             bicliques_result=results,  # Pass the full results
             selected_component_id=request.args.get("component_id", type=int),
             total_bicliques=len(bicliques),
