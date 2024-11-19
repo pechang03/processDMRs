@@ -30,7 +30,11 @@ def create_node_traces(
     if not biclique_colors:
         biclique_colors = ["gray"]  # Default color
 
-    # Create traces in order: DMRs, regular genes, split genes
+    # Handle empty bicliques case
+    if not biclique_colors:
+        biclique_colors = ["gray"]  # Default color
+
+    # Create traces in order: DMRs, regular genes
     dmr_trace = create_dmr_trace(
         node_info.dmr_nodes,
         node_positions,
@@ -43,27 +47,42 @@ def create_node_traces(
     if dmr_trace:
         traces.append(dmr_trace)
 
-    gene_trace = create_gene_trace(
-        node_info.regular_genes,
-        node_positions,
-        node_labels,
-        node_biclique_map,
-        biclique_colors,
-        gene_metadata,
-    )
-    if gene_trace:
-        traces.append(gene_trace)
+    # Combine regular and split genes for empty bicliques case
+    if not biclique_colors or len(biclique_colors) == 1:
+        all_genes = node_info.regular_genes | node_info.split_genes
+        gene_trace = create_gene_trace(
+            all_genes,
+            node_positions,
+            node_labels,
+            node_biclique_map,
+            biclique_colors,
+            gene_metadata,
+        )
+        if gene_trace:
+            traces.append(gene_trace)
+    else:
+        # Normal case - separate regular and split genes
+        gene_trace = create_gene_trace(
+            node_info.regular_genes,
+            node_positions,
+            node_labels,
+            node_biclique_map,
+            biclique_colors,
+            gene_metadata,
+        )
+        if gene_trace:
+            traces.append(gene_trace)
 
-    split_gene_trace = create_split_gene_trace(
-        node_info.split_genes,
-        node_positions,
-        node_labels,
-        node_biclique_map,
-        biclique_colors,
-        gene_metadata,
-    )
-    if split_gene_trace:
-        traces.append(split_gene_trace)
+        split_gene_trace = create_split_gene_trace(
+            node_info.split_genes,
+            node_positions,
+            node_labels,
+            node_biclique_map,
+            biclique_colors,
+            gene_metadata,
+        )
+        if split_gene_trace:
+            traces.append(split_gene_trace)
 
     return traces
 

@@ -58,25 +58,15 @@ def calculate_node_positions(
     # Handle remaining nodes
     missing_nodes = node_info.all_nodes - set(positions.keys())
     if missing_nodes:
-        print(f"\nRemaining nodes analysis:")
-        print(f"Total missing nodes: {len(missing_nodes)}")
-        print(
-            f"Missing DMRs: {len([n for n in missing_nodes if n in node_info.dmr_nodes])}"
-        )
-        print(
-            f"Missing genes: {len([n for n in missing_nodes if n not in node_info.dmr_nodes])}"
-        )
-        print(f"Sample missing node IDs: {sorted(list(missing_nodes))[:5]}")
-
-        position_remaining_nodes(positions, node_info, current_y, spacing)
-
-    # Final validation
-    final_missing = node_info.all_nodes - set(positions.keys())
-    if final_missing:
-        print(f"\nFinal position check:")
-        print(f"Nodes still missing positions: {len(final_missing)}")
-        print(f"Sample missing: {sorted(list(final_missing))[:5]}")
-
+        print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
+        for node in sorted(missing_nodes):
+            x_pos = 0  # DMRs at x=0
+            if node in node_info.split_genes:
+                x_pos = 1.1  # Split genes at x=1.1
+            elif node not in node_info.dmr_nodes:
+                x_pos = 1  # Regular genes at x=1
+            positions[node] = (x_pos, current_y)
+            current_y += spacing
     return positions
 
 
