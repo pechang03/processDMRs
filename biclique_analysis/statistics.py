@@ -283,10 +283,9 @@ def calculate_edge_coverage(
     # Count edges by coverage
     single = sum(1 for count in edge_coverage.values() if count == 1)
     multiple = sum(1 for count in edge_coverage.values() if count > 1)
-    covered_edges = set(edge_coverage.keys())
-    uncovered = len(graph.edges()) - len(covered_edges)
-
     total_edges = len(graph.edges())
+    uncovered = total_edges - len(edge_coverage)
+
     return {
         "single": single,
         "multiple": multiple,
