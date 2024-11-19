@@ -161,13 +161,13 @@
                         <h5>Overall Statistics</h5>
                         <ul class="list-group">
                             <li class="list-group-item">
-                                Total DMRs in Dominating Set: {{ statistics.dominating_set.size }}
+                                Total DMRs in Dominating Set: {{ statistics.dominating_set.get('size', 0) }}
                             </li>
                             <li class="list-group-item">
-                                Percentage of DMRs: {{ "%.1f"|format(statistics.dominating_set.percentage * 100) }}%
+                                Percentage of DMRs: {{ "%.1f"|format(statistics.dominating_set.get('percentage', 0) * 100) }}%
                             </li>
                             <li class="list-group-item">
-                                Genes Dominated: {{ statistics.dominating_set.genes_dominated }}
+                                Genes Dominated: {{ statistics.dominating_set.get('genes_dominated', 0) }}
                             </li>
                         </ul>
                     </div>
