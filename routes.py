@@ -159,7 +159,8 @@ def component_detail_route(component_id):
                                 node_biclique_map=node_biclique_map,
                                 dmr_metadata=results.get("dmr_metadata", {}),
                                 gene_metadata=results.get("gene_metadata", {}),
-                                gene_id_mapping=results.get("gene_id_mapping", {})
+                                gene_id_mapping=results.get("gene_id_mapping", {}),
+                                dominating_set=results.get("dominating_set", set())  # Add this line
                             )
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:

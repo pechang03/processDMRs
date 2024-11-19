@@ -18,9 +18,10 @@ from graph_utils import validate_bipartite_graph
 from graph_utils import create_bipartite_graph
 from graph_utils import read_excel_file
 from rb_domination import (
-    # greedy_rb_domination,
-    process_components,
+    greedy_rb_domination,
+    calculate_dominating_sets,  # Changed name
     print_domination_statistics,
+    copy_dominating_set  # Add new function
 )
 
 # Add version constant at top of file
