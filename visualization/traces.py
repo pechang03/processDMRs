@@ -26,39 +26,167 @@ def create_node_traces(
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
     traces = []
-    
+
     # Handle empty bicliques case
     if not biclique_colors:
         biclique_colors = ["gray"]  # Default color
-        
+
     # Create separate traces for DMRs and genes
-    dmr_trace = create_dmr_trace(node_info.dmr_nodes, node_positions, node_labels, 
-                                node_biclique_map, biclique_colors, dominating_set, dmr_metadata)
+    dmr_trace = create_dmr_trace(
+        node_info.dmr_nodes,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors,
+        dominating_set,
+        dmr_metadata,
+    )
     if dmr_trace:
         traces.append(dmr_trace)
-        
-    gene_trace = create_gene_trace(node_info.regular_genes, node_positions, node_labels,
-                                  node_biclique_map, biclique_colors, gene_metadata)
+
+    gene_trace = create_gene_trace(
+        node_info.regular_genes,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors,
+        gene_metadata,
+    )
     if gene_trace:
         traces.append(gene_trace)
-        
-    split_gene_trace = create_split_gene_trace(node_info.split_genes, node_positions,
-                                              node_labels, node_biclique_map, biclique_colors, gene_metadata)
+
+    split_gene_trace = create_split_gene_trace(
+        node_info.split_genes,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors,
+        gene_metadata,
+    )
     if split_gene_trace:
         traces.append(split_gene_trace)
-    
+
     return traces
 
 
+def create_dmr_trace(
+    dmr_nodes: Set[int],
+    node_positions: Dict[int, Tuple[float, float]],
+    node_labels: Dict[int, str],
+    node_biclique_map: Dict[int, List[int]],
+    biclique_colors: List[str],
+    dominating_set: Set[int] = None,
+    dmr_metadata: Dict[str, Dict] = None,
+) -> go.Scatter:
+    """Create trace for DMR nodes."""
+    x = []
+    y = []
+    text = []
+    hover_text = []
+    colors = []
+
+    # Separate dominating and non-dominating DMRs
+    dominating_dmrs = {n for n in dmr_nodes if dominating_set and n in dominating_set}
+    non_dominating_dmrs = dmr_nodes - dominating_dmrs
+
+    # Process dominating DMRs first
+    for node_id in dominating_dmrs:
+        position = node_positions.get(node_id)
+        if not position or not isinstance(position, tuple) or len(position) != 2:
+            continue
+
+        x_pos, y_pos = position
+        x.append(x_pos)
+        y.append(y_pos)
+
+        # Set node color based on biclique membership
+        if node_id in node_biclique_map and biclique_colors:
+            biclique_idx = node_biclique_map[node_id][0]
+            color = (
+                biclique_colors[biclique_idx]
+                if biclique_idx < len(biclique_colors)
+                else "red"
+            )
+        else:
+            color = "red"
+        colors.append(color)
+
+        # Create label and hover text
+        label = node_labels.get(node_id, str(node_id))
+        text.append(label)
+
+        # Add metadata to hover text
+        meta = dmr_metadata.get(label, {}) if dmr_metadata else {}
+        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
+        hover += "<br>(Dominating Set Member)"
+        hover_text.append(hover)
+
+    # Process non-dominating DMRs
+    for node_id in non_dominating_dmrs:
+        position = node_positions.get(node_id)
+        if not position or not isinstance(position, tuple) or len(position) != 2:
+            continue
+
+        x_pos, y_pos = position
+        x.append(x_pos)
+        y.append(y_pos)
+
+        # Set node color
+        if node_id in node_biclique_map and biclique_colors:
+            biclique_idx = node_biclique_map[node_id][0]
+            color = (
+                biclique_colors[biclique_idx]
+                if biclique_idx < len(biclique_colors)
+                else "gray"
+            )
+        else:
+            color = "gray"
+        colors.append(color)
+
+        label = node_labels.get(node_id, str(node_id))
+        text.append(label)
+
+        meta = dmr_metadata.get(label, {}) if dmr_metadata else {}
+        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
+        hover_text.append(hover)
+
+    if not x:  # Return None if no nodes to show
+        return None
+
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="markers+text",
+        marker=dict(
+            size=[
+                15 if n in dominating_set else 10
+                for n in dmr_nodes
+                if n in node_positions
+            ],
+            color=colors,
+            symbol="star" if dominating_set else "circle",
+            line=dict(color="black", width=1),
+        ),
+        text=text,
+        hovertext=hover_text,
+        textposition="middle left",
+        hoverinfo="text",
+        name="Dominating DMRs" if dominating_set else "Regular DMRs",
+        showlegend=True,
+    )
+
+
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]] | List[Tuple[Set[int], Set[int], Set[int]]] | List[Tuple[int, int]],
+    edge_classifications: Dict[str, List[EdgeInfo]]
+    | List[Tuple[Set[int], Set[int], Set[int]]]
+    | List[Tuple[int, int]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     original_graph: nx.Graph,
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     edge_type: str = "biclique",
-    edge_style: Dict = None
+    edge_style: Dict = None,
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
     traces = []
@@ -84,11 +212,13 @@ def create_edge_traces(
                 # Handle both EdgeInfo objects and raw tuples
                 if isinstance(edge_info, EdgeInfo):
                     u, v = edge_info.edge
-                    sources = ', '.join(edge_info.sources) if edge_info.sources else 'Unknown'
+                    sources = (
+                        ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
+                    )
                     edge_label = edge_info.label
                 else:
                     u, v = edge_info
-                    sources = 'Unknown'
+                    sources = "Unknown"
                     edge_label = label
 
                 if u in node_positions and v in node_positions:
@@ -116,22 +246,24 @@ def create_edge_traces(
         x_coords = []
         y_coords = []
         hover_texts = []
-        
+
         # If input is a list of tuples (DMR nodes, gene nodes, split_genes)
         if isinstance(edge_classifications, list) and len(edge_classifications) > 0:
             if isinstance(edge_classifications[0], tuple):
-                if len(edge_classifications[0]) == 3:  # (DMR, genes, split_genes) format
+                if (
+                    len(edge_classifications[0]) == 3
+                ):  # (DMR, genes, split_genes) format
                     # Handle biclique format with split genes
                     for dmr_nodes, gene_nodes, split_genes in edge_classifications:
                         # Create edges between DMRs and regular genes
                         for dmr in dmr_nodes:
-                            for gene in (gene_nodes - split_genes):  # Regular genes
+                            for gene in gene_nodes - split_genes:  # Regular genes
                                 if dmr in node_positions and gene in node_positions:
                                     x0, y0 = node_positions[dmr]
                                     x1, y1 = node_positions[gene]
                                     x_coords.extend([x0, x1, None])
                                     y_coords.extend([y0, y1, None])
-                                    
+
                                     hover_text = f"Edge: {node_labels.get(dmr, dmr)} - {node_labels.get(gene, gene)}"
                                     hover_texts.extend([hover_text, hover_text, None])
 
@@ -143,7 +275,7 @@ def create_edge_traces(
                                     x1, y1 = node_positions[gene]
                                     x_coords.extend([x0, x1, None])
                                     y_coords.extend([y0, y1, None])
-                                    
+
                                     hover_text = f"Edge: {node_labels.get(dmr, dmr)} - {node_labels.get(gene, gene)} (Split Gene)"
                                     hover_texts.extend([hover_text, hover_text, None])
 
@@ -157,7 +289,7 @@ def create_edge_traces(
                                     x1, y1 = node_positions[gene]
                                     x_coords.extend([x0, x1, None])
                                     y_coords.extend([y0, y1, None])
-                                    
+
                                     hover_text = f"Edge: {node_labels.get(dmr, dmr)} - {node_labels.get(gene, gene)}"
                                     hover_texts.extend([hover_text, hover_text, None])
 
@@ -168,8 +300,7 @@ def create_edge_traces(
                 y=y_coords,
                 mode="lines",
                 line=dict(
-                    color=color_map["permanent"],
-                    width=edge_style.get("width", 1)
+                    color=color_map["permanent"], width=edge_style.get("width", 1)
                 ),
                 hoverinfo="text",
                 text=hover_texts,
@@ -190,21 +321,23 @@ def create_edge_traces(
                         fp_y.extend([y0, y1, None])
                         hover_text = f"False Positive Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}"
                         fp_texts.extend([hover_text, hover_text, None])
-                
+
                 if fp_x:
-                    traces.append(go.Scatter(
-                        x=fp_x,
-                        y=fp_y,
-                        mode="lines",
-                        line=dict(
-                            color=color_map["false_positive"],
-                            width=edge_style.get("width", 1),
-                            dash="dash"
-                        ),
-                        hoverinfo="text",
-                        text=fp_texts,
-                        name="False Positive Edges"
-                    ))
+                    traces.append(
+                        go.Scatter(
+                            x=fp_x,
+                            y=fp_y,
+                            mode="lines",
+                            line=dict(
+                                color=color_map["false_positive"],
+                                width=edge_style.get("width", 1),
+                                dash="dash",
+                            ),
+                            hoverinfo="text",
+                            text=fp_texts,
+                            name="False Positive Edges",
+                        )
+                    )
 
             # Add false negative edges if provided
             if false_negative_edges:
@@ -219,21 +352,23 @@ def create_edge_traces(
                         fn_y.extend([y0, y1, None])
                         hover_text = f"False Negative Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}"
                         fn_texts.extend([hover_text, hover_text, None])
-                
+
                 if fn_x:
-                    traces.append(go.Scatter(
-                        x=fn_x,
-                        y=fn_y,
-                        mode="lines",
-                        line=dict(
-                            color=color_map["false_negative"],
-                            width=edge_style.get("width", 1),
-                            dash="dot"
-                        ),
-                        hoverinfo="text",
-                        text=fn_texts,
-                        name="False Negative Edges"
-                    ))
+                    traces.append(
+                        go.Scatter(
+                            x=fn_x,
+                            y=fn_y,
+                            mode="lines",
+                            line=dict(
+                                color=color_map["false_negative"],
+                                width=edge_style.get("width", 1),
+                                dash="dot",
+                            ),
+                            hoverinfo="text",
+                            text=fn_texts,
+                            name="False Negative Edges",
+                        )
+                    )
 
     return traces
 
@@ -256,7 +391,7 @@ def create_biclique_boxes(
                 positions.append(node_positions[node])
             else:
                 continue  # Skip nodes without positions
-                
+
         if not positions:
             continue  # Skip if no positions are found
         x_coords, y_coords = zip(*positions)
@@ -279,8 +414,3 @@ def create_biclique_boxes(
             )
         )
     return traces
-
-
-
-
-import networkx as nx
