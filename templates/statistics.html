@@ -328,17 +328,19 @@ rel="stylesheet">
                     <tbody>
                         {% if bicliques_result and bicliques_result.interesting_components %}
                             {% for component in bicliques_result.interesting_components %}
-                                <tr>
-                                    <td>{{ component.id }}</td>
-                                    <td>{{ component.dmrs }}</td>
-                                    <td>{{ component.total_genes }}</td>
-                                    <td>{{ component.split_genes|length }}</td>
-                                    <td>{{ component.raw_bicliques|length }}</td>
-                                    <td>
-                                        <a href="{{ url_for('component_detail', component_id=component.id) }}" 
-                                           class="btn btn-sm btn-primary">View Details</a>
-                                    </td>
-                                </tr>
+                                {% if component.dmrs >= 3 or component.total_genes >= 3 %}
+                                    <tr>
+                                        <td>{{ component.id }}</td>
+                                        <td>{{ component.dmrs }}</td>
+                                        <td>{{ component.total_genes }}</td>
+                                        <td>{{ component.split_genes|length }}</td>
+                                        <td>{{ component.raw_bicliques|length }}</td>
+                                        <td>
+                                            <a href="{{ url_for('component_detail', component_id=component.id) }}" 
+                                               class="btn btn-sm btn-primary">View Details</a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
                             {% endfor %}
                         {% else %}
                             <tr>
