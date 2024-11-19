@@ -196,21 +196,34 @@ def process_data():
             bipartite_graph, biclique_graph, dominating_set
         )
 
-        # Add to statistics
-        _cached_data["component_stats"]["dominating_set"] = {
-            "size": len(dominating_set),
-            "components_with_ds": len(
-                [
-                    c
-                    for c in _cached_data["interesting_components"]
-                    if any(n in dominating_set for n in c["dmr_nodes"])
-                ]
-            ),
-            "avg_size_per_component": len(dominating_set)
-            / len(_cached_data["interesting_components"])
-            if _cached_data["interesting_components"]
-            else 0,
+        # Create cached data first
+        _cached_data = {
+            "stats": stats,
+            "interesting_components": interesting_components,
+            "simple_connections": simple_connections, 
+            "coverage": bicliques_result.get("coverage", {}),
+            "dmr_metadata": dmr_metadata,
+            "gene_metadata": gene_metadata,
+            "gene_id_mapping": gene_id_mapping,
+            "node_positions": node_positions,
+            "node_labels": node_labels,
+            "bipartite_graph": bipartite_graph,
+            "component_stats": {
+                "components": component_stats
+            },
+            "dominating_set": dominating_set
         }
+
+        # Now add dominating set statistics
+        if interesting_components:  # Add this check
+            _cached_data["component_stats"]["dominating_set"] = {
+                "size": len(dominating_set),
+                "components_with_ds": len([
+                    c for c in interesting_components  # Use interesting_components directly
+                    if any(n in dominating_set for n in c["dmr_nodes"])
+                ]),
+                "avg_size_per_component": len(dominating_set) / len(interesting_components)
+            }
         # Retrieve edge_sources from the graph
         edge_sources = bipartite_graph.graph.get("edge_sources", {})
 
