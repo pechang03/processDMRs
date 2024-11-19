@@ -281,7 +281,8 @@ def process_data():
                     "avg_size_per_component": len(dominating_set) / len(interesting_components) 
                                             if interesting_components else 0
                 }
-            }
+            },
+            "dominating_set": dominating_set
         }
 
         return _cached_data
