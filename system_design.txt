@@ -16,7 +16,12 @@
  2 Biclique Analysis
     • Biclique Identification: Provide a brief overview of the algorithms used to identify bicliques.
     • Edge Classification: Explain the criteria for classifying edges as permanent, false_positive, or false_negative.
- 3 Visualization System
+ 3 Dominating Set Analysis
+    • RB-Domination: Implements red-blue domination algorithm for bipartite graphs
+    • Greedy Approach: Uses heap-based greedy selection with utility scoring
+    • Minimization: Includes post-processing to remove redundant dominators
+    • Statistics: Tracks coverage metrics and component-level domination
+ 4 Visualization System
     • Hierarchical Visualization: Describe the hierarchy in more detail, including how components interact.
     • EdgeInfo Objects: Explain how EdgeInfo objects are used in the visualization process.
 
@@ -39,6 +44,10 @@
     • Vertical Spacing: Describe how vertical spacing is calculated and why it is important.
  3 Component Organization
     • Modular Trace Creation: Explain the benefits of modular trace creation, such as easier debugging and testing.
+ 4 Dominating Set Implementation
+    • Greedy Selection: Chose greedy approach for balance of efficiency and solution quality
+    • Component Integration: Integrated with component analysis for granular insights
+    • Caching Strategy: Cached dominating set results with component statistics
 
                                                    Future Considerations
 
