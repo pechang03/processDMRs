@@ -9,6 +9,13 @@ import psutil
 from typing import Dict, Tuple
 
 from biclique_analysis.processor import process_enhancer_info
+from biclique_analysis import (
+    process_bicliques,
+    process_enhancer_info,
+    create_node_metadata,
+    process_components,  # Add this import
+    reporting
+)
 from biclique_analysis.reader import read_bicliques_file
 from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
 from visualization import calculate_node_positions  # Import from package root
