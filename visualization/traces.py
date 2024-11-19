@@ -214,12 +214,11 @@ def create_dmr_trace(
     hover_text = []
     colors = []
 
-    # Separate dominating and non-dominating DMRs
-    dominating_dmrs = {n for n in dmr_nodes if dominating_set and n in dominating_set}
-    non_dominating_dmrs = dmr_nodes - dominating_dmrs
+    # Convert dominating_set to empty set if None
+    dominating_set = dominating_set or set()
 
-    # Process dominating DMRs first
-    for node_id in dominating_dmrs:
+    # Process all DMRs
+    for node_id in sorted(dmr_nodes):
         position = node_positions.get(node_id)
         if not position or not isinstance(position, tuple) or len(position) != 2:
             continue
@@ -234,10 +233,10 @@ def create_dmr_trace(
             color = (
                 biclique_colors[biclique_idx]
                 if biclique_idx < len(biclique_colors)
-                else "red"
+                else "gray"
             )
         else:
-            color = "red"
+            color = "gray"
         colors.append(color)
 
         # Create label and hover text
@@ -247,36 +246,8 @@ def create_dmr_trace(
         # Add metadata to hover text
         meta = dmr_metadata.get(label, {}) if dmr_metadata else {}
         hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
-        hover += "<br>(Dominating Set Member)"
-        hover_text.append(hover)
-
-    # Process non-dominating DMRs
-    for node_id in non_dominating_dmrs:
-        position = node_positions.get(node_id)
-        if not position or not isinstance(position, tuple) or len(position) != 2:
-            continue
-
-        x_pos, y_pos = position
-        x.append(x_pos)
-        y.append(y_pos)
-
-        # Set node color
-        if node_id in node_biclique_map and biclique_colors:
-            biclique_idx = node_biclique_map[node_id][0]
-            color = (
-                biclique_colors[biclique_idx]
-                if biclique_idx < len(biclique_colors)
-                else "gray"
-            )
-        else:
-            color = "gray"
-        colors.append(color)
-
-        label = node_labels.get(node_id, str(node_id))
-        text.append(label)
-
-        meta = dmr_metadata.get(label, {}) if dmr_metadata else {}
-        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
+        if node_id in dominating_set:
+            hover += "<br>(Dominating Set Member)"
         hover_text.append(hover)
 
     if not x:  # Return None if no nodes to show
@@ -287,11 +258,7 @@ def create_dmr_trace(
         y=y,
         mode="markers+text",
         marker=dict(
-            size=[
-                15 if n in dominating_set else 10
-                for n in dmr_nodes
-                if n in node_positions
-            ],
+            size=[15 if n in dominating_set else 10 for n in dmr_nodes if n in node_positions],
             color=colors,
             symbol="star" if dominating_set else "circle",
             line=dict(color="black", width=1),
