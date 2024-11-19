@@ -233,7 +233,7 @@ def process_data():
 
         # Debug print the component_stats structure
         print("\nComponent Statistics received:")
-        print(json.dumps(component_stats, indent=2))
+        print(json.dumps(convert_dict_keys_to_str(component_stats), indent=2))
 
         # Ensure proper structure for component stats
         def convert_dict_keys_to_str(d):
