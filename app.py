@@ -55,12 +55,37 @@ def statistics():
             return render_template("error.html", message=results["error"])
 
         # Calculate additional statistics if needed
+        # Create properly structured statistics
+        component_stats = results.get('component_stats', {})
         detailed_stats = {
-            "size_distribution": results.get("size_distribution", {}),
-            "coverage": results.get("coverage", {}),
-            "node_participation": results.get("node_participation", {}),
-            "edge_coverage": results.get("edge_coverage", {}),
+            'components': {
+                'original': {
+                    'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
+                    'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
+                },
+                'biclique': {
+                    'connected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0},
+                    'biconnected': {'total': 0, 'single_node': 0, 'small': 0, 'interesting': 0}
+                }
+            },
+            'dominating_set': {
+                'size': 0,
+                'percentage': 0,
+                'genes_dominated': 0,
+                'components_with_ds': 0,
+                'avg_size_per_component': 0
+            },
+            'size_distribution': results.get("size_distribution", {}),
+            'coverage': results.get("coverage", {}),
+            'node_participation': results.get("node_participation", {}),
+            'edge_coverage': results.get("edge_coverage", {}),
         }
+        
+        # Update with actual stats if available
+        if 'components' in component_stats:
+            detailed_stats['components'].update(component_stats['components'])
+        if 'dominating_set' in component_stats:
+            detailed_stats['dominating_set'].update(component_stats['dominating_set'])
 
         return render_template(
             "statistics.html", statistics=detailed_stats, bicliques_result=results
