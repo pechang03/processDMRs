@@ -244,13 +244,46 @@ def process_data():
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
             "component_stats": {
-                "components": component_stats,
+                "components": {
+                    "original": {
+                        "connected": component_stats.get("original", {}).get("connected", {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0
+                        }),
+                        "biconnected": component_stats.get("original", {}).get("biconnected", {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0
+                        })
+                    },
+                    "biclique": {
+                        "connected": component_stats.get("biclique", {}).get("connected", {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0
+                        }),
+                        "biconnected": component_stats.get("biclique", {}).get("biconnected", {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0
+                        })
+                    }
+                },
                 "dominating_set": {
                     "size": len(dominating_set),
+                    "percentage": len(dominating_set) / len(df) if len(df) > 0 else 0,
+                    "genes_dominated": len(set().union(*[set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set])),
                     "components_with_ds": len([c for c in interesting_components 
                                             if any(n in dominating_set for n in c.get("dmr_nodes", []))]),
                     "avg_size_per_component": len(dominating_set) / len(interesting_components) 
-                                            if interesting_components else 0
+                                            if interesting_components else 0,
+                    "genes_dominated_percentage": len(set().union(*[set(bipartite_graph.neighbors(dmr)) 
+                                                for dmr in dominating_set])) / len(gene_id_mapping) * 100
                 }
             },
             "dominating_set": dominating_set
