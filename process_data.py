@@ -196,41 +196,7 @@ def process_data():
             bipartite_graph, biclique_graph, dominating_set
         )
 
-        # Create cached data first
-        _cached_data = {
-            "stats": {},
-            "interesting_components": [],
-            "simple_connections": [], 
-            "coverage": bicliques_result.get("coverage", {}),
-            "dmr_metadata": dmr_metadata,
-            "gene_metadata": gene_metadata,
-            "gene_id_mapping": gene_id_mapping,
-            "node_positions": node_positions,
-            "node_labels": node_labels,
-            "bipartite_graph": bipartite_graph,
-            "component_stats": {
-                "components": {}
-            },
-            "dominating_set": dominating_set
-        }
-
-        # Now add dominating set statistics
-        if _cached_data["interesting_components"]:  # Add this check
-            _cached_data["component_stats"]["dominating_set"] = {
-                "size": len(dominating_set),
-                "components_with_ds": len([
-                    c for c in _cached_data["interesting_components"]  # Use interesting_components directly
-                    if any(n in dominating_set for n in c["dmr_nodes"])
-                ]),
-                "avg_size_per_component": len(dominating_set) / len(_cached_data["interesting_components"])
-            }
-        # Retrieve edge_sources from the graph
-        edge_sources = bipartite_graph.graph.get("edge_sources", {})
-
-        # Perform edge classification
-        edge_classifications = classify_edges(
-            bipartite_graph, biclique_graph, edge_sources
-        )
+        # Process components first
         print("Processing components...")
         interesting_components, simple_connections, component_stats = (
             process_components(
@@ -241,24 +207,8 @@ def process_data():
                 gene_id_mapping=gene_id_mapping,
             )
         )
-        # Update the cached data
-        _cached_data = {
-            # ... existing data ...
-            "component_stats": {"components": component_stats},
-        }
 
-        # Add debug logging
-        # print(f"Found {len(interesting_components)} interesting components")
-        # print(f"Component stats show {component_stats['components']['interesting']} interesting components")
-        #         print(f"Found {len(interesting_components)} interesting components")
-        print(
-            f"Original graph has {component_stats['components']['original']['connected']['interesting']} interesting components"
-        )
-        print(
-            f"Biclique graph has {component_stats['components']['biclique']['connected']['interesting']} interesting components"
-        )
-
-        # Create summary statistics first
+        # Create summary statistics
         stats = {
             "total_components": len(interesting_components),
             "components_with_bicliques": len(
@@ -273,7 +223,15 @@ def process_data():
             ),
         }
 
-        # Create cached data
+        # Add debug logging
+        print(
+            f"Original graph has {component_stats['components']['original']['connected']['interesting']} interesting components"
+        )
+        print(
+            f"Biclique graph has {component_stats['components']['biclique']['connected']['interesting']} interesting components"
+        )
+
+        # Create cached data with all information
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
@@ -290,7 +248,7 @@ def process_data():
                 "dominating_set": {
                     "size": len(dominating_set),
                     "components_with_ds": len([c for c in interesting_components 
-                                            if any(n in dominating_set for n in c["dmr_nodes"])]),
+                                            if any(n in dominating_set for n in c.get("dmr_nodes", []))]),
                     "avg_size_per_component": len(dominating_set) / len(interesting_components) 
                                             if interesting_components else 0
                 }
