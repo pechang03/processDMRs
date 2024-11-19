@@ -127,22 +127,19 @@ def create_bipartite_graph(
     for gene_name, gene_id in gene_id_mapping.items():
         B.add_node(gene_id, bipartite=1)
 
-    # Track edges and sources
-    edges_seen = set()
-    edges_added = 0
-
     # Process each row to add edges
+    edges_added = 0
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-            
+        
         # Process closest gene
         if pd.notna(row[closest_gene_col]):
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
-                # Add edge here
-                B.add_edge(dmr_id, gene_id)
-                edges_added += 1
+                if not B.has_edge(dmr_id, gene_id):  # Check if edge exists first
+                    B.add_edge(dmr_id, gene_id)
+                    edges_added += 1
 
         # Process enhancer genes
         if isinstance(row.get("Processed_Enhancer_Info"), (set, list)):
@@ -150,15 +147,11 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    # Add edge here
-                    B.add_edge(dmr_id, gene_id)
-                    edges_added += 1
+                    if not B.has_edge(dmr_id, gene_id):  # Check if edge exists first
+                        B.add_edge(dmr_id, gene_id)
+                        edges_added += 1
 
-    print(f"\nGraph construction summary:")
-    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
-    print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
-    print(f"Total edges added: {edges_added}")
-
+    # Print summary once
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
