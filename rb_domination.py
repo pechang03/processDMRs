@@ -125,8 +125,8 @@ def greedy_rb_domination(graph, df, area_col=None):
     return minimal_dominating_set
 
 
-def process_components(graph, df):
-    """Process connected components of the graph to find dominating sets"""
+def calculate_dominating_sets(graph, df):
+    """Calculate dominating sets for the graph."""
     # Process whole graph at once
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
     return dominating_set
@@ -203,3 +203,20 @@ def print_domination_statistics(
         area = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
         num_dominated = len(list(graph.neighbors(dmr)))
         print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
+def copy_dominating_set(source_graph: nx.Graph, target_graph: nx.Graph, dominating_set: Set[int]) -> Set[int]:
+    """
+    Copy dominating set between graphs with same node IDs.
+    
+    Args:
+        source_graph: Original graph containing the dominating set
+        target_graph: Target graph to verify dominating set
+        dominating_set: Set of node IDs in the dominating set
+    
+    Returns:
+        Verified dominating set for target graph
+    """
+    # Verify nodes exist in target graph
+    if not all(node in target_graph for node in dominating_set):
+        raise ValueError("Some dominating set nodes not found in target graph")
+        
+    return dominating_set

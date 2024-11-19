@@ -188,20 +188,39 @@ def analyze_biconnected_components(graph: nx.Graph) -> Dict:
         "avg_genes": total_genes / interesting if interesting else 0
     }
 
-def calculate_biclique_statistics(bicliques: List, graph: nx.Graph) -> Dict:
+def calculate_dominating_set_statistics(graph: nx.Graph, dominating_set: Set[int]) -> Dict:
+    """Calculate statistics about the dominating set."""
+    dmr_nodes = {n for n, d in graph.nodes(data=True) if d['bipartite'] == 0}
+    gene_nodes = {n for n, d in graph.nodes(data=True) if d['bipartite'] == 1}
+    
+    # Calculate dominated genes
+    dominated_genes = set()
+    for dmr in dominating_set:
+        dominated_genes.update(graph.neighbors(dmr))
+    
+    return {
+        "size": len(dominating_set),
+        "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
+        "genes_dominated": len(dominated_genes),
+        "genes_dominated_percentage": len(dominated_genes) / len(gene_nodes) if gene_nodes else 0
+    }
+
+def calculate_biclique_statistics(bicliques: List, graph: nx.Graph, dominating_set: Set[int] = None) -> Dict:
     """Calculate comprehensive biclique statistics."""
     # Validate graph structure first
     validate_graph(graph)
 
     node_participation = calculate_node_participation(bicliques)
     edge_coverage = calculate_edge_coverage(bicliques, graph)
-    return {
+    stats = {
         "size_distribution": calculate_size_distribution(bicliques),
         "coverage": calculate_coverage_statistics(bicliques, graph),
         "node_participation": node_participation,
         "edge_coverage": edge_coverage,
-        "components": calculate_component_statistics(bicliques, graph),  # Add this line
+        "components": calculate_component_statistics(bicliques, graph),
+        "dominating_set": calculate_dominating_set_statistics(graph, dominating_set) if dominating_set else {}
     }
+    return stats
 
 
 def calculate_size_distribution(bicliques: List) -> Dict:
