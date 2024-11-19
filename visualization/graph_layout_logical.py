@@ -366,7 +366,7 @@ def get_x_position(node: int, node_info: "NodeInfo") -> float:
     if node in node_info.dmr_nodes:
         return 0
     if node in node_info.split_genes:
-        return 1.1
+        return 1.1  # Ensure this is exactly 1.1 for split genes
     return 1
 
 

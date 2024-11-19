@@ -134,17 +134,15 @@ def create_bipartite_graph(
     # Process each row to add edges
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        
+            
         # Process closest gene
         if pd.notna(row[closest_gene_col]):
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
-                edge = tuple(sorted([dmr_id, gene_id]))
-                if edge not in edges_seen:
-                    B.add_edge(dmr_id, gene_id)
-                    edges_seen.add(edge)
-                    edges_added += 1
+                # Add edge here
+                B.add_edge(dmr_id, gene_id)
+                edges_added += 1
 
         # Process enhancer genes
         if isinstance(row.get("Processed_Enhancer_Info"), (set, list)):
@@ -152,11 +150,9 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    edge = tuple(sorted([dmr_id, gene_id]))
-                    if edge not in edges_seen:
-                        B.add_edge(dmr_id, gene_id)
-                        edges_seen.add(edge)
-                        edges_added += 1
+                    # Add edge here
+                    B.add_edge(dmr_id, gene_id)
+                    edges_added += 1
 
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
