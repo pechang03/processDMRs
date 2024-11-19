@@ -24,104 +24,28 @@ def create_node_traces(
     gene_metadata: Dict[str, Dict] = None,
 ) -> List[go.Scatter]:
     """Create node traces with proper styling based on node type."""
-    if os.getenv('DEBUG'):
-        print("\nNode trace creation debug:")
-        print(f"Total nodes to position: {len(node_positions)}")
-        print(f"DMR nodes: {len(node_info.dmr_nodes)}")
-        print(f"Regular genes: {len(node_info.regular_genes)}")
-        print(f"Split genes: {len(node_info.split_genes)}")
-        print(f"Dominating set size: {len(dominating_set) if dominating_set else 0}")
-
     traces = []
     
-    # Separate DMR nodes into dominating and non-dominating
-    dominating_dmrs = set()
-    non_dominating_dmrs = set()
-    if dominating_set:
-        dominating_dmrs = {n for n in node_info.dmr_nodes if n in dominating_set}
-        non_dominating_dmrs = node_info.dmr_nodes - dominating_dmrs
-    else:
-        non_dominating_dmrs = node_info.dmr_nodes
-
-    # Create traces for each node category
-    node_categories = [
-        ("Dominating DMRs", dominating_dmrs, "star", "red"),
-        ("Regular DMRs", non_dominating_dmrs, "circle", "gray"),
-        ("Regular Genes", node_info.regular_genes, "diamond", "gray"),
-        ("Split Genes", node_info.split_genes, "diamond-cross", "gray")
-    ]
-
-    for category_name, nodes, symbol, default_color in node_categories:
-        x = []
-        y = []
-        text = []
-        hover_text = []
-        colors = []
-
-        for node_id in nodes:
-            # Validate position exists and is a proper tuple
-            position = node_positions.get(node_id)
-            if not position or not isinstance(position, tuple) or len(position) != 2:
-                print(f"Warning: Invalid position for node {node_id}: {position}")
-                continue
-
-            x_pos, y_pos = position
-            x.append(x_pos)
-            y.append(y_pos)
-
-            # Set node color
-            if node_id in node_biclique_map and biclique_colors:
-                biclique_idx = node_biclique_map[node_id][0]
-                color = biclique_colors[biclique_idx] if biclique_idx < len(biclique_colors) else default_color
-            else:
-                color = default_color
-            colors.append(color)
-
-            # Create label and hover text
-            label = node_labels.get(node_id, str(node_id))
-            text.append(label)
-
-            # Add metadata to hover text
-            if node_id in node_info.dmr_nodes and dmr_metadata:
-                meta = dmr_metadata.get(label, {})
-                hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
-            elif gene_metadata:
-                gene_name = node_labels.get(node_id)
-                if gene_name in gene_metadata:
-                    meta = gene_metadata[gene_name]
-                    hover = f"{gene_name}<br>Description: {meta.get('description', 'N/A')}"
-                else:
-                    hover = label
-            else:
-                hover = label
-
-            # Add dominating set status to hover text if applicable
-            if dominating_set and node_id in dominating_set:
-                hover += "<br>(Dominating Set Member)"
-
-            hover_text.append(hover)
-
-        if x:  # Only create trace if we have nodes to show
-            traces.append(
-                go.Scatter(
-                    x=x,
-                    y=y,
-                    mode="markers+text",
-                    marker=dict(
-                        size=15 if category_name == "Dominating DMRs" else 10,
-                        color=colors,
-                        symbol=symbol,
-                        line=dict(color="black", width=1),
-                    ),
-                    text=text,
-                    hovertext=hover_text,
-                    textposition="middle right" if "Genes" in category_name else "middle left",
-                    hoverinfo="text",
-                    name=category_name,
-                    showlegend=True,
-                )
-            )
-
+    # Handle empty bicliques case
+    if not biclique_colors:
+        biclique_colors = ["gray"]  # Default color
+        
+    # Create separate traces for DMRs and genes
+    dmr_trace = create_dmr_trace(node_info.dmr_nodes, node_positions, node_labels, 
+                                node_biclique_map, biclique_colors, dominating_set)
+    if dmr_trace:
+        traces.append(dmr_trace)
+        
+    gene_trace = create_gene_trace(node_info.regular_genes, node_positions, node_labels,
+                                  node_biclique_map, biclique_colors)
+    if gene_trace:
+        traces.append(gene_trace)
+        
+    split_gene_trace = create_split_gene_trace(node_info.split_genes, node_positions,
+                                              node_labels, node_biclique_map, biclique_colors)
+    if split_gene_trace:
+        traces.append(split_gene_trace)
+    
     return traces
 
 

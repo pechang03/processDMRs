@@ -350,12 +350,11 @@ def position_remaining_nodes(
     missing_nodes = node_info.all_nodes - set(positions.keys())
     if missing_nodes:
         print(f"Assigning positions to {len(missing_nodes)} remaining nodes")
-        for node in sorted(missing_nodes):  # Sort to ensure consistent ordering
-            if node in node_info.dmr_nodes:
-                x_pos = 0  # DMRs at x=0
-            elif node in node_info.split_genes:
+        for node in sorted(missing_nodes):
+            x_pos = 0  # DMRs at x=0
+            if node in node_info.split_genes:
                 x_pos = 1.1  # Split genes at x=1.1
-            else:
+            elif node not in node_info.dmr_nodes:
                 x_pos = 1  # Regular genes at x=1
             positions[node] = (x_pos, current_y)
             current_y += spacing

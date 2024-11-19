@@ -118,60 +118,50 @@ def create_bipartite_graph(
     B = nx.Graph()
     dmr_nodes = df["DMR_No."].values  # Ensure this is zero-based
 
-    # Add DMR nodes with explicit bipartite attribute (0-based indexing)
+    # Add DMR nodes (0-based indexing)
+    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
     for dmr in dmr_nodes:
-        B.add_node(dmr - 1, bipartite=0)  # Zero-based indexing
+        B.add_node(dmr, bipartite=0)
 
-    # Add all gene nodes from mapping with bipartite=1 attribute
+    # Add all gene nodes from mapping
     for gene_name, gene_id in gene_id_mapping.items():
         B.add_node(gene_id, bipartite=1)
 
-    # Initialize edge sources dictionary in graph
-    B.graph["edge_sources"] = {}
-
-    # Track edges and their sources
+    # Track edges and sources
     edges_seen = set()
     edges_added = 0
 
+    # Process each row to add edges
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        associated_genes = set()
-        gene_sources = {}
-
-        # Add closest gene if it exists
-        if pd.notna(row[closest_gene_col]) and row[closest_gene_col]:
+        
+        # Process closest gene
+        if pd.notna(row[closest_gene_col]):
             gene_name = str(row[closest_gene_col]).strip().lower()
-            associated_genes.add(gene_name)
-            gene_sources[gene_name] = {"Gene_Symbol_Nearby"}
-
-        # Add enhancer genes if they exist
-        if isinstance(row["Processed_Enhancer_Info"], (set, list)):
-            enhancer_genes = {g.lower() for g in row["Processed_Enhancer_Info"] if g}
-            associated_genes.update(enhancer_genes)
-            for gene in enhancer_genes:
-                if gene in gene_sources:
-                    gene_sources[gene].add("ENCODE_Enhancer_Interaction(BingRen_Lab)")
-                else:
-                    gene_sources[gene] = {"ENCODE_Enhancer_Interaction(BingRen_Lab)"}
-
-        # Add edges and track their sources
-        for gene_name in associated_genes:
-            gene_name = gene_name.lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
                 edge = tuple(sorted([dmr_id, gene_id]))
-                
                 if edge not in edges_seen:
-                    # Add edge to graph
                     B.add_edge(dmr_id, gene_id)
                     edges_seen.add(edge)
                     edges_added += 1
 
-                    # Store edge sources in graph attribute
-                    B.graph["edge_sources"][edge] = gene_sources[gene_name]
-                else:
-                    # Update sources for existing edge
-                    B.graph["edge_sources"][edge].update(gene_sources[gene_name])
+        # Process enhancer genes
+        if isinstance(row.get("Processed_Enhancer_Info"), (set, list)):
+            for gene_name in row["Processed_Enhancer_Info"]:
+                gene_name = str(gene_name).strip().lower()
+                if gene_name in gene_id_mapping:
+                    gene_id = gene_id_mapping[gene_name]
+                    edge = tuple(sorted([dmr_id, gene_id]))
+                    if edge not in edges_seen:
+                        B.add_edge(dmr_id, gene_id)
+                        edges_seen.add(edge)
+                        edges_added += 1
+
+    print(f"\nGraph construction summary:")
+    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
+    print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
+    print(f"Total edges added: {edges_added}")
 
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
