@@ -375,10 +375,10 @@ def process_data():
         # Filter interesting components
         interesting_components = [
             comp
-            for comp in interesting_components
+            for comp in interesting_components 
             if (
-                len(comp.get("raw_bicliques", [])) >= 1
-                and (len(comp.get("dmrs", [])) >= 3 or comp.get("total_genes", 0) >= 3)
+                len(comp.get("raw_bicliques", [])) >= 1 
+                and (comp.get("dmrs", 0) >= 3 or comp.get("total_genes", 0) >= 3)
             )
         ]
 
