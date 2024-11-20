@@ -402,7 +402,7 @@ def process_data():
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
             "biclique_graph": biclique_graph,  # Add this line
-            "component_stats": formatted_component_stats,
+            "component_stats": component_stats,  # Use the full component_stats
             "dominating_set": dominating_set_stats,
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
