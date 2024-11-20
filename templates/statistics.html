@@ -156,33 +156,37 @@
                 <h3>Dominating Set Analysis</h3>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>Overall Statistics</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item">
-                                Total DMRs in Dominating Set: {{ statistics.dominating_set.get('size', 0) }}
-                            </li>
-                            <li class="list-group-item">
-                                Percentage of DMRs: {{ "%.1f"|format(statistics.dominating_set.get('percentage', 0) * 100) }}%
-                            </li>
-                            <li class="list-group-item">
-                                Genes Dominated: {{ statistics.dominating_set.get('genes_dominated', 0) }}
-                            </li>
-                        </ul>
+                {% if statistics and statistics.get('dominating_set') %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Overall Statistics</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Total DMRs in Dominating Set: {{ statistics.dominating_set.get('size', 0) }}
+                                </li>
+                                <li class="list-group-item">
+                                    Percentage of DMRs: {{ "%.1f"|format(statistics.dominating_set.get('percentage', 0) * 100) }}%
+                                </li>
+                                <li class="list-group-item">
+                                    Genes Dominated: {{ statistics.dominating_set.get('genes_dominated', 0) }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Component Analysis</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Components with Dominating Sets: {{ statistics.dominating_set.get('components_with_ds', 0) }}
+                                </li>
+                                <li class="list-group-item">
+                                    Average DS Size per Component: {{ "%.1f"|format(statistics.dominating_set.get('avg_size_per_component', 0)) }}
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <h5>Component Analysis</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item">
-                                Components with Dominating Sets: {{ statistics.dominating_set.components_with_ds }}
-                            </li>
-                            <li class="list-group-item">
-                                Average DS Size per Component: {{ "%.1f"|format(statistics.dominating_set.avg_size_per_component) }}
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                {% else %}
+                    <p>No dominating set data available.</p>
+                {% endif %}
             </div>
         </div>
 
