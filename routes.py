@@ -203,7 +203,7 @@ def component_detail_route(component_id):
                                 node_positions,                                                                                                                      
                                 edge_classifications,                                                                                                                
                                 original_graph=bipartite_graph,                                                                                                      
-                                bipartite_graph=bipartite_graph,                                                                                                     
+                                bipartite_graph=subgraph, #or should this be biclque_graph                                                                                                     
                                 original_node_positions=original_positions,                                                                                          
                                 node_biclique_map=node_biclique_map,
                                 dmr_metadata=results.get("dmr_metadata", {}),                                                                                        
