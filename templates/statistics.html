@@ -190,19 +190,19 @@
                 <tbody>
                   <tr>
                     <td>Total Bicliques</td>
-                    <td>{{ statistics.total_bicliques }}</td>
+                    <td>{{ statistics.size_distribution.values()|sum }}</td>
+                  </tr>
+                  <tr>
+                    <td>Empty Components</td>
+                    <td>{{ statistics.components.biclique.connected.single_node }}</td>
+                  </tr>
+                  <tr>
+                    <td>Simple Components</td>
+                    <td>{{ statistics.size_distribution.get("1_1", 0) }}</td>
                   </tr>
                   <tr>
                     <td>Interesting Components</td>
-                    <td>{{ bicliques_result.interesting_components|length }}</td>
-                  </tr>
-                  <tr>
-                    <td>Components with Split Genes</td>
-                    <td>{{ statistics.components.with_split_genes }}</td>
-                  </tr>
-                  <tr>
-                    <td>Total Split Genes</td>
-                    <td>{{ statistics.components.total_split_genes }}</td>
+                    <td>{{ statistics.components.biclique.connected.interesting }}</td>
                   </tr>
                   <tr>
                     <td>Complex Components</td>
