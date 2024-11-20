@@ -398,9 +398,7 @@ def process_data():
             "total_split_genes": sum(
                 len(comp.get("split_genes", [])) for comp in interesting_components
             ),
-            "total_bicliques": sum(
-                len(comp.get("raw_bicliques", [])) for comp in interesting_components
-            ),
+            "size_distribution": bicliques_result.get("size_distribution", {}),
         }
 
         print("\nFormatted component stats structure:")
