@@ -145,71 +145,18 @@ def statistics_route():
             "edge_coverage": results.get("edge_coverage", {}),
         }
 
-        # Debug logging
-        print("\nDetailed stats structure:")
-        print("Components key exists:", "components" in detailed_stats)
-        if "components" in detailed_stats:
-            print("Biclique key exists:", "biclique" in detailed_stats["components"])
-            if "biclique" in detailed_stats["components"]:
-                print(
-                    "Connected key exists:",
-                    "connected" in detailed_stats["components"]["biclique"],
-                )
-                if "connected" in detailed_stats["components"]["biclique"]:
-                    print(
-                        "Interesting key exists:",
-                        "interesting"
-                        in detailed_stats["components"]["biclique"]["connected"],
-                    )
-
-        # Merge component stats more carefully
-        if "component_stats" in results:
-            if "components" not in detailed_stats:
-                detailed_stats["components"] = {}
-            # Update instead of replace
-            detailed_stats["components"].update(
-                results["component_stats"]["components"]
+        # Calculate edge coverage percentages
+        total_edges = detailed_stats["edge_coverage"]["total"]
+        if total_edges > 0:
+            detailed_stats["edge_coverage"]["single_percentage"] = (
+                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
             )
-
-        # Additional debug logging after merge
-        print("\nFinal stats structure:")
-        print("Keys in detailed_stats:", detailed_stats.keys())
-        if "components" in detailed_stats:
-            print("Keys in components:", detailed_stats["components"].keys())
-            if "biclique" in detailed_stats["components"]:
-                print(
-                    "Keys in biclique:", detailed_stats["components"]["biclique"].keys()
-                )
-
-        # Add debug logging
-        print(
-            f"Statistics show {detailed_stats['components']['original']['connected']['interesting']} interesting components"
-        )
-        print(
-            f"Results contain {len(results.get('interesting_components', []))} components"
-        )
-
-        # Debug output
-        print(f"\nComponent Statistics:")
-        print(
-            f"Original graph components: {detailed_stats['components']['original']['connected']['interesting']}"
-        )
-        print(
-            f"Biclique graph components: {detailed_stats['components']['biclique']['connected']['interesting']}"
-        )
-        print("Debug - Dominating Set Stats:", detailed_stats.get("dominating_set", {}))
-        print(
-            "\nFull detailed_stats structure:",
-            json.dumps(detailed_stats, indent=2, default=str),
-        )
-        print("\nDEBUG - All components being passed to template:")
-        if "interesting_components" in results:
-            for comp in results["interesting_components"]:
-                print(
-                    f"Component {comp.get('id')}: {comp.get('dmrs', '?')} DMRs, {comp.get('total_genes', '?')} genes"
-                )
-        else:
-            print("No interesting_components in results")
+            detailed_stats["edge_coverage"]["multiple_percentage"] = (
+                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
+                detailed_stats["edge_coverage"]["uncovered"] / total_edges
+            )
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
