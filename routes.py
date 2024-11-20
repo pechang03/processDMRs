@@ -121,6 +121,12 @@ def statistics_route():
         )
         print("Debug - Dominating Set Stats:", detailed_stats.get('dominating_set', {}))
         print("\nFull detailed_stats structure:", json.dumps(detailed_stats, indent=2, default=str))
+        print("\nDEBUG - All components being passed to template:")
+        if 'interesting_components' in results:
+            for comp in results['interesting_components']:
+                print(f"Component {comp.get('id')}: {comp.get('dmrs', '?')} DMRs, {comp.get('total_genes', '?')} genes")
+        else:
+            print("No interesting_components in results")
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
