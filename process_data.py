@@ -237,6 +237,8 @@ def process_data():
         biclique_dominating_set = copy_dominating_set(
             bipartite_graph, biclique_graph, dominating_set
         )
+        # Add biclique_graph to results
+        _cached_data["biclique_graph"] = biclique_graph
 
         # Process components first
         print("Processing components...")
