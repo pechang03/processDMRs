@@ -4,7 +4,7 @@ from biclique_analysis.statistics import calculate_biclique_statistics
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
-    calculate_node_positions,
+    CircularBicliqueLayout,
 )
 
 
@@ -170,8 +170,18 @@ def visualize_component(
 
     # Create visualization
     node_biclique_map = create_node_biclique_map(component_info["raw_bicliques"])
-    node_positions = calculate_node_positions(
-        component_info["raw_bicliques"], node_biclique_map
+    # Use CircularBicliqueLayout for biclique visualization
+    layout = CircularBicliqueLayout()
+    node_positions = layout.calculate_positions(
+        bipartite_graph,
+        NodeInfo(
+            all_nodes=set(bipartite_graph.nodes()),
+            dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0},
+            regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1},
+            split_genes=set(),
+            node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
+            min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0),
+        ),
     )
 
     # Generate biclique summary data
