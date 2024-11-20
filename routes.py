@@ -186,9 +186,16 @@ def statistics_route():
         }
 
         # Calculate edge coverage percentages
-        detailed_stats["edge_coverage"] = calculate_edge_coverage_percentages(
-            detailed_stats["edge_coverage"]
-        )
+        if total_edges > 0:
+            detailed_stats["edge_coverage"]["single_percentage"] = (
+                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["multiple_percentage"] = (
+                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
+                detailed_stats["edge_coverage"]["uncovered"] / total_edges
+            )
 
         return render_template(
             "statistics.html",
