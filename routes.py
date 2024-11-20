@@ -68,12 +68,29 @@ def index_route():
             }),
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
-            "edge_coverage": results.get("edge_coverage", {
-                "single": 0,
-                "multiple": 0,
-                "uncovered": 0
-            })
+            "edge_coverage": {  # Restructure edge coverage to match template expectations
+                "single_coverage": results.get("edge_coverage", {}).get("single", 0),
+                "multiple_coverage": results.get("edge_coverage", {}).get("multiple", 0),
+                "uncovered": results.get("edge_coverage", {}).get("uncovered", 0),
+                "total": sum(results.get("edge_coverage", {}).values()),
+                "single_percentage": 0,
+                "multiple_percentage": 0,
+                "uncovered_percentage": 0
+            }
         }
+
+        # Calculate percentages if we have a total
+        total_edges = detailed_stats["edge_coverage"]["total"]
+        if total_edges > 0:
+            detailed_stats["edge_coverage"]["single_percentage"] = (
+                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["multiple_percentage"] = (
+                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
+                detailed_stats["edge_coverage"]["uncovered"] / total_edges
+            )
 
         return render_template(
             "index.html",
