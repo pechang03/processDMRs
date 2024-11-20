@@ -250,6 +250,10 @@ def visualize_component(
     return {
         "visualization": plotly_graph,
         "bicliques": biclique_data,
+        "statistics": statistics,
+        "edge_coverage": edge_coverage,
+        "node_participation": node_participation,
+        "biclique_types": type_counts,
         "summary": {
             "component_id": component_info["id"],
             "total_nodes": component_info["size"],
