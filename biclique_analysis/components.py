@@ -139,6 +139,19 @@ def find_interesting_components(
 import json
 
 
+def convert_stats_for_json(stats):
+    """Convert dictionary with tuple keys to use string keys for JSON serialization."""
+    if isinstance(stats, dict):
+        return {
+            str(k) if isinstance(k, tuple) else k: convert_stats_for_json(v)
+            for k, v in stats.items()
+        }
+    elif isinstance(stats, list):
+        return [convert_stats_for_json(x) for x in stats]
+    elif isinstance(stats, set):
+        return list(stats)  # Convert sets to lists
+    return stats
+
 def visualize_component(
     component_info: Dict,
     bipartite_graph: nx.Graph,
@@ -154,7 +167,7 @@ def visualize_component(
         component_info["raw_bicliques"], bipartite_graph
     )
     print("\nBiclique Statistics:")
-    print(json.dumps(biclique_stats, indent=2))
+    print(json.dumps(convert_stats_for_json(biclique_stats), indent=2))
 
     edge_coverage_stats = calculate_edge_coverage(
         component_info["raw_bicliques"], bipartite_graph
