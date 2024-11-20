@@ -2,6 +2,7 @@
 import warnings
 from typing import List, Dict, Tuple, Set
 import networkx as nx
+from biclique_analysis.classifier import classify_biclique, classify_biclique_types
 
 def analyze_components(components, graph):
     """Helper function to analyze components of a graph."""
