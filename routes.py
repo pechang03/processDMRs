@@ -198,6 +198,19 @@ def component_detail_route(component_id):
                                 layout_type="spring"                                                                                                                 
                             )                                                                                                                                        
                             component_viz = create_biclique_visualization(
+                                comp["raw_bicliques"],
+                                results["node_labels"],
+                                node_positions,
+                                edge_classifications,
+                                original_graph=bipartite_graph,
+                                bipartite_graph=results.get("biclique_graph"),
+                                original_node_positions=original_positions,
+                                node_biclique_map=node_biclique_map,
+                                dmr_metadata=results.get("dmr_metadata", {}),
+                                gene_metadata=results.get("gene_metadata", {}),
+                                gene_id_mapping=results.get("gene_id_mapping", {}),
+                                dominating_set=results.get("dominating_set", set())
+                            )
                                 comp["raw_bicliques"],                                                                                                               
                                 results["node_labels"],                                                                                                              
                                 node_positions,                                                                                                                      
