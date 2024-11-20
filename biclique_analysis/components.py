@@ -8,7 +8,11 @@ from biclique_analysis.statistics import calculate_biclique_statistics
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.statistics import calculate_edge_coverage
 from biclique_analysis.statistics import calculate_node_participation
-from biclique_analysis.statistics import classify_biclique_types
+from biclique_analysis.classifier import (
+    classify_biclique,
+    classify_biclique_types,
+    classify_component  # Add this import
+)
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
