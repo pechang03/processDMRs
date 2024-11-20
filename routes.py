@@ -167,6 +167,34 @@ def statistics_route():
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
+def component_detail_route(component_id):
+    """Handle component detail page requests."""
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        # Find the requested component
+        component = next(
+            (c for c in results["interesting_components"] if c["id"] == component_id),
+            None
+        )
+        
+        if not component:
+            return render_template("error.html", message=f"Component {component_id} not found")
+
+        return render_template(
+            "components.html",
+            component=component,
+            dmr_metadata=results.get("dmr_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {}),
+            gene_id_mapping=results.get("gene_id_mapping", {})
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template("error.html", message=str(e))
+
 
 from biclique_analysis.classifier import classify_biclique
 
