@@ -104,54 +104,65 @@
     </ul>
 </div>
 
-                                <!-- Biclique Graph -->
-                                <h6>Biclique Graph</h6>
-                                    
-                                <!-- Connected Components -->
-                                <div class="mb-3">
-                                    <h7 class="text-muted">Connected Components</h7>
-                                    <ul class="list-group mb-2">
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Total Components
-                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.connected.total }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Single Node Components
-                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.connected.single_node }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Small Components
-                                            <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.connected.small }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Interesting Components
-                                            <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.connected.interesting }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Biconnected Components -->
-                                <div class="mb-3">
-                                    <h7 class="text-muted">Biconnected Components</h7>
-                                    <ul class="list-group">
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Total Components
-                                            <span class="badge bg-primary rounded-pill">{{ statistics.components.biclique.biconnected.total }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Single Node Components
-                                            <span class="badge bg-secondary rounded-pill">{{ statistics.components.biclique.biconnected.single_node }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Small Components
-                                            <span class="badge bg-info rounded-pill">{{ statistics.components.biclique.biconnected.small }}</span>
-                                        </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Interesting Components
-                                            <span class="badge bg-success rounded-pill">{{ statistics.components.biclique.biconnected.interesting }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
+        <!-- Component Analysis -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Original Graph Components</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if statistics and statistics.get('components') %}
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Connected Components: {{ statistics.components.original.connected.total }}
+                                </li>
+                                <li class="list-group-item">
+                                    Single Node Components: {{ statistics.components.original.connected.single_node }}
+                                </li>
+                                <li class="list-group-item">
+                                    Small Components: {{ statistics.components.original.connected.small }}
+                                </li>
+                                <li class="list-group-item">
+                                    Interesting Components: {{ statistics.components.original.connected.interesting }}
+                                </li>
+                            </ul>
+                            <a href="{{ url_for('original_graph_components') }}" class="btn btn-primary mt-3">View Details</a>
+                        {% else %}
+                            <p>No component data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Biclique Graph Components</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if statistics and statistics.get('components') %}
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    Connected Components: {{ statistics.components.biclique.connected.total }}
+                                </li>
+                                <li class="list-group-item">
+                                    Single Node Components: {{ statistics.components.biclique.connected.single_node }}
+                                </li>
+                                <li class="list-group-item">
+                                    Small Components: {{ statistics.components.biclique.connected.small }}
+                                </li>
+                                <li class="list-group-item">
+                                    Interesting Components: {{ statistics.components.biclique.connected.interesting }}
+                                </li>
+                            </ul>
+                            <a href="{{ url_for('biclique_graph_components') }}" class="btn btn-primary mt-3">View Details</a>
+                        {% else %}
+                            <p>No component data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
 
                                 <hr>
 
