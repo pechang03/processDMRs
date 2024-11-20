@@ -35,7 +35,8 @@ from biclique_analysis import (
 from biclique_analysis.edge_classification import classify_edges
 from visualization import (
     create_node_biclique_map,
-    calculate_node_positions,
+    CircularBicliqueLayout,
+    NodeInfo
 )
 from visualization.node_info import NodeInfo
 from graph_utils import read_excel_file, create_bipartite_graph
