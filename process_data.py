@@ -241,12 +241,6 @@ def process_data():
             biclique_graph.add_edges_from(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
-        # Copy dominating set to biclique graph
-        biclique_dominating_set = copy_dominating_set(
-            bipartite_graph, biclique_graph, dominating_set
-        )
-        # Add biclique_graph to results
-        _cached_data["biclique_graph"] = biclique_graph
 
         # Process components first
         print("Processing components...")
@@ -468,6 +462,7 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
+            "biclique_graph": biclique_graph,  # Add this line
             "component_stats": formatted_component_stats,
             "dominating_set": dominating_set_stats,
             "size_distribution": bicliques_result.get("size_distribution", {}),
