@@ -201,6 +201,7 @@ def process_data():
 
         # Calculate positions
         # Use circular layout for biclique visualization
+        from visualization import CircularBicliqueLayout
         biclique_layout = CircularBicliqueLayout()
         node_positions = biclique_layout.calculate_positions(
             bipartite_graph, 

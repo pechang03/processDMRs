@@ -197,7 +197,7 @@ def component_detail_route(component_id):
                                 ),                                                                                                                                   
                                 layout_type="spring"                                                                                                                 
                             )                                                                                                                                        
-                            component_viz = create_biclique_visualization(                                                                                           
+                            component_viz = create_biclique_visualization(
                                 comp["raw_bicliques"],                                                                                                               
                                 results["node_labels"],                                                                                                              
                                 node_positions,                                                                                                                      
