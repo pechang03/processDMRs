@@ -4,7 +4,9 @@ from process_data import process_data
 from visualization import (
     create_biclique_visualization,
     create_node_biclique_map,
-    calculate_node_positions,
+    OriginalGraphLayout,  # Add this
+    CircularBicliqueLayout,  # Add this
+    SpringLogicalLayout,  # Add this
 )
 from biclique_analysis.statistics import calculate_biclique_statistics
 
@@ -168,8 +170,25 @@ def component_detail_route(component_id):
                             node_biclique_map = create_node_biclique_map(
                                 comp["raw_bicliques"]
                             )
-                            node_positions = calculate_node_positions(
-                                comp["raw_bicliques"], node_biclique_map
+                            # Use CircularBicliqueLayout for biclique visualization
+                            layout = CircularBicliqueLayout()
+                            node_positions = layout.calculate_positions(
+                                bipartite_graph,
+                                NodeInfo(
+                                    all_nodes=set(bipartite_graph.nodes()),
+                                    dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},
+                                    regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},
+                                    split_genes=set(),  # Will be populated during processing
+                                    node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
+                                    min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0)
+                                )
+                            )
+
+                            # Create original graph layout for comparison
+                            original_layout = OriginalGraphLayout()
+                            original_positions = original_layout.calculate_positions(
+                                bipartite_graph,
+                                layout_type="spring"  # or "circular" based on preference
                             )
                             component_viz = create_biclique_visualization(
                                 comp["raw_bicliques"],
