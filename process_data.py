@@ -306,99 +306,70 @@ def process_data():
         print(f"\nCalculated dominating set statistics:")
         print(json.dumps(dominating_set_stats, indent=2))
 
-        # Create formatted component stats with dominating set included
+        # First get the biclique classifications
+        biclique_type_counts = classify_biclique_types(bicliques_result["bicliques"])
+
+        # Get component classifications
+        components = list(nx.connected_components(bipartite_graph))
+        component_classifications = {
+            "empty": 0,
+            "simple": 0,
+            "normal": 0,
+            "interesting": 0,
+            "complex": 0
+        }
+
+        for component in components:
+            subgraph = bipartite_graph.subgraph(component)
+            dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
+            gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
+            
+            # Get bicliques for this component
+            component_bicliques = [
+                (dmr_nodes_bic, gene_nodes_bic) 
+                for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]
+                if (dmr_nodes_bic | gene_nodes_bic) & set(component)
+            ]
+            
+            category = classify_component(len(dmr_nodes), len(gene_nodes), component_bicliques)
+            component_classifications[category] += 1
+
         formatted_component_stats = {
             "components": {
                 "original": {
                     "connected": {
-                        "total": len(list(nx.connected_components(bipartite_graph))),
-                        "single_node": sum(
-                            1
-                            for comp in nx.connected_components(bipartite_graph)
-                            if len(comp) == 1
-                        ),
-                        "small": sum(
-                            1
-                            for comp in nx.connected_components(bipartite_graph)
-                            if 1 < len(comp) <= 3
-                        ),  # Adjust small threshold as needed
-                        "interesting": len(
-                            [
-                                comp
-                                for comp in nx.connected_components(bipartite_graph)
-                                if len(comp) > 3
-                            ]
-                        ),  # Adjust interesting threshold as needed
-                    },
-                    "biconnected": {
-                        "total": len(list(nx.biconnected_components(bipartite_graph))),
-                        "single_node": 0,  # Biconnected components can't have single nodes
-                        "small": sum(
-                            1
-                            for comp in nx.biconnected_components(bipartite_graph)
-                            if len(comp) <= 3
-                        ),
-                        "interesting": len(
-                            [
-                                comp
-                                for comp in nx.biconnected_components(bipartite_graph)
-                                if len(comp) > 3
-                            ]
-                        ),
-                    },
-                },
-                "biclique": {
-                    "connected": {
-                        "total": len(interesting_components),
-                        "single_node": sum(
-                            1
-                            for comp in interesting_components
-                            if len(comp.get("dmr_nodes", []))
-                            + len(comp.get("gene_nodes", []))
-                            == 1
-                        ),
-                        "small": sum(
-                            1
-                            for comp in interesting_components
-                            if 1
-                            < len(comp.get("dmr_nodes", []))
-                            + len(comp.get("gene_nodes", []))
-                            <= 3
-                        ),
-                        "interesting": sum(
-                            1
-                            for comp in interesting_components
-                            if len(comp.get("dmr_nodes", []))
-                            + len(comp.get("gene_nodes", []))
-                            > 3
-                        ),
+                        "total": len(components),
+                        "single_node": component_classifications["empty"],
+                        "small": component_classifications["simple"],
+                        "interesting": component_classifications["interesting"] + component_classifications["complex"]
                     },
                     "biconnected": {
                         "total": len(list(nx.biconnected_components(bipartite_graph))),
                         "single_node": 0,
-                        "small": sum(
-                            1
-                            for comp in nx.biconnected_components(bipartite_graph)
-                            if len(comp) <= 3
-                        ),
-                        "interesting": len(
-                            [
-                                comp
-                                for comp in nx.biconnected_components(bipartite_graph)
-                                if len(comp) > 3
-                            ]
-                        ),
-                    },
+                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) if len(comp) <= 3),
+                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) if len(comp) > 3])
+                    }
                 },
+                "biclique": {
+                    "connected": {
+                        "total": len(bicliques_result["bicliques"]),
+                        "single_node": component_classifications["empty"],
+                        "small": component_classifications["simple"],
+                        "interesting": component_classifications["interesting"],
+                        "complex": component_classifications["complex"]
+                    },
+                    "biconnected": {
+                        "total": len(list(nx.biconnected_components(biclique_graph))),
+                        "single_node": 0,
+                        "small": sum(1 for comp in nx.biconnected_components(biclique_graph) if len(comp) <= 3),
+                        "interesting": len([comp for comp in nx.biconnected_components(biclique_graph) if len(comp) > 3])
+                    }
+                }
             },
-            "dominating_set": dominating_set_stats,  # Add dominating set stats here
-            "with_split_genes": sum(
-                1 for comp in interesting_components if comp.get("split_genes")
-            ),
-            "total_split_genes": sum(
-                len(comp.get("split_genes", [])) for comp in interesting_components
-            ),
-            "size_distribution": bicliques_result.get("size_distribution", {}),
+            "dominating_set": dominating_set_stats,
+            "with_split_genes": sum(1 for comp in interesting_components if comp.get("split_genes")),
+            "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
+            "size_distribution": bicliques_result.get("size_distribution", {})
         }
 
         print("\nFormatted component stats structure:")
