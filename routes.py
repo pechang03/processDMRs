@@ -142,7 +142,52 @@ def statistics_route():
             "coverage": results.get("coverage", {}),
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
-            "edge_coverage": results.get("edge_coverage", {}),
+            # Get raw edge coverage data
+            edge_coverage_data = results.get("edge_coverage", {})
+            total_edges = sum([
+                edge_coverage_data.get("single", 0),
+                edge_coverage_data.get("multiple", 0),
+                edge_coverage_data.get("uncovered", 0)
+            ])
+
+            # Initialize detailed stats with proper structure
+            detailed_stats = {
+                "components": results.get("component_stats", {}).get("components", {}),
+                "dominating_set": results.get(
+                    "dominating_set",
+                    {
+                        "size": 0,
+                        "percentage": 0,
+                        "genes_dominated": 0,
+                        "components_with_ds": 0,
+                        "avg_size_per_component": 0,
+                    },
+                ),
+                "coverage": results.get("coverage", {}),
+                "size_distribution": results.get("size_distribution", {}),
+                "node_participation": results.get("node_participation", {}),
+                "edge_coverage": {  # Add proper edge coverage structure with total
+                    "single_coverage": edge_coverage_data.get("single", 0),
+                    "multiple_coverage": edge_coverage_data.get("multiple", 0),
+                    "uncovered": edge_coverage_data.get("uncovered", 0),
+                    "total": total_edges,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }
+
+            # Calculate percentages if we have a total
+            if total_edges > 0:
+                detailed_stats["edge_coverage"]["single_percentage"] = (
+                    detailed_stats["edge_coverage"]["single_coverage"] / total_edges
+                )
+                detailed_stats["edge_coverage"]["multiple_percentage"] = (
+                    detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
+                )
+                detailed_stats["edge_coverage"]["uncovered_percentage"] = (
+                    detailed_stats["edge_coverage"]["uncovered"] / total_edges
+                )
         }
 
         # Calculate edge coverage percentages

@@ -76,6 +76,7 @@ def find_interesting_components(
                     gene_participation[gene_id].add(biclique_idx)
 
         # Classify the component
+        # Classify the component using the correct function from classifier.py
         category = classify_component(
             len(dmr_nodes), len(gene_nodes), component_bicliques
         )
