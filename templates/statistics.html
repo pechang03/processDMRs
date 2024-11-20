@@ -173,7 +173,7 @@
           </div>
         </div>
 
-        <!-- Biclique Graph Statistics -->
+        <!-- Replace the existing Biclique Graph Components card with this -->
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
@@ -183,45 +183,30 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Total</th>
-                    <th>Single Node</th>
-                    <th>Small</th>
-                    <th>Interesting</th>
+                    <th>Category</th>
+                    <th>Count</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Connected</td>
-                    <td>
-                      {{ statistics.components.biclique.connected.total }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.connected.single_node }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.connected.small }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.connected.interesting }}
-                    </td>
+                    <td>Total Bicliques</td>
+                    <td>{{ statistics.total_bicliques }}</td>
                   </tr>
                   <tr>
-                    <td>Biconnected</td>
-                    <td>
-                      {{ statistics.components.biclique.biconnected.total }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.biconnected.single_node
-                      }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.biconnected.small }}
-                    </td>
-                    <td>
-                      {{ statistics.components.biclique.biconnected.interesting
-                      }}
-                    </td>
+                    <td>Interesting Components</td>
+                    <td>{{ bicliques_result.interesting_components|length }}</td>
+                  </tr>
+                  <tr>
+                    <td>Components with Split Genes</td>
+                    <td>{{ statistics.components.with_split_genes }}</td>
+                  </tr>
+                  <tr>
+                    <td>Total Split Genes</td>
+                    <td>{{ statistics.components.total_split_genes }}</td>
+                  </tr>
+                  <tr>
+                    <td>Complex Components</td>
+                    <td>{{ statistics.components.biclique.connected.interesting }}</td>
                   </tr>
                 </tbody>
               </table>
