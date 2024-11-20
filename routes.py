@@ -142,6 +142,7 @@ def statistics_route():
             "coverage": results.get("coverage", {}),
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
+            }
             # Get raw edge coverage data
             edge_coverage_data = results.get("edge_coverage", {})
             total_edges = sum([
@@ -188,7 +189,6 @@ def statistics_route():
                 detailed_stats["edge_coverage"]["uncovered_percentage"] = (
                     detailed_stats["edge_coverage"]["uncovered"] / total_edges
                 )
-        }
 
         # Calculate edge coverage percentages
         total_edges = detailed_stats["edge_coverage"]["total"]
