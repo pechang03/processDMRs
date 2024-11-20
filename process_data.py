@@ -346,8 +346,16 @@ def process_data():
                     "biconnected": {
                         "total": len(list(nx.biconnected_components(bipartite_graph))),
                         "single_node": 0,
-                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) if len(comp) <= 3),
-                        "interesting": len([comp for comp in nx.biconnected_components(bipartite_graph) if len(comp) > 3])
+                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
+                                    if classify_biclique(
+                                        {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 0},
+                                        {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 1}
+                                    ) == "small"),
+                        "interesting": sum(1 for comp in nx.biconnected_components(bipartite_graph)
+                                          if classify_biclique(
+                                              {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 0},
+                                              {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 1}
+                                          ) == "interesting")
                     }
                 },
                 "biclique": {
@@ -361,8 +369,16 @@ def process_data():
                     "biconnected": {
                         "total": len(list(nx.biconnected_components(biclique_graph))),
                         "single_node": 0,
-                        "small": sum(1 for comp in nx.biconnected_components(biclique_graph) if len(comp) <= 3),
-                        "interesting": len([comp for comp in nx.biconnected_components(biclique_graph) if len(comp) > 3])
+                        "small": sum(1 for comp in nx.biconnected_components(biclique_graph)
+                                    if classify_biclique(
+                                        {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 0},
+                                        {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 1}
+                                    ) == "small"),
+                        "interesting": sum(1 for comp in nx.biconnected_components(biclique_graph)
+                                          if classify_biclique(
+                                              {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 0},
+                                              {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 1}
+                                          ) == "interesting")
                     }
                 }
             },
