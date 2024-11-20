@@ -64,7 +64,6 @@ def statistics_route():
                     bicliques.extend(component["raw_bicliques"])
 
         # Initialize detailed stats with proper structure
-        # Create a proper statistics dictionary that includes dominating set info
         detailed_stats = {
             "components": results.get('component_stats', {}).get('components', {}),
             "dominating_set": results.get('dominating_set', {
