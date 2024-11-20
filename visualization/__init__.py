@@ -2,7 +2,9 @@
 
 from .core import create_biclique_visualization, generate_biclique_colors
 from .utils import create_node_biclique_map
-from .graph_layout import calculate_node_positions
+from .graph_layout_original import OriginalGraphLayout
+from .graph_original_spring import SpringLogicalLayout
+from .graph_layout_biclique import CircularBicliqueLayout
 from .tables import create_dmr_table, create_gene_table
 from .traces import create_node_traces, create_biclique_boxes, create_edge_traces
 from .layout import create_visual_layout, create_axis_layout, calculate_plot_height
@@ -15,7 +17,9 @@ __all__ = [
     'create_axis_layout',
     'calculate_plot_height',
     'NodeInfo',
-    'calculate_node_positions',
+    'OriginalGraphLayout',
+    'SpringLogicalLayout',
+    'CircularBicliqueLayout',
     'create_edge_traces',
     'create_node_traces',
     'create_biclique_boxes',

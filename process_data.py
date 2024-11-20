@@ -200,8 +200,18 @@ def process_data():
         )
 
         # Calculate positions
-        node_positions = calculate_node_positions(
-            bicliques_result["bicliques"], node_biclique_map
+        # Use circular layout for biclique visualization
+        biclique_layout = CircularBicliqueLayout()
+        node_positions = biclique_layout.calculate_positions(
+            bipartite_graph, 
+            NodeInfo(
+                all_nodes=set(bipartite_graph.nodes()),
+                dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},
+                regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},
+                split_genes=set(),
+                node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
+                min_gene_id=min(gene_id_mapping.values(), default=0)
+            )
         )
 
         # Create node labels and metadata
