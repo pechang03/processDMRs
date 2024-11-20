@@ -12,7 +12,8 @@ from visualization import (
 from biclique_analysis.statistics import calculate_biclique_statistics
 from biclique_analysis.classifier import classify_biclique
 
-@app.template_filter('get_biclique_classification')
+
+@app.template_filter("get_biclique_classification")
 def get_biclique_classification(dmr_nodes, gene_nodes):
     """Template filter to get biclique classification."""
     return classify_biclique(set(dmr_nodes), set(gene_nodes))
@@ -36,47 +37,78 @@ def index_route():
 
         # Create properly structured statistics dictionary
         detailed_stats = {
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {
-                    "single_coverage": 0,
-                    "multiple_coverage": 0,
-                    "uncovered": 0,
-                    "total": 0,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0
-                }
-            }),
-            "components": results.get("component_stats", {}).get("components", {
-                "original": {
-                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            "coverage": results.get(
+                "coverage",
+                {
+                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                    "genes": {"covered": 0, "total": 0, "percentage": 0},
+                    "edges": {
+                        "single_coverage": 0,
+                        "multiple_coverage": 0,
+                        "uncovered": 0,
+                        "total": 0,
+                        "single_percentage": 0,
+                        "multiple_percentage": 0,
+                        "uncovered_percentage": 0,
+                    },
                 },
-                "biclique": {
-                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                }
-            }),
-            "dominating_set": results.get("dominating_set", {
-                "size": 0,
-                "percentage": 0,
-                "genes_dominated": 0,
-                "components_with_ds": 0,
-                "avg_size_per_component": 0
-            }),
+            ),
+            "components": results.get("component_stats", {}).get(
+                "components",
+                {
+                    "original": {
+                        "connected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                        "biconnected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                    },
+                    "biclique": {
+                        "connected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                        "biconnected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                    },
+                },
+            ),
+            "dominating_set": results.get(
+                "dominating_set",
+                {
+                    "size": 0,
+                    "percentage": 0,
+                    "genes_dominated": 0,
+                    "components_with_ds": 0,
+                    "avg_size_per_component": 0,
+                },
+            ),
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
             "edge_coverage": {  # Restructure edge coverage to match template expectations
                 "single_coverage": results.get("edge_coverage", {}).get("single", 0),
-                "multiple_coverage": results.get("edge_coverage", {}).get("multiple", 0),
+                "multiple_coverage": results.get("edge_coverage", {}).get(
+                    "multiple", 0
+                ),
                 "uncovered": results.get("edge_coverage", {}).get("uncovered", 0),
                 "total": sum(results.get("edge_coverage", {}).values()),
                 "single_percentage": 0,
                 "multiple_percentage": 0,
-                "uncovered_percentage": 0
-            }
+                "uncovered_percentage": 0,
+            },
         }
 
         # Calculate percentages if we have a total
@@ -142,61 +174,38 @@ def statistics_route():
             "coverage": results.get("coverage", {}),
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
-            }
-            # Get raw edge coverage data
-            edge_coverage_data = results.get("edge_coverage", {})
-            total_edges = sum([
-                edge_coverage_data.get("single", 0),
-                edge_coverage_data.get("multiple", 0),
-                edge_coverage_data.get("uncovered", 0)
-            ])
+            "edge_coverage": {  # Add proper edge coverage structure with total
+                "single_coverage": edge_coverage_data.get("single", 0),
+                "multiple_coverage": edge_coverage_data.get("multiple", 0),
+                "uncovered": edge_coverage_data.get("uncovered", 0),
+                "total": total_edges,
+                "single_percentage": 0,
+                "multiple_percentage": 0,
+                "uncovered_percentage": 0,
+            },
+        }
 
-            # Initialize detailed stats with proper structure
-            detailed_stats = {
-                "components": results.get("component_stats", {}).get("components", {}),
-                "dominating_set": results.get(
-                    "dominating_set",
-                    {
-                        "size": 0,
-                        "percentage": 0,
-                        "genes_dominated": 0,
-                        "components_with_ds": 0,
-                        "avg_size_per_component": 0,
-                    },
-                ),
-                "coverage": results.get("coverage", {}),
-                "size_distribution": results.get("size_distribution", {}),
-                "node_participation": results.get("node_participation", {}),
-                "edge_coverage": {  # Add proper edge coverage structure with total
-                    "single_coverage": edge_coverage_data.get("single", 0),
-                    "multiple_coverage": edge_coverage_data.get("multiple", 0),
-                    "uncovered": edge_coverage_data.get("uncovered", 0),
-                    "total": total_edges,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0
-                }
-            }
-
-            # Calculate percentages if we have a total
-            if total_edges > 0:
-                detailed_stats["edge_coverage"]["single_percentage"] = (
-                    detailed_stats["edge_coverage"]["single_coverage"] / total_edges
-                )
-                detailed_stats["edge_coverage"]["multiple_percentage"] = (
-                    detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
-                )
-                detailed_stats["edge_coverage"]["uncovered_percentage"] = (
-                    detailed_stats["edge_coverage"]["uncovered"] / total_edges
-                )
+        # Calculate percentages if we have a total
+        if total_edges > 0:
+            detailed_stats["edge_coverage"]["single_percentage"] = (
+                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["multiple_percentage"] = (
+                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
+            )
+            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
+                detailed_stats["edge_coverage"]["uncovered"] / total_edges
+            )
 
         # Get raw edge coverage data
         edge_coverage_data = results.get("edge_coverage", {})
-        total_edges = sum([
-            edge_coverage_data.get("single", 0),
-            edge_coverage_data.get("multiple", 0),
-            edge_coverage_data.get("uncovered", 0)
-        ])
+        total_edges = sum(
+            [
+                edge_coverage_data.get("single", 0),
+                edge_coverage_data.get("multiple", 0),
+                edge_coverage_data.get("uncovered", 0),
+            ]
+        )
 
         # Initialize detailed stats with proper structure
         detailed_stats = {
@@ -221,8 +230,8 @@ def statistics_route():
                 "total": total_edges,
                 "single_percentage": 0,
                 "multiple_percentage": 0,
-                "uncovered_percentage": 0
-            }
+                "uncovered_percentage": 0,
+            },
         }
 
         # Calculate percentages if we have a total
@@ -249,6 +258,7 @@ def statistics_route():
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
+
 def component_detail_route(component_id):
     """Handle component detail page requests."""
     try:
@@ -259,28 +269,32 @@ def component_detail_route(component_id):
         # Find the requested component
         component = next(
             (c for c in results["interesting_components"] if c["id"] == component_id),
-            None
+            None,
         )
-        
+
         if not component:
-            return render_template("error.html", message=f"Component {component_id} not found")
+            return render_template(
+                "error.html", message=f"Component {component_id} not found"
+            )
 
         return render_template(
             "components.html",
             component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            gene_id_mapping=results.get("gene_id_mapping", {})
+            gene_id_mapping=results.get("gene_id_mapping", {}),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
 
 from biclique_analysis.classifier import classify_biclique
 
-@app.template_filter('get_biclique_classification')
+
+@app.template_filter("get_biclique_classification")
 def get_biclique_classification(dmr_nodes, gene_nodes):
     """Template filter to get biclique classification."""
     return classify_biclique(set(dmr_nodes), set(gene_nodes))
