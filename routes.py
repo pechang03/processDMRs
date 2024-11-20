@@ -34,7 +34,30 @@ def index_route():
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
-        detailed_stats = results.get("component_stats", {})
+        # Create properly structured statistics dictionary
+        detailed_stats = {
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }),
+            "components": results.get("component_stats", {}).get("components", {}),
+            "dominating_set": results.get("dominating_set", {
+                "size": 0,
+                "percentage": 0,
+                "genes_dominated": 0,
+                "components_with_ds": 0,
+                "avg_size_per_component": 0
+            })
+        }
 
         return render_template(
             "index.html",
