@@ -159,6 +159,7 @@ def visualize_component(
     print("\nBiclique Statistics:")
     print(json.dumps(biclique_stats, indent=2))
 
+    from biclique_analysis.statistics import calculate_edge_coverage
     edge_coverage_stats = calculate_edge_coverage(
         component_info["raw_bicliques"], 
         bipartite_graph
@@ -166,12 +167,14 @@ def visualize_component(
     print("\nEdge Coverage Statistics:")
     print(json.dumps(edge_coverage_stats, indent=2))
 
+    from biclique_analysis.statistics import calculate_node_participation
     node_participation_stats = calculate_node_participation(
         component_info["raw_bicliques"]
     )
     print("\nNode Participation Statistics:")
     print(json.dumps(node_participation_stats, indent=2))
 
+    from biclique_analysis.statistics import classify_biclique_types
     biclique_type_stats = classify_biclique_types(
         component_info["raw_bicliques"]
     )
