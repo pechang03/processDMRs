@@ -148,55 +148,6 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        bicliques = []
-        if "interesting_components" in results:
-            # Add debug logging
-            print(
-                f"Number of interesting components: {len(results['interesting_components'])}"
-            )
-            for component in results["interesting_components"]:
-                if "raw_bicliques" in component:
-                    bicliques.extend(component["raw_bicliques"])
-
-        # Initialize detailed stats with proper structure
-        detailed_stats = {
-            "components": results.get("component_stats", {}).get("components", {}),
-            "dominating_set": results.get(
-                "dominating_set",
-                {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
-            ),
-            "coverage": results.get("coverage", {}),
-            "size_distribution": results.get("size_distribution", {}),
-            "node_participation": results.get("node_participation", {}),
-            "edge_coverage": {  # Add proper edge coverage structure with total
-                "single_coverage": edge_coverage_data.get("single", 0),
-                "multiple_coverage": edge_coverage_data.get("multiple", 0),
-                "uncovered": edge_coverage_data.get("uncovered", 0),
-                "total": total_edges,
-                "single_percentage": 0,
-                "multiple_percentage": 0,
-                "uncovered_percentage": 0,
-            },
-        }
-
-        # Calculate percentages if we have a total
-        if total_edges > 0:
-            detailed_stats["edge_coverage"]["single_percentage"] = (
-                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["multiple_percentage"] = (
-                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
-                detailed_stats["edge_coverage"]["uncovered"] / total_edges
-            )
-
         # Get raw edge coverage data
         edge_coverage_data = results.get("edge_coverage", {})
         total_edges = sum(
@@ -245,12 +196,13 @@ def statistics_route():
             detailed_stats["edge_coverage"]["uncovered_percentage"] = (
                 detailed_stats["edge_coverage"]["uncovered"] / total_edges
             )
+
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=results,  # Pass the full results
             selected_component_id=request.args.get("component_id", type=int),
-            total_bicliques=len(bicliques),
+            total_bicliques=len(results.get("interesting_components", [])),
         )
     except Exception as e:
         import traceback
