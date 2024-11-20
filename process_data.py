@@ -335,53 +335,7 @@ def process_data():
             component_classifications[category] += 1
 
         formatted_component_stats = {
-            "components": {
-                "original": {
-                    "connected": {
-                        "total": len(components),
-                        "single_node": component_classifications["empty"],
-                        "small": component_classifications["simple"],
-                        "interesting": component_classifications["interesting"] + component_classifications["complex"]
-                    },
-                    "biconnected": {
-                        "total": len(list(nx.biconnected_components(bipartite_graph))),
-                        "single_node": 0,
-                        "small": sum(1 for comp in nx.biconnected_components(bipartite_graph) 
-                                    if classify_biclique(
-                                        {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 0},
-                                        {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 1}
-                                    ) == "small"),
-                        "interesting": sum(1 for comp in nx.biconnected_components(bipartite_graph)
-                                          if classify_biclique(
-                                              {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 0},
-                                              {n for n in comp if bipartite_graph.nodes[n]["bipartite"] == 1}
-                                          ) == "interesting")
-                    }
-                },
-                "biclique": {
-                    "connected": {
-                        "total": len(bicliques_result["bicliques"]),
-                        "single_node": component_classifications["empty"],
-                        "small": component_classifications["simple"],
-                        "interesting": component_classifications["interesting"],
-                        "complex": component_classifications["complex"]
-                    },
-                    "biconnected": {
-                        "total": len(list(nx.biconnected_components(biclique_graph))),
-                        "single_node": 0,
-                        "small": sum(1 for comp in nx.biconnected_components(biclique_graph)
-                                    if classify_biclique(
-                                        {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 0},
-                                        {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 1}
-                                    ) == "small"),
-                        "interesting": sum(1 for comp in nx.biconnected_components(biclique_graph)
-                                          if classify_biclique(
-                                              {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 0},
-                                              {n for n in comp if biclique_graph.nodes[n]["bipartite"] == 1}
-                                          ) == "interesting")
-                    }
-                }
-            },
+            "components": component_stats["components"],  # Use the stats directly from process_components()
             "dominating_set": dominating_set_stats,
             "with_split_genes": sum(1 for comp in interesting_components if comp.get("split_genes")),
             "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
