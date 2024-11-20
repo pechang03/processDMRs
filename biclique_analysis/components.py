@@ -1,3 +1,5 @@
+from visualization.node_info import NodeInfo  # Add this line at the top with other imports
+
 import networkx as nx
 from typing import List, Dict, Tuple, Set
 from biclique_analysis.statistics import calculate_biclique_statistics
