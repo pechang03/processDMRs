@@ -182,7 +182,7 @@ def visualize_component(
             regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1},
             split_genes=set(),
             node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
-            min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0),
+            min_gene_id=min(gene_id_mapping.values(), default=0),
         ),
     )
 
@@ -252,10 +252,10 @@ def visualize_component(
     return {
         "visualization": plotly_graph,
         "bicliques": biclique_data,
-        "statistics": statistics,
-        "edge_coverage": edge_coverage,
-        "node_participation": node_participation,
-        "biclique_types": type_counts,
+        "statistics": calculate_biclique_statistics(component_info["raw_bicliques"], bipartite_graph),
+        "edge_coverage": calculate_edge_coverage(component_info["raw_bicliques"], bipartite_graph),
+        "node_participation": calculate_node_participation(component_info["raw_bicliques"]),
+        "biclique_types": classify_biclique_types(component_info["raw_bicliques"]),
         "summary": {
             "component_id": component_info["id"],
             "total_nodes": component_info["size"],
