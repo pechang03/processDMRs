@@ -68,13 +68,13 @@ DMR Analysis System Design
  ----------------
  - **Modular design** with clear separation between data processing, analysis, and visualization.
    - Benefits: Easier maintenance, scalability, and reusability of components.
- - Uses **NetworkX** for graph operations and **Plotly** for interactive visualizations.
+ - Uses **NetworkX** for graph operations, **Plotly** for interactive visualizations, and **Pandas** for data processing.
  - **Flask-based web interface** for result display.
 
  Key Components
  -------------
  1. **Data Processing**
-    - Handles Excel input files containing DMR and gene data.
+    - Handles Excel input files containing DMR and gene data using **Pandas**.
     - Creates bipartite graph structure (DMRs to genes).
     - Manages gene ID mapping system.
 
