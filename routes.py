@@ -211,10 +211,10 @@ def component_detail_route(component_id):
                                 gene_id_mapping=results.get("gene_id_mapping", {}),
                                 dominating_set=results.get("dominating_set", set())
                             )
-                                comp["raw_bicliques"],                                                                                                               
-                                results["node_labels"],                                                                                                              
-                                node_positions,                                                                                                                      
-                                edge_classifications,                                                                                                                
+                                comp["raw_bicliques"],
+                                results["node_labels"],
+                                node_positions,
+                                edge_classifications,
                                 original_graph=bipartite_graph,                                                                                                      
                                 bipartite_graph=results.get("biclique_graph"),  # The graph constructed from bicliques
                                 original_node_positions=original_positions,                                                                                          
