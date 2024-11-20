@@ -16,31 +16,6 @@ from visualization import (
 )
 
 
-def classify_component(dmr_count: int, gene_count: int, bicliques: List) -> str:
-    """Classify component based on hierarchy."""
-    if dmr_count == 0 or gene_count == 0:
-        return "empty"
-    if dmr_count == 1 and gene_count == 1:
-        return "simple"
-
-    # Check if any biclique is interesting
-    has_interesting_biclique = any(
-        len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
-        for dmr_nodes, gene_nodes in bicliques
-    )
-
-    if has_interesting_biclique:
-        # Check for complexity (multiple interesting bicliques or split genes)
-        interesting_biclique_count = sum(
-            1
-            for dmr_nodes, gene_nodes in bicliques
-            if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
-        )
-        if interesting_biclique_count > 1:
-            return "complex"
-        return "interesting"
-
-    return "normal"
 
 
 def find_interesting_components(
