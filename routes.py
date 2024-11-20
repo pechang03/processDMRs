@@ -183,26 +183,35 @@ def component_detail_route(component_id):
                                     min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0)
                                 )
                             )
-
-                            # Create original graph layout for comparison
-                            original_layout = OriginalGraphLayout()
-                            original_positions = original_layout.calculate_positions(
-                                bipartite_graph,
-                                layout_type="spring"  # or "circular" based on preference
-                            )
-                            component_viz = create_biclique_visualization(
-                                comp["raw_bicliques"],
-                                results["node_labels"],
-                                node_positions,
-                                edge_classifications=edge_classifications,
-                                original_graph=bipartite_graph,
-                                bipartite_graph=bipartite_graph,
+                            
+                                     # Create original graph layout for comparison                                                                                            
+                            original_layout = OriginalGraphLayout()                                                                                                  
+                            original_positions = original_layout.calculate_positions(                                                                                
+                                bipartite_graph,                                                                                                                     
+                                NodeInfo(                                                                                                                            
+                                    all_nodes=set(bipartite_graph.nodes()),                                                                                          
+                                    dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},                                               
+                                    regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},                                           
+                                    split_genes=set(),                                                                                                               
+                                    node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},                                      
+                                    min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0)                                                          
+                                ),                                                                                                                                   
+                                layout_type="spring"                                                                                                                 
+                            )                                                                                                                                        
+                            component_viz = create_biclique_visualization(                                                                                           
+                                comp["raw_bicliques"],                                                                                                               
+                                results["node_labels"],                                                                                                              
+                                node_positions,                                                                                                                      
+                                edge_classifications,                                                                                                                
+                                original_graph=bipartite_graph,                                                                                                      
+                                bipartite_graph=bipartite_graph,                                                                                                     
+                                original_node_positions=original_positions,                                                                                          
                                 node_biclique_map=node_biclique_map,
-                                dmr_metadata=results.get("dmr_metadata", {}),
-                                gene_metadata=results.get("gene_metadata", {}),
-                                gene_id_mapping=results.get("gene_id_mapping", {}),
-                                dominating_set=results.get("dominating_set", set())  # Add this line
-                            )
+                                dmr_metadata=results.get("dmr_metadata", {}),                                                                                        
+                                gene_metadata=results.get("gene_metadata", {}),                                                                                      
+                                gene_id_mapping=results.get("gene_id_mapping", {}),                                                                                  
+                                dominating_set=results.get("dominating_set", set())  
+
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:
                             print(f"Error creating visualization: {str(e)}")
