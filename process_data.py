@@ -267,7 +267,20 @@ def process_data():
         print("\nComponent Statistics received:")
         print(json.dumps(convert_dict_keys_to_str(component_stats), indent=2))
 
-        # Ensure proper structure for component stats
+        # Calculate dominating set statistics first
+        dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
+        dominating_set_stats = {
+            "size": len(dominating_set),
+            "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
+            "genes_dominated": len(set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))),
+            "components_with_ds": sum(1 for comp in interesting_components if any(node in dominating_set for node in comp.get('component', []))),
+            "avg_size_per_component": len(dominating_set) / len(interesting_components) if interesting_components else 0
+        }
+
+        print(f"\nCalculated dominating set statistics:")
+        print(json.dumps(dominating_set_stats, indent=2))
+
+        # Create formatted component stats with dominating set included
         formatted_component_stats = {
             "components": {
                 "original": {
@@ -352,6 +365,7 @@ def process_data():
                     },
                 },
             },
+            "dominating_set": dominating_set_stats,  # Add dominating set stats here
             "with_split_genes": sum(
                 1 for comp in interesting_components if comp.get("split_genes")
             ),
@@ -362,7 +376,9 @@ def process_data():
                 len(comp.get("raw_bicliques", [])) for comp in interesting_components
             ),
         }
-        formatted_component_stats = convert_dict_keys_to_str(formatted_component_stats)
+
+        print("\nFormatted component stats structure:")
+        print(json.dumps(convert_dict_keys_to_str(formatted_component_stats), indent=2))
 
         def is_interesting_component(component):
             """Determine if a component is interesting based on size criteria."""
