@@ -49,13 +49,29 @@ def index_route():
                     "uncovered_percentage": 0
                 }
             }),
-            "components": results.get("component_stats", {}).get("components", {}),
+            "components": results.get("component_stats", {}).get("components", {
+                "original": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                },
+                "biclique": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                }
+            }),
             "dominating_set": results.get("dominating_set", {
                 "size": 0,
                 "percentage": 0,
                 "genes_dominated": 0,
                 "components_with_ds": 0,
                 "avg_size_per_component": 0
+            }),
+            "size_distribution": results.get("size_distribution", {}),
+            "node_participation": results.get("node_participation", {}),
+            "edge_coverage": results.get("edge_coverage", {
+                "single": 0,
+                "multiple": 0,
+                "uncovered": 0
             })
         }
 
