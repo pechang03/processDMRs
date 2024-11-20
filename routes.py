@@ -27,7 +27,7 @@ def index_route():
                 if "raw_bicliques" in component:
                     bicliques.extend(component["raw_bicliques"])
 
-        detailed_stats = results.get('component_stats', {})
+        detailed_stats = results.get("component_stats", {})
 
         return render_template(
             "index.html",
@@ -65,18 +65,21 @@ def statistics_route():
 
         # Initialize detailed stats with proper structure
         detailed_stats = {
-            "components": results.get('component_stats', {}).get('components', {}),
-            "dominating_set": results.get('dominating_set', {
-                "size": 0,
-                "percentage": 0,
-                "genes_dominated": 0,
-                "components_with_ds": 0,
-                "avg_size_per_component": 0
-            }),
-            "coverage": results.get('coverage', {}),
-            "size_distribution": results.get('size_distribution', {}),
-            "node_participation": results.get('node_participation', {}),
-            "edge_coverage": results.get('edge_coverage', {})
+            "components": results.get("component_stats", {}).get("components", {}),
+            "dominating_set": results.get(
+                "dominating_set",
+                {
+                    "size": 0,
+                    "percentage": 0,
+                    "genes_dominated": 0,
+                    "components_with_ds": 0,
+                    "avg_size_per_component": 0,
+                },
+            ),
+            "coverage": results.get("coverage", {}),
+            "size_distribution": results.get("size_distribution", {}),
+            "node_participation": results.get("node_participation", {}),
+            "edge_coverage": results.get("edge_coverage", {}),
         }
 
         # Debug logging
@@ -85,16 +88,25 @@ def statistics_route():
         if "components" in detailed_stats:
             print("Biclique key exists:", "biclique" in detailed_stats["components"])
             if "biclique" in detailed_stats["components"]:
-                print("Connected key exists:", "connected" in detailed_stats["components"]["biclique"])
+                print(
+                    "Connected key exists:",
+                    "connected" in detailed_stats["components"]["biclique"],
+                )
                 if "connected" in detailed_stats["components"]["biclique"]:
-                    print("Interesting key exists:", "interesting" in detailed_stats["components"]["biclique"]["connected"])
+                    print(
+                        "Interesting key exists:",
+                        "interesting"
+                        in detailed_stats["components"]["biclique"]["connected"],
+                    )
 
         # Merge component stats more carefully
         if "component_stats" in results:
             if "components" not in detailed_stats:
                 detailed_stats["components"] = {}
             # Update instead of replace
-            detailed_stats["components"].update(results["component_stats"]["components"])
+            detailed_stats["components"].update(
+                results["component_stats"]["components"]
+            )
 
         # Additional debug logging after merge
         print("\nFinal stats structure:")
@@ -102,7 +114,9 @@ def statistics_route():
         if "components" in detailed_stats:
             print("Keys in components:", detailed_stats["components"].keys())
             if "biclique" in detailed_stats["components"]:
-                print("Keys in biclique:", detailed_stats["components"]["biclique"].keys())
+                print(
+                    "Keys in biclique:", detailed_stats["components"]["biclique"].keys()
+                )
 
         # Add debug logging
         print(
@@ -120,12 +134,17 @@ def statistics_route():
         print(
             f"Biclique graph components: {detailed_stats['components']['biclique']['connected']['interesting']}"
         )
-        print("Debug - Dominating Set Stats:", detailed_stats.get('dominating_set', {}))
-        print("\nFull detailed_stats structure:", json.dumps(detailed_stats, indent=2, default=str))
+        print("Debug - Dominating Set Stats:", detailed_stats.get("dominating_set", {}))
+        print(
+            "\nFull detailed_stats structure:",
+            json.dumps(detailed_stats, indent=2, default=str),
+        )
         print("\nDEBUG - All components being passed to template:")
-        if 'interesting_components' in results:
-            for comp in results['interesting_components']:
-                print(f"Component {comp.get('id')}: {comp.get('dmrs', '?')} DMRs, {comp.get('total_genes', '?')} genes")
+        if "interesting_components" in results:
+            for comp in results["interesting_components"]:
+                print(
+                    f"Component {comp.get('id')}: {comp.get('dmrs', '?')} DMRs, {comp.get('total_genes', '?')} genes"
+                )
         else:
             print("No interesting_components in results")
         return render_template(
@@ -175,28 +194,56 @@ def component_detail_route(component_id):
                                 bipartite_graph,
                                 NodeInfo(
                                     all_nodes=set(bipartite_graph.nodes()),
-                                    dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},
-                                    regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},
+                                    dmr_nodes={
+                                        n
+                                        for n, d in bipartite_graph.nodes(data=True)
+                                        if d["bipartite"] == 0
+                                    },
+                                    regular_genes={
+                                        n
+                                        for n, d in bipartite_graph.nodes(data=True)
+                                        if d["bipartite"] == 1
+                                    },
                                     split_genes=set(),  # Will be populated during processing
-                                    node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
-                                    min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0)
-                                )
+                                    node_degrees={
+                                        n: len(list(bipartite_graph.neighbors(n)))
+                                        for n in bipartite_graph.nodes()
+                                    },
+                                    min_gene_id=min(
+                                        results.get("gene_id_mapping", {}).values(),
+                                        default=0,
+                                    ),
+                                ),
                             )
-                            
-                                     # Create original graph layout for comparison                                                                                            
-                            original_layout = OriginalGraphLayout()                                                                                                  
-                            original_positions = original_layout.calculate_positions(                                                                                
-                                bipartite_graph,                                                                                                                     
-                                NodeInfo(                                                                                                                            
-                                    all_nodes=set(bipartite_graph.nodes()),                                                                                          
-                                    dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},                                               
-                                    regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},                                           
-                                    split_genes=set(),                                                                                                               
-                                    node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},                                      
-                                    min_gene_id=min(results.get("gene_id_mapping", {}).values(), default=0)                                                          
-                                ),                                                                                                                                   
-                                layout_type="spring"                                                                                                                 
-                            )                                                                                                                                        
+
+                            # Create original graph layout for comparison
+                            original_layout = OriginalGraphLayout()
+                            original_positions = original_layout.calculate_positions(
+                                bipartite_graph,
+                                NodeInfo(
+                                    all_nodes=set(bipartite_graph.nodes()),
+                                    dmr_nodes={
+                                        n
+                                        for n, d in bipartite_graph.nodes(data=True)
+                                        if d["bipartite"] == 0
+                                    },
+                                    regular_genes={
+                                        n
+                                        for n, d in bipartite_graph.nodes(data=True)
+                                        if d["bipartite"] == 1
+                                    },
+                                    split_genes=set(),
+                                    node_degrees={
+                                        n: len(list(bipartite_graph.neighbors(n)))
+                                        for n in bipartite_graph.nodes()
+                                    },
+                                    min_gene_id=min(
+                                        results.get("gene_id_mapping", {}).values(),
+                                        default=0,
+                                    ),
+                                ),
+                                layout_type="spring",
+                            )
                             component_viz = create_biclique_visualization(
                                 comp["raw_bicliques"],
                                 results["node_labels"],
@@ -209,21 +256,8 @@ def component_detail_route(component_id):
                                 dmr_metadata=results.get("dmr_metadata", {}),
                                 gene_metadata=results.get("gene_metadata", {}),
                                 gene_id_mapping=results.get("gene_id_mapping", {}),
-                                dominating_set=results.get("dominating_set", set())
+                                dominating_set=results.get("dominating_set", set()),
                             )
-                                comp["raw_bicliques"],
-                                results["node_labels"],
-                                node_positions,
-                                edge_classifications,
-                                original_graph=bipartite_graph,                                                                                                      
-                                bipartite_graph=results.get("biclique_graph"),  # The graph constructed from bicliques
-                                original_node_positions=original_positions,                                                                                          
-                                node_biclique_map=node_biclique_map,
-                                dmr_metadata=results.get("dmr_metadata", {}),                                                                                        
-                                gene_metadata=results.get("gene_metadata", {}),                                                                                      
-                                gene_id_mapping=results.get("gene_id_mapping", {}),                                                                                  
-                                dominating_set=results.get("dominating_set", set())  
-
                             comp["plotly_graph"] = json.loads(component_viz)
                         except Exception as e:
                             print(f"Error creating visualization: {str(e)}")
