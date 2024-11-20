@@ -252,10 +252,10 @@ def visualize_component(
     return {
         "visualization": plotly_graph,
         "bicliques": biclique_data,
-        "statistics": calculate_biclique_statistics(component_info["raw_bicliques"], bipartite_graph),
-        "edge_coverage": calculate_edge_coverage(component_info["raw_bicliques"], bipartite_graph),
-        "node_participation": calculate_node_participation(component_info["raw_bicliques"]),
-        "biclique_types": classify_biclique_types(component_info["raw_bicliques"]),
+        "statistics": biclique_stats,
+        "edge_coverage": edge_coverage_stats,
+        "node_participation": node_participation_stats,
+        "biclique_types": biclique_type_stats,
         "summary": {
             "component_id": component_info["id"],
             "total_nodes": component_info["size"],
