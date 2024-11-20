@@ -1,15 +1,10 @@
 import argparse
 import sys
-from flask import Flask, render_template
+from extensions import app
 from routes import index_route, statistics_route, component_detail_route
-from process_data import process_data
-# from graph_utils import create_bipartite_graph
-
-app = Flask(__name__)
 
 # Add version constant at top of file
 __version__ = "0.0.1-alpha"
-
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -31,7 +26,6 @@ def parse_arguments():
         help="Format for biclique file parsing (gene-name or number)",
     )
     return parser.parse_args()
-
 
 # Register routes
 app.add_url_rule("/", "index_route", index_route)
