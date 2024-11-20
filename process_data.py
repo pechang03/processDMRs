@@ -33,11 +33,7 @@ from biclique_analysis import (
     reporting,  # Add this import
 )
 from biclique_analysis.edge_classification import classify_edges
-from visualization import (
-    create_node_biclique_map,
-    CircularBicliqueLayout,
-    NodeInfo
-)
+from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
 from visualization.node_info import NodeInfo
 from graph_utils import read_excel_file, create_bipartite_graph
 from rb_domination import (
@@ -202,18 +198,28 @@ def process_data():
 
         # Calculate positions
         # Use circular layout for biclique visualization
-        from visualization import CircularBicliqueLayout
         biclique_layout = CircularBicliqueLayout()
         node_positions = biclique_layout.calculate_positions(
-            bipartite_graph, 
+            bipartite_graph,
             NodeInfo(
                 all_nodes=set(bipartite_graph.nodes()),
-                dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0},
-                regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 1},
+                dmr_nodes={
+                    n
+                    for n, d in bipartite_graph.nodes(data=True)
+                    if d["bipartite"] == 0
+                },
+                regular_genes={
+                    n
+                    for n, d in bipartite_graph.nodes(data=True)
+                    if d["bipartite"] == 1
+                },
                 split_genes=set(),
-                node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
-                min_gene_id=min(gene_id_mapping.values(), default=0)
-            )
+                node_degrees={
+                    n: len(list(bipartite_graph.neighbors(n)))
+                    for n in bipartite_graph.nodes()
+                },
+                min_gene_id=min(gene_id_mapping.values(), default=0),
+            ),
         )
 
         # Create node labels and metadata
@@ -282,13 +288,25 @@ def process_data():
         print(json.dumps(convert_dict_keys_to_str(component_stats), indent=2))
 
         # Calculate dominating set statistics first
-        dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
+        dmr_nodes = {
+            n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0
+        }
         dominating_set_stats = {
             "size": len(dominating_set),
             "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
-            "genes_dominated": len(set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))),
-            "components_with_ds": sum(1 for comp in interesting_components if any(node in dominating_set for node in comp.get('component', []))),
-            "avg_size_per_component": len(dominating_set) / len(interesting_components) if interesting_components else 0
+            "genes_dominated": len(
+                set().union(
+                    *(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set)
+                )
+            ),
+            "components_with_ds": sum(
+                1
+                for comp in interesting_components
+                if any(node in dominating_set for node in comp.get("component", []))
+            ),
+            "avg_size_per_component": len(dominating_set) / len(interesting_components)
+            if interesting_components
+            else 0,
         }
 
         print(f"\nCalculated dominating set statistics:")
