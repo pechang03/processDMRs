@@ -139,6 +139,8 @@ def find_interesting_components(
     return interesting_components
 
 
+import json
+
 def visualize_component(
     component_info: Dict,
     bipartite_graph: nx.Graph,
@@ -148,6 +150,33 @@ def visualize_component(
     edge_classification: Dict[str, Set[Tuple[int, int]]] = None,  # Add this parameter
 ) -> Dict:  # Change return type to Dict to include both visualization and data
     """Create visualization and data summary for a specific component."""
+
+    # Calculate statistics first
+    biclique_stats = calculate_biclique_statistics(
+        component_info["raw_bicliques"], 
+        bipartite_graph
+    )
+    print("\nBiclique Statistics:")
+    print(json.dumps(biclique_stats, indent=2))
+
+    edge_coverage_stats = calculate_edge_coverage(
+        component_info["raw_bicliques"], 
+        bipartite_graph
+    )
+    print("\nEdge Coverage Statistics:")
+    print(json.dumps(edge_coverage_stats, indent=2))
+
+    node_participation_stats = calculate_node_participation(
+        component_info["raw_bicliques"]
+    )
+    print("\nNode Participation Statistics:")
+    print(json.dumps(node_participation_stats, indent=2))
+
+    biclique_type_stats = classify_biclique_types(
+        component_info["raw_bicliques"]
+    )
+    print("\nBiclique Type Statistics:")
+    print(json.dumps(biclique_type_stats, indent=2))
 
     reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()}
     subgraph = bipartite_graph.subgraph(component_info["component"])
