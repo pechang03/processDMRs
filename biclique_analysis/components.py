@@ -1,8 +1,14 @@
-from visualization.node_info import NodeInfo  # Add this line at the top with other imports
+from visualization.node_info import (
+    NodeInfo,
+)  # Add this line at the top with other imports
 
 import networkx as nx
 from typing import List, Dict, Tuple, Set
 from biclique_analysis.statistics import calculate_biclique_statistics
+from biclique_analysis.edge_classification import classify_edges
+from biclique_analysis.statistics import calculate_edge_coverage
+from biclique_analysis.statistics import calculate_node_participation
+from biclique_analysis.statistics import classify_biclique_types
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
@@ -16,24 +22,26 @@ def classify_component(dmr_count: int, gene_count: int, bicliques: List) -> str:
         return "empty"
     if dmr_count == 1 and gene_count == 1:
         return "simple"
-        
+
     # Check if any biclique is interesting
     has_interesting_biclique = any(
-        len(dmr_nodes) >= 3 and len(gene_nodes) >= 3 
+        len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
         for dmr_nodes, gene_nodes in bicliques
     )
-    
+
     if has_interesting_biclique:
         # Check for complexity (multiple interesting bicliques or split genes)
         interesting_biclique_count = sum(
-            1 for dmr_nodes, gene_nodes in bicliques 
+            1
+            for dmr_nodes, gene_nodes in bicliques
             if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
         )
         if interesting_biclique_count > 1:
             return "complex"
         return "interesting"
-    
+
     return "normal"
+
 
 def find_interesting_components(
     bipartite_graph: nx.Graph,
@@ -43,38 +51,44 @@ def find_interesting_components(
     gene_id_mapping: Dict[str, int] = None,
 ) -> List[Dict]:
     """Find and analyze interesting components without visualization."""
-    
+
     components = list(nx.connected_components(bipartite_graph))
     total_components = len(components)
     print(f"\nFound {total_components} total components")
-    
+
     # Initialize counters for each category
     category_counts = {
         "empty": 0,
         "simple": 0,
         "normal": 0,
         "interesting": 0,
-        "complex": 0
+        "complex": 0,
     }
-    
+
     interesting_components = []
-    reverse_gene_mapping = {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
+    reverse_gene_mapping = (
+        {v: k for k, v in gene_id_mapping.items()} if gene_id_mapping else {}
+    )
 
     for idx, component in enumerate(components):
         subgraph = bipartite_graph.subgraph(component)
-        
+
         # Get unique DMRs and genes
         dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
-        gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
-        
+        gene_nodes = {
+            n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1
+        }
+
         # Find all bicliques for this component
         component_bicliques = []
         gene_participation = {}
-        
-        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(bicliques_result["bicliques"]):
+
+        for biclique_idx, (dmr_nodes_bic, gene_nodes_bic) in enumerate(
+            bicliques_result["bicliques"]
+        ):
             dmr_set = {int(d) if isinstance(d, str) else d for d in dmr_nodes_bic}
             gene_set = {int(g) if isinstance(g, str) else g for g in gene_nodes_bic}
-            
+
             if (dmr_set | gene_set) & set(component):
                 component_bicliques.append((dmr_set, gene_set))
                 for gene_id in gene_set:
@@ -83,9 +97,11 @@ def find_interesting_components(
                     gene_participation[gene_id].add(biclique_idx)
 
         # Classify the component
-        category = classify_component(len(dmr_nodes), len(gene_nodes), component_bicliques)
+        category = classify_component(
+            len(dmr_nodes), len(gene_nodes), component_bicliques
+        )
         category_counts[category] += 1
-        
+
         # Process genes
         regular_genes = []
         split_genes = []
@@ -93,7 +109,9 @@ def find_interesting_components(
             gene_name = reverse_gene_mapping.get(gene_id, f"Gene_{gene_id}")
             gene_info = {
                 "gene_name": gene_name,
-                "description": gene_metadata.get(gene_name, {}).get("description", "N/A"),
+                "description": gene_metadata.get(gene_name, {}).get(
+                    "description", "N/A"
+                ),
                 "bicliques": sorted(list(bicliques)),
             }
             if len(bicliques) > 1:
@@ -114,12 +132,12 @@ def find_interesting_components(
             "split_genes": split_genes,
             "total_genes": len(regular_genes) + len(split_genes),
             "interesting_bicliques": [
-                (dmr_nodes, gene_nodes) 
+                (dmr_nodes, gene_nodes)
                 for dmr_nodes, gene_nodes in component_bicliques
                 if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
-            ]
+            ],
         }
-        
+
         # Keep all components for analysis, but mark interesting ones
         if category in ["interesting", "complex"]:
             interesting_components.append(component_info)
@@ -128,7 +146,7 @@ def find_interesting_components(
     print("\nComponent Classification Summary:")
     for category, count in category_counts.items():
         print(f"{category.capitalize()}: {count}")
-    
+
     print("\nInteresting and Complex Components:")
     for comp in interesting_components:
         print(f"\nComponent {comp['id']} ({comp['category']}):")
@@ -140,6 +158,7 @@ def find_interesting_components(
 
 
 import json
+
 
 def visualize_component(
     component_info: Dict,
@@ -153,31 +172,24 @@ def visualize_component(
 
     # Calculate statistics first
     biclique_stats = calculate_biclique_statistics(
-        component_info["raw_bicliques"], 
-        bipartite_graph
+        component_info["raw_bicliques"], bipartite_graph
     )
     print("\nBiclique Statistics:")
     print(json.dumps(biclique_stats, indent=2))
 
-    from biclique_analysis.statistics import calculate_edge_coverage
     edge_coverage_stats = calculate_edge_coverage(
-        component_info["raw_bicliques"], 
-        bipartite_graph
+        component_info["raw_bicliques"], bipartite_graph
     )
     print("\nEdge Coverage Statistics:")
     print(json.dumps(edge_coverage_stats, indent=2))
 
-    from biclique_analysis.statistics import calculate_node_participation
     node_participation_stats = calculate_node_participation(
         component_info["raw_bicliques"]
     )
     print("\nNode Participation Statistics:")
     print(json.dumps(node_participation_stats, indent=2))
 
-    from biclique_analysis.statistics import classify_biclique_types
-    biclique_type_stats = classify_biclique_types(
-        component_info["raw_bicliques"]
-    )
+    biclique_type_stats = classify_biclique_types(component_info["raw_bicliques"])
     print("\nBiclique Type Statistics:")
     print(json.dumps(biclique_type_stats, indent=2))
 
@@ -210,10 +222,17 @@ def visualize_component(
         bipartite_graph,
         NodeInfo(
             all_nodes=set(bipartite_graph.nodes()),
-            dmr_nodes={n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0},
-            regular_genes={n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1},
+            dmr_nodes={
+                n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0
+            },
+            regular_genes={
+                n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1
+            },
             split_genes=set(),
-            node_degrees={n: len(list(bipartite_graph.neighbors(n))) for n in bipartite_graph.nodes()},
+            node_degrees={
+                n: len(list(bipartite_graph.neighbors(n)))
+                for n in bipartite_graph.nodes()
+            },
             min_gene_id=min(gene_id_mapping.values(), default=0),
         ),
     )
@@ -274,11 +293,11 @@ def visualize_component(
         node_positions,
         node_biclique_map,  # Required positional arg
         edge_classification,  # Required positional arg
-        bipartite_graph,       # Required positional arg
-        subgraph,              # Required positional arg
+        bipartite_graph,  # Required positional arg
+        subgraph,  # Required positional arg
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata,
-        gene_id_mapping=gene_id_mapping
+        gene_id_mapping=gene_id_mapping,
     )
 
     return {
@@ -298,6 +317,7 @@ def visualize_component(
         },
     }
 
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -316,9 +336,8 @@ def process_components(
                     biclique_graph.add_edge(dmr, gene)
 
     # Calculate edge classifications
-    from biclique_analysis.edge_classification import classify_edges
     # Get edge_sources from the graph's attributes
-    edge_sources = getattr(bipartite_graph, 'graph', {}).get('edge_sources', {})
+    edge_sources = getattr(bipartite_graph, "graph", {}).get("edge_sources", {})
     edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
 
     interesting_components = find_interesting_components(
@@ -338,7 +357,8 @@ def process_components(
         interesting_components[0].update(component_data)
 
     # Calculate comprehensive statistics using biclique_analysis.statistics
-    statistics = calculate_biclique_statistics(bicliques_result["bicliques"], bipartite_graph)
+    statistics = calculate_biclique_statistics(
+        bicliques_result["bicliques"], bipartite_graph
+    )
 
     return interesting_components, [], statistics
-
