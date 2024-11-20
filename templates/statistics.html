@@ -16,9 +16,37 @@
         </nav>
         <h1>Detailed Biclique Analysis Statistics</h1>
 
-        <!-- Add this right after the <h1> tag in statistics.html -->
-        <div class="card mb-4">
-            <div class="card-header">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Original Graph</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">Total DMRs: {{ statistics.graph_info.total_dmrs }}</li>
+                            <li class="list-group-item">Total Genes: {{ statistics.graph_info.total_genes }}</li>
+                            <li class="list-group-item">Total Edges: {{ statistics.graph_info.total_edges }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Biclique Graph</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">Total Bicliques: {{ statistics.total_bicliques }}</li>
+                            <li class="list-group-item">Total DMRs: {{ statistics.graph_info.total_dmrs }}</li>
+                            <li class="list-group-item">Total Genes: {{ statistics.graph_info.total_genes }}</li>
+                            <li class="list-group-item">Total Edges: {{ statistics.graph_info.total_edges }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Add this right after the <h1> tag in statistics.html -->
         <div class="card mb-4">
@@ -353,7 +381,7 @@
     <!-- Interesting Components Section -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3>Interesting Components (Debug View)</h3>
+            <h3>Interesting Components</h3>
         </div>
         <div class="card-body">
             <div class="table-responsive">
