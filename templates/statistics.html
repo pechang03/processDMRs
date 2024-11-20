@@ -73,22 +73,30 @@
                                 <!-- Original Graph Components -->
                                 <h6>Original Graph</h6>
                                     
-<!-- Original Graph Connected Components -->
-<h6>Original Graph</h6>
-    
-<!-- Connected Components -->
+<!-- Update the component classification section -->
 <div class="mb-3">
-    <h7 class="text-muted">Connected Components</h7>
+    <h7 class="text-muted">Component Classifications</h7>
     <ul class="list-group mb-2">
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            Total Components
-            <span class="badge bg-primary rounded-pill">{{ statistics.components.original.connected.total }}</span>
+            Empty Components
+            <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.classifications.empty }}</span>
         </li>
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            Single Node Components
-            <span class="badge bg-secondary rounded-pill">{{ statistics.components.original.connected.single_node }}</span>
+            Simple Components
+            <span class="badge bg-info rounded-pill">{{ statistics.components.original.classifications.simple }}</span>
         </li>
-        <!-- Continue for other stats -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Normal Components
+            <span class="badge bg-primary rounded-pill">{{ statistics.components.original.classifications.normal }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Interesting Components
+            <span class="badge bg-warning rounded-pill">{{ statistics.components.original.classifications.interesting }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Complex Components
+            <span class="badge bg-danger rounded-pill">{{ statistics.components.original.classifications.complex }}</span>
+        </li>
     </ul>
 </div>
 
