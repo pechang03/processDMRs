@@ -19,6 +19,7 @@ from visualization import (
     create_biclique_visualization,
     CircularBicliqueLayout,
 )
+from .component_analyzer import ComponentAnalyzer
 
 
 def find_interesting_components(*args, **kwargs):
@@ -240,18 +241,17 @@ def process_components(
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
     
-    # Create biclique graph
-    biclique_graph = nx.Graph()
+    # Create analyzer
+    from .component_analyzer import ComponentAnalyzer
+    analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
+    
+    # Get component statistics
+    component_stats = analyzer.analyze_components(dominating_set)
+    
+    # Process individual components
     interesting_components = []
-    
-    # Get original graph components
-    _, original_connected_stats = analyze_connected_components(bipartite_graph)
-    _, original_biconn_stats = analyze_biconnected_components(bipartite_graph)
-    
-    # Process each component
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
         if isinstance(component_data, dict):
-            # If component data is already processed, add it directly
             interesting_components.append(component_data)
         else:
             # Process raw component data
@@ -267,19 +267,22 @@ def process_components(
                 "category": classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]).name.lower()
             }
             interesting_components.append(component_info)
-            
-            # Add edges to biclique graph
-            for dmr in dmr_nodes:
-                for gene in gene_nodes:
-                    biclique_graph.add_edge(dmr, gene)
-
-    # Get biclique graph components 
-    _, biclique_connected_stats = analyze_connected_components(biclique_graph)
-    _, biclique_biconn_stats = analyze_biconnected_components(biclique_graph)
-
-    # Calculate edge classifications
-    edge_sources = getattr(bipartite_graph, "graph", {}).get("edge_sources", {})
-    edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
+    
+    # Extract component categories
+    complex_components = [
+        comp for comp in interesting_components 
+        if comp["category"] == "complex"
+    ]
+    non_simple_components = [
+        comp for comp in interesting_components
+        if comp["category"] not in ["empty", "simple"]
+    ]
+    
+    # Calculate comprehensive statistics
+    statistics = calculate_biclique_statistics(
+        bicliques_result["bicliques"], 
+        bipartite_graph
+    )
 
     # Only visualize first component initially
     if interesting_components:
@@ -289,78 +292,14 @@ def process_components(
             dmr_metadata,
             gene_metadata,
             gene_id_mapping,
-            edge_classifications,
+            analyzer.get_edge_classifications(),
         )
         interesting_components[0].update(component_data)
-
-    # Calculate comprehensive statistics using biclique_analysis.statistics
-    statistics = calculate_biclique_statistics(
-        bicliques_result["bicliques"], bipartite_graph
-    )
-    # Collect non-simple and complex components
-    non_simple_components = [
-        comp
-        for comp in interesting_components
-        if comp["category"] not in ["empty", "simple"]
-    ]
-
-    complex_components = [
-        comp for comp in interesting_components if comp["category"] == "complex"
-    ]
-
-    # Calculate dominating set statistics
-    dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
-    if dominating_set is None:
-        dominating_set = set()
-        
-    dominating_set_stats = {
-        "size": len(dominating_set),
-        "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
-        "genes_dominated": len(
-            set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))
-        ),
-        "components_with_ds": original_connected_stats['interesting'],
-        "avg_size_per_component": (
-            len(dominating_set) / original_connected_stats['interesting']
-            if original_connected_stats['interesting'] > 0
-            else 0
-        )
-    }
-
-    # Build component statistics structure
-    component_stats = {
-        "components": {
-            "original": {
-                "connected": original_connected_stats,
-                "biconnected": original_biconn_stats,
-                "triconnected": {
-                    "total": 0,
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": 0
-                },
-                "dominating_set": dominating_set_stats
-            },
-            "biclique": {
-                "connected": biclique_connected_stats,
-                "biconnected": biclique_biconn_stats,
-                "triconnected": {
-                    "total": 0,
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": 0
-                }
-            }
-        }
-    }
-
-    # Create simple_connections (empty list for now)
-    simple_connections = []
 
     return (
         complex_components,
         interesting_components,
-        simple_connections,
+        [],  # simple_connections 
         non_simple_components,
         component_stats,
         statistics,
