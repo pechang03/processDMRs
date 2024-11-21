@@ -64,25 +64,25 @@
                   <tr>
                     <td>Single Coverage:</td>
                     <td>
-                      {{ statistics.edge_coverage.single_coverage }} ({{
-                      "%.1f"|format(statistics.edge_coverage.single_percentage *
-                      100) }}%)
+                      {{ statistics.get('edge_coverage', {}).get('single', 0) }} ({{
+                      "%.1f"|format(statistics.get('edge_coverage', {}).get('single_percentage', 0) * 100)
+                      }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Multiple Coverage:</td>
                     <td>
-                      {{ statistics.edge_coverage.multiple_coverage }} ({{
-                      "%.1f"|format(statistics.edge_coverage.multiple_percentage
-                      * 100) }}%)
+                      {{ statistics.get('edge_coverage', {}).get('multiple', 0) }} ({{
+                      "%.1f"|format(statistics.get('edge_coverage', {}).get('multiple_percentage', 0) * 100)
+                      }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Uncovered:</td>
                     <td>
-                      {{ statistics.edge_coverage.uncovered }} ({{
-                      "%.1f"|format(statistics.edge_coverage.uncovered_percentage
-                      * 100) }}%)
+                      {{ statistics.get('edge_coverage', {}).get('uncovered', 0) }} ({{
+                      "%.1f"|format(statistics.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100)
+                      }}%)
                     </td>
                   </tr>
                 </tbody>
