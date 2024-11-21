@@ -279,8 +279,8 @@ def calculate_size_distribution(bicliques: List) -> Dict:
     """Calculate size distribution of bicliques."""
     distribution = {}
     for dmr_nodes, gene_nodes in bicliques:
-        size_key = f"{len(dmr_nodes)}_{len(gene_nodes)}"  # Use string key directly
-        distribution[size_key] = distribution.get(size_key, 0) + 1
+        key = (len(dmr_nodes), len(gene_nodes))  # Use tuple directly as key
+        distribution[key] = distribution.get(key, 0) + 1
     return distribution
 
 
