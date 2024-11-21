@@ -6,11 +6,11 @@ import networkx as nx
 
 
 def read_bicliques_file(
-    filename: str, 
-    max_DMR_id: int, 
+    filename: str,
+    max_DMR_id: int,
     original_graph: nx.Graph,
     gene_id_mapping: Dict[str, int] = None,  # Make optional
-    file_format: str = "gene_name"  # Add format parameter, default to gene_name format
+    file_format: str = "gene_name",  # Add format parameter, default to gene_name format
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
     print(f"\nReading bicliques file in {file_format} format")
@@ -27,11 +27,13 @@ def read_bicliques_file(
         print(f"'{gene}': {id}")
 
     print("\nChecking for specific genes:")
-    test_genes = ['oprk1', 'sgk3', 'xkr9', 'col9a1']
+    test_genes = ["oprk1", "sgk3", "xkr9", "col9a1"]
     for gene in test_genes:
         print(f"'{gene}' in mapping: {gene in gene_id_mapping}")
 
-    bicliques, line_idx = parse_bicliques(lines, max_DMR_id, gene_id_mapping, file_format=file_format)
+    bicliques, line_idx = parse_bicliques(
+        lines, max_DMR_id, gene_id_mapping, file_format=file_format
+    )
 
     # Calculate coverage information
     coverage_info = calculate_coverage(bicliques, original_graph)
@@ -54,37 +56,37 @@ def parse_header_statistics(lines: List[str]) -> Dict:
         "size_distribution": {},
         "coverage": {
             "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-            "genes": {"covered": 0, "total": 0, "percentage": 0}
+            "genes": {"covered": 0, "total": 0, "percentage": 0},
         },
         "node_participation": {"dmrs": {}, "genes": {}},
-        "edge_coverage": {"single": 0, "multiple": 0, "uncovered": 0}
+        "edge_coverage": {"single": 0, "multiple": 0, "uncovered": 0},
     }
-    
+
     line_idx = 0
     section = None
-    
+
     while line_idx < len(lines):
         line = lines[line_idx].strip()
-        
+
         if not line:
             line_idx += 1
             continue
-            
+
         if line == "Biclique Size Distribution":
             section = "size_dist"
             line_idx += 2  # Skip header row
             continue
-            
+
         if line == "Coverage Statistics":
             section = "coverage"
             line_idx += 1
             continue
-            
+
         if line == "Node Participation":
             section = "participation"
             line_idx += 1
             continue
-            
+
         if line == "Edge Coverage":
             section = "edge"
             line_idx += 1
@@ -95,9 +97,13 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                 line_idx += 1
                 continue
             parts = line.split()
-            if len(parts) == 3:
-                statistics["size_distribution"][(int(parts[0]), int(parts[1]))] = int(parts[2])
-                
+            if (
+                len(parts) == 3
+            ):  # this is related to the file structure and not if a component is interesting
+                statistics["size_distribution"][(int(parts[0]), int(parts[1]))] = int(
+                    parts[2]
+                )
+
         elif section == "coverage":
             if line.startswith("DMR Coverage"):
                 line_idx += 1
@@ -109,7 +115,7 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                     statistics["coverage"]["dmrs"] = {
                         "covered": covered,
                         "total": total,
-                        "percentage": percentage
+                        "percentage": percentage,
                     }
             elif line.startswith("Gene Coverage"):
                 line_idx += 1
@@ -121,25 +127,29 @@ def parse_header_statistics(lines: List[str]) -> Dict:
                     statistics["coverage"]["genes"] = {
                         "covered": covered,
                         "total": total,
-                        "percentage": percentage
+                        "percentage": percentage,
                     }
-                
+
         elif section == "participation":
             if line.startswith("DMR Participation"):
                 line_idx += 2  # Skip header
                 while line_idx < len(lines) and lines[line_idx].strip():
                     parts = lines[line_idx].strip().split()
                     if len(parts) == 2:
-                        statistics["node_participation"]["dmrs"][int(parts[0])] = int(parts[1])
+                        statistics["node_participation"]["dmrs"][int(parts[0])] = int(
+                            parts[1]
+                        )
                     line_idx += 1
             elif line.startswith("Gene Participation"):
                 line_idx += 2  # Skip header
                 while line_idx < len(lines) and lines[line_idx].strip():
                     parts = lines[line_idx].strip().split()
                     if len(parts) == 2:
-                        statistics["node_participation"]["genes"][int(parts[0])] = int(parts[1])
+                        statistics["node_participation"]["genes"][int(parts[0])] = int(
+                            parts[1]
+                        )
                     line_idx += 1
-                    
+
         elif section == "edge":
             parts = line.split()
             if len(parts) >= 3:
@@ -156,20 +166,20 @@ def parse_header_statistics(lines: List[str]) -> Dict:
 
 
 def parse_bicliques(
-    lines: List[str], 
+    lines: List[str],
     max_DMR_id: int,
     gene_id_mapping: Dict[str, int] = None,
-    file_format: str = "id"
+    file_format: str = "id",
 ) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
     """Parse bicliques from file lines."""
     bicliques = []
     line_idx = 0
-    
+
     # Add debug print for gene_id_mapping
     print(f"\nGene ID mapping size: {len(gene_id_mapping) if gene_id_mapping else 0}")
     if gene_id_mapping:
         print(f"Sample of gene names: {list(gene_id_mapping.keys())[:5]}")
-    
+
     # Create set of valid DMR IDs (0 to max_DMR_id-1)
     valid_dmr_ids = set(range(max_DMR_id))
 
@@ -188,28 +198,32 @@ def parse_bicliques(
 
         # Split line into tokens
         tokens = line.split()
-        
+
         if file_format == "gene_name":
             gene_ids = set()
             dmr_ids = set()
-            
+
             for token in tokens:
                 token = token.strip().lower()  # Normalize token
-                
+
                 # First check if it's a valid gene name
                 if gene_id_mapping and token in gene_id_mapping:
                     gene_ids.add(gene_id_mapping[token])
                     continue
-                    
+
                 # Then try to parse as DMR ID
                 try:
                     dmr_id = int(token)
                     if dmr_id in valid_dmr_ids:
                         dmr_ids.add(dmr_id)
                     else:
-                        print(f"Warning: DMR ID {dmr_id} out of valid range on line {line_idx + 1}")
+                        print(
+                            f"Warning: DMR ID {dmr_id} out of valid range on line {line_idx + 1}"
+                        )
                 except ValueError:
-                    print(f"Warning: Token '{token}' not found in gene mapping on line {line_idx + 1}")
+                    print(
+                        f"Warning: Token '{token}' not found in gene mapping on line {line_idx + 1}"
+                    )
         else:
             # Handle original ID format
             try:
@@ -217,10 +231,10 @@ def parse_bicliques(
                 if len(parts) != 2:
                     line_idx += 1
                     continue
-                    
+
                 gene_ids = {int(x) for x in parts[0].split()}
                 dmr_ids = {int(x) for x in parts[1].split()}
-                
+
             except ValueError as e:
                 print(f"Warning: Error parsing line {line_idx + 1}: {e}")
                 line_idx += 1
@@ -231,7 +245,7 @@ def parse_bicliques(
             bicliques.append((dmr_ids, gene_ids))
         else:
             print(f"Warning: Skipping line {line_idx + 1} - missing DMRs or genes")
-        
+
         line_idx += 1
 
     return bicliques, line_idx
@@ -302,15 +316,19 @@ def create_result_dict(
     total_edges = len(original_graph.edges())
     single_coverage = len([e for e, b in edge_distribution.items() if len(b) == 1])
     multiple_coverage = len([e for e, b in edge_distribution.items() if len(b) > 1])
-    
+
     coverage_info["edges"] = {
         "single_coverage": single_coverage,
         "multiple_coverage": multiple_coverage,
         "uncovered": len(uncovered_edges),
         "total": total_edges,
         "single_percentage": single_coverage / total_edges if total_edges > 0 else 0,
-        "multiple_percentage": multiple_coverage / total_edges if total_edges > 0 else 0,
-        "uncovered_percentage": len(uncovered_edges) / total_edges if total_edges > 0 else 0
+        "multiple_percentage": multiple_coverage / total_edges
+        if total_edges > 0
+        else 0,
+        "uncovered_percentage": len(uncovered_edges) / total_edges
+        if total_edges > 0
+        else 0,
     }
 
     return {
