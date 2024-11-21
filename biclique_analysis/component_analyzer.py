@@ -5,6 +5,7 @@ import networkx as nx
 
 from .statistics import analyze_components
 from .edge_classification import classify_edges
+from .edge_info import EdgeInfo
 
 class ComponentAnalyzer:
     """Handles analysis of graph components."""
@@ -84,7 +85,7 @@ class ComponentAnalyzer:
             return 0.0
         return len(dominating_set) / len(components)
 
-    def get_edge_classifications(self) -> Dict[str, List['EdgeInfo']]:
+    def get_edge_classifications(self) -> Dict[str, List[EdgeInfo]]:
         """Get edge classifications between original and biclique graphs."""
         return classify_edges(
             self.bipartite_graph, 
