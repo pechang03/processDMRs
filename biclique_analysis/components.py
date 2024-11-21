@@ -231,6 +231,30 @@ def analyze_connected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     
     return conn_comps, stats
 
+def generate_component_description(
+    dmr_nodes: Set[int],
+    gene_nodes: Set[int],
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    category: BicliqueSizeCategory
+) -> str:
+    """Generate a human-readable description of the component."""
+    if category == BicliqueSizeCategory.EMPTY:
+        return "Empty component with no connections"
+    
+    if category == BicliqueSizeCategory.SIMPLE:
+        return f"Simple component with {len(dmr_nodes)} DMR(s) connected to {len(gene_nodes)} gene(s)"
+    
+    if category == BicliqueSizeCategory.INTERESTING:
+        return (f"Interesting component containing {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes "
+                f"forming {len(bicliques)} biclique(s)")
+    
+    if category == BicliqueSizeCategory.COMPLEX:
+        split_genes = {g for _, genes in bicliques for g in genes} - {g for _, genes in bicliques[0]}
+        return (f"Complex component with {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes, "
+                f"including {len(split_genes)} split genes across {len(bicliques)} bicliques")
+    
+    return "Unknown component type"
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -256,6 +280,16 @@ def process_components(
         else:
             # Process raw component data
             dmr_nodes, gene_nodes = component_data
+            category = classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)])
+            
+            # Generate component description
+            description = generate_component_description(
+                dmr_nodes, 
+                gene_nodes, 
+                [(dmr_nodes, gene_nodes)],
+                category
+            )
+            
             component_info = {
                 "id": idx + 1,
                 "component": dmr_nodes | gene_nodes,
@@ -264,7 +298,8 @@ def process_components(
                 "size": len(dmr_nodes) + len(gene_nodes),
                 "total_edges": sum(1 for dmr in dmr_nodes for gene in gene_nodes),
                 "raw_bicliques": [(dmr_nodes, gene_nodes)],
-                "category": classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]).name.lower()
+                "category": category.name.lower(),
+                "description": description  # Add description
             }
             interesting_components.append(component_info)
     
