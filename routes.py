@@ -184,10 +184,18 @@ def statistics_route():
             "size_distribution": results.get("size_distribution", {})
         }
 
+        # Convert numpy types and tuple keys before JSON serialization
+        from process_data import convert_dict_keys_to_str
+        detailed_stats = convert_dict_keys_to_str(detailed_stats)
+
         # Update edge coverage from biclique statistics if available
         if "biclique_stats" in results:
-            detailed_stats["edge_coverage"] = results["biclique_stats"].get("edge_coverage", {})
-            detailed_stats["coverage"]["edges"] = results["biclique_stats"].get("edge_coverage", {})
+            detailed_stats["edge_coverage"] = convert_dict_keys_to_str(
+                results["biclique_stats"].get("edge_coverage", {})
+            )
+            detailed_stats["coverage"]["edges"] = convert_dict_keys_to_str(
+                results["biclique_stats"].get("edge_coverage", {})
+            )
 
         print("\nDetailed stats being sent to template:")
         print(json.dumps(detailed_stats, indent=2))
@@ -195,7 +203,7 @@ def statistics_route():
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
-            bicliques_result=results
+            bicliques_result=convert_dict_keys_to_str(results)
         )
     except Exception as e:
         import traceback
