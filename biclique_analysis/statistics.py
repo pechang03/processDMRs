@@ -46,7 +46,13 @@ class InvalidGraphError(Exception):
 def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
     """
     Validate graph structure and return DMR and gene node sets.
-
+    Checks:
+    - Graph has nodes
+    - No isolated nodes (degree 0)
+    - No multi-edges
+    - Both partite sets non-empty
+    - Split genes have degree > 2 in both graphs
+    
     Args:
         graph: NetworkX graph to validate
 
@@ -68,16 +74,22 @@ def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
     if any(len(graph[u][v]) > 1 for u, v in graph.edges()):
         raise InvalidGraphError("Graph contains multi-edges")
 
-    # Identify DMR and gene nodes (DMRs are 0-2, genes are 3+)
+    # Get partite sets based on bipartite attribute
     all_nodes = set(graph.nodes())
-    dmr_nodes = {n for n in all_nodes if n <= 2}
-    gene_nodes = {n for n in all_nodes if n > 2}
+    dmr_nodes = {n for n, d in graph.nodes(data=True) if d.get('bipartite') == 0}
+    gene_nodes = {n for n, d in graph.nodes(data=True) if d.get('bipartite') == 1}
 
     # Check for empty partite sets
     if not dmr_nodes:
         raise InvalidGraphError("Graph contains no DMR nodes")
     if not gene_nodes:
         raise InvalidGraphError("Graph contains no gene nodes")
+
+    # Validate split genes have sufficient degree
+    split_genes = {n for n in gene_nodes if graph.degree(n) > 2}
+    for gene in split_genes:
+        if graph.degree(gene) <= 2:
+            raise InvalidGraphError(f"Split gene {gene} has insufficient degree ({graph.degree(gene)})")
 
     return dmr_nodes, gene_nodes
 
