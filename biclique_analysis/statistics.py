@@ -263,7 +263,7 @@ def calculate_biclique_statistics(
     
     # Combine all statistics
     stats = {
-        "size_distribution": size_dist,
+        "size_distribution": size_dist,  # Now uses string keys
         "coverage": coverage_stats,
         "node_participation": node_participation,
         "edge_coverage": edge_coverage,
@@ -279,7 +279,7 @@ def calculate_size_distribution(bicliques: List) -> Dict:
     """Calculate size distribution of bicliques."""
     distribution = {}
     for dmr_nodes, gene_nodes in bicliques:
-        size_key = (len(dmr_nodes), len(gene_nodes))
+        size_key = f"{len(dmr_nodes)}_{len(gene_nodes)}"  # Use string key directly
         distribution[size_key] = distribution.get(size_key, 0) + 1
     return distribution
 
