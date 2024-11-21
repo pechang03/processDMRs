@@ -303,14 +303,14 @@ def process_data():
                     *(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set)
                 )
             ),
-            "components_with_ds": sum(
-                1
-                for comp in interesting_components
-                if any(node in dominating_set for node in comp.get("component", []))
-            ),
-            "avg_size_per_component": len(dominating_set) / len(interesting_components)
-            if interesting_components
-            else 0,
+            # Use the count from component_stats instead of recalculating
+            "components_with_ds": component_stats["components"]["original"]["connected"]["interesting"],
+            # Use the interesting component count from stats
+            "avg_size_per_component": (
+                len(dominating_set) / component_stats["components"]["original"]["connected"]["interesting"]
+                if component_stats["components"]["original"]["connected"]["interesting"] > 0
+                else 0
+            )
         }
 
         print(f"\nCalculated dominating set statistics:")
