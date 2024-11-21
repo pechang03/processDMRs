@@ -9,6 +9,9 @@ from visualization import (
     CircularBicliqueLayout,
     SpringLogicalLayout,
 )
+from visualization.node_info import NodeInfo
+from visualization.base_layout import BaseLogicalLayout
+from visualization.biconnected_visualization import BiconnectedVisualization
 from biclique_analysis.statistics import calculate_biclique_statistics
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
@@ -199,7 +202,7 @@ def statistics_route():
         return render_template("error.html", message=str(e))
 
 
-def component_detail_route(component_id, type='biclique'):
+def component_detail_route(component_id, type='biconnected'):
     """Handle component detail page requests."""
     try:
         results = process_data()
@@ -209,34 +212,54 @@ def component_detail_route(component_id, type='biclique'):
         if type == 'triconnected':
             # Get triconnected component
             component = next(
-                (c for c in results.get("statistics", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", []) 
+                (c for c in results["statistics"]["components"]["original"]["triconnected"]["components"] 
                  if c["id"] == component_id),
                 None
             )
             if component:
-                # Create spring layout visualization
-                from visualization import SpringLogicalLayout
-                layout = SpringLogicalLayout()
-                subgraph = results["bipartite_graph"].subgraph(component["nodes"])
-                positions = layout.calculate_positions(subgraph)
+                from visualization.base_layout import BaseLogicalLayout
+                from visualization.biconnected_visualization import BiconnectedVisualization
                 
-                # Create visualization using spring layout
-                from visualization import create_biclique_visualization
-                viz_data = create_biclique_visualization(
-                    [],  # No bicliques for triconnected view
-                    results["node_labels"],
-                    positions,
-                    {},  # No biclique map needed
-                    {},  # No edge classifications needed
-                    subgraph,  # Use the component subgraph
-                    subgraph,  # Same graph for both parameters
-                    original_node_positions=positions
+                # Create subgraph for the component
+                subgraph = results["bipartite_graph"].subgraph(component["nodes"])
+                
+                # Create NodeInfo for the component
+                node_info = NodeInfo(
+                    all_nodes=set(subgraph.nodes()),
+                    dmr_nodes=component["dmrs"],
+                    regular_genes=component["genes"],
+                    split_genes=set(),  # No split genes in triconnected view
+                    node_degrees={n: subgraph.degree(n) for n in subgraph.nodes()},
+                    min_gene_id=min(component["genes"]) if component["genes"] else 0
                 )
-                component["visualization"] = viz_data
+
+                # Use BaseLogicalLayout for positioning
+                layout = BaseLogicalLayout()
+                node_positions = layout.calculate_positions(
+                    subgraph,
+                    node_info,
+                    layout_type="spring"  # Use spring layout for triconnected
+                )
+                
+                # Create visualization
+                viz = BiconnectedVisualization()
+                component["visualization"] = viz.create_visualization(
+                    subgraph,
+                    results["node_labels"],
+                    node_positions,
+                    node_metadata={
+                        n: results["dmr_metadata"].get(f"DMR_{n+1}", {})
+                        if n in component["dmrs"]
+                        else results["gene_metadata"].get(results["node_labels"].get(n, ""), {})
+                        for n in component["nodes"]
+                    },
+                    components=[component["nodes"]],  # Single component
+                    component_colors={0: "rgb(31, 119, 180)"}  # Blue for triconnected
+                )
         else:
             # Original biclique component logic
             component = next(
-                (c for c in results.get("interesting_components", []) if c["id"] == component_id),
+                (c for c in results["interesting_components"] if c["id"] == component_id),
                 None
             )
 
