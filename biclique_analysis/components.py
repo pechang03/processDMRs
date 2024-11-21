@@ -13,6 +13,7 @@ from biclique_analysis.classifier import (
     classify_biclique,
     classify_biclique_types,
     classify_component,
+    BicliqueSizeCategory,
 )
 from visualization import (
     create_node_biclique_map,
