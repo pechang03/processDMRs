@@ -1,5 +1,5 @@
 import unittest
-from biclique_analysis.classifier import classify_biclique, get_biclique_type_counts
+from biclique_analysis.classifier import classify_biclique, classify_biclique_types
 
 class TestClassifier(unittest.TestCase):
     def test_classify_biclique(self):
