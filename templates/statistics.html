@@ -189,24 +189,20 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Total Bicliques</td>
-                    <td>{{ statistics.size_distribution.values()|sum }}</td>
-                  </tr>
-                  <tr>
                     <td>Empty Components</td>
-                    <td>{{ statistics.components.biclique.connected.single_node }}</td>
+                    <td>{{ statistics.biclique_types.empty }}</td>
                   </tr>
                   <tr>
                     <td>Simple Components</td>
-                    <td>{{ statistics.size_distribution.get("1_1", 0) }}</td>
+                    <td>{{ statistics.biclique_types.simple }}</td>
                   </tr>
                   <tr>
                     <td>Interesting Components</td>
-                    <td>{{ statistics.components.biclique.connected.interesting }}</td>
+                    <td>{{ statistics.biclique_types.interesting }}</td>
                   </tr>
                   <tr>
                     <td>Complex Components</td>
-                    <td>{{ statistics.components.biclique.connected.interesting }}</td>
+                    <td>{{ statistics.biclique_types.complex }}</td>
                   </tr>
                 </tbody>
               </table>

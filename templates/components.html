@@ -128,8 +128,9 @@
           <div class="card mb-3">
             <div class="card-header">
               <h4>
-                Biclique {{ loop.index }} ({{ biclique[0]|length }} DMRs, {{
-                biclique[1]|length }} genes)
+                Biclique {{ loop.index }} 
+                ({{ biclique[0]|length }} DMRs, {{ biclique[1]|length }} genes)
+                - {{ biclique[0]|get_biclique_classification(biclique[1]) }}
               </h4>
             </div>
             <div class="card-body">
