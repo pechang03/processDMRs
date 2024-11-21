@@ -347,7 +347,7 @@ def position_remaining_nodes(
             elif node not in node_info.dmr_nodes:
                 x_pos = 1  # Regular genes at x=1
             positions[node] = (x_pos, current_y)
-            current_y += spacing
+            current_y += spacing * 1.5  # Increase spacing for better separation
     return positions
 
 
