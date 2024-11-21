@@ -314,18 +314,21 @@ def calculate_edge_coverage(
     """Calculate edge coverage statistics."""
     edge_coverage = {}
     
+    # Get all edges from original graph
+    original_edges = set(map(tuple, map(sorted, graph.edges())))
+    
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 edge = tuple(sorted([dmr, gene]))
-                if edge in graph.edges():  # Only count edges that exist in original graph
+                if edge in original_edges:  # Only count edges that exist in original graph
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
     # Count edges by coverage
     single = sum(1 for count in edge_coverage.values() if count == 1)
     multiple = sum(1 for count in edge_coverage.values() if count > 1)
-    total_edges = len(graph.edges())
+    total_edges = len(original_edges)
     uncovered = total_edges - len(edge_coverage)
 
     return {
