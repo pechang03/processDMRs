@@ -278,13 +278,36 @@ def process_components(
         comp for comp in interesting_components if comp["category"] == "complex"
     ]
 
-    # Initialize component_stats dictionary
+    # Initialize component_stats dictionary with proper structure
     component_stats = {
         "components": {
-            "counts": {
-                "num_interesting_components": len(interesting_components),
-                "num_non_simple_components": len(non_simple_components),
-                "num_complex_components": len(complex_components),
+            "original": {
+                "connected": {
+                    "total": len(interesting_components),
+                    "single_node": 0,  # We can update these if needed
+                    "small": 0,
+                    "interesting": len(interesting_components)
+                },
+                "biconnected": {
+                    "total": 0,
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": 0
+                }
+            },
+            "biclique": {
+                "connected": {
+                    "total": len(interesting_components),
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": len(interesting_components)
+                },
+                "biconnected": {
+                    "total": 0,
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": 0
+                }
             }
         }
     }
