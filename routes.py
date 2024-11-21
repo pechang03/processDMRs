@@ -12,6 +12,7 @@ from visualization import (
 from visualization.node_info import NodeInfo
 from visualization.base_layout import BaseLogicalLayout
 from visualization.biconnected_visualization import BiconnectedVisualization
+from visualization.triconnected_visualization import TriconnectedVisualization
 from biclique_analysis.statistics import calculate_biclique_statistics
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
@@ -242,7 +243,7 @@ def component_detail_route(component_id, type='biconnected'):
                 )
                 
                 # Create visualization
-                viz = BiconnectedVisualization()
+                viz = TriconnectedVisualization()
                 component["visualization"] = viz.create_visualization(
                     subgraph,
                     results["node_labels"],
