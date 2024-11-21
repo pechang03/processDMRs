@@ -11,15 +11,13 @@ from biclique_analysis.statistics import calculate_node_participation
 from biclique_analysis.classifier import (
     classify_biclique,
     classify_biclique_types,
-    classify_component  # Add this import
+    classify_component,  # Add this import
 )
 from visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
     CircularBicliqueLayout,
 )
-
-
 
 
 def find_interesting_components(
@@ -152,6 +150,7 @@ def convert_stats_for_json(stats):
     elif isinstance(stats, set):
         return list(stats)  # Convert sets to lists
     return stats
+
 
 def visualize_component(
     component_info: Dict,
@@ -317,7 +316,7 @@ def process_components(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-) -> Tuple[List[Dict], List[Dict], Dict]:
+) -> Tuple[List[Dict], List[Dict], List[Dict], Dict]:
     """Process connected components of the graph."""
 
     # Create biclique graph for edge classification
@@ -353,5 +352,29 @@ def process_components(
     statistics = calculate_biclique_statistics(
         bicliques_result["bicliques"], bipartite_graph
     )
+    # Collect non-simple and complex components
+    non_simple_components = [
+        comp
+        for comp in interesting_components
+        if comp["category"] not in ["empty", "simple"]
+    ]
 
-    return interesting_components, [], statistics
+    complex_components = [
+        comp for comp in interesting_components if comp["category"] == "complex"
+    ]
+
+    # Update component stats with counts
+    component_stats["components"]["counts"] = {
+        "num_interesting_components": len(interesting_components),
+        "num_non_simple_components": len(non_simple_components),
+        "num_complex_components": len(complex_components),
+    }
+
+    return (
+        complex_components,
+        interesting_components,
+        simple_connections,
+        non_simple_components,
+        component_stats,
+        statistics,
+    )
