@@ -263,6 +263,7 @@ def process_data():
             dmr_metadata=dmr_metadata,
             gene_metadata=gene_metadata,
             gene_id_mapping=gene_id_mapping,
+            dominating_set=dominating_set,  # Add this parameter
         )
 
         # Create summary statistics

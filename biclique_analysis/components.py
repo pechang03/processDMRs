@@ -4,10 +4,13 @@ from visualization.node_info import (
 
 import networkx as nx
 from typing import List, Dict, Tuple, Set
-from biclique_analysis.statistics import calculate_biclique_statistics
+from biclique_analysis.statistics import (
+    calculate_biclique_statistics,
+    calculate_edge_coverage,
+    calculate_node_participation,
+    analyze_components
+)
 from biclique_analysis.edge_classification import classify_edges
-from biclique_analysis.statistics import calculate_edge_coverage
-from biclique_analysis.statistics import calculate_node_participation
 from biclique_analysis.classifier import (
     classify_biclique,
     classify_biclique_types,
@@ -215,6 +218,7 @@ def process_components(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
+    dominating_set: Set[int] = None,  # Add this parameter
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
 
