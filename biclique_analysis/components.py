@@ -212,19 +212,43 @@ def visualize_component(
     }
 
 
+def analyze_biconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
+    """Find and analyze biconnected components of a graph."""
+    # Get biconnected components
+    biconn_comps = list(nx.biconnected_components(graph))
+    
+    # Analyze components
+    stats = analyze_components(biconn_comps, graph)
+    
+    return biconn_comps, stats
+
+def analyze_connected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
+    """Find and analyze connected components of a graph."""
+    # Get connected components
+    conn_comps = list(nx.connected_components(graph))
+    
+    # Analyze components
+    stats = analyze_components(conn_comps, graph)
+    
+    return conn_comps, stats
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-    dominating_set: Set[int] = None,  # Add this parameter
+    dominating_set: Set[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
-
-    # Create biclique graph for edge classification
+    
+    # Create biclique graph
     biclique_graph = nx.Graph()
     interesting_components = []
+    
+    # Get original graph components
+    _, original_connected_stats = analyze_connected_components(bipartite_graph)
+    _, original_biconn_stats = analyze_biconnected_components(bipartite_graph)
     
     # Process each component
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
@@ -251,6 +275,10 @@ def process_components(
                 for gene in gene_nodes:
                     biclique_graph.add_edge(dmr, gene)
 
+    # Get biclique graph components 
+    _, biclique_connected_stats = analyze_connected_components(biclique_graph)
+    _, biclique_biconn_stats = analyze_biconnected_components(biclique_graph)
+
     # Calculate edge classifications
     edge_sources = getattr(bipartite_graph, "graph", {}).get("edge_sources", {})
     edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
@@ -263,7 +291,7 @@ def process_components(
             dmr_metadata,
             gene_metadata,
             gene_id_mapping,
-            edge_classifications,  # Pass edge classifications
+            edge_classifications,
         )
         interesting_components[0].update(component_data)
 
@@ -282,24 +310,43 @@ def process_components(
         comp for comp in interesting_components if comp["category"] == "complex"
     ]
 
-    # Initialize component_stats dictionary with proper structure
+    # Calculate dominating set statistics
+    dmr_nodes = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}
+    if dominating_set is None:
+        dominating_set = set()
+        
+    dominating_set_stats = {
+        "size": len(dominating_set),
+        "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
+        "genes_dominated": len(
+            set().union(*(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set))
+        ),
+        "components_with_ds": original_connected_stats['interesting'],
+        "avg_size_per_component": (
+            len(dominating_set) / original_connected_stats['interesting']
+            if original_connected_stats['interesting'] > 0
+            else 0
+        )
+    }
+
+    # Build component statistics structure
     component_stats = {
         "components": {
             "original": {
-                "connected": original_connected_stats,  # Use the stats from analyze_components
+                "connected": original_connected_stats,
                 "biconnected": original_biconn_stats,
-                "triconnected": {  # Add placeholder for triconnected
+                "triconnected": {
                     "total": 0,
-                    "single_node": 0, 
+                    "single_node": 0,
                     "small": 0,
                     "interesting": 0
                 },
-                "dominating_set": dominating_set_stats  # Add dominating set stats
+                "dominating_set": dominating_set_stats
             },
             "biclique": {
-                "connected": biclique_connected_stats,  # Use the stats from analyze_components
+                "connected": biclique_connected_stats,
                 "biconnected": biclique_biconn_stats,
-                "triconnected": {  # Add placeholder for triconnected
+                "triconnected": {
                     "total": 0,
                     "single_node": 0,
                     "small": 0,
