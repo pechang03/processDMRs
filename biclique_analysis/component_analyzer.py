@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Set, Tuple
 import networkx as nx
+from collections import defaultdict
 
 from .statistics import analyze_components
 from .edge_classification import classify_edges
