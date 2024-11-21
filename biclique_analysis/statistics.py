@@ -236,22 +236,41 @@ def calculate_dominating_set_statistics(graph: nx.Graph, dominating_set: Set[int
         "genes_dominated_percentage": len(dominated_genes) / len(gene_nodes) if gene_nodes else 0
     }
 
-def calculate_biclique_statistics(bicliques: List, graph: nx.Graph, dominating_set: Set[int] = None) -> Dict:
+def calculate_biclique_statistics(
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    graph: nx.Graph,
+    dominating_set: Set[int] = None
+) -> Dict:
     """Calculate comprehensive biclique statistics."""
     # Validate graph structure first
     validate_graph(graph)
 
+    # Calculate node participation first
     node_participation = calculate_node_participation(bicliques)
+    
+    # Calculate edge coverage
     edge_coverage = calculate_edge_coverage(bicliques, graph)
+    
+    # Calculate size distribution
+    size_dist = calculate_size_distribution(bicliques)
+    
+    # Calculate coverage statistics
+    coverage_stats = calculate_coverage_statistics(bicliques, graph)
+    
+    # Calculate component statistics
+    component_stats = calculate_component_statistics(bicliques, graph)
+    
+    # Combine all statistics
     stats = {
-        "size_distribution": calculate_size_distribution(bicliques),
-        "coverage": calculate_coverage_statistics(bicliques, graph),
+        "size_distribution": size_dist,
+        "coverage": coverage_stats,
         "node_participation": node_participation,
         "edge_coverage": edge_coverage,
-        "components": calculate_component_statistics(bicliques, graph),
+        "components": component_stats,
         "dominating_set": calculate_dominating_set_statistics(graph, dominating_set) if dominating_set else {},
         "biclique_types": classify_biclique_types(bicliques)
     }
+    
     return stats
 
 
