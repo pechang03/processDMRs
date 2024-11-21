@@ -167,6 +167,26 @@
                       }}
                     </td>
                   </tr>
+                  <tr>
+                    <td>Triconnected</td>
+                    <td>
+                      {{ statistics.components.original.triconnected.total }}
+                    </td>
+                    <td>
+                      {{ statistics.components.original.triconnected.single_node }}
+                    </td>
+                    <td>
+                      {{ statistics.components.original.triconnected.small }}
+                    </td>
+                    <td>
+                      {{ statistics.components.original.triconnected.interesting }}
+                    </td>
+                  </tr>
+                  <tr class="text-muted">
+                    <td colspan="5" class="small">
+                      <em>Note: {{ statistics.components.original.triconnected.skipped_simple }} simple components skipped for triconnected analysis</em>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
