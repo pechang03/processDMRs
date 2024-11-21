@@ -2,8 +2,8 @@ from flask import render_template, request
 import json
 from extensions import app
 from process_data import process_data, convert_dict_keys_to_str
+from visualization.core import create_biclique_visualization  # Direct import
 from visualization import (
-    create_biclique_visualization,
     create_node_biclique_map,
     OriginalGraphLayout,
     CircularBicliqueLayout,
@@ -254,14 +254,13 @@ def component_detail_route(component_id, type='biconnected'):
                 )
 
                 # Create visualization
-                from visualization.core import create_biclique_visualization
                 component["visualization"] = create_biclique_visualization(
                     [(component["dmrs"], component["genes"])],  # Convert to biclique format
                     results["node_labels"],
                     node_positions,
                     create_node_biclique_map([(component["dmrs"], component["genes"])]),
                     results.get("edge_classifications", {}),
-                    subgraph,  # Add required graph parameter
+                    results["bipartite_graph"],  # Add required graph parameter
                     results["bipartite_graph"],  # Add required original graph
                     dmr_metadata=results.get("dmr_metadata", {}),
                     gene_metadata=results.get("gene_metadata", {}),
