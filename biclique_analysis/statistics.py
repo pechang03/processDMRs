@@ -309,36 +309,38 @@ def calculate_node_participation(bicliques: List[Tuple[Set[int], Set[int]]]) -> 
 
 
 def calculate_edge_coverage(
-    bicliques: List[Tuple[Set[int], Set[int]]], graph: nx.Graph
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    graph: nx.Graph
 ) -> Dict:
     """Calculate edge coverage statistics."""
-    edge_coverage = {}
-    
     # Get all edges from original graph
     original_edges = set(map(tuple, map(sorted, graph.edges())))
+    
+    # Track coverage for each edge
+    edge_coverage = {}
     
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 edge = tuple(sorted([dmr, gene]))
-                if edge in original_edges:  # Only count edges that exist in original graph
-                    edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+                edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
-    # Count edges by coverage
-    single = sum(1 for count in edge_coverage.values() if count == 1)
-    multiple = sum(1 for count in edge_coverage.values() if count > 1)
+    # Calculate coverage statistics
     total_edges = len(original_edges)
-    uncovered = total_edges - len(edge_coverage)
+    covered_edges = set(edge_coverage.keys())
+    single_covered = {e for e in covered_edges if edge_coverage[e] == 1}
+    multiple_covered = {e for e in covered_edges if edge_coverage[e] > 1}
+    uncovered = original_edges - covered_edges
 
     return {
-        "single": single,
-        "multiple": multiple,
-        "uncovered": uncovered,
+        "single": len(single_covered),
+        "multiple": len(multiple_covered),
+        "uncovered": len(uncovered),
         "total": total_edges,
-        "single_percentage": single / total_edges if total_edges else 0,
-        "multiple_percentage": multiple / total_edges if total_edges else 0,
-        "uncovered_percentage": uncovered / total_edges if total_edges else 0
+        "single_percentage": len(single_covered) / total_edges if total_edges else 0,
+        "multiple_percentage": len(multiple_covered) / total_edges if total_edges else 0,
+        "uncovered_percentage": len(uncovered) / total_edges if total_edges else 0
     }
 
 def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
