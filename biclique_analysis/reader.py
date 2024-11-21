@@ -1,6 +1,7 @@
 # File reader.py
 # Author: Peter Shaw
 
+import os
 from typing import Dict, List, Union, Tuple, Set
 import networkx as nx
 
