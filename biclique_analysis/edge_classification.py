@@ -2,14 +2,62 @@
 # Description : Edge classification module
 
 from typing import Dict, List, Tuple, Set
+from collections import defaultdict
 import networkx as nx
 
 from .edge_info import EdgeInfo
+
+def analyze_bridge_edges(
+    graph: nx.Graph, 
+    bicliques: List[Tuple[Set[int], Set[int]]]
+) -> Dict[str, Set[Tuple[int, int]]]:
+    """
+    Analyze bridge edges in bipartite graph context.
+    
+    In biclique analysis:
+    - Bridge edges between bicliques are likely false positives
+    - However, some bridges might represent legitimate biclique connections
+    - Need to consider DMR-Gene relationship in classification
+    """
+    # Find traditional bridge edges
+    bridges = set(nx.bridges(graph))
+    
+    # Create biclique membership map
+    node_to_bicliques = defaultdict(set)
+    for idx, (dmrs, genes) in enumerate(bicliques):
+        for node in dmrs | genes:
+            node_to_bicliques[node].add(idx)
+            
+    # Classify bridge edges
+    false_positives = set()
+    potential_true_bridges = set()
+    
+    for u, v in bridges:
+        # Get biclique memberships
+        u_bicliques = node_to_bicliques[u]
+        v_bicliques = node_to_bicliques[v]
+        
+        # If nodes belong to different bicliques, likely false positive
+        if not (u_bicliques & v_bicliques):
+            false_positives.add((u, v))
+        else:
+            # Could be legitimate if connects DMR to gene within biclique structure
+            if (graph.nodes[u].get('bipartite') != 
+                graph.nodes[v].get('bipartite')):
+                potential_true_bridges.add((u, v))
+            else:
+                false_positives.add((u, v))
+    
+    return {
+        "false_positives": false_positives,
+        "potential_true_bridges": potential_true_bridges
+    }
 
 def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
+    bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> Dict[str, List[EdgeInfo]]:
     """
     Classify edges by comparing original and biclique graphs.
@@ -56,11 +104,26 @@ def classify_edges(
                     edge_info = EdgeInfo(edge, label="false_negative", sources=sources)
                     false_negative_edges.append(edge_info)
 
-    return {
+    # Incorporate bridge edge analysis results
+    result = {
         "permanent": permanent_edges,
         "false_positive": false_positive_edges,
         "false_negative": false_negative_edges
     }
+    
+    if bridge_analysis is not None:
+        result["bridge_edges"] = {
+            "false_positives": [
+                EdgeInfo(edge, label="bridge_false_positive") 
+                for edge in bridge_analysis["false_positives"]
+            ],
+            "potential_true_bridges": [
+                EdgeInfo(edge, label="potential_true_bridge") 
+                for edge in bridge_analysis["potential_true_bridges"]
+            ]
+        }
+    
+    return result
 
 def validate_edge_classification(
     classification: Dict[str, Set[Tuple[int, int]]],
