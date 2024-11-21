@@ -329,7 +329,8 @@ def calculate_edge_coverage(
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 edge = tuple(sorted([dmr, gene]))
-                edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
+                if edge in original_edges:  # Only count edges that exist in original graph
+                    edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
     # Calculate coverage statistics
     total_edges = len(original_edges)
@@ -338,7 +339,7 @@ def calculate_edge_coverage(
     multiple_covered = {e for e in covered_edges if edge_coverage[e] > 1}
     uncovered = original_edges - covered_edges
 
-    stats = {
+    return {
         "single": len(single_covered),
         "multiple": len(multiple_covered),
         "uncovered": len(uncovered),
@@ -347,9 +348,6 @@ def calculate_edge_coverage(
         "multiple_percentage": len(multiple_covered) / total_edges if total_edges else 0,
         "uncovered_percentage": len(uncovered) / total_edges if total_edges else 0
     }
-    
-    print("Edge coverage statistics:", json.dumps(stats, indent=2))
-    return stats
 
 def calculate_component_statistics(bicliques: List, graph: nx.Graph) -> Dict:
     """Calculate statistics about components in both original and biclique graphs."""
