@@ -10,13 +10,18 @@ from visualization import (
     SpringLogicalLayout,
 )
 from biclique_analysis.statistics import calculate_biclique_statistics
-from biclique_analysis.classifier import classify_biclique
+from biclique_analysis.classifier import (
+    BicliqueSizeCategory,
+    classify_biclique,
+    classify_component
+)
 
 
 @app.template_filter("get_biclique_classification")
 def get_biclique_classification(dmr_nodes, gene_nodes):
     """Template filter to get biclique classification."""
-    return classify_biclique(set(dmr_nodes), set(gene_nodes))
+    category = classify_biclique(set(dmr_nodes), set(gene_nodes))
+    return category.name.lower()  # Return string name of enum
 
 
 def index_route():
@@ -159,30 +164,31 @@ def statistics_route():
         )
 
         # Initialize detailed stats with proper structure
-        detailed_stats = {
-            "components": results.get("component_stats", {}).get("components", {}),
-            "dominating_set": results.get(
-                "dominating_set",
-                {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
-            ),
-            "coverage": results.get("coverage", {}),
-            "size_distribution": results.get("size_distribution", {}),
-            "node_participation": results.get("node_participation", {}),
-            "edge_coverage": {  # Add proper edge coverage structure with total
-                "single_coverage": edge_coverage_data.get("single", 0),
-                "multiple_coverage": edge_coverage_data.get("multiple", 0),
-                "uncovered": edge_coverage_data.get("uncovered", 0),
-                "total": total_edges,
-                "single_percentage": 0,
-                "multiple_percentage": 0,
-                "uncovered_percentage": 0,
-            },
+        detailed_stats = results.get("component_stats", {})
+        
+        # Update classification names to lowercase
+        if "components" in detailed_stats:
+            for graph_type in ["original", "biclique"]:
+                if graph_type in detailed_stats["components"]:
+                    for comp_type in ["connected", "biconnected"]:
+                        if comp_type in detailed_stats["components"][graph_type]:
+                            stats = detailed_stats["components"][graph_type][comp_type]
+                            # Convert any classification counts to use new enum names
+                            if "classifications" in stats:
+                                stats["classifications"] = {
+                                    cat.name.lower(): count 
+                                    for cat, count in stats["classifications"].items()
+                                }
+
+        # Add edge coverage details
+        detailed_stats["edge_coverage"] = {
+            "single_coverage": edge_coverage_data.get("single", 0),
+            "multiple_coverage": edge_coverage_data.get("multiple", 0),
+            "uncovered": edge_coverage_data.get("uncovered", 0),
+            "total": total_edges,
+            "single_percentage": 0,
+            "multiple_percentage": 0,
+            "uncovered_percentage": 0,
         }
 
         # Calculate edge coverage percentages
@@ -203,10 +209,10 @@ def statistics_route():
             bicliques_result=results,  # Pass the full results
             selected_component_id=request.args.get("component_id", type=int),
             total_bicliques=len(results.get("interesting_components", [])),
+            BicliqueSizeCategory=BicliqueSizeCategory  # Pass enum to template
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
