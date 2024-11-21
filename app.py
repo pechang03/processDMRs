@@ -33,6 +33,9 @@ app.add_url_rule("/statistics", "statistics_route", statistics_route)
 app.add_url_rule(
     "/component/<int:component_id>", "component_detail", component_detail_route
 )
+app.add_url_rule(
+    "/component/<int:component_id>/<type>", "component_detail", component_detail_route
+)
 
 if __name__ == "__main__":
     args = parse_arguments()
