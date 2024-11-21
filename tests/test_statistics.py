@@ -55,6 +55,10 @@ class TestStatistics(unittest.TestCase):
         self.assertEqual(biclique_stats["edge_coverage"]["single"], 3)
         self.assertEqual(biclique_stats["edge_coverage"]["multiple"], 0)
         self.assertEqual(biclique_stats["edge_coverage"]["uncovered"], 3)
+        
+        # Verify biclique types are present
+        self.assertIn("biclique_types", biclique_stats)
+        self.assertIsInstance(biclique_stats["biclique_types"], dict)
 
     def test_calculate_size_distribution(self):
         size_dist = calculate_size_distribution(self.bicliques)
