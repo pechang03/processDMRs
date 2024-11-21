@@ -329,7 +329,7 @@ def process_components(
     # Rest of the function remains the same...
 
     # Convert any sets to lists before returning
-    component_stats = convert_sets_to_lists(component_stats)
+    component_stats = convert_for_json(component_stats)
     # Initialize lists before using them
     complex_components = []
     interesting_components = []
