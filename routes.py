@@ -218,59 +218,104 @@ def component_detail_route(component_id, type='biconnected'):
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Convert results to handle numpy types and tuple keys
+        results = convert_dict_keys_to_str(results)
+
         if type == 'triconnected':
             # Get triconnected component
             component = next(
-                (c for c in results["statistics"]["components"]["original"]["triconnected"]["components"] 
-                 if c["id"] == component_id),
+                (c for c in results.get("statistics", {})
+                    .get("components", {})
+                    .get("original", {})
+                    .get("triconnected", {})
+                    .get("components", [])
+                 if c.get("id") == component_id),
                 None
             )
             if component:
-                from visualization.base_layout import BaseLogicalLayout
-                from visualization.biconnected_visualization import BiconnectedVisualization
-                
                 # Create subgraph for the component
                 subgraph = results["bipartite_graph"].subgraph(component["nodes"])
                 
                 # Create NodeInfo for the component
                 node_info = NodeInfo(
                     all_nodes=set(subgraph.nodes()),
-                    dmr_nodes=component["dmrs"],
-                    regular_genes=component["genes"],
+                    dmr_nodes=set(component["dmrs"]),
+                    regular_genes=set(component["genes"]),
                     split_genes=set(),  # No split genes in triconnected view
                     node_degrees={n: subgraph.degree(n) for n in subgraph.nodes()},
                     min_gene_id=min(component["genes"]) if component["genes"] else 0
                 )
 
-                # Use BaseLogicalLayout for positioning
-                layout = BaseLogicalLayout()
+                # Calculate positions
+                layout = CircularBicliqueLayout()
                 node_positions = layout.calculate_positions(
                     subgraph,
-                    node_info,
-                    layout_type="spring"  # Use spring layout for triconnected
+                    node_info
                 )
-                
+
                 # Create visualization
-                viz = TriconnectedVisualization()
-                component["visualization"] = viz.create_visualization(
-                    subgraph,
+                from visualization.core import create_biclique_visualization
+                component["visualization"] = create_biclique_visualization(
+                    [(component["dmrs"], component["genes"])],  # Convert to biclique format
                     results["node_labels"],
                     node_positions,
-                    node_metadata={
-                        n: results["dmr_metadata"].get(f"DMR_{n+1}", {})
-                        if n in component["dmrs"]
-                        else results["gene_metadata"].get(results["node_labels"].get(n, ""), {})
-                        for n in component["nodes"]
-                    },
-                    components=[component["nodes"]],  # Single component
-                    component_colors={0: "rgb(31, 119, 180)"}  # Blue for triconnected
+                    create_node_biclique_map([(component["dmrs"], component["genes"])]),
+                    results.get("edge_classifications", {}),
+                    subgraph,  # Add required graph parameter
+                    results["bipartite_graph"],  # Add required original graph
+                    dmr_metadata=results.get("dmr_metadata", {}),
+                    gene_metadata=results.get("gene_metadata", {}),
+                    gene_id_mapping=results.get("gene_id_mapping", {})
                 )
+
         else:
             # Original biclique component logic
             component = next(
                 (c for c in results["interesting_components"] if c["id"] == component_id),
                 None
             )
+            
+            if component and "raw_bicliques" in component:
+                # Calculate positions
+                node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
+                layout = CircularBicliqueLayout()
+                
+                # Create NodeInfo
+                all_nodes = set().union(*[dmrs | genes for dmrs, genes in component["raw_bicliques"]])
+                dmr_nodes = set().union(*[dmrs for dmrs, _ in component["raw_bicliques"]])
+                gene_nodes = all_nodes - dmr_nodes
+                split_genes = {
+                    node for node in gene_nodes 
+                    if len(node_biclique_map.get(node, [])) > 1
+                }
+                
+                node_info = NodeInfo(
+                    all_nodes=all_nodes,
+                    dmr_nodes=dmr_nodes,
+                    regular_genes=gene_nodes - split_genes,
+                    split_genes=split_genes,
+                    node_degrees={node: len(node_biclique_map.get(node, [])) for node in all_nodes},
+                    min_gene_id=min(gene_nodes) if gene_nodes else 0
+                )
+                
+                node_positions = layout.calculate_positions(
+                    results["bipartite_graph"].subgraph(all_nodes),
+                    node_info
+                )
+
+                # Create visualization
+                component["visualization"] = create_biclique_visualization(
+                    component["raw_bicliques"],
+                    results["node_labels"],
+                    node_positions,
+                    node_biclique_map,
+                    results.get("edge_classifications", {}),
+                    results["bipartite_graph"],  # Add required graph parameter
+                    results["bipartite_graph"],  # Add required original graph
+                    dmr_metadata=results.get("dmr_metadata", {}),
+                    gene_metadata=results.get("gene_metadata", {}),
+                    gene_id_mapping=results.get("gene_id_mapping", {})
+                )
 
         if not component:
             return render_template(
