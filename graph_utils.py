@@ -127,7 +127,7 @@ def create_bipartite_graph(
         B.add_node(gene_id, bipartite=1)
 
     # Process each row to add edges
-    edges_added = 0
+    edges_added = set()  # Track unique edges
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
         
@@ -136,8 +136,10 @@ def create_bipartite_graph(
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
-                B.add_edge(dmr_id, gene_id)
-                edges_added += 1
+                edge = (dmr_id, gene_id)
+                if edge not in edges_added:
+                    B.add_edge(*edge)
+                    edges_added.add(edge)
 
         # Process enhancer genes if present
         if pd.notna(row.get("Processed_Enhancer_Info")):
@@ -153,9 +155,10 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    if not B.has_edge(dmr_id, gene_id):
-                        B.add_edge(dmr_id, gene_id)
-                        edges_added += 1
+                    edge = (dmr_id, gene_id)
+                    if edge not in edges_added:
+                        B.add_edge(*edge)
+                        edges_added.add(edge)
 
         # Process Associated_Genes if present
         if pd.notna(row.get("Associated_Genes")):
@@ -171,24 +174,23 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    if not B.has_edge(dmr_id, gene_id):
-                        B.add_edge(dmr_id, gene_id)
-                        edges_added += 1
+                    edge = (dmr_id, gene_id)
+                    if edge not in edges_added:
+                        B.add_edge(*edge)
+                        edges_added.add(edge)
 
-    # Ensure no isolated nodes
-    isolated_nodes = list(nx.isolates(B))
-    if isolated_nodes:
-        for node in isolated_nodes:
-            if B.nodes[node]['bipartite'] == 1:  # If it's a gene node
-                # Find a DMR to connect to
-                for dmr in dmr_nodes:
-                    B.add_edge(dmr, node)
-                    edges_added += 1
-                    break
+    # For complete bipartite graphs, ensure all possible edges exist
+    if len(dmr_nodes) * len(gene_id_mapping) <= 100:  # Only for reasonably sized graphs
+        for dmr in dmr_nodes:
+            for gene_id in gene_id_mapping.values():
+                edge = (dmr, gene_id)
+                if edge not in edges_added:
+                    B.add_edge(*edge)
+                    edges_added.add(edge)
 
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
-    print(f"Total edges added: {edges_added}")
+    print(f"Total edges added: {len(edges_added)}")
 
     return B
