@@ -317,7 +317,7 @@ def process_data():
         print(json.dumps(dominating_set_stats, indent=2))
 
         # First get the biclique classifications
-        biclique_type_counts = classify_biclique_types(bicliques_result["bicliques"])
+        biclique_type_counts = get_biclique_type_counts(bicliques_result["bicliques"])
 
         # Get component classifications
         components = list(nx.connected_components(bipartite_graph))
