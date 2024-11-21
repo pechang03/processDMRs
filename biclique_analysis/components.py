@@ -256,6 +256,18 @@ def generate_component_description(
     
     return "Unknown component type"
 
+def convert_sets_to_lists(data):
+    """Convert any sets in the data structure to lists recursively."""
+    if isinstance(data, dict):
+        return {k: convert_sets_to_lists(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_sets_to_lists(i) for i in data]
+    elif isinstance(data, set):
+        return sorted(list(data))
+    elif isinstance(data, tuple):
+        return list(data)
+    return data
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -303,6 +315,21 @@ def process_components(
             }
         }
     }
+    
+    # Rest of the function remains the same...
+
+    # Convert any sets to lists before returning
+    component_stats = convert_sets_to_lists(component_stats)
+    statistics = convert_sets_to_lists(statistics)
+    
+    return (
+        complex_components,
+        interesting_components,
+        [],  # simple_connections 
+        non_simple_components,
+        component_stats,
+        statistics,
+    )
     
     # Process individual components
     interesting_components = []
