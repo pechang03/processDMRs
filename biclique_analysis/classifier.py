@@ -17,26 +17,6 @@ class BicliqueSizeCategory(Enum):
     INTERESTING = auto() # ≥3 DMRs and ≥3 genes
     COMPLEX = auto()    # Interesting with split genes (multiple interesting bicliques)
 
-def classify_biclique_types(bicliques: List[Tuple[Set[int], Set[int]]]) -> Dict[str, int]:
-    """
-    Classify all bicliques and return counts by type.
-    
-    Args:
-        bicliques: List of (dmr_nodes, gene_nodes) tuples
-        
-    Returns:
-        Dictionary with counts of each biclique type
-    """
-    type_counts = {
-        category.name.lower(): 0 
-        for category in BicliqueSizeCategory
-    }
-    
-    for dmr_nodes, gene_nodes in bicliques:
-        category = classify_biclique(dmr_nodes, gene_nodes)
-        type_counts[category.name.lower()] += 1
-        
-    return type_counts
 
 @dataclass
 class BicliqueSizes:
