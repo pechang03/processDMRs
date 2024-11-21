@@ -218,38 +218,27 @@ def parse_header_statistics(lines: List[str]) -> Dict:
 
 
 def parse_bicliques(
-    lines: List[str],
+    lines: List[str], 
     max_DMR_id: int,
     gene_id_mapping: Dict[str, int] = None,
-    file_format: str = "id",
+    file_format: str = "gene_name"
 ) -> Tuple[List[Tuple[Set[int], Set[int]]], int]:
     """Parse bicliques from file lines."""
     bicliques = []
     line_idx = 0
-
-    # Extensive logging
-    print(f"\nParsing Bicliques:")
-    print(f"File format: {file_format}")
+    
+    print("\nParsing bicliques:")
     print(f"Max DMR ID: {max_DMR_id}")
-    print(f"Gene ID mapping size: {len(gene_id_mapping) if gene_id_mapping else 0}")
+    print(f"Gene mapping size: {len(gene_id_mapping) if gene_id_mapping else 0}")
 
-    # Validate gene_id_mapping
-    if gene_id_mapping:
-        print("First 10 gene mappings:")
-        for gene, id_val in list(gene_id_mapping.items())[:10]:
-            print(f"  {gene}: {id_val}")
-
-    # Create set of valid DMR IDs (0 to max_DMR_id-1)
-    valid_dmr_ids = set(range(max_DMR_id))
-
-    # Skip header and empty lines
+    # Skip header until we find "# Clusters"
     while line_idx < len(lines):
-        line = lines[line_idx].strip()
-        if line and not line.startswith(("#", "- ")):
+        if lines[line_idx].strip() == "# Clusters":
+            line_idx += 1  # Move to first cluster line
             break
         line_idx += 1
 
-    # Parsing loop with extensive error handling
+    # Parse bicliques
     while line_idx < len(lines):
         line = lines[line_idx].strip()
         if not line:
@@ -257,62 +246,52 @@ def parse_bicliques(
             continue
 
         try:
-            if file_format == "gene_name":
-                # Gene name format parsing
-                gene_ids = set()
-                dmr_ids = set()
-
-                tokens = line.split()
-                for token in tokens:
-                    token = token.strip().lower()
-
-                    # Try gene mapping first
+            # Split line into tokens
+            tokens = line.split()
+            if not tokens:
+                line_idx += 1
+                continue
+                
+            gene_ids = set()
+            dmr_ids = set()
+            
+            # Process each token
+            for token in tokens:
+                token = token.strip().lower()  # Normalize to lowercase
+                
+                try:
+                    # Try parsing as DMR ID first
+                    dmr_id = int(token)
+                    if dmr_id < max_DMR_id:
+                        dmr_ids.add(dmr_id)
+                    continue
+                except ValueError:
+                    # Not a number, must be a gene name
                     if gene_id_mapping and token in gene_id_mapping:
                         gene_ids.add(gene_id_mapping[token])
-                        continue
+                    else:
+                        print(f"Warning: Gene '{token}' not found in mapping")
 
-                    # Then try DMR ID
-                    try:
-                        dmr_id = int(token)
-                        if dmr_id in valid_dmr_ids:
-                            dmr_ids.add(dmr_id)
-                        else:
-                            print(f"Warning: DMR ID {dmr_id} out of valid range")
-                    except ValueError:
-                        print(f"Warning: Unrecognized token '{token}'")
-
-            else:
-                # Original ID format parsing
-                parts = line.split(None, 1)
-                if len(parts) != 2:
-                    print(f"Skipping malformed line: {line}")
-                    line_idx += 1
-                    continue
-
-                gene_ids = {int(x) for x in parts[0].split()}
-                dmr_ids = {int(x) for x in parts[1].split()}
-
-            # Validate and add biclique
+            # Only add valid bicliques
             if dmr_ids and gene_ids:
                 bicliques.append((dmr_ids, gene_ids))
-                print(f"Added biclique: {len(dmr_ids)} DMRs, {len(gene_ids)} genes")
-            else:
-                print(f"Skipping line - insufficient nodes: {line}")
+                if len(bicliques) <= 3:  # Debug first 3 bicliques
+                    print(f"\nBiclique {len(bicliques)}:")
+                    print(f"  Original line: {line}")
+                    print(f"  DMRs: {sorted(dmr_ids)}")
+                    print(f"  Genes: {sorted(gene_ids)}")
 
         except Exception as e:
-            print(f"Error parsing line {line_idx + 1}: {e}")
+            print(f"Warning: Error parsing line {line_idx + 1}: {str(e)}")
+            print(f"Line content: {line}")
 
         line_idx += 1
 
-    # Final summary
-    print(f"\nBiclique Parsing Complete:")
+    print(f"\nParsing complete:")
     print(f"Total bicliques found: {len(bicliques)}")
     if bicliques:
-        print("First 3 bicliques:")
-        for i, (dmrs, genes) in enumerate(bicliques[:3], 1):
-            print(f"  Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
-            print(f"    DMRs: {sorted(dmrs)}")
-            print(f"    Genes: {sorted(genes)}")
+        print(f"First biclique DMRs: {sorted(bicliques[0][0])}")
+        print(f"First biclique genes: {sorted(bicliques[0][1])}")
 
     return bicliques, line_idx
 
