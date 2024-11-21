@@ -4,8 +4,26 @@ from typing import List, Dict, Tuple, Set
 import networkx as nx
 from biclique_analysis.classifier import classify_biclique, classify_biclique_types
 
-def analyze_components(components, graph):
-    """Helper function to analyze components of a graph."""
+def analyze_components(
+    components: List[Set[int]], 
+    graph: nx.Graph
+) -> Dict[str, float]:
+    """
+    Analyze graph components and calculate statistics.
+    
+    Args:
+        components: List of sets of node IDs representing components
+        graph: NetworkX graph containing the components
+        
+    Returns:
+        Dictionary containing:
+            - total: Total number of components
+            - single_node: Number of single-node components
+            - small: Number of components with ≤2 nodes or ≤1 DMR/gene
+            - interesting: Number of components with >2 nodes and ≥2 DMR/gene
+            - avg_dmrs: Average number of DMRs in interesting components
+            - avg_genes: Average number of genes in interesting components
+    """
     interesting_comps = []
     single_node = 0
     small = 0
@@ -13,7 +31,7 @@ def analyze_components(components, graph):
     for comp in components:
         dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
         genes = {n for n in comp if graph.nodes[n].get('bipartite') == 1}
-
+        
         if len(comp) == 1:
             single_node += 1
         elif len(dmrs) <= 1 or len(genes) <= 1:
