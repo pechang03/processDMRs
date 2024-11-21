@@ -280,13 +280,26 @@ def process_components(
     from .triconnected import analyze_triconnected_components
     triconnected_components, tri_stats = analyze_triconnected_components(bipartite_graph)
     
-    # Get component statistics
+    # Create biclique graph from bicliques
+    biclique_graph = nx.Graph()
+    if bicliques_result and "bicliques" in bicliques_result:
+        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+            biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+    
+    # Get component statistics for both graphs
     component_stats = {
         "components": {
             "original": {
                 "connected": analyze_components(connected_components, bipartite_graph),
                 "biconnected": biconnected_stats,
                 "triconnected": tri_stats
+            },
+            "biclique": {
+                "connected": analyze_components(list(nx.connected_components(biclique_graph)), biclique_graph),
+                "biconnected": analyze_biconnected_components(biclique_graph)[1],  # Get just the stats
+                "triconnected": analyze_triconnected_components(biclique_graph)[1]  # Get just the stats
             }
         }
     }
