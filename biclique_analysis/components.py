@@ -300,6 +300,27 @@ def convert_sets_to_lists(data):
     return data
 
 
+def convert_all_for_json(data):
+    """Comprehensive conversion of all data types for JSON serialization."""
+    import numpy as np
+    if isinstance(data, dict):
+        return {
+            str(k) if isinstance(k, tuple) else k: convert_all_for_json(v)
+            for k, v in data.items()
+        }
+    elif isinstance(data, (list, tuple)):
+        return [convert_all_for_json(i) for i in data]
+    elif isinstance(data, set):
+        return sorted(list(data))
+    elif isinstance(data, np.integer):
+        return int(data)
+    elif isinstance(data, np.floating):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return data.tolist()
+    return data
+
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -367,12 +388,12 @@ def process_components(
 
     # Rest of the function remains the same...
 
-    # Convert any sets to lists before returning
-    component_stats = convert_for_json(component_stats)
-    # Initialize lists before using them
-    complex_components = []
-    interesting_components = []
-    non_simple_components = []
+    # Convert all return values to JSON-safe format
+    complex_components = convert_all_for_json(complex_components)
+    interesting_components = convert_all_for_json(interesting_components)
+    non_simple_components = convert_all_for_json(non_simple_components)
+    component_stats = convert_all_for_json(component_stats)
+    statistics = convert_all_for_json(statistics)
 
     # Process individual components
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
