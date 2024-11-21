@@ -220,20 +220,36 @@ def process_components(
 
     # Create biclique graph for edge classification
     biclique_graph = nx.Graph()
-    for component in bicliques_result.get("interesting_components", []):
-        for dmr_nodes, gene_nodes in component.get("raw_bicliques", []):
+    interesting_components = []
+    
+    # Process each component
+    for idx, component_data in enumerate(bicliques_result.get("components", [])):
+        if isinstance(component_data, dict):
+            # If component data is already processed, add it directly
+            interesting_components.append(component_data)
+        else:
+            # Process raw component data
+            dmr_nodes, gene_nodes = component_data
+            component_info = {
+                "id": idx + 1,
+                "component": dmr_nodes | gene_nodes,
+                "dmrs": len(dmr_nodes),
+                "genes": len(gene_nodes),
+                "size": len(dmr_nodes) + len(gene_nodes),
+                "total_edges": sum(1 for dmr in dmr_nodes for gene in gene_nodes),
+                "raw_bicliques": [(dmr_nodes, gene_nodes)],
+                "category": classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]).name.lower()
+            }
+            interesting_components.append(component_info)
+            
+            # Add edges to biclique graph
             for dmr in dmr_nodes:
                 for gene in gene_nodes:
                     biclique_graph.add_edge(dmr, gene)
 
     # Calculate edge classifications
-    # Get edge_sources from the graph's attributes
     edge_sources = getattr(bipartite_graph, "graph", {}).get("edge_sources", {})
     edge_classifications = classify_edges(bipartite_graph, biclique_graph, edge_sources)
-
-    interesting_components = find_interesting_components(
-        bipartite_graph, bicliques_result, dmr_metadata, gene_metadata, gene_id_mapping
-    )
 
     # Only visualize first component initially
     if interesting_components:
