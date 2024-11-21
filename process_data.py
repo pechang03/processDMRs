@@ -23,6 +23,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template
 import pandas as pd
+import numpy as np
 
 # from processDMR import read_excel_file,
 from biclique_analysis import (
@@ -63,7 +64,9 @@ _cached_data = None
 
 
 def convert_dict_keys_to_str(d):
-    """Convert dictionary tuple keys to strings recursively and handle sets."""
+    """Convert dictionary tuple keys to strings recursively and handle numpy types."""
+    import numpy as np  # Add this import at top of file
+    
     if isinstance(d, dict):
         return {
             "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
@@ -72,9 +75,15 @@ def convert_dict_keys_to_str(d):
     elif isinstance(d, list):
         return [convert_dict_keys_to_str(i) for i in d]
     elif isinstance(d, set):  # Handle sets by converting to sorted lists
-        return sorted(list(d))  # Sort for consistent output
+        return sorted(list(d))
     elif isinstance(d, tuple):  # Handle tuples
-        return list(d)  # Convert tuples to lists for JSON
+        return list(d)
+    elif isinstance(d, np.integer):  # Handle numpy integers
+        return int(d)
+    elif isinstance(d, np.floating):  # Handle numpy floats
+        return float(d)
+    elif isinstance(d, np.ndarray):  # Handle numpy arrays
+        return d.tolist()
     return d
 
 
