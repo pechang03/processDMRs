@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple
 import networkx as nx
-from biclique_analysis import classify_edges
-from biclique_analysis import classify_edges
 
 
 class GraphVisualization(ABC):
