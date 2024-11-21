@@ -33,6 +33,12 @@ from biclique_analysis import (
     reporting,  # Add this import
 )
 from biclique_analysis.edge_classification import classify_edges
+from biclique_analysis.classifier import (
+    BicliqueSizeCategory,
+    classify_biclique,
+    classify_component,
+    classify_biclique_types
+)
 from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
 from visualization.node_info import NodeInfo
 from graph_utils import read_excel_file, create_bipartite_graph
@@ -316,11 +322,10 @@ def process_data():
         # Get component classifications
         components = list(nx.connected_components(bipartite_graph))
         component_classifications = {
-            "empty": 0,
-            "simple": 0,
-            "normal": 0,
-            "interesting": 0,
-            "complex": 0,
+            BicliqueSizeCategory.EMPTY: 0,
+            BicliqueSizeCategory.SIMPLE: 0,
+            BicliqueSizeCategory.INTERESTING: 0,
+            BicliqueSizeCategory.COMPLEX: 0
         }
 
         for component in components:
@@ -339,9 +344,7 @@ def process_data():
                 if (dmr_nodes_bic | gene_nodes_bic) & set(component)
             ]
 
-            category = classify_component(
-                len(dmr_nodes), len(gene_nodes), component_bicliques
-            )
+            category = classify_component(dmr_nodes, gene_nodes, component_bicliques)
             component_classifications[category] += 1
 
         formatted_component_stats = {
