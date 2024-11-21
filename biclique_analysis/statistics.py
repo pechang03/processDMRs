@@ -232,7 +232,7 @@ def calculate_biclique_statistics(bicliques: List, graph: nx.Graph, dominating_s
         "edge_coverage": edge_coverage,
         "components": calculate_component_statistics(bicliques, graph),
         "dominating_set": calculate_dominating_set_statistics(graph, dominating_set) if dominating_set else {},
-        "biclique_types": get_biclique_type_counts(bicliques)
+        "biclique_types": classify_biclique_types(bicliques)
     }
     return stats
 
