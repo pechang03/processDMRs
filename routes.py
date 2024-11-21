@@ -153,62 +153,21 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Get raw edge coverage data
-        edge_coverage_data = results.get("edge_coverage", {})
-        total_edges = sum(
-            [
-                edge_coverage_data.get("single", 0),
-                edge_coverage_data.get("multiple", 0),
-                edge_coverage_data.get("uncovered", 0),
-            ]
-        )
-
-        # Initialize detailed stats with proper structure
-        detailed_stats = results.get("component_stats", {})
-        
-        # Update classification names to lowercase
-        if "components" in detailed_stats:
-            for graph_type in ["original", "biclique"]:
-                if graph_type in detailed_stats["components"]:
-                    for comp_type in ["connected", "biconnected"]:
-                        if comp_type in detailed_stats["components"][graph_type]:
-                            stats = detailed_stats["components"][graph_type][comp_type]
-                            # Convert any classification counts to use new enum names
-                            if "classifications" in stats:
-                                stats["classifications"] = {
-                                    cat.name.lower(): count 
-                                    for cat, count in stats["classifications"].items()
-                                }
-
-        # Add edge coverage details
-        detailed_stats["edge_coverage"] = {
-            "single_coverage": edge_coverage_data.get("single", 0),
-            "multiple_coverage": edge_coverage_data.get("multiple", 0),
-            "uncovered": edge_coverage_data.get("uncovered", 0),
-            "total": total_edges,
-            "single_percentage": 0,
-            "multiple_percentage": 0,
-            "uncovered_percentage": 0,
+        # Create properly structured statistics
+        detailed_stats = {
+            "components": results.get("component_stats", {}).get("components", {}),
+            "dominating_set": results.get("component_stats", {}).get("dominating_set", {}),
+            "coverage": results.get("coverage", {}),
+            "node_participation": results.get("node_participation", {}),
+            "edge_coverage": results.get("edge_coverage", {}),
+            "size_distribution": results.get("size_distribution", {}),
+            "biclique_types": results.get("biclique_type_counts", {})
         }
 
-        # Calculate edge coverage percentages
-        if total_edges > 0:
-            detailed_stats["edge_coverage"]["single_percentage"] = (
-                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["multiple_percentage"] = (
-                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
-                detailed_stats["edge_coverage"]["uncovered"] / total_edges
-            )
-
         return render_template(
-            "statistics.html",
+            "statistics.html", 
             statistics=detailed_stats,
-            bicliques_result=results,  # Pass the full results
-            selected_component_id=request.args.get("component_id", type=int),
-            total_bicliques=len(results.get("interesting_components", [])),
+            bicliques_result=results,
             BicliqueSizeCategory=BicliqueSizeCategory  # Pass enum to template
         )
     except Exception as e:
@@ -255,4 +214,5 @@ from biclique_analysis.classifier import classify_biclique
 @app.template_filter("get_biclique_classification")
 def get_biclique_classification(dmr_nodes, gene_nodes):
     """Template filter to get biclique classification."""
-    return classify_biclique(set(dmr_nodes), set(gene_nodes))
+    category = classify_biclique(set(dmr_nodes), set(gene_nodes))
+    return category.name.lower()
