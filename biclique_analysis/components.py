@@ -1,6 +1,7 @@
 from typing import List, Dict, Tuple, Set
 import networkx as nx
 import json
+import numpy as np
 
 from visualization.node_info import NodeInfo
 from biclique_analysis.statistics import (
