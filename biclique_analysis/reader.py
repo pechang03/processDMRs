@@ -231,6 +231,9 @@ def parse_bicliques(
     print(f"Max DMR ID: {max_DMR_id}")
     print(f"Gene mapping size: {len(gene_id_mapping) if gene_id_mapping else 0}")
 
+    if not gene_id_mapping:
+        raise ValueError("Gene ID mapping is required but was not provided")
+
     # Skip header until we find "# Clusters"
     while line_idx < len(lines):
         if lines[line_idx].strip() == "# Clusters":
@@ -267,10 +270,11 @@ def parse_bicliques(
                     continue
                 except ValueError:
                     # Not a number, must be a gene name
-                    if gene_id_mapping and token in gene_id_mapping:
+                    if token in gene_id_mapping:
                         gene_ids.add(gene_id_mapping[token])
                     else:
                         print(f"Warning: Gene '{token}' not found in mapping")
+                        print(f"Available genes (first 5): {list(gene_id_mapping.keys())[:5]}")
 
             # Only add valid bicliques
             if dmr_ids and gene_ids:
@@ -280,6 +284,7 @@ def parse_bicliques(
                     print(f"  Original line: {line}")
                     print(f"  DMRs: {sorted(dmr_ids)}")
                     print(f"  Genes: {sorted(gene_ids)}")
+                    print(f"  Original gene names: {[t for t in tokens if not t[0].isdigit()]}")
 
         except Exception as e:
             print(f"Warning: Error parsing line {line_idx + 1}: {str(e)}")
@@ -292,6 +297,7 @@ def parse_bicliques(
     if bicliques:
         print(f"First biclique DMRs: {sorted(bicliques[0][0])}")
         print(f"First biclique genes: {sorted(bicliques[0][1])}")
+        print(f"First biclique original gene names: {[t for t in lines[line_idx-len(bicliques)].split() if not t[0].isdigit()]}")
 
     return bicliques, line_idx
 
