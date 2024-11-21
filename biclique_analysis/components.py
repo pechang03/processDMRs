@@ -330,7 +330,53 @@ def process_components(
 
     # Convert any sets to lists before returning
     component_stats = convert_sets_to_lists(component_stats)
+    # Initialize lists before using them
+    complex_components = []
+    interesting_components = []
+    non_simple_components = []
+
+    # Process individual components
+    for idx, component_data in enumerate(bicliques_result.get("components", [])):
+        if isinstance(component_data, dict):
+            interesting_components.append(component_data)
+        else:
+            # Process raw component data
+            dmr_nodes, gene_nodes = component_data
+            category = classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)])
+            
+            # Generate component description
+            description = generate_component_description(
+                dmr_nodes, 
+                gene_nodes, 
+                [(dmr_nodes, gene_nodes)],
+                category
+            )
+            
+            component_info = {
+                "id": idx + 1,
+                "component": dmr_nodes | gene_nodes,
+                "dmrs": len(dmr_nodes),
+                "genes": len(gene_nodes),
+                "size": len(dmr_nodes) + len(gene_nodes),
+                "total_edges": sum(1 for dmr in dmr_nodes for gene in gene_nodes),
+                "raw_bicliques": [(dmr_nodes, gene_nodes)],
+                "category": category.name.lower(),
+                "description": description  # Add description
+            }
+            interesting_components.append(component_info)
+    
+    # Extract component categories
+    complex_components = [
+        comp for comp in interesting_components 
+        if comp["category"] == "complex"
+    ]
+    non_simple_components = [
+        comp for comp in interesting_components
+        if comp["category"] not in ["empty", "simple"]
+    ]
+
     statistics = convert_sets_to_lists(statistics)
+    component_stats = convert_sets_to_lists(component_stats)
     
     return (
         complex_components,
@@ -340,11 +386,6 @@ def process_components(
         component_stats,
         statistics,
     )
-    
-    # Process individual components
-    interesting_components = []
-    for idx, component_data in enumerate(bicliques_result.get("components", [])):
-        if isinstance(component_data, dict):
             interesting_components.append(component_data)
         else:
             # Process raw component data
