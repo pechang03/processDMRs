@@ -77,3 +77,21 @@ def is_complex(bicliques: List[Tuple[Set[int], Set[int]]]) -> bool:
     )
     return interesting_count > 1
 
+def classify_biclique_types(bicliques: List[Tuple[Set[int], Set[int]]]) -> Dict[str, int]:
+    """
+    Classify all bicliques and return count of each type.
+    
+    Args:
+        bicliques: List of (dmr_nodes, gene_nodes) tuples
+        
+    Returns:
+        Dictionary mapping category names to counts
+    """
+    type_counts = {cat.name.lower(): 0 for cat in BicliqueSizeCategory}
+    
+    for dmr_nodes, gene_nodes in bicliques:
+        category = classify_biclique(dmr_nodes, gene_nodes)
+        type_counts[category.name.lower()] += 1
+        
+    return type_counts
+
