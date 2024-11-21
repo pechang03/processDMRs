@@ -30,11 +30,7 @@ def create_node_traces(
     if not biclique_colors:
         biclique_colors = ["gray"]  # Default color
 
-    # Handle empty bicliques case
-    if not biclique_colors:
-        biclique_colors = ["gray"]  # Default color
-
-    # Create traces in order: DMRs, regular genes
+    # Create traces in order: DMRs, regular genes, split genes
     dmr_trace = create_dmr_trace(
         node_info.dmr_nodes,
         node_positions,
@@ -73,16 +69,18 @@ def create_node_traces(
         if gene_trace:
             traces.append(gene_trace)
 
-        split_gene_trace = create_split_gene_trace(
-            node_info.split_genes,
-            node_positions,
-            node_labels,
-            node_biclique_map,
-            biclique_colors,
-            gene_metadata,
-        )
-        if split_gene_trace:
-            traces.append(split_gene_trace)
+        # Only create split gene trace if we have split genes
+        if node_info.split_genes:
+            split_gene_trace = create_split_gene_trace(
+                node_info.split_genes,
+                node_positions,
+                node_labels,
+                node_biclique_map,
+                biclique_colors,
+                gene_metadata,
+            )
+            if split_gene_trace:
+                traces.append(split_gene_trace)
 
     return traces
 
