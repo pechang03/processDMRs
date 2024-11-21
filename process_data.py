@@ -404,14 +404,14 @@ def process_data():
                 calculate_biclique_statistics,
                 calculate_edge_coverage
             )
-        
+
             # Calculate edge coverage
             edge_coverage = calculate_edge_coverage(
                 bicliques_result["bicliques"],
                 bipartite_graph
             )
             print("Edge coverage calculated:", edge_coverage)
-        
+
             # Calculate full biclique statistics
             biclique_stats = calculate_biclique_statistics(
                 bicliques_result["bicliques"],
@@ -420,11 +420,46 @@ def process_data():
             )
             print("Biclique statistics calculated:", json.dumps(biclique_stats, indent=2))
 
+            # Process components to identify interesting ones
+            interesting_components = []
+            for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
+                # Create subgraph for this component
+                component_nodes = dmr_nodes | gene_nodes
+                subgraph = bipartite_graph.subgraph(component_nodes)
+        
+                # Get bicliques for this component
+                component_bicliques = [(dmr_nodes, gene_nodes)]
+        
+                # Classify the component
+                category = classify_component(dmr_nodes, gene_nodes, component_bicliques)
+        
+                if category in [BicliqueSizeCategory.INTERESTING, BicliqueSizeCategory.COMPLEX]:
+                    # Find split genes (genes appearing in multiple bicliques)
+                    split_genes = {
+                        gene for gene in gene_nodes
+                        if len([b for b in bicliques_result["bicliques"] if gene in b[1]]) > 1
+                    }
+            
+                    component_info = {
+                        "id": idx + 1,
+                        "dmrs": len(dmr_nodes),
+                        "genes": len(gene_nodes - split_genes),
+                        "total_genes": len(gene_nodes),
+                        "split_genes": list(split_genes),
+                        "raw_bicliques": component_bicliques,
+                        "category": category.name.lower(),
+                        "component": component_nodes,
+                        "total_edges": len(list(subgraph.edges()))
+                    }
+                    interesting_components.append(component_info)
+
+            print(f"\nFound {len(interesting_components)} interesting components")
+
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
-            "simple_connections": [],  # Initialize as empty list
+            "simple_connections": [],
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
