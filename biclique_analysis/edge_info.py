@@ -5,6 +5,14 @@ from typing import Tuple, Set
 class EdgeInfo:
     """Container for edge information and metadata."""
 
+    VALID_LABELS = {
+        "permanent",           # Edge present in both graphs
+        "false_positive",      # Edge in original but not biclique
+        "false_negative",      # Edge in biclique but not original
+        "bridge_false_positive", # Bridge edge likely to be noise
+        "potential_true_bridge", # Bridge edge that may be legitimate
+    }
+
     def __init__(
         self,
         edge: Tuple[int, int],
@@ -19,6 +27,9 @@ class EdgeInfo:
             label: Classification label for the edge
             sources: Set of sources where the edge comes from
         """
+        if label not in self.VALID_LABELS:
+            raise ValueError(f"Invalid label: {label}")
+            
         self.edge = edge
         self.label = label
         self.sources = sources or set()
