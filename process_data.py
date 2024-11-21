@@ -324,10 +324,7 @@ def process_data():
         # Get component classifications
         components = list(nx.connected_components(bipartite_graph))
         component_classifications = {
-            BicliqueSizeCategory.EMPTY: 0,
-            BicliqueSizeCategory.SIMPLE: 0,
-            BicliqueSizeCategory.INTERESTING: 0,
-            BicliqueSizeCategory.COMPLEX: 0
+            cat.name.lower(): 0 for cat in BicliqueSizeCategory
         }
 
         for component in components:
@@ -347,7 +344,7 @@ def process_data():
             ]
 
             category = classify_component(dmr_nodes, gene_nodes, component_bicliques)
-            component_classifications[category] += 1
+            component_classifications[category.name.lower()] += 1
 
         formatted_component_stats = {
             "components": component_stats[
