@@ -215,7 +215,7 @@ def process_components(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
-) -> Tuple[List[Dict], List[Dict], List[Dict], Dict]:
+) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
 
     # Create biclique graph for edge classification
@@ -262,12 +262,19 @@ def process_components(
         comp for comp in interesting_components if comp["category"] == "complex"
     ]
 
-    # Update component stats with counts
-    component_stats["components"]["counts"] = {
-        "num_interesting_components": len(interesting_components),
-        "num_non_simple_components": len(non_simple_components),
-        "num_complex_components": len(complex_components),
+    # Initialize component_stats dictionary
+    component_stats = {
+        "components": {
+            "counts": {
+                "num_interesting_components": len(interesting_components),
+                "num_non_simple_components": len(non_simple_components),
+                "num_complex_components": len(complex_components),
+            }
+        }
     }
+
+    # Create simple_connections (empty list for now)
+    simple_connections = []
 
     return (
         complex_components,
