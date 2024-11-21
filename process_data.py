@@ -403,6 +403,7 @@ def process_data():
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
             "edge_coverage": bicliques_result.get("edge_coverage", {}),
+            "biclique_types": classify_biclique_types(bicliques_result.get("bicliques", [])),
         }
 
         return _cached_data
