@@ -59,15 +59,23 @@
       </div>
 
       <!-- Visualization Section -->
-      {% if component.plotly_graph %}
       <div class="card mb-4">
         <div class="card-header">
-          <h3>Visualization</h3>
+          <h3>Component Visualization</h3>
+          <div class="text-muted">
+            Category: {{ component.category }}
+            {% if component.description %}
+              <br>
+              Description: {{ component.description }}
+            {% endif %}
+          </div>
         </div>
         <div class="card-body">
+          <!-- Main Graph -->
+          {% if component.visualization %}
           <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
           <script>
-            var graphData = {{ component.plotly_graph|tojson|safe }};
+            var graphData = {{ component.visualization|tojson|safe }};
             Plotly.newPlot('plotly-graph-{{ component.id }}',
                 graphData.data,
                 graphData.layout,
@@ -80,9 +88,24 @@
                 }
             );
           </script>
+          {% else %}
+          <div class="alert alert-info">
+            No visualization available for this component.
+          </div>
+          {% endif %}
+
+          <!-- Edge Classification Legend -->
+          <div class="mt-3">
+            <h5>Edge Types:</h5>
+            <ul class="list-inline">
+              <li class="list-inline-item"><span class="badge bg-primary">Permanent</span> - Present in both graphs</li>
+              <li class="list-inline-item"><span class="badge bg-warning">False Positive</span> - Only in original graph</li>
+              <li class="list-inline-item"><span class="badge bg-danger">False Negative</span> - Only in biclique graph</li>
+              <li class="list-inline-item"><span class="badge bg-secondary">Bridge</span> - Connects bicliques</li>
+            </ul>
+          </div>
         </div>
       </div>
-      {% endif %}
 
       <!-- Split Genes Section -->
       {% if component.split_genes %}
