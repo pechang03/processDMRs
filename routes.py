@@ -221,8 +221,10 @@ def component_detail_route(component_id, type='biconnected'):
         # Convert results to handle numpy types and tuple keys
         results = convert_dict_keys_to_str(results)
 
+        # Create layout object
+        layout = CircularBicliqueLayout()
+
         if type == 'triconnected':
-            # Get triconnected component
             component = next(
                 (c for c in results.get("statistics", {})
                     .get("components", {})
@@ -233,59 +235,50 @@ def component_detail_route(component_id, type='biconnected'):
                 None
             )
             if component:
-                # Create subgraph for the component
-                subgraph = results["bipartite_graph"].subgraph(component["nodes"])
-                
                 # Create NodeInfo for the component
                 node_info = NodeInfo(
-                    all_nodes=set(subgraph.nodes()),
+                    all_nodes=set(component["nodes"]),
                     dmr_nodes=set(component["dmrs"]),
                     regular_genes=set(component["genes"]),
                     split_genes=set(),  # No split genes in triconnected view
-                    node_degrees={n: subgraph.degree(n) for n in subgraph.nodes()},
+                    node_degrees={n: results["bipartite_graph"].degree(n) for n in component["nodes"]},
                     min_gene_id=min(component["genes"]) if component["genes"] else 0
                 )
 
-                # Calculate positions
-                layout = CircularBicliqueLayout()
+                # Calculate positions using layout class
                 node_positions = layout.calculate_positions(
-                    subgraph,
+                    results["bipartite_graph"].subgraph(component["nodes"]),
                     node_info
                 )
 
                 # Create visualization
                 component["visualization"] = create_biclique_visualization(
-                    [(component["dmrs"], component["genes"])],  # Convert to biclique format
+                    [(component["dmrs"], component["genes"])],
                     results["node_labels"],
                     node_positions,
                     create_node_biclique_map([(component["dmrs"], component["genes"])]),
                     results.get("edge_classifications", {}),
-                    results["bipartite_graph"],  # Add required graph parameter
-                    results["bipartite_graph"],  # Add required original graph
+                    results["bipartite_graph"],
+                    results["bipartite_graph"],
                     dmr_metadata=results.get("dmr_metadata", {}),
                     gene_metadata=results.get("gene_metadata", {}),
                     gene_id_mapping=results.get("gene_id_mapping", {})
                 )
 
         else:
-            # Original biclique component logic
             component = next(
                 (c for c in results["interesting_components"] if c["id"] == component_id),
                 None
             )
             
             if component and "raw_bicliques" in component:
-                # Calculate positions
-                node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
-                layout = CircularBicliqueLayout()
-                
                 # Create NodeInfo
                 all_nodes = set().union(*[dmrs | genes for dmrs, genes in component["raw_bicliques"]])
                 dmr_nodes = set().union(*[dmrs for dmrs, _ in component["raw_bicliques"]])
                 gene_nodes = all_nodes - dmr_nodes
                 split_genes = {
                     node for node in gene_nodes 
-                    if len(node_biclique_map.get(node, [])) > 1
+                    if len([b for b in component["raw_bicliques"] if node in b[1]]) > 1
                 }
                 
                 node_info = NodeInfo(
@@ -293,10 +286,11 @@ def component_detail_route(component_id, type='biconnected'):
                     dmr_nodes=dmr_nodes,
                     regular_genes=gene_nodes - split_genes,
                     split_genes=split_genes,
-                    node_degrees={node: len(node_biclique_map.get(node, [])) for node in all_nodes},
+                    node_degrees={n: results["bipartite_graph"].degree(n) for n in all_nodes},
                     min_gene_id=min(gene_nodes) if gene_nodes else 0
                 )
                 
+                # Calculate positions using layout class
                 node_positions = layout.calculate_positions(
                     results["bipartite_graph"].subgraph(all_nodes),
                     node_info
@@ -307,19 +301,17 @@ def component_detail_route(component_id, type='biconnected'):
                     component["raw_bicliques"],
                     results["node_labels"],
                     node_positions,
-                    node_biclique_map,
+                    create_node_biclique_map(component["raw_bicliques"]),
                     results.get("edge_classifications", {}),
-                    results["bipartite_graph"],  # Add required graph parameter
-                    results["bipartite_graph"],  # Add required original graph
+                    results["bipartite_graph"],
+                    results["bipartite_graph"],
                     dmr_metadata=results.get("dmr_metadata", {}),
                     gene_metadata=results.get("gene_metadata", {}),
                     gene_id_mapping=results.get("gene_id_mapping", {})
                 )
 
         if not component:
-            return render_template(
-                "error.html", message=f"Component {component_id} not found"
-            )
+            return render_template("error.html", message=f"Component {component_id} not found")
 
         return render_template(
             "components.html",
@@ -329,6 +321,7 @@ def component_detail_route(component_id, type='biconnected'):
             gene_id_mapping=results.get("gene_id_mapping", {}),
             component_type=type
         )
+
     except Exception as e:
         import traceback
         traceback.print_exc()
