@@ -270,8 +270,26 @@ def process_components(
     from .component_analyzer import ComponentAnalyzer
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
     
+    # Get connected components first
+    connected_components = list(nx.connected_components(bipartite_graph))
+    
+    # Get biconnected components
+    biconnected_stats = analyze_biconnected_components(bipartite_graph)
+    
+    # Get triconnected components for non-simple components
+    from .triconnected import analyze_triconnected_components
+    triconnected_components, tri_stats = analyze_triconnected_components(bipartite_graph)
+    
     # Get component statistics
-    component_stats = analyzer.analyze_components(dominating_set)
+    component_stats = {
+        "components": {
+            "original": {
+                "connected": analyze_components(connected_components, bipartite_graph),
+                "biconnected": biconnected_stats,
+                "triconnected": tri_stats
+            }
+        }
+    }
     
     # Process individual components
     interesting_components = []
