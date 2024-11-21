@@ -1,5 +1,6 @@
 from typing import List, Dict, Tuple, Set
 import networkx as nx
+import json
 
 from visualization.node_info import NodeInfo
 from biclique_analysis.statistics import (
@@ -21,23 +22,25 @@ from visualization import (
     CircularBicliqueLayout,
 )
 from .component_analyzer import ComponentAnalyzer
+from .triconnected import analyze_triconnected_components
+from .statistics import calculate_biclique_statistics
 
 
 def find_interesting_components(*args, **kwargs):
     """DEPRECATED: Use process_components instead."""
     import warnings
     import traceback
+
     warnings.warn(
         "find_interesting_components is deprecated and will be removed. Use process_components instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     print("Deprecation traceback:")
     traceback.print_stack()
-    raise DeprecationWarning("This function is deprecated. Use process_components instead.")
-
-
-import json
+    raise DeprecationWarning(
+        "This function is deprecated. Use process_components instead."
+    )
 
 
 def convert_stats_for_json(stats):
@@ -52,6 +55,24 @@ def convert_stats_for_json(stats):
     elif isinstance(stats, set):
         return list(stats)  # Convert sets to lists
     return stats
+
+
+def convert_for_json(data):
+    """Convert data structures for JSON serialization."""
+    if isinstance(data, dict):
+        return {
+            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_for_json(
+                v
+            )
+            for k, v in data.items()
+        }
+    elif isinstance(data, list):
+        return [convert_for_json(i) for i in data]
+    elif isinstance(data, set):
+        return sorted(list(data))
+    elif isinstance(data, tuple):
+        return list(data)
+    return data
 
 
 def visualize_component(
@@ -216,45 +237,54 @@ def analyze_biconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     """Find and analyze biconnected components of a graph."""
     # Get biconnected components
     biconn_comps = list(nx.biconnected_components(graph))
-    
+
     # Use analyze_components from statistics.py
     stats = analyze_components(biconn_comps, graph)
-    
+
     return biconn_comps, stats
+
 
 def analyze_connected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     """Find and analyze connected components of a graph."""
     # Get connected components
     conn_comps = list(nx.connected_components(graph))
-    
+
     # Use analyze_components from statistics.py
     stats = analyze_components(conn_comps, graph)
-    
+
     return conn_comps, stats
+
 
 def generate_component_description(
     dmr_nodes: Set[int],
     gene_nodes: Set[int],
     bicliques: List[Tuple[Set[int], Set[int]]],
-    category: BicliqueSizeCategory
+    category: BicliqueSizeCategory,
 ) -> str:
     """Generate a human-readable description of the component."""
     if category == BicliqueSizeCategory.EMPTY:
         return "Empty component with no connections"
-    
+
     if category == BicliqueSizeCategory.SIMPLE:
         return f"Simple component with {len(dmr_nodes)} DMR(s) connected to {len(gene_nodes)} gene(s)"
-    
+
     if category == BicliqueSizeCategory.INTERESTING:
-        return (f"Interesting component containing {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes "
-                f"forming {len(bicliques)} biclique(s)")
-    
+        return (
+            f"Interesting component containing {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes "
+            f"forming {len(bicliques)} biclique(s)"
+        )
+
     if category == BicliqueSizeCategory.COMPLEX:
-        split_genes = {gene for biclique in bicliques for gene in biclique[1]} - set(bicliques[0][1])
-        return (f"Complex component with {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes, "
-                f"including {len(split_genes)} split genes across {len(bicliques)} bicliques")
-    
+        split_genes = {gene for biclique in bicliques for gene in biclique[1]} - set(
+            bicliques[0][1]
+        )
+        return (
+            f"Complex component with {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes, "
+            f"including {len(split_genes)} split genes across {len(bicliques)} bicliques"
+        )
+
     return "Unknown component type"
+
 
 def convert_sets_to_lists(data):
     """Convert any sets in the data structure to lists recursively."""
@@ -268,6 +298,7 @@ def convert_sets_to_lists(data):
         return list(data)
     return data
 
+
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -277,55 +308,62 @@ def process_components(
     dominating_set: Set[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
-    
+
     # Create analyzer
-    from .component_analyzer import ComponentAnalyzer
+
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
-    
+
     # Calculate statistics first
     statistics = {}
     if bicliques_result and "bicliques" in bicliques_result:
-        from .statistics import calculate_biclique_statistics
         statistics = calculate_biclique_statistics(
-            bicliques_result["bicliques"], 
-            bipartite_graph,
-            dominating_set
+            bicliques_result["bicliques"], bipartite_graph, dominating_set
         )
-    
+
     # Get connected components first
     connected_components = list(nx.connected_components(bipartite_graph))
-    
+
     # Get biconnected components
     biconnected_stats = analyze_biconnected_components(bipartite_graph)
-    
+
     # Get triconnected components for non-simple components
-    from .triconnected import analyze_triconnected_components
-    triconnected_components, tri_stats = analyze_triconnected_components(bipartite_graph)
-    
+
+    triconnected_components, tri_stats = analyze_triconnected_components(
+        bipartite_graph
+    )
+
     # Create biclique graph from bicliques
     biclique_graph = nx.Graph()
     if bicliques_result and "bicliques" in bicliques_result:
         for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
             biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
             biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-            biclique_graph.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
-    
+            biclique_graph.add_edges_from(
+                (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
+            )
+
     # Get component statistics for both graphs
     component_stats = {
         "components": {
             "original": {
                 "connected": analyze_components(connected_components, bipartite_graph),
                 "biconnected": biconnected_stats,
-                "triconnected": tri_stats
+                "triconnected": tri_stats,
             },
             "biclique": {
-                "connected": analyze_components(list(nx.connected_components(biclique_graph)), biclique_graph),
-                "biconnected": analyze_biconnected_components(biclique_graph)[1],  # Get just the stats
-                "triconnected": analyze_triconnected_components(biclique_graph)[1]  # Get just the stats
-            }
+                "connected": analyze_components(
+                    list(nx.connected_components(biclique_graph)), biclique_graph
+                ),
+                "biconnected": analyze_biconnected_components(biclique_graph)[
+                    1
+                ],  # Get just the stats
+                "triconnected": analyze_triconnected_components(biclique_graph)[
+                    1
+                ],  # Get just the stats
+            },
         }
     }
-    
+
     # Rest of the function remains the same...
 
     # Convert any sets to lists before returning
@@ -342,16 +380,15 @@ def process_components(
         else:
             # Process raw component data
             dmr_nodes, gene_nodes = component_data
-            category = classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)])
-            
+            category = classify_component(
+                dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]
+            )
+
             # Generate component description
             description = generate_component_description(
-                dmr_nodes, 
-                gene_nodes, 
-                [(dmr_nodes, gene_nodes)],
-                category
+                dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)], category
             )
-            
+
             component_info = {
                 "id": idx + 1,
                 "component": dmr_nodes | gene_nodes,
@@ -361,23 +398,23 @@ def process_components(
                 "total_edges": sum(1 for dmr in dmr_nodes for gene in gene_nodes),
                 "raw_bicliques": [(dmr_nodes, gene_nodes)],
                 "category": category.name.lower(),
-                "description": description  # Add description
+                "description": description,  # Add description
             }
             interesting_components.append(component_info)
-    
+
     # Extract component categories
     complex_components = [
-        comp for comp in interesting_components 
-        if comp["category"] == "complex"
+        comp for comp in interesting_components if comp["category"] == "complex"
     ]
     non_simple_components = [
-        comp for comp in interesting_components
+        comp
+        for comp in interesting_components
         if comp["category"] not in ["empty", "simple"]
     ]
 
     statistics = convert_sets_to_lists(statistics)
     component_stats = convert_sets_to_lists(component_stats)
-    
+
     # Initialize lists before using them
     complex_components = []
     interesting_components = []
@@ -390,16 +427,15 @@ def process_components(
         else:
             # Process raw component data
             dmr_nodes, gene_nodes = component_data
-            category = classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)])
-            
+            category = classify_component(
+                dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]
+            )
+
             # Generate component description
             description = generate_component_description(
-                dmr_nodes, 
-                gene_nodes, 
-                [(dmr_nodes, gene_nodes)],
-                category
+                dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)], category
             )
-            
+
             component_info = {
                 "id": idx + 1,
                 "component": dmr_nodes | gene_nodes,
@@ -409,24 +445,23 @@ def process_components(
                 "total_edges": sum(1 for dmr in dmr_nodes for gene in gene_nodes),
                 "raw_bicliques": [(dmr_nodes, gene_nodes)],
                 "category": category.name.lower(),
-                "description": description  # Add description
+                "description": description,  # Add description
             }
             interesting_components.append(component_info)
-    
+
     # Extract component categories
     complex_components = [
-        comp for comp in interesting_components 
-        if comp["category"] == "complex"
+        comp for comp in interesting_components if comp["category"] == "complex"
     ]
     non_simple_components = [
-        comp for comp in interesting_components
+        comp
+        for comp in interesting_components
         if comp["category"] not in ["empty", "simple"]
     ]
-    
+
     # Calculate comprehensive statistics
     statistics = calculate_biclique_statistics(
-        bicliques_result["bicliques"], 
-        bipartite_graph
+        bicliques_result["bicliques"], bipartite_graph
     )
 
     # Only visualize first component initially
@@ -444,7 +479,7 @@ def process_components(
     return (
         complex_components,
         interesting_components,
-        [],  # simple_connections 
+        [],  # simple_connections
         non_simple_components,
         component_stats,
         statistics,
