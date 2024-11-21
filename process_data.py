@@ -308,7 +308,7 @@ def process_data():
                 for comp in interesting_components
                 if any(node in dominating_set for node in comp.get("component", []))
             ),
-            "avg_size_per_component": len(dominating_set) / num_interesting_components
+            "avg_size_per_component": len(dominating_set) / len(interesting_components)
             if interesting_components
             else 0,
         }
@@ -390,7 +390,7 @@ def process_data():
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
-            "simple_connections": simple_connections,
+            "simple_connections": [],  # Initialize as empty list
             "coverage": bicliques_result.get("coverage", {}),
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
