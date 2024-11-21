@@ -32,7 +32,13 @@
       <!-- Component Summary -->
       <div class="card mb-4">
         <div class="card-header">
-          <h2>Component {{ component.id }}</h2>
+          <h2>
+            {% if component_type == 'triconnected' %}
+              Triconnected Component {{ component.id }}
+            {% else %}
+              Biclique Component {{ component.id }}
+            {% endif %}
+          </h2>
         </div>
         <div class="card-body">
           <table class="table">

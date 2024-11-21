@@ -231,44 +231,91 @@
         </div>
       </div>
 
-      <!-- Components Table -->
-      <div class="card mt-4">
-        <div class="card-header">
-          <h3>Interesting Components</h3>
+      <!-- Components Tables -->
+      <div class="row mt-4">
+        <!-- Triconnected Components -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3>Triconnected Components</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Component ID</th>
+                      <th>DMRs</th>
+                      <th>Genes</th>
+                      <th>Total Edges</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for component in statistics.components.original.triconnected.components %}
+                    <tr>
+                      <td>{{ component.id }}</td>
+                      <td>{{ component.dmrs|length }}</td>
+                      <td>{{ component.genes|length }}</td>
+                      <td>{{ component.edges|length }}</td>
+                      <td>
+                        <a
+                          href="{{ url_for('component_detail', component_id=component.id, type='triconnected') }}"
+                          class="btn btn-primary btn-sm"
+                        >
+                          View Graph
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Component ID</th>
-                  <th>DMRs</th>
-                  <th>Genes</th>
-                  <th>Split Genes</th>
-                  <th>Total Bicliques</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for component in bicliques_result.interesting_components %}
-                <tr>
-                  <td>{{ component.id }}</td>
-                  <td>{{ component.dmrs }}</td>
-                  <td>{{ component.total_genes }}</td>
-                  <td>{{ component.split_genes|length }}</td>
-                  <td>{{ component.raw_bicliques|length }}</td>
-                  <td>
-                    <a
-                      href="{{ url_for('component_detail', component_id=component.id) }}"
-                      class="btn btn-primary btn-sm"
-                    >
-                      View Graph
-                    </a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+
+        <!-- Biclique Components -->
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3>Interesting Components</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Component ID</th>
+                      <th>DMRs</th>
+                      <th>Genes</th>
+                      <th>Split Genes</th>
+                      <th>Total Bicliques</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for component in bicliques_result.interesting_components %}
+                    <tr>
+                      <td>{{ component.id }}</td>
+                      <td>{{ component.dmrs }}</td>
+                      <td>{{ component.total_genes }}</td>
+                      <td>{{ component.split_genes|length }}</td>
+                      <td>{{ component.raw_bicliques|length }}</td>
+                      <td>
+                        <a
+                          href="{{ url_for('component_detail', component_id=component.id, type='biclique') }}"
+                          class="btn btn-primary btn-sm"
+                        >
+                          View Graph
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

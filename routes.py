@@ -199,45 +199,59 @@ def statistics_route():
         return render_template("error.html", message=str(e))
 
 
-def component_detail_route(component_id):
+def component_detail_route(component_id, type='biclique'):
     """Handle component detail page requests."""
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Find the requested component
-        component = next(
-            (c for c in results["interesting_components"] if c["id"] == component_id),
-            None,
-        )
+        if type == 'triconnected':
+            # Get triconnected component
+            component = next(
+                (c for c in results.get("statistics", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", []) 
+                 if c["id"] == component_id),
+                None
+            )
+            if component:
+                # Create spring layout visualization
+                from visualization import SpringLogicalLayout
+                layout = SpringLogicalLayout()
+                subgraph = results["bipartite_graph"].subgraph(component["nodes"])
+                positions = layout.calculate_positions(subgraph)
+                
+                # Create visualization using spring layout
+                from visualization import create_biclique_visualization
+                viz_data = create_biclique_visualization(
+                    [],  # No bicliques for triconnected view
+                    results["node_labels"],
+                    positions,
+                    {},  # No biclique map needed
+                    {},  # No edge classifications needed
+                    subgraph,  # Use the component subgraph
+                    subgraph,  # Same graph for both parameters
+                    original_node_positions=positions
+                )
+                component["visualization"] = viz_data
+        else:
+            # Original biclique component logic
+            component = next(
+                (c for c in results.get("interesting_components", []) if c["id"] == component_id),
+                None
+            )
 
         if not component:
             return render_template(
                 "error.html", message=f"Component {component_id} not found"
             )
 
-        # Add additional data needed by the template
-        component_data = {
-            **component,  # Spread existing component data
-            "dmr_metadata": results.get("dmr_metadata", {}),
-            "gene_metadata": results.get("gene_metadata", {}),
-            "gene_id_mapping": results.get("gene_id_mapping", {}),
-            "biclique_types": results.get("biclique_types", {}),
-            "edge_coverage": results.get("edge_coverage", {}),
-            "node_participation": results.get("node_participation", {})
-        }
-
-        # Debug print
-        print("\nComponent data keys:", list(component_data.keys()))
-        print("Biclique types:", component_data.get("biclique_types"))
-
         return render_template(
             "components.html",
-            component=component_data,
+            component=component,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            gene_id_mapping=results.get("gene_id_mapping", {})
+            gene_id_mapping=results.get("gene_id_mapping", {}),
+            component_type=type
         )
     except Exception as e:
         import traceback
