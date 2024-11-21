@@ -282,6 +282,16 @@ def process_components(
     from .component_analyzer import ComponentAnalyzer
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
     
+    # Calculate statistics first
+    statistics = {}
+    if bicliques_result and "bicliques" in bicliques_result:
+        from .statistics import calculate_biclique_statistics
+        statistics = calculate_biclique_statistics(
+            bicliques_result["bicliques"], 
+            bipartite_graph,
+            dominating_set
+        )
+    
     # Get connected components first
     connected_components = list(nx.connected_components(bipartite_graph))
     
