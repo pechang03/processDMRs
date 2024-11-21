@@ -244,14 +244,18 @@ def process_data():
 
         # Process components first
         print("Processing components...")
-        interesting_components, simple_connections, component_stats = (
-            process_components(
-                bipartite_graph,
-                bicliques_result,
-                dmr_metadata=dmr_metadata,
-                gene_metadata=gene_metadata,
-                gene_id_mapping=gene_id_mapping,
-            )
+        (
+            interesting_components,
+            simple_components,
+            non_simple_components,
+            complex_components,
+            component_stats,
+        ) = process_components(
+            bipartite_graph,
+            bicliques_result,
+            dmr_metadata=dmr_metadata,
+            gene_metadata=gene_metadata,
+            gene_id_mapping=gene_id_mapping,
         )
 
         # Create summary statistics
@@ -298,7 +302,7 @@ def process_data():
                 for comp in interesting_components
                 if any(node in dominating_set for node in comp.get("component", []))
             ),
-            "avg_size_per_component": len(dominating_set) / len(interesting_components)
+            "avg_size_per_component": len(dominating_set) / num_interesting_components
             if interesting_components
             else 0,
         }
@@ -316,56 +320,46 @@ def process_data():
             "simple": 0,
             "normal": 0,
             "interesting": 0,
-            "complex": 0
+            "complex": 0,
         }
 
         for component in components:
             subgraph = bipartite_graph.subgraph(component)
-            dmr_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0}
-            gene_nodes = {n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1}
-            
+            dmr_nodes = {
+                n for n in component if bipartite_graph.nodes[n]["bipartite"] == 0
+            }
+            gene_nodes = {
+                n for n in component if bipartite_graph.nodes[n]["bipartite"] == 1
+            }
+
             # Get bicliques for this component
             component_bicliques = [
-                (dmr_nodes_bic, gene_nodes_bic) 
+                (dmr_nodes_bic, gene_nodes_bic)
                 for dmr_nodes_bic, gene_nodes_bic in bicliques_result["bicliques"]
                 if (dmr_nodes_bic | gene_nodes_bic) & set(component)
             ]
-            
-            category = classify_component(len(dmr_nodes), len(gene_nodes), component_bicliques)
+
+            category = classify_component(
+                len(dmr_nodes), len(gene_nodes), component_bicliques
+            )
             component_classifications[category] += 1
 
         formatted_component_stats = {
-            "components": component_stats["components"],  # Use the stats directly from process_components()
+            "components": component_stats[
+                "components"
+            ],  # Use the stats directly from process_components()
             "dominating_set": dominating_set_stats,
-            "with_split_genes": sum(1 for comp in interesting_components if comp.get("split_genes")),
-            "total_split_genes": sum(len(comp.get("split_genes", [])) for comp in interesting_components),
-            "size_distribution": bicliques_result.get("size_distribution", {})
+            "with_split_genes": sum(
+                1 for comp in interesting_components if comp.get("split_genes")
+            ),
+            "total_split_genes": sum(
+                len(comp.get("split_genes", [])) for comp in interesting_components
+            ),
+            "size_distribution": bicliques_result.get("size_distribution", {}),
         }
 
         print("\nFormatted component stats structure:")
         print(json.dumps(convert_dict_keys_to_str(formatted_component_stats), indent=2))
-
-        def is_interesting_component(component):
-            """Determine if a component is interesting based on size criteria."""
-            dmr_count = len(component.get("dmr_nodes", []))
-            gene_count = len(component.get("gene_nodes", [])) + len(
-                component.get("split_genes", [])
-            )
-            return dmr_count >= 3 and gene_count >= 3
-
-        # Filter interesting components
-        interesting_components = [
-            comp
-            for comp in interesting_components
-            if (
-                len(comp.get("raw_bicliques", [])) >= 1
-                and (comp.get("dmrs", 0) >= 3 or comp.get("total_genes", 0) >= 3)
-            )
-        ]
-
-        # print("\nCalculating dominating set...again")
-        # dominating_set = calculate_dominating_sets(bipartite_graph, df)
-        # print(f"Found dominating set of size {len(dominating_set)}")
 
         # Calculate dominating set statistics
         dmr_nodes = {
