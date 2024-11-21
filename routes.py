@@ -9,6 +9,7 @@ from visualization import (
     CircularBicliqueLayout,
     SpringLogicalLayout,
 )
+from visualization.graph_layout import calculate_node_positions
 from visualization.node_info import NodeInfo
 from visualization.base_layout import BaseLogicalLayout
 from visualization.biconnected_visualization import BiconnectedVisualization
