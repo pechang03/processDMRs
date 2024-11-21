@@ -249,7 +249,7 @@ def generate_component_description(
                 f"forming {len(bicliques)} biclique(s)")
     
     if category == BicliqueSizeCategory.COMPLEX:
-        split_genes = {g for _, genes in bicliques for g in genes} - {g for _, genes in bicliques[0]}
+        split_genes = {gene for _, genes in bicliques for gene in genes} - {gene for _, genes in bicliques[0]}
         return (f"Complex component with {len(dmr_nodes)} DMRs and {len(gene_nodes)} genes, "
                 f"including {len(split_genes)} split genes across {len(bicliques)} bicliques")
     
