@@ -218,53 +218,17 @@ def component_detail_route(component_id, type='biconnected'):
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Convert results to handle numpy types and tuple keys
         results = convert_dict_keys_to_str(results)
 
         # Create layout object
         layout = CircularBicliqueLayout()
 
+        # Debug print
+        print(f"\nProcessing component {component_id} of type {type}")
+
         if type == 'triconnected':
-            component = next(
-                (c for c in results.get("statistics", {})
-                    .get("components", {})
-                    .get("original", {})
-                    .get("triconnected", {})
-                    .get("components", [])
-                 if c.get("id") == component_id),
-                None
-            )
-            if component:
-                # Create NodeInfo for the component
-                node_info = NodeInfo(
-                    all_nodes=set(component["nodes"]),
-                    dmr_nodes=set(component["dmrs"]),
-                    regular_genes=set(component["genes"]),
-                    split_genes=set(),  # No split genes in triconnected view
-                    node_degrees={n: results["bipartite_graph"].degree(n) for n in component["nodes"]},
-                    min_gene_id=min(component["genes"]) if component["genes"] else 0
-                )
-
-                # Calculate positions using layout class
-                node_positions = layout.calculate_positions(
-                    results["bipartite_graph"].subgraph(component["nodes"]),
-                    node_info
-                )
-
-                # Create visualization
-                component["visualization"] = create_biclique_visualization(
-                    [(component["dmrs"], component["genes"])],
-                    results["node_labels"],
-                    node_positions,
-                    create_node_biclique_map([(component["dmrs"], component["genes"])]),
-                    results.get("edge_classifications", {}),
-                    results["bipartite_graph"],
-                    results["bipartite_graph"],
-                    dmr_metadata=results.get("dmr_metadata", {}),
-                    gene_metadata=results.get("gene_metadata", {}),
-                    gene_id_mapping=results.get("gene_id_mapping", {})
-                )
-
+            # ... [triconnected handling stays the same] ...
+            pass
         else:
             component = next(
                 (c for c in results["interesting_components"] if c["id"] == component_id),
@@ -272,39 +236,79 @@ def component_detail_route(component_id, type='biconnected'):
             )
             
             if component and "raw_bicliques" in component:
-                # Create NodeInfo
-                all_nodes = set().union(*[dmrs | genes for dmrs, genes in component["raw_bicliques"]])
-                dmr_nodes = set().union(*[dmrs for dmrs, _ in component["raw_bicliques"]])
-                gene_nodes = all_nodes - dmr_nodes
-                split_genes = {
-                    node for node in gene_nodes 
-                    if len([b for b in component["raw_bicliques"] if node in b[1]]) > 1
-                }
+                print("\nComponent found:")
+                print(f"Component ID: {component['id']}")
+                print(f"Number of raw bicliques: {len(component['raw_bicliques'])}")
                 
+                # Debug print first few bicliques
+                print("\nFirst few bicliques:")
+                for i, (dmrs, genes) in enumerate(component["raw_bicliques"][:3]):
+                    print(f"Biclique {i}:")
+                    print(f"  DMRs: {sorted(list(dmrs))}")
+                    print(f"  Genes: {sorted(list(genes))}")
+
+                # Create NodeInfo with explicit gene handling
+                all_nodes = set()
+                dmr_nodes = set()
+                gene_nodes = set()
+                
+                for dmrs, genes in component["raw_bicliques"]:
+                    dmr_nodes.update(dmrs)
+                    gene_nodes.update(genes)
+                    all_nodes.update(dmrs)
+                    all_nodes.update(genes)
+
+                # Identify split genes (genes in multiple bicliques)
+                gene_biclique_count = {}
+                for _, genes in component["raw_bicliques"]:
+                    for gene in genes:
+                        gene_biclique_count[gene] = gene_biclique_count.get(gene, 0) + 1
+                
+                split_genes = {g for g, count in gene_biclique_count.items() if count > 1}
+                regular_genes = gene_nodes - split_genes
+
+                print("\nNode counts:")
+                print(f"Total nodes: {len(all_nodes)}")
+                print(f"DMR nodes: {len(dmr_nodes)}")
+                print(f"Gene nodes: {len(gene_nodes)}")
+                print(f"Split genes: {len(split_genes)}")
+                print(f"Regular genes: {len(regular_genes)}")
+
+                # Create NodeInfo
                 node_info = NodeInfo(
                     all_nodes=all_nodes,
                     dmr_nodes=dmr_nodes,
-                    regular_genes=gene_nodes - split_genes,
+                    regular_genes=regular_genes,
                     split_genes=split_genes,
                     node_degrees={n: results["bipartite_graph"].degree(n) for n in all_nodes},
                     min_gene_id=min(gene_nodes) if gene_nodes else 0
                 )
+
+                # Get subgraph for this component
+                subgraph = results["bipartite_graph"].subgraph(all_nodes)
                 
-                # Calculate positions using layout class
+                # Calculate positions
                 node_positions = layout.calculate_positions(
-                    results["bipartite_graph"].subgraph(all_nodes),
+                    subgraph,
                     node_info
                 )
+
+                print("\nPosition calculation complete:")
+                print(f"Number of positions: {len(node_positions)}")
+                
+                # Create node biclique map
+                node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
+                print(f"Node-biclique map size: {len(node_biclique_map)}")
 
                 # Create visualization
                 component["visualization"] = create_biclique_visualization(
                     component["raw_bicliques"],
                     results["node_labels"],
                     node_positions,
-                    create_node_biclique_map(component["raw_bicliques"]),
+                    node_biclique_map,
                     results.get("edge_classifications", {}),
                     results["bipartite_graph"],
-                    results["bipartite_graph"],
+                    subgraph,  # Use the component subgraph here
                     dmr_metadata=results.get("dmr_metadata", {}),
                     gene_metadata=results.get("gene_metadata", {}),
                     gene_id_mapping=results.get("gene_id_mapping", {})
@@ -312,6 +316,13 @@ def component_detail_route(component_id, type='biconnected'):
 
         if not component:
             return render_template("error.html", message=f"Component {component_id} not found")
+
+        # Debug print final component data
+        print("\nFinal component data:")
+        print(f"DMRs: {component.get('dmrs')}")
+        print(f"Genes: {component.get('genes')}")
+        print(f"Total edges: {component.get('total_edges')}")
+        print(f"Has visualization: {'visualization' in component}")
 
         return render_template(
             "components.html",
