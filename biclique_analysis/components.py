@@ -1,20 +1,18 @@
-from visualization.node_info import (
-    NodeInfo,
-)  # Add this line at the top with other imports
-
-import networkx as nx
 from typing import List, Dict, Tuple, Set
+import networkx as nx
+
+from visualization.node_info import NodeInfo
 from biclique_analysis.statistics import (
     calculate_biclique_statistics,
     calculate_edge_coverage,
     calculate_node_participation,
-    analyze_components
+    analyze_components,
 )
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
     classify_biclique,
     classify_biclique_types,
-    classify_component,  # Add this import
+    classify_component,
 )
 from visualization import (
     create_node_biclique_map,
@@ -217,7 +215,7 @@ def analyze_biconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     # Get biconnected components
     biconn_comps = list(nx.biconnected_components(graph))
     
-    # Analyze components
+    # Use analyze_components from statistics.py
     stats = analyze_components(biconn_comps, graph)
     
     return biconn_comps, stats
@@ -227,7 +225,7 @@ def analyze_connected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     # Get connected components
     conn_comps = list(nx.connected_components(graph))
     
-    # Analyze components
+    # Use analyze_components from statistics.py
     stats = analyze_components(conn_comps, graph)
     
     return conn_comps, stats
