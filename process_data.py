@@ -251,11 +251,12 @@ def process_data():
         # Process components first
         print("Processing components...")
         (
-            interesting_components,
-            simple_components,
-            non_simple_components,
             complex_components,
+            interesting_components,
+            simple_connections,
+            non_simple_components,
             component_stats,
+            statistics,
         ) = process_components(
             bipartite_graph,
             bicliques_result,
