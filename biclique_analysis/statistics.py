@@ -2,6 +2,7 @@
 import warnings
 from typing import List, Dict, Tuple, Set
 import networkx as nx
+import json
 from biclique_analysis.classifier import classify_biclique, classify_biclique_types
 
 def analyze_components(
