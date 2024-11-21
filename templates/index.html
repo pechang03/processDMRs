@@ -56,13 +56,13 @@
                       onchange="window.location.href=this.value"
                     >
                       <option value="">Select a component</option>
-                      {% for component in
-                      bicliques_result.interesting_components %}
+                      {% for component in bicliques_result.interesting_components %}
                       <option
                         value="{{ url_for('component_detail', component_id=component.id) }}"
                       >
-                        Component {{ component.id }} ({{ component.dmrs }} DMRs,
-                        {{ component.genes }} Genes)
+                        Component {{ component.id }} 
+                        ({{ component.dmrs }} DMRs, {{ component.genes }} Genes)
+                        - {{ component.category }}
                       </option>
                       {% endfor %}
                     </select>
