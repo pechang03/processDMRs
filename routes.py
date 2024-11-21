@@ -153,6 +153,10 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Debug print for available keys in results
+        print("\nAvailable keys in results:")
+        print(list(results.keys()))
+
         # Create properly structured statistics
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
@@ -161,8 +165,12 @@ def statistics_route():
             "node_participation": results.get("node_participation", {}),
             "edge_coverage": results.get("edge_coverage", {}),
             "size_distribution": results.get("size_distribution", {}),
-            "biclique_types": results.get("biclique_type_counts", {})
+            "biclique_types": results.get("biclique_types", {})
         }
+
+        # Debug print for detailed stats being sent to template
+        print("\nDetailed stats being sent to template:")
+        print(json.dumps(detailed_stats, indent=2))
 
         return render_template(
             "statistics.html", 

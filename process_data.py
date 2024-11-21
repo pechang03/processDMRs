@@ -100,6 +100,8 @@ def process_data():
 
     # Return cached data if available
     if _cached_data is not None:
+        print("\nCached data keys:")
+        print(list(_cached_data.keys()))
         return _cached_data
 
     try:
@@ -169,9 +171,19 @@ def process_data():
             "DSS1",
             gene_id_mapping=gene_id_mapping,
             file_format=app.config.get(
-                "BICLIQUE_FORMAT", "gene_name"
+                "BICLIQUE_FORMAT", "gene-name"
             ),  # Get format from app config
         )
+
+        # Debug print for bicliques result
+        print("\nBicliques result contents:")
+        print("Number of bicliques:", len(bicliques_result.get("bicliques", [])))
+        print("Keys in bicliques_result:", list(bicliques_result.keys()))
+        
+        # Biclique type statistics
+        biclique_type_stats = classify_biclique_types(bicliques_result.get("bicliques", []))
+        print("\nBiclique type statistics:")
+        print(json.dumps(biclique_type_stats, indent=2))
 
         # Get header statistics from bicliques file
         header_stats = bicliques_result.get("statistics", {})
@@ -403,8 +415,16 @@ def process_data():
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
             "edge_coverage": bicliques_result.get("edge_coverage", {}),
-            "biclique_types": classify_biclique_types(bicliques_result.get("bicliques", [])),
+            "biclique_types": biclique_type_stats,  # Use the pre-calculated stats
         }
+
+        # Debug print for cached data
+        print("\nCached data keys:")
+        print(list(_cached_data.keys()))
+
+        # Debug print for biclique types
+        print("\nBiclique types from results:")
+        print(json.dumps(_cached_data.get("biclique_types", {}), indent=2))
 
         return _cached_data
     except Exception as e:
