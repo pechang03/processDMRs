@@ -153,30 +153,45 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Full results keys debug print
-        print("\nFull results keys:", list(results.keys()))
-        print("Biclique types:", results.get("biclique_types"))
-        print("Edge coverage:", results.get("edge_coverage"))
-
         # Create properly structured statistics dictionary
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
             "dominating_set": results.get("dominating_set", {}),
-            "coverage": results.get("coverage", {}),
-            "node_participation": results.get("node_participation", {}),
+            "coverage": results.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }),
             "edge_coverage": results.get("edge_coverage", {}),
-            "size_distribution": results.get("size_distribution", {}),
-            "biclique_types": results.get("biclique_types", {})  # Ensure this is included
+            "biclique_types": results.get("biclique_types", {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
+            }),
+            "size_distribution": results.get("size_distribution", {})
         }
 
-        # Debug print
+        # Update edge coverage from biclique statistics if available
+        if "biclique_stats" in results:
+            detailed_stats["edge_coverage"] = results["biclique_stats"].get("edge_coverage", {})
+            detailed_stats["coverage"]["edges"] = results["biclique_stats"].get("edge_coverage", {})
+
         print("\nDetailed stats being sent to template:")
         print(json.dumps(detailed_stats, indent=2))
 
         return render_template(
-            "statistics.html", 
+            "statistics.html",
             statistics=detailed_stats,
-            bicliques_result=results  # Pass the full results object
+            bicliques_result=results
         )
     except Exception as e:
         import traceback

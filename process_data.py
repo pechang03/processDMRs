@@ -397,6 +397,29 @@ def process_data():
             else 0,
         }
 
+        # Calculate biclique statistics
+        if bicliques_result and "bicliques" in bicliques_result:
+            print("\nCalculating biclique statistics...")
+            from biclique_analysis.statistics import (
+                calculate_biclique_statistics,
+                calculate_edge_coverage
+            )
+        
+            # Calculate edge coverage
+            edge_coverage = calculate_edge_coverage(
+                bicliques_result["bicliques"],
+                bipartite_graph
+            )
+            print("Edge coverage calculated:", edge_coverage)
+        
+            # Calculate full biclique statistics
+            biclique_stats = calculate_biclique_statistics(
+                bicliques_result["bicliques"],
+                bipartite_graph,
+                dominating_set
+            )
+            print("Biclique statistics calculated:", json.dumps(biclique_stats, indent=2))
+
         # Create cached data with all information
         _cached_data = {
             "stats": stats,
@@ -409,13 +432,14 @@ def process_data():
             "node_positions": node_positions,
             "node_labels": node_labels,
             "bipartite_graph": bipartite_graph,
-            "biclique_graph": biclique_graph,  # Add this line
-            "component_stats": component_stats,  # Use the full component_stats
+            "biclique_graph": biclique_graph,
+            "component_stats": component_stats,
             "dominating_set": dominating_set_stats,
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
-            "edge_coverage": bicliques_result.get("edge_coverage", {}),
-            "biclique_types": biclique_type_stats,  # Use the pre-calculated stats
+            "edge_coverage": edge_coverage,
+            "biclique_stats": biclique_stats,
+            "biclique_types": biclique_stats.get("biclique_types", {})
         }
 
         # Debug print for cached data
