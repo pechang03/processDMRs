@@ -136,9 +136,8 @@ def create_bipartite_graph(
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
-                if not B.has_edge(dmr_id, gene_id):
-                    B.add_edge(dmr_id, gene_id)
-                    edges_added += 1
+                B.add_edge(dmr_id, gene_id)
+                edges_added += 1
 
         # Process enhancer genes
         if isinstance(row.get("Processed_Enhancer_Info"), (set, list)):
@@ -146,11 +145,9 @@ def create_bipartite_graph(
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
-                    if not B.has_edge(dmr_id, gene_id):
-                        B.add_edge(dmr_id, gene_id)
-                        edges_added += 1
+                    B.add_edge(dmr_id, gene_id)
+                    edges_added += 1
 
-    # Print summary once
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
