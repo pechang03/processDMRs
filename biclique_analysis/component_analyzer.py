@@ -115,19 +115,9 @@ class ComponentAnalyzer:
     def validate_dominating_set(self, dominating_set: Set[int]) -> bool:
         """
         Validate that the dominating set properly dominates all components.
-        
-        Args:
-            dominating_set: Set of DMR nodes in the dominating set
-            
-        Returns:
-            True if valid, raises ValueError if invalid
-            
-        Raises:
-            ValueError: If any component is not dominated
         """
-        from collections import defaultdict
+        biclique_ds_nodes = defaultdict(set)
         
-        # Check each component has at least one dominating node
         components = list(nx.connected_components(self.bipartite_graph))
         for idx, comp in enumerate(components):
             ds_nodes = comp & dominating_set
@@ -137,7 +127,6 @@ class ComponentAnalyzer:
                 )
             
             # Check if component has multiple dominating nodes in same biclique
-            biclique_ds_nodes = defaultdict(set)
             for dmr in ds_nodes:
                 for bic_idx, (dmr_nodes, _) in enumerate(self.bicliques_result["bicliques"]):
                     if dmr in dmr_nodes:
