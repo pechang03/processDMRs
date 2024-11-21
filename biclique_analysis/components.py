@@ -282,27 +282,20 @@ def process_components(
     component_stats = {
         "components": {
             "original": {
-                "connected": {
-                    "total": len(interesting_components),
-                    "single_node": 0,  # We can update these if needed
-                    "small": 0,
-                    "interesting": len(interesting_components)
-                },
-                "biconnected": {
+                "connected": original_connected_stats,  # Use the stats from analyze_components
+                "biconnected": original_biconn_stats,
+                "triconnected": {  # Add placeholder for triconnected
                     "total": 0,
-                    "single_node": 0,
+                    "single_node": 0, 
                     "small": 0,
                     "interesting": 0
-                }
+                },
+                "dominating_set": dominating_set_stats  # Add dominating set stats
             },
             "biclique": {
-                "connected": {
-                    "total": len(interesting_components),
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": len(interesting_components)
-                },
-                "biconnected": {
+                "connected": biclique_connected_stats,  # Use the stats from analyze_components
+                "biconnected": biclique_biconn_stats,
+                "triconnected": {  # Add placeholder for triconnected
                     "total": 0,
                     "single_node": 0,
                     "small": 0,
