@@ -153,30 +153,30 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Debug print for available keys in results
-        print("\nAvailable keys in results:")
-        print(list(results.keys()))
+        # Full results keys debug print
+        print("\nFull results keys:", list(results.keys()))
+        print("Biclique types:", results.get("biclique_types"))
+        print("Edge coverage:", results.get("edge_coverage"))
 
-        # Create properly structured statistics
+        # Create properly structured statistics dictionary
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
-            "dominating_set": results.get("component_stats", {}).get("dominating_set", {}),
+            "dominating_set": results.get("dominating_set", {}),
             "coverage": results.get("coverage", {}),
             "node_participation": results.get("node_participation", {}),
             "edge_coverage": results.get("edge_coverage", {}),
             "size_distribution": results.get("size_distribution", {}),
-            "biclique_types": results.get("biclique_types", {})
+            "biclique_types": results.get("biclique_types", {})  # Ensure this is included
         }
 
-        # Debug print for detailed stats being sent to template
+        # Debug print
         print("\nDetailed stats being sent to template:")
         print(json.dumps(detailed_stats, indent=2))
 
         return render_template(
             "statistics.html", 
             statistics=detailed_stats,
-            bicliques_result=results,
-            BicliqueSizeCategory=BicliqueSizeCategory  # Pass enum to template
+            bicliques_result=results  # Pass the full results object
         )
     except Exception as e:
         import traceback
@@ -202,16 +202,30 @@ def component_detail_route(component_id):
                 "error.html", message=f"Component {component_id} not found"
             )
 
+        # Add additional data needed by the template
+        component_data = {
+            **component,  # Spread existing component data
+            "dmr_metadata": results.get("dmr_metadata", {}),
+            "gene_metadata": results.get("gene_metadata", {}),
+            "gene_id_mapping": results.get("gene_id_mapping", {}),
+            "biclique_types": results.get("biclique_types", {}),
+            "edge_coverage": results.get("edge_coverage", {}),
+            "node_participation": results.get("node_participation", {})
+        }
+
+        # Debug print
+        print("\nComponent data keys:", list(component_data.keys()))
+        print("Biclique types:", component_data.get("biclique_types"))
+
         return render_template(
             "components.html",
-            component=component,
+            component=component_data,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            gene_id_mapping=results.get("gene_id_mapping", {}),
+            gene_id_mapping=results.get("gene_id_mapping", {})
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
