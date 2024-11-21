@@ -28,4 +28,5 @@ __all__ = [
     "create_gene_table",
     "generate_biclique_colors",
     "calculate_node_positions",
+    "TriconnectedVisualization",
 ]
