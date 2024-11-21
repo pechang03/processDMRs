@@ -9,6 +9,7 @@ from biclique_analysis.statistics import (
     InvalidGraphError,
     validate_graph,
 )
+from biclique_analysis.classifier import BicliqueSizeCategory
 
 class TestStatistics(unittest.TestCase):
     def setUp(self):
@@ -19,6 +20,12 @@ class TestStatistics(unittest.TestCase):
             (0, 3), (1, 3), (2, 3),  # First gene connected to all DMRs
             (0, 4), (1, 4), (2, 4)   # Second gene connected to all DMRs
         ])
+        
+        # Add bipartite attributes
+        for n in [0, 1, 2]:
+            self.graph.nodes[n]['bipartite'] = 0  # DMRs
+        for n in [3, 4]:
+            self.graph.nodes[n]['bipartite'] = 1  # Genes
         
         # Bicliques should use the same node numbering convention
         self.bicliques = [
