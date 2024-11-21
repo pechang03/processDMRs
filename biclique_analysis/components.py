@@ -378,14 +378,14 @@ def process_components(
     statistics = convert_sets_to_lists(statistics)
     component_stats = convert_sets_to_lists(component_stats)
     
-    return (
-        complex_components,
-        interesting_components,
-        [],  # simple_connections 
-        non_simple_components,
-        component_stats,
-        statistics,
-    )
+    # Initialize lists before using them
+    complex_components = []
+    interesting_components = []
+    non_simple_components = []
+
+    # Process individual components
+    for idx, component_data in enumerate(bicliques_result.get("components", [])):
+        if isinstance(component_data, dict):
             interesting_components.append(component_data)
         else:
             # Process raw component data
