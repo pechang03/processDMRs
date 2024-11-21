@@ -63,34 +63,34 @@ _cached_data = None
 
 
 def convert_dict_keys_to_str(d):
-    """Convert dictionary tuple keys to strings recursively."""
+    """Convert dictionary tuple keys to strings recursively and handle sets."""
     if isinstance(d, dict):
         return {
-            "_".join(map(str, k))
-            if isinstance(k, tuple)
-            else str(k): convert_dict_keys_to_str(v)
+            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
             for k, v in d.items()
         }
     elif isinstance(d, list):
         return [convert_dict_keys_to_str(i) for i in d]
-    elif isinstance(d, set):
-        return list(d)  # Convert sets to lists for JSON serialization
+    elif isinstance(d, set):  # Handle sets by converting to sorted lists
+        return sorted(list(d))  # Sort for consistent output
+    elif isinstance(d, tuple):  # Handle tuples
+        return list(d)  # Convert tuples to lists for JSON
     return d
 
 
 def convert_dict_keys_to_str(d):
-    """Convert dictionary tuple keys to strings recursively."""
+    """Convert dictionary tuple keys to strings recursively and handle sets."""
     if isinstance(d, dict):
         return {
-            "_".join(map(str, k))
-            if isinstance(k, tuple)
-            else str(k): convert_dict_keys_to_str(v)
+            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
             for k, v in d.items()
         }
     elif isinstance(d, list):
         return [convert_dict_keys_to_str(i) for i in d]
-    elif isinstance(d, set):
-        return list(d)  # Convert sets to lists for JSON serialization
+    elif isinstance(d, set):  # Handle sets by converting to sorted lists
+        return sorted(list(d))  # Sort for consistent output
+    elif isinstance(d, tuple):  # Handle tuples
+        return list(d)  # Convert tuples to lists for JSON
     return d
 
 
