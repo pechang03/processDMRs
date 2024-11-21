@@ -330,29 +330,20 @@ def process_components(
     dominating_set: Set[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
     """Process connected components of the graph."""
-
     # Create analyzer
-
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
 
-    # Calculate statistics first
+    # Calculate initial statistics
     statistics = {}
     if bicliques_result and "bicliques" in bicliques_result:
         statistics = calculate_biclique_statistics(
             bicliques_result["bicliques"], bipartite_graph, dominating_set
         )
 
-    # Get connected components first
+    # Get connected components
     connected_components = list(nx.connected_components(bipartite_graph))
-
-    # Get biconnected components
     biconnected_stats = analyze_biconnected_components(bipartite_graph)
-
-    # Get triconnected components for non-simple components
-
-    triconnected_components, tri_stats = analyze_triconnected_components(
-        bipartite_graph
-    )
+    triconnected_components, tri_stats = analyze_triconnected_components(bipartite_graph)
 
     # Create biclique graph from bicliques
     biclique_graph = nx.Graph()
