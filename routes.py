@@ -1,7 +1,7 @@
 from flask import render_template, request
 import json
 from extensions import app
-from process_data import process_data
+from process_data import process_data, convert_dict_keys_to_str
 from visualization import (
     create_biclique_visualization,
     create_node_biclique_map,
