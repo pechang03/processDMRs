@@ -397,14 +397,15 @@ def process_data():
         dmr_nodes = {
             n for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0
         }
+        genes_dominated = set().union(
+            *(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set)
+        )
+        num_genes_dominated = len(genes_dominated)
         dominating_set_stats = {
             "size": len(dominating_set),
-            "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
-            "genes_dominated": len(
-                set().union(
-                    *(set(bipartite_graph.neighbors(dmr)) for dmr in dominating_set)
-                )
-            ),
+            # "percentage": len(dominating_set) / len(dmr_nodes) if dmr_nodes else 0,
+            "percentage": num_genes_dominated / len(gene_nodes) if dmr_nodes else 0,
+            "genes_dominated": num_genes_dominated,
             "components_with_ds": sum(
                 1
                 for comp in interesting_components
