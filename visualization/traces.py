@@ -6,7 +6,7 @@
 
 import os
 from typing import Dict, List, Set, Tuple
-from biclique_analysis.edge_info import EdgeInfo  # Import EdgeInfo
+from utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
 from .node_info import NodeInfo
