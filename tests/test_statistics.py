@@ -127,6 +127,17 @@ class TestStatistics(unittest.TestCase):
             calculate_coverage_statistics([], gene_graph)
 
 
+    def test_calculate_node_participation(self):
+        """Test calculation of node participation in bicliques"""
+        node_participation = calculate_node_participation(self.bicliques)
+        
+        # In our setup:
+        # - Each DMR appears in exactly one biclique
+        # - Node 8 appears in both bicliques, other genes in one each
+        self.assertEqual(node_participation["dmrs"][1], 6)  # All 6 DMRs appear in 1 biclique
+        self.assertEqual(node_participation["genes"][1], 4)  # 4 genes appear in 1 biclique
+        self.assertEqual(node_participation["genes"][2], 1)  # 1 gene (node 8) appears in 2 bicliques
+
 if __name__ == "__main__":
     unittest.main()
 class TestStatisticsEdgeCases(unittest.TestCase):
