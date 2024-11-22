@@ -2,12 +2,13 @@
 
 import json
 from typing import Dict, List, Set, Tuple
-from utils.edge_info import EdgeInfo  # Updated import path
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objs as go
 import plotly.colors
 import networkx as nx
 
+from ..utils.node_info import NodeInfo
+from ..utils.edge_info import EdgeInfo
 from .traces import (
     create_node_traces,
     create_edge_traces,
@@ -15,7 +16,6 @@ from .traces import (
 )
 
 from .layout import create_visual_layout
-from utils.node_info import NodeInfo
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
@@ -34,7 +34,9 @@ def create_biclique_visualization(
     edge_classifications: Dict[str, List[EdgeInfo]],
     original_graph: nx.Graph,  # Required parameter moved up
     bipartite_graph: nx.Graph,  # Also make this required since it's needed
-    original_node_positions: Dict[int, Tuple[float, float]] = None,  # Optional parameters start here
+    original_node_positions: Dict[
+        int, Tuple[float, float]
+    ] = None,  # Optional parameters start here
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
