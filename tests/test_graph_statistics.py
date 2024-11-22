@@ -1,12 +1,12 @@
 import unittest
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import networkx as nx
 from processDMR import create_bipartite_graph
 from biclique_analysis.processor import process_enhancer_info
-from biclique_analysis.classifier import BicliqueSizeCategory
 from biclique_analysis.statistics import validate_graph
 # from rb_domination import greedy_rb_domination
 
@@ -18,7 +18,7 @@ class TestGraphStatistics(unittest.TestCase):
             "DMR_No.": [1, 2, 3],
             "Gene_Symbol_Nearby": ["genea", "geneb", "genec"],  # Make lowercase
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["gened;genee", "genef", None],
-            "Gene_Description": ["Desc1", "Desc2", "Desc3"]
+            "Gene_Description": ["Desc1", "Desc2", "Desc3"],
         }
         self.df = pd.DataFrame(data)
         self.df["Processed_Enhancer_Info"] = self.df[
@@ -32,8 +32,10 @@ class TestGraphStatistics(unittest.TestCase):
             if genes:
                 all_genes.update(g.strip().lower() for g in genes)
 
-        self.gene_id_mapping = {gene: idx + len(self.df) for idx, gene in enumerate(sorted(all_genes))}
-        
+        self.gene_id_mapping = {
+            gene: idx + len(self.df) for idx, gene in enumerate(sorted(all_genes))
+        }
+
         # Create the bipartite graph
         self.bipartite_graph = create_bipartite_graph(self.df, self.gene_id_mapping)
 
@@ -55,18 +57,17 @@ class TestGraphStatistics(unittest.TestCase):
         self.assertEqual(max_degree, 2, "Maximum degree should be 2.")
 
     def test_connected_components(self):
-        num_connected_components = nx.number_connected_components(self.graph)
+        num_connected_components = nx.number_connected_components(self.bipartie_graph)
         self.assertEqual(
             num_connected_components, 1, "There should be 1 connected component."
         )
-
 
     def test_graph_structure(self):
         """Test the basic structure of the graph"""
         # Test number of nodes
         expected_nodes = 9  # 3 DMRs + 6 genes (A,B,C,D,E,F)
         self.assertEqual(len(self.bipartite_graph.nodes()), expected_nodes)
-        
+
         # Test number of edges
         expected_edges = 6  # Each DMR connects to its nearby gene and enhancer genes
         self.assertEqual(len(self.bipartite_graph.edges()), expected_edges)
@@ -79,4 +80,6 @@ class TestGraphStatistics(unittest.TestCase):
             self.assertTrue(len(gene_nodes) > 0, "Should have gene nodes")
         except Exception as e:
             self.fail(f"Graph validation failed: {str(e)}")
+
+
 from visualization.core import create_biclique_visualization
