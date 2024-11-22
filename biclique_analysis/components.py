@@ -1,7 +1,6 @@
 from typing import List, Dict, Tuple, Set
 import networkx as nx
 import json
-import numpy as np
 
 from visualization.node_info import NodeInfo
 from biclique_analysis.statistics import (
@@ -12,7 +11,6 @@ from biclique_analysis.statistics import (
 )
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
-    classify_biclique,
     classify_biclique_types,
     classify_component,
     BicliqueSizeCategory,
@@ -24,7 +22,6 @@ from visualization import (
 )
 from .component_analyzer import ComponentAnalyzer
 from .triconnected import analyze_triconnected_components
-from .statistics import calculate_biclique_statistics
 
 
 def find_interesting_components(*args, **kwargs):
@@ -73,6 +70,28 @@ def convert_for_json(data):
         return sorted(list(data))
     elif isinstance(data, tuple):
         return list(data)
+    return data
+
+
+def convert_all_for_json(data):
+    """Comprehensive conversion of all data types for JSON serialization."""
+    import numpy as np
+
+    if isinstance(data, dict):
+        return {
+            str(k) if isinstance(k, tuple) else k: convert_all_for_json(v)
+            for k, v in data.items()
+        }
+    elif isinstance(data, (list, tuple)):
+        return [convert_all_for_json(i) for i in data]
+    elif isinstance(data, set):
+        return sorted(list(data))
+    elif isinstance(data, np.integer):
+        return int(data)
+    elif isinstance(data, np.floating):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return data.tolist()
     return data
 
 
@@ -202,6 +221,7 @@ def visualize_component(
             }
         )
 
+        """
     # Create visualization
     plotly_graph = create_biclique_visualization(
         component_info["raw_bicliques"],
@@ -232,6 +252,7 @@ def visualize_component(
             "total_bicliques": len(component_info["raw_bicliques"]),
         },
     }
+"""
 
 
 def analyze_biconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
@@ -300,27 +321,6 @@ def convert_sets_to_lists(data):
     return data
 
 
-def convert_all_for_json(data):
-    """Comprehensive conversion of all data types for JSON serialization."""
-    import numpy as np
-    if isinstance(data, dict):
-        return {
-            str(k) if isinstance(k, tuple) else k: convert_all_for_json(v)
-            for k, v in data.items()
-        }
-    elif isinstance(data, (list, tuple)):
-        return [convert_all_for_json(i) for i in data]
-    elif isinstance(data, set):
-        return sorted(list(data))
-    elif isinstance(data, np.integer):
-        return int(data)
-    elif isinstance(data, np.floating):
-        return float(data)
-    elif isinstance(data, np.ndarray):
-        return data.tolist()
-    return data
-
-
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
@@ -343,7 +343,9 @@ def process_components(
     # Get connected components
     connected_components = list(nx.connected_components(bipartite_graph))
     biconnected_stats = analyze_biconnected_components(bipartite_graph)
-    triconnected_components, tri_stats = analyze_triconnected_components(bipartite_graph)
+    triconnected_components, tri_stats = analyze_triconnected_components(
+        bipartite_graph
+    )
 
     # Create biclique graph from bicliques
     biclique_graph = nx.Graph()

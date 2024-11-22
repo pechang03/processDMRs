@@ -22,8 +22,8 @@ import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template
-import pandas as pd
-import numpy as np
+# import pandas as pd
+# import numpy as np
 
 # from processDMR import read_excel_file,
 from biclique_analysis import (
@@ -38,7 +38,7 @@ from biclique_analysis.classifier import (
     BicliqueSizeCategory,
     classify_biclique,
     classify_component,
-    classify_biclique_types
+    classify_biclique_types,
 )
 from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
 from visualization.node_info import NodeInfo
@@ -65,35 +65,13 @@ _cached_data = None
 
 def convert_dict_keys_to_str(d):
     """Convert dictionary tuple keys to strings recursively and handle numpy types."""
-    import numpy as np  # Add this import at top of file
-    
-    if isinstance(d, dict):
-        return {
-            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
-            for k, v in d.items()
-        }
-    elif isinstance(d, list):
-        return [convert_dict_keys_to_str(i) for i in d]
-    elif isinstance(d, set):  # Handle sets by converting to sorted lists
-        return sorted(list(d))
-    elif isinstance(d, tuple):  # Handle tuples
-        return list(d)
-    elif isinstance(d, np.integer):  # Handle numpy integers
-        return int(d)
-    elif isinstance(d, np.floating):  # Handle numpy floats
-        return float(d)
-    elif isinstance(d, np.ndarray):  # Handle numpy arrays
-        return d.tolist()
-    return d
-
-
-def convert_dict_keys_to_str(d):
-    """Convert dictionary tuple keys to strings recursively and handle numpy types."""
     import numpy as np
-    
+
     if isinstance(d, dict):
         return {
-            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_dict_keys_to_str(v)
+            "_".join(map(str, k))
+            if isinstance(k, tuple)
+            else str(k): convert_dict_keys_to_str(v)
             for k, v in d.items()
         }
     elif isinstance(d, list):
@@ -102,9 +80,22 @@ def convert_dict_keys_to_str(d):
         return sorted(list(d))
     elif isinstance(d, tuple):
         return list(d)
-    elif isinstance(d, (np.int_, np.intc, np.intp, np.int8,
-        np.int16, np.int32, np.int64, np.uint8,
-        np.uint16, np.uint32, np.uint64)):
+    elif isinstance(
+        d,
+        (
+            np.int_,
+            np.intc,
+            np.intp,
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.uint8,
+            np.uint16,
+            np.uint32,
+            np.uint64,
+        ),
+    ):
         return int(d)
     elif isinstance(d, (np.float_, np.float16, np.float32, np.float64)):
         return float(d)
@@ -200,9 +191,11 @@ def process_data():
         print("\nBicliques result contents:")
         print("Number of bicliques:", len(bicliques_result.get("bicliques", [])))
         print("Keys in bicliques_result:", list(bicliques_result.keys()))
-        
+
         # Biclique type statistics
-        biclique_type_stats = classify_biclique_types(bicliques_result.get("bicliques", []))
+        biclique_type_stats = classify_biclique_types(
+            bicliques_result.get("bicliques", [])
+        )
         print("\nBiclique type statistics:")
         print(json.dumps(biclique_type_stats, indent=2))
 
@@ -339,13 +332,17 @@ def process_data():
                 )
             ),
             # Use the count from component_stats instead of recalculating
-            "components_with_ds": component_stats["components"]["original"]["connected"]["interesting"],
+            "components_with_ds": component_stats["components"]["original"][
+                "connected"
+            ]["interesting"],
             # Use the interesting component count from stats
             "avg_size_per_component": (
-                len(dominating_set) / component_stats["components"]["original"]["connected"]["interesting"]
-                if component_stats["components"]["original"]["connected"]["interesting"] > 0
+                len(dominating_set)
+                / component_stats["components"]["original"]["connected"]["interesting"]
+                if component_stats["components"]["original"]["connected"]["interesting"]
+                > 0
                 else 0
-            )
+            ),
         }
 
         print(f"\nCalculated dominating set statistics:")
@@ -423,44 +420,54 @@ def process_data():
             print("\nCalculating biclique statistics...")
             from biclique_analysis.statistics import (
                 calculate_biclique_statistics,
-                calculate_edge_coverage
+                calculate_edge_coverage,
             )
 
             # Calculate edge coverage
             edge_coverage = calculate_edge_coverage(
-                bicliques_result["bicliques"],
-                bipartite_graph
+                bicliques_result["bicliques"], bipartite_graph
             )
             print("Edge coverage calculated:", edge_coverage)
 
             # Calculate full biclique statistics
             biclique_stats = calculate_biclique_statistics(
-                bicliques_result["bicliques"],
-                bipartite_graph,
-                dominating_set
+                bicliques_result["bicliques"], bipartite_graph, dominating_set
             )
-            print("Biclique statistics calculated:", json.dumps(biclique_stats, indent=2))
+            print(
+                "Biclique statistics calculated:", json.dumps(biclique_stats, indent=2)
+            )
 
             # Process components to identify interesting ones
             interesting_components = []
-            for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
+            for idx, (dmr_nodes, gene_nodes) in enumerate(
+                bicliques_result["bicliques"]
+            ):
                 # Create subgraph for this component
                 component_nodes = dmr_nodes | gene_nodes
                 subgraph = bipartite_graph.subgraph(component_nodes)
-        
+
                 # Get bicliques for this component
                 component_bicliques = [(dmr_nodes, gene_nodes)]
-        
+
                 # Classify the component
-                category = classify_component(dmr_nodes, gene_nodes, component_bicliques)
-        
-                if category in [BicliqueSizeCategory.INTERESTING, BicliqueSizeCategory.COMPLEX]:
+                category = classify_component(
+                    dmr_nodes, gene_nodes, component_bicliques
+                )
+
+                if category in [
+                    BicliqueSizeCategory.INTERESTING,
+                    BicliqueSizeCategory.COMPLEX,
+                ]:
                     # Find split genes (genes appearing in multiple bicliques)
                     split_genes = {
-                        gene for gene in gene_nodes
-                        if len([b for b in bicliques_result["bicliques"] if gene in b[1]]) > 1
+                        gene
+                        for gene in gene_nodes
+                        if len(
+                            [b for b in bicliques_result["bicliques"] if gene in b[1]]
+                        )
+                        > 1
                     }
-            
+
                     component_info = {
                         "id": idx + 1,
                         "dmrs": len(dmr_nodes),
@@ -470,7 +477,7 @@ def process_data():
                         "raw_bicliques": component_bicliques,
                         "category": category.name.lower(),
                         "component": component_nodes,
-                        "total_edges": len(list(subgraph.edges()))
+                        "total_edges": len(list(subgraph.edges())),
                     }
                     interesting_components.append(component_info)
 
@@ -495,7 +502,7 @@ def process_data():
             "node_participation": bicliques_result.get("node_participation", {}),
             "edge_coverage": edge_coverage,
             "biclique_stats": biclique_stats,
-            "biclique_types": biclique_stats.get("biclique_types", {})
+            "biclique_types": biclique_stats.get("biclique_types", {}),
         }
 
         # Debug print for cached data
@@ -513,40 +520,3 @@ def process_data():
 
         traceback.print_exc()
         return {"error": str(e)}
-
-
-def extract_biclique_sets(bicliques_data) -> List[Tuple[Set[int], Set[int]]]:
-    """Extract DMR and gene sets from processed biclique data."""
-    result = []
-    for biclique in bicliques_data:
-        try:
-            if isinstance(biclique, dict) and "details" in biclique:
-                # Handle processed biclique format
-                dmrs = {
-                    int(d["id"].split("_")[1]) - 1
-                    if isinstance(d["id"], str)
-                    else d["id"]
-                    for d in biclique["details"]["dmrs"]
-                }
-                genes = {g["name"] for g in biclique["details"]["genes"]}
-                result.append((dmrs, genes))
-            elif isinstance(biclique, tuple) and len(biclique) == 2:
-                # Handle raw biclique format
-                dmrs = {int(d) if isinstance(d, str) else d for d in biclique[0]}
-                genes = {int(g) if isinstance(g, str) else g for g in biclique[1]}
-                result.append((dmrs, genes))
-            else:
-                print(f"Warning: Unexpected biclique format: {type(biclique)}")
-                continue
-
-        except Exception as e:
-            print(f"Error processing biclique: {str(e)}")
-            continue
-
-    print(f"Processed {len(result)} bicliques")
-    if result:
-        print("Sample biclique sizes:")
-        for i, (dmrs, genes) in enumerate(result[:3]):
-            print(f"Biclique {i}: {len(dmrs)} DMRs, {len(genes)} genes")
-
-    return result
