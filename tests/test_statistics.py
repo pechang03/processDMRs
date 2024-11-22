@@ -129,3 +129,36 @@ class TestStatistics(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+class TestStatisticsEdgeCases(unittest.TestCase):
+    def setUp(self):
+        """Set up test graph with simple structure"""
+        self.graph = nx.Graph()
+        
+        # Add nodes
+        for n in [0, 1, 2]:
+            self.graph.add_node(n, bipartite=0)  # DMRs
+        for n in [3, 4, 5]:
+            self.graph.add_node(n, bipartite=1)  # Genes
+            
+        # Add edges
+        self.graph.add_edges_from([(0, 3), (1, 4), (2, 5)])
+        
+        # Simple bicliques
+        self.bicliques = [
+            ({0}, {3}),
+            ({1}, {4}),
+            ({2}, {5})
+        ]
+
+    def test_calculate_coverage_statistics(self):
+        coverage_stats = calculate_coverage_statistics(self.bicliques, self.graph)
+        self.assertEqual(coverage_stats["dmrs"]["covered"], 3)
+        self.assertEqual(coverage_stats["genes"]["covered"], 3)
+        self.assertEqual(coverage_stats["dmrs"]["percentage"], 1.0)
+        self.assertEqual(coverage_stats["genes"]["percentage"], 1.0)
+
+    def test_calculate_edge_coverage(self):
+        edge_coverage = calculate_edge_coverage(self.bicliques, self.graph)
+        self.assertEqual(edge_coverage["single"], 3)
+        self.assertEqual(edge_coverage["multiple"], 0)
+        self.assertEqual(edge_coverage["uncovered"], 0)
