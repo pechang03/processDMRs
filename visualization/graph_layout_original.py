@@ -5,7 +5,7 @@
 from typing import Dict, Tuple, Set
 import networkx as nx
 from .base_layout import BaseLayout
-from .node_info import NodeInfo
+from ..utils.node_info import NodeInfo
 
 
 class OriginalGraphLayout(BaseLayout):
