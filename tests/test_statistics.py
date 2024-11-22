@@ -53,13 +53,12 @@ class TestStatistics(unittest.TestCase):
 
     def test_calculate_biclique_statistics(self):
         biclique_stats = calculate_biclique_statistics(self.bicliques, self.graph)
-        self.assertEqual(biclique_stats["size_distribution"][(2, 1)], 1)
-        self.assertEqual(biclique_stats["size_distribution"][(1, 2)], 1)
-        self.assertEqual(biclique_stats["size_distribution"][(3, 1)], 1)
-        self.assertEqual(biclique_stats["coverage"]["dmrs"]["covered"], 3)
-        self.assertEqual(biclique_stats["coverage"]["genes"]["covered"], 2)
-        self.assertEqual(biclique_stats["node_participation"]["dmrs"][2], 1)
-        self.assertEqual(biclique_stats["node_participation"]["genes"][2], 1)
+        self.assertEqual(biclique_stats["size_distribution"][(3, 3)], 2)  # Two bicliques of size 3,3
+        self.assertEqual(biclique_stats["coverage"]["dmrs"]["covered"], 6)  # All 6 DMRs are covered
+        self.assertEqual(biclique_stats["coverage"]["genes"]["covered"], 5)  # All 5 genes are covered
+        self.assertEqual(biclique_stats["node_participation"]["dmrs"][1], 6)  # 6 DMRs appear in 1 biclique
+        self.assertEqual(biclique_stats["node_participation"]["genes"][1], 4)  # 4 genes appear in 1 biclique
+        self.assertEqual(biclique_stats["node_participation"]["genes"][2], 1)  # 1 gene appears in 2 bicliques
         self.assertEqual(biclique_stats["edge_coverage"]["single"], 3)
         self.assertEqual(biclique_stats["edge_coverage"]["multiple"], 0)
         self.assertEqual(biclique_stats["edge_coverage"]["uncovered"], 3)
