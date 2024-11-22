@@ -59,7 +59,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
 HOME1_FILE = os.path.join(DATA_DIR, "HOME1.xlsx")
-BICLIQUES_FILE = os.path.join(DATA_DIR, "bipartite_graph_output.txt.biclusters")
+BICLIQUES_FILE_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}.txt.biclusters")
+TIME_POINTS = ["0h", "2h", "4h", "8h", "12h", "24h", "36h", "48h"]
 
 
 _cached_data = None
@@ -574,6 +575,15 @@ def process_data():
             "edge_coverage": edge_coverage,
             "biclique_stats": biclique_stats,
             "biclique_types": biclique_stats.get("biclique_types", {}),
+            "timepoint_stats": {
+                timepoint: {
+                    "total_bicliques": len(results.get("bicliques", [])),
+                    "biclique_types": results.get("statistics", {}).get("biclique_stats", {}).get("biclique_types", {}),
+                    "split_genes": results.get("statistics", {}).get("complex_components", {}).get("split_genes", {}),
+                    "edge_coverage": results.get("statistics", {}).get("edge_coverage", {})
+                }
+                for timepoint, results in timepoint_results.items()
+            }
         }
 
         # Debug print for cached data
