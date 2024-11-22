@@ -9,6 +9,11 @@ from biclique_analysis.statistics import (
     calculate_node_participation,
     analyze_components,
 )
+from utils.json_utils import (
+    convert_stats_for_json,
+    convert_all_for_json,
+    convert_sets_to_lists,
+)
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
     classify_biclique_types,
