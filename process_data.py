@@ -475,6 +475,18 @@ def process_data():
             print(f"\nFound {len(complex_components)} complex components with split genes")
             print(f"Total split genes across components: {sum(len(c['split_genes']) for c in complex_components)}")
 
+            # Update biclique type statistics to include complex components
+            biclique_stats["biclique_types"] = {
+                "empty": 0,
+                "simple": len(bicliques_result["bicliques"]) - len(complex_components),
+                "interesting": len([c for c in complex_components if len(c["bicliques"]) == 2]),
+                "complex": len([c for c in complex_components if len(c["bicliques"]) > 2])
+            }
+
+            # Also add the header statistics from the biclique file
+            if "statistics" in bicliques_result:
+                biclique_stats["header_statistics"] = bicliques_result["statistics"]
+
             # Process components to identify interesting ones
             interesting_components = []
             for idx, (dmr_nodes, gene_nodes) in enumerate(
