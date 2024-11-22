@@ -38,10 +38,12 @@ def create_node_biclique_map(
             node_biclique_map[node].append(biclique_idx)
 
     return node_biclique_map
+
+
 def get_node_position(
-    node_id: int, 
-    node_positions: Dict[int, Tuple[float, float]], 
-    default: Tuple[float, float] = None
+    node_id: int,
+    node_positions: Dict[int, Tuple[float, float]],
+    default: Tuple[float, float] = None,
 ) -> Tuple[float, float]:
     """
     Safely get and validate a node's position.
@@ -62,15 +64,15 @@ def get_node_position(
         (0, 0)
     """
     position = node_positions.get(node_id)
-    
+
     if position is None:
         if default is not None:
             return default
         raise ValueError(f"No position found for node {node_id}")
-        
+
     if not isinstance(position, tuple) or len(position) != 2:
         if default is not None:
             return default
         raise ValueError(f"Invalid position format for node {node_id}: {position}")
-        
+
     return position

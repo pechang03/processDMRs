@@ -14,21 +14,21 @@ from biclique_analysis import (
     process_enhancer_info,
     create_node_metadata,
     process_components,  # Add this import
-    reporting
+    reporting,
 )
 from biclique_analysis.reader import read_bicliques_file
 from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
 from visualization import calculate_node_positions  # Import from package root
 from visualization.core import create_biclique_visualization
 from visualization import create_node_biclique_map
-from graph_utils import validate_bipartite_graph
-from graph_utils import create_bipartite_graph
-from graph_utils import read_excel_file
+from data_loader import validate_bipartite_graph
+from data_loader import create_bipartite_graph
+from data_loader import read_excel_file
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,  # Changed name
     print_domination_statistics,
-    copy_dominating_set  # Add new function
+    copy_dominating_set,  # Add new function
 )
 
 # Add version constant at top of file
