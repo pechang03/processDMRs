@@ -10,7 +10,7 @@ from visualization import (
     SpringLogicalLayout,
 )
 from visualization.graph_layout import calculate_node_positions
-from visualization.node_info import NodeInfo
+from utils.node_info import NodeInfo
 from visualization.base_layout import BaseLogicalLayout
 from visualization.biconnected_visualization import BiconnectedVisualization
 from visualization.triconnected_visualization import TriconnectedVisualization
@@ -18,7 +18,7 @@ from biclique_analysis.statistics import calculate_biclique_statistics
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
     classify_biclique,
-    classify_component
+    classify_component,
 )
 
 
@@ -162,31 +162,33 @@ def statistics_route():
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
             "dominating_set": results.get("dominating_set", {}),
-            "coverage": results.get("coverage", {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {
-                    "single_coverage": 0,
-                    "multiple_coverage": 0,
-                    "uncovered": 0,
-                    "total": 0,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0
-                }
-            }),
+            "coverage": results.get(
+                "coverage",
+                {
+                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                    "genes": {"covered": 0, "total": 0, "percentage": 0},
+                    "edges": {
+                        "single_coverage": 0,
+                        "multiple_coverage": 0,
+                        "uncovered": 0,
+                        "total": 0,
+                        "single_percentage": 0,
+                        "multiple_percentage": 0,
+                        "uncovered_percentage": 0,
+                    },
+                },
+            ),
             "edge_coverage": results.get("edge_coverage", {}),
-            "biclique_types": results.get("biclique_types", {
-                "empty": 0,
-                "simple": 0,
-                "interesting": 0,
-                "complex": 0
-            }),
-            "size_distribution": results.get("size_distribution", {})
+            "biclique_types": results.get(
+                "biclique_types",
+                {"empty": 0, "simple": 0, "interesting": 0, "complex": 0},
+            ),
+            "size_distribution": results.get("size_distribution", {}),
         }
 
         # Convert numpy types and tuple keys before JSON serialization
         from utils.json_utils import convert_dict_keys_to_str
+
         detailed_stats = convert_dict_keys_to_str(detailed_stats)
 
         # Update edge coverage from biclique statistics if available
@@ -204,15 +206,16 @@ def statistics_route():
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
-            bicliques_result=convert_dict_keys_to_str(results)
+            bicliques_result=convert_dict_keys_to_str(results),
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
 
-def component_detail_route(component_id, type='biconnected'):
+def component_detail_route(component_id, type="biconnected"):
     """Handle component detail page requests."""
     try:
         results = process_data()
@@ -223,15 +226,19 @@ def component_detail_route(component_id, type='biconnected'):
 
         print(f"\nProcessing component {component_id} of type {type}")
 
-        if type == 'triconnected':
+        if type == "triconnected":
             # ... [triconnected handling stays the same] ...
             pass
         else:
             component = next(
-                (c for c in results["interesting_components"] if c["id"] == component_id),
-                None
+                (
+                    c
+                    for c in results["interesting_components"]
+                    if c["id"] == component_id
+                ),
+                None,
             )
-            
+
             if component and "raw_bicliques" in component:
                 print("\nComponent found:")
                 print(f"Component ID: {component['id']}")
@@ -243,8 +250,7 @@ def component_detail_route(component_id, type='biconnected'):
 
                 # Calculate positions using graph_layout.py
                 node_positions = calculate_node_positions(
-                    component["raw_bicliques"],
-                    node_biclique_map
+                    component["raw_bicliques"], node_biclique_map
                 )
 
                 print("\nPosition calculation complete:")
@@ -268,11 +274,13 @@ def component_detail_route(component_id, type='biconnected'):
                     subgraph,
                     dmr_metadata=results.get("dmr_metadata", {}),
                     gene_metadata=results.get("gene_metadata", {}),
-                    gene_id_mapping=results.get("gene_id_mapping", {})
+                    gene_id_mapping=results.get("gene_id_mapping", {}),
                 )
 
         if not component:
-            return render_template("error.html", message=f"Component {component_id} not found")
+            return render_template(
+                "error.html", message=f"Component {component_id} not found"
+            )
 
         print("\nFinal component data:")
         print(f"DMRs: {component.get('dmrs')}")
@@ -286,11 +294,12 @@ def component_detail_route(component_id, type='biconnected'):
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             gene_id_mapping=results.get("gene_id_mapping", {}),
-            component_type=type
+            component_type=type,
         )
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 

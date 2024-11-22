@@ -10,7 +10,7 @@ from utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
 from utils.node_info import NodeInfo
-from .utils import get_node_position  # Add this import
+# from utils import get_node_position  # Add this import
 
 
 def create_node_traces(
@@ -58,6 +58,7 @@ def create_node_traces(
 
     return traces
 
+
 def create_gene_trace(
     gene_nodes: Set[int],
     node_positions: Dict[int, Tuple[float, float]],
@@ -65,7 +66,7 @@ def create_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    textposition: str = "middle right"
+    textposition: str = "middle right",
 ) -> go.Scatter:
     """Create trace for regular gene nodes."""
     x = []
@@ -87,7 +88,11 @@ def create_gene_trace(
         # Set node color based on biclique membership
         if node_id in node_biclique_map and biclique_colors:
             biclique_idx = node_biclique_map[node_id][0]
-            color = biclique_colors[biclique_idx] if biclique_idx < len(biclique_colors) else "gray"
+            color = (
+                biclique_colors[biclique_idx]
+                if biclique_idx < len(biclique_colors)
+                else "gray"
+            )
         else:
             color = "gray"
         colors.append(color)
@@ -122,6 +127,7 @@ def create_gene_trace(
         showlegend=True,
     )
 
+
 def create_split_gene_trace(
     split_genes: Set[int],
     node_positions: Dict[int, Tuple[float, float]],
@@ -129,7 +135,7 @@ def create_split_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    textposition: str = "middle right"
+    textposition: str = "middle right",
 ) -> go.Scatter:
     """Create trace for split gene nodes."""
     x = []
@@ -151,7 +157,11 @@ def create_split_gene_trace(
         # Set node color based on first biclique membership
         if node_id in node_biclique_map and biclique_colors:
             biclique_idx = node_biclique_map[node_id][0]
-            color = biclique_colors[biclique_idx] if biclique_idx < len(biclique_colors) else "gray"
+            color = (
+                biclique_colors[biclique_idx]
+                if biclique_idx < len(biclique_colors)
+                else "gray"
+            )
         else:
             color = "gray"
         colors.append(color)
@@ -248,7 +258,11 @@ def create_dmr_trace(
         y=y,
         mode="markers+text",
         marker=dict(
-            size=[15 if n in dominating_set else 10 for n in dmr_nodes if n in node_positions],
+            size=[
+                15 if n in dominating_set else 10
+                for n in dmr_nodes
+                if n in node_positions
+            ],
             color=colors,
             symbol="star" if dominating_set else "circle",
             line=dict(color="black", width=1),

@@ -3,7 +3,8 @@
 import json
 from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
-import plotly.graph_objs as go
+
+# import plotly.graph_objs as go
 import plotly.colors
 import networkx as nx
 
