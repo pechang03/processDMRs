@@ -42,6 +42,8 @@ from biclique_analysis.classifier import (
 )
 from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
 from utils.node_info import NodeInfo
+from utils.json_utils import convert_dict_keys_to_str
+
 from data_loader import read_excel_file, create_bipartite_graph
 from rb_domination import (
     greedy_rb_domination,
@@ -435,7 +437,8 @@ def process_data():
                 bicliques_result["bicliques"], bipartite_graph, dominating_set
             )
             print(
-                "Biclique statistics calculated:", json.dumps(biclique_stats, indent=2)
+                "Biclique statistics calculated:",
+                json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
             )
 
             # Process components to identify interesting ones
