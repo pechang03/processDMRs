@@ -33,3 +33,4 @@ __all__ = [
     "TriconnectedVisualization",
     "NodeInfo",
 ]
+"""Visualization package"""

@@ -19,3 +19,4 @@ __all__ = [
     "convert_stats_for_json",
     "convert_dict_keys_to_str",
 ]
+"""Utilities package"""
