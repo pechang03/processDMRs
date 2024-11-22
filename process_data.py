@@ -441,6 +441,40 @@ def process_data():
                 json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
             )
 
+            # Analyze connected components
+            print("\nAnalyzing connected components...")
+            connected_components = list(nx.connected_components(biclique_graph))
+            print(f"Found {len(connected_components)} connected components")
+
+            # Track complex components (those with multiple bicliques)
+            complex_components = []
+            for component in connected_components:
+                # Get all bicliques that have nodes in this component
+                component_bicliques = [
+                    (dmr_nodes, gene_nodes) 
+                    for dmr_nodes, gene_nodes in bicliques_result["bicliques"]
+                    if not (dmr_nodes | gene_nodes).isdisjoint(component)
+                ]
+            
+                if len(component_bicliques) > 1:
+                    # This is a complex component with multiple bicliques
+                    split_genes = {
+                        gene 
+                        for _, genes in component_bicliques 
+                        for gene in genes
+                        if sum(1 for _, g in component_bicliques if gene in g) > 1
+                    }
+                
+                    if split_genes:  # Only count if there are actual split genes
+                        complex_components.append({
+                            "component": component,
+                            "bicliques": component_bicliques,
+                            "split_genes": split_genes
+                        })
+
+            print(f"\nFound {len(complex_components)} complex components with split genes")
+            print(f"Total split genes across components: {sum(len(c['split_genes']) for c in complex_components)}")
+
             # Process components to identify interesting ones
             interesting_components = []
             for idx, (dmr_nodes, gene_nodes) in enumerate(
