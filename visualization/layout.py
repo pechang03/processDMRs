@@ -6,7 +6,7 @@ Functions for visual layout of graph elements
 """
 
 from typing import Dict, List, Set, Tuple
-from ..utils.node_info import NodeInfo
+from utils.node_info import NodeInfo
 import plotly.graph_objs as go
 
 

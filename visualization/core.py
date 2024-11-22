@@ -7,8 +7,8 @@ import plotly.graph_objs as go
 import plotly.colors
 import networkx as nx
 
-from ..utils.node_info import NodeInfo
-from ..utils.edge_info import EdgeInfo
+from utils.node_info import NodeInfo
+from utils.edge_info import EdgeInfo
 from .traces import (
     create_node_traces,
     create_edge_traces,

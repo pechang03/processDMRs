@@ -6,7 +6,7 @@ from .graph_layout_logical import (  # Updated import
     collect_node_information,
     # position_nodes_by_biclique,  # Add this import
 )
-from ..utils.node_info import NodeInfo
+from utils.node_info import NodeInfo
 
 
 def calculate_node_positions(
