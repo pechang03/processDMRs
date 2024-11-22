@@ -476,11 +476,32 @@ def process_data():
             print(f"Total split genes across components: {sum(len(c['split_genes']) for c in complex_components)}")
 
             # Update biclique type statistics to include complex components
+            total_components = len(bicliques_result["bicliques"])
+            complex_count = len([c for c in complex_components if len(c["bicliques"]) > 2])
+            interesting_count = len([c for c in complex_components if len(c["bicliques"]) == 2])
+            simple_count = total_components - (complex_count + interesting_count)
+
             biclique_stats["biclique_types"] = {
                 "empty": 0,
-                "simple": len(bicliques_result["bicliques"]) - len(complex_components),
-                "interesting": len([c for c in complex_components if len(c["bicliques"]) == 2]),
-                "complex": len([c for c in complex_components if len(c["bicliques"]) > 2])
+                "simple": simple_count,
+                "interesting": interesting_count,
+                "complex": complex_count
+            }
+
+            # Add more detailed component statistics
+            biclique_stats["component_details"] = {
+                "total_components": total_components,
+                "split_genes": {
+                    "total": sum(len(c["split_genes"]) for c in complex_components),
+                    "per_component": {
+                        f"component_{i}": len(c["split_genes"]) 
+                        for i, c in enumerate(complex_components)
+                    }
+                },
+                "bicliques_per_component": {
+                    f"component_{i}": len(c["bicliques"]) 
+                    for i, c in enumerate(complex_components)
+                }
             }
 
             # Also add the header statistics from the biclique file
