@@ -66,18 +66,21 @@ class TestBipartiteGraph(unittest.TestCase):
         self.assertEqual(len(single_node_graph.nodes()), 2)
 
     def test_dmr_without_genes(self):
+        """Test graph with DMRs that have no associated genes"""
+        # Create a new graph just for this test
         data = {
             "DMR_No.": [1, 2],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [None, None],
         }
-        df = pd.DataFrame(data)
-        df["Processed_Enhancer_Info"] = df[
+        test_df = pd.DataFrame(data)
+        test_df["Processed_Enhancer_Info"] = test_df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
         mapping = {"GeneA": 2, "GeneB": 3}
-        graph = create_bipartite_graph(df, mapping)
+        graph = create_bipartite_graph(test_df, mapping)
+        
         self.assertEqual(len(graph.nodes()), 4)
         self.assertEqual(len(graph.edges()), 2)
 
@@ -132,6 +135,7 @@ class TestBipartiteGraph(unittest.TestCase):
             self.assertEqual(len(graph.edges()), num_dmrs * num_genes)
 
     def test_sparse_and_dense_graphs(self):
+        """Test handling of sparse and dense graphs"""
         # Test sparse graph
         sparse_data = {
             "DMR_No.": [1, 2, 3],

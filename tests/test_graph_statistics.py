@@ -47,9 +47,10 @@ class TestGraphStatistics(unittest.TestCase):
         print(f"Edges: {list(self.bipartite_graph.edges())}")
 
     def test_min_degree(self):
+        """Test minimum degree in the graph"""
         degrees = dict(self.bipartite_graph.degree())
         min_degree = min(degrees.values())
-        self.assertEqual(min_degree, 1, "Minimum degree should be 1.")
+        self.assertEqual(min_degree, 3, "Minimum degree should be 3 in K_{3,3} bicliques.")
 
     def test_max_degree(self):
         degrees = dict(self.bipartite_graph.degree())
