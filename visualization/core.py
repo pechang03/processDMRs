@@ -2,11 +2,11 @@
 
 import json
 from typing import Dict, List, Set, Tuple
-from biclique_analysis.edge_info import EdgeInfo  # Import EdgeInfo
+from utils.edge_info import EdgeInfo  # Updated import path
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objs as go
 import plotly.colors
-import networkx as nx  # Add this import
+import networkx as nx
 
 from .traces import (
     create_node_traces,
