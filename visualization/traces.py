@@ -9,7 +9,7 @@ from typing import Dict, List, Set, Tuple
 from utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
-from .node_info import NodeInfo
+from utils.node_info import NodeInfo
 from .utils import get_node_position  # Add this import
 
 

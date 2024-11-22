@@ -2,7 +2,7 @@ from typing import List, Dict, Tuple, Set
 import networkx as nx
 import json
 
-from visualization.node_info import NodeInfo
+from utils.node_info import NodeInfo
 from biclique_analysis.statistics import (
     calculate_biclique_statistics,
     calculate_edge_coverage,
