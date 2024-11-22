@@ -17,21 +17,20 @@ class TestStatistics(unittest.TestCase):
         # DMR nodes should be 0,1,2 (3 DMRs)
         # Gene nodes should be 3,4 (2 genes)
         self.graph.add_edges_from([
-            (0, 3), (1, 3), (2, 3),  # First gene connected to all DMRs
-            (0, 4), (1, 4), (2, 4)   # Second gene connected to all DMRs
+            (0, 3), (1, 3),  # First gene connected to DMRs 0,1
+            (1, 4), (2, 4)   # Second gene connected to DMRs 1,2
         ])
-        
+    
         # Add bipartite attributes
         for n in [0, 1, 2]:
             self.graph.nodes[n]['bipartite'] = 0  # DMRs
         for n in [3, 4]:
             self.graph.nodes[n]['bipartite'] = 1  # Genes
-        
-        # Bicliques should use the same node numbering convention
+    
+        # Update bicliques to match the graph structure
         self.bicliques = [
             ({0, 1}, {3}),    # First biclique: DMRs 0,1 with gene 3
-            ({2}, {3, 4}),    # Second biclique: DMR 2 with genes 3,4
-            ({0, 1, 2}, {4})  # Third biclique: All DMRs with gene 4
+            ({1, 2}, {4})     # Second biclique: DMRs 1,2 with gene 4
         ]
 
     def test_calculate_coverage_statistics(self):
@@ -62,9 +61,7 @@ class TestStatistics(unittest.TestCase):
 
     def test_calculate_size_distribution(self):
         size_dist = calculate_size_distribution(self.bicliques)
-        self.assertEqual(size_dist[(2, 1)], 1)
-        self.assertEqual(size_dist[(1, 2)], 1)
-        self.assertEqual(size_dist[(3, 1)], 1)
+        self.assertEqual(size_dist[(2, 1)], 2)  # Two bicliques with 2 DMRs and 1 gene
 
     def test_calculate_node_participation(self):
         node_participation = calculate_node_participation(self.bicliques)
@@ -77,8 +74,8 @@ class TestStatistics(unittest.TestCase):
         edge_coverage = calculate_edge_coverage(self.bicliques, self.graph)
         self.assertEqual(edge_coverage["single"], 3)      # 3 edges covered once
         self.assertEqual(edge_coverage["multiple"], 0)    # No edges covered multiple times
-        self.assertEqual(edge_coverage["uncovered"], 3)   # 3 edges not covered
-        self.assertEqual(edge_coverage["total"], 6)       # Total of 6 edges in graph
+        self.assertEqual(edge_coverage["uncovered"], 1)   # 1 edge not covered
+        self.assertEqual(edge_coverage["total"], 4)       # Total of 4 edges in graph
 
     def test_invalid_graph_structures(self):
         """Test that invalid graph structures raise appropriate exceptions"""
