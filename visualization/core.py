@@ -15,7 +15,7 @@ from .traces import (
 )
 
 from .layout import create_visual_layout
-from .node_info import NodeInfo
+from utils.node_info import NodeInfo
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:

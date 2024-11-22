@@ -1,7 +1,7 @@
 """Core graph layout algorithms"""
 
 from typing import Dict, List, Set, Tuple
-from .node_info import NodeInfo
+from utils.node_info import NodeInfo
 
 
 def calculate_node_positions(

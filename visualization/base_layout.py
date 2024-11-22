@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple, Set
 import networkx as nx
-from .node_info import NodeInfo
+from utils.node_info import NodeInfo
 
 
 class BaseLayout(ABC):
