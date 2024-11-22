@@ -10,16 +10,18 @@ from .traces import create_node_traces, create_biclique_boxes, create_edge_trace
 from .layout import create_visual_layout, create_axis_layout, calculate_plot_height
 from .node_info import NodeInfo
 from .graph_layout_logical import calculate_node_positions  # Add this import
+from .biconnected_visualization import BiconnectedVisualization
+from .triconnected_visualization import TriconnectedVisualization
 
 __all__ = [
     "create_biclique_visualization",
-    "create_node_biclique_map", 
+    "create_node_biclique_map",
     "create_visual_layout",
     "create_axis_layout",
     "calculate_plot_height",
     "NodeInfo",
     "OriginalGraphLayout",
-    "SpringLogicalLayout", 
+    "SpringLogicalLayout",
     "CircularBicliqueLayout",
     "create_edge_traces",
     "create_node_traces",
@@ -28,5 +30,6 @@ __all__ = [
     "create_gene_table",
     "generate_biclique_colors",
     "calculate_node_positions",
+    "BiconnectedVisualization",
     "TriconnectedVisualization",
 ]

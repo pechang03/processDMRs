@@ -1,3 +1,5 @@
+# File : __init__.py
+# License :
 from .reader import read_bicliques_file
 from .edge_info import EdgeInfo  # Import EdgeInfo
 from .components import process_components
@@ -14,6 +16,7 @@ from .processor import (
     process_dataset,
     create_node_metadata,
 )
+from .edge_classification import classify_edges  # Add this import
 
 # Use a set to ensure uniqueness and then convert back to a list
 __all__ = list(
@@ -39,6 +42,8 @@ __all__ = list(
             "EdgeInfo",
             "print_bicliques_summary",
             "print_bicliques_detail",
+            # Edge classification exports
+            "classify_edges",  # Add this to __all__
         ]
     )
 )

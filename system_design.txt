@@ -49,87 +49,106 @@
     • Component Integration: Integrated with component analysis for granular insights
     • Caching Strategy: Cached dominating set results with component statistics
 
-                                                   Future Considerations
-
- 1 Performance Optimization
-    • Caching: Discuss potential caching strategies and their benefits.
-    • Batch Processing: Explain how batch processing could improve performance.
- 2 Extensibility
-    • New Edge/Node Types: Provide examples of how new edge/node types could be added.
-    • Visualization System: Discuss potential new features for the visualization system.
- 3 Data Validation
-    • Basic Validation: Explain the current validation methods.
-    • Robust Error Checking: Discuss potential improvements in error checking.
-
+=======
 DMR Analysis System Design
- =========================
+=========================
 
- Core Architecture
- ----------------
- - **Modular design** with clear separation between data processing, analysis, and visualization.
-   - Benefits: Easier maintenance, scalability, and reusability of components.
- - Uses **NetworkX** for graph operations, **Plotly** for interactive visualizations, and **Pandas** for data processing.
- - **Flask-based web interface** for result display.
+Core Architecture
+----------------
+- **Modular design** with clear separation between data processing, analysis, and visualization.
+  - Benefits: Easier maintenance, scalability, and reusability of components.
+- Uses **NetworkX** for graph operations, **Plotly** for interactive visualizations, and **Pandas** for data processing.
+- **Flask-based web interface** for result display.
+- **Layout System**: Implements polymorphic layout strategies through BaseLayout abstract class
+  - Supports multiple visualization approaches (spring, circular)
+  - Enables easy addition of new layout algorithms
+  - Provides consistent interface for all layout implementations
 
- Key Components
- -------------
- 1. **Data Processing**
-    - Handles Excel input files containing DMR and gene data using **Pandas**.
-    - Creates bipartite graph structure (DMRs to genes).
-    - Manages gene ID mapping system.
+Key Components
+-------------
+1. **Data Processing**
+   - Handles Excel input files containing DMR and gene data using **Pandas**.
+   - Creates bipartite graph structure (DMRs to genes).
+   - Manages gene ID mapping system.
 
- 2. **Biclique Analysis**
-    - Identifies complete bipartite subgraphs.
-    - Classifies bicliques (trivial, small, interesting).
-    - Tracks edge classifications and sources.
+2. **Biclique Analysis**
+   - Identifies complete bipartite subgraphs.
+   - Classifies bicliques (trivial, small, interesting).
+   - Tracks edge classifications and sources.
 
- 3. **Visualization System**
-    - Hierarchical visualization components:
-      * Core plotting (create_biclique_visualization)
-      * Trace creation (nodes, edges, biclique boxes)
-      * Layout management
-    - Uses EdgeInfo objects to track edge metadata.
-    - Supports multiple input formats for flexibility.
+3. **Visualization System**
+   - Hierarchical visualization components:
+     * Core plotting (create_biclique_visualization)
+     * Trace creation (nodes, edges, biclique boxes)
+     * Polymorphic layout system:
+       - BaseLayout abstract class
+       - OriginalGraphLayout for spring embedding
+       - CircularBicliqueLayout for biclique visualization
+       - SpringLogicalLayout for logical constraints
+   - Uses EdgeInfo objects to track edge metadata
+   - Supports multiple input formats for flexibility
 
- Data Structures
- --------------
- 1. **EdgeInfo**
-    - Encapsulates edge data and metadata.
-    - Tracks edge sources and classifications.
-    - Supports JSON serialization.
+4. **Dominating Set Analysis**
+   - RB-Domination: Implements red-blue domination algorithm for bipartite graphs
+   - Greedy Approach: Uses heap-based greedy selection with utility scoring
+   - Minimization: Includes post-processing to remove redundant dominators
+   - Statistics: Tracks coverage metrics and component-level domination
 
- 2. **NodeInfo**
-    - Manages node categorization (DMR vs gene).
-    - Tracks split genes and node degrees.
-    - Provides type checking methods.
+Data Structures
+--------------
+1. **EdgeInfo**
+   - Encapsulates edge data and metadata.
+   - Tracks edge sources and classifications.
+   - Supports JSON serialization.
 
- Design Decisions
- ---------------
- 1. **Edge Classification**
-    - Uses dictionary-based classification system.
-    - Categories: permanent, false_positive, false_negative.
-    - Supports both EdgeInfo objects and raw tuples for backward compatibility.
+2. **NodeInfo**
+   - Manages node categorization (DMR vs gene).
+   - Tracks split genes and node degrees.
+   - Provides type checking methods.
 
- 2. **Layout Strategy**
-    - Bipartite layout with DMRs on left, genes on right.
-    - Special handling for split genes (positioned slightly offset).
-    - Vertical spacing based on biclique sizes.
+Design Decisions
+---------------
+1. **Edge Classification**
+   - Uses dictionary-based classification system.
+   - Categories: permanent, false_positive, false_negative.
+   - Supports both EdgeInfo objects and raw tuples for backward compatibility.
 
- 3. **Component Organization**
-    - Separate modules for different visualization aspects.
-    - Clear hierarchy of functionality.
-    - Modular trace creation for maintainability.
+2. **Layout Strategy System**
+   - Abstract BaseLayout class provides interface for layout algorithms
+   - Enables polymorphic layout selection at runtime
+   - Separates layout logic from visualization logic
+   - Makes adding new layout algorithms straightforward
+   - Key implementations:
+     * Original graph layout (spring embedding)
+     * Circular biclique layout
+     * Spring layout with logical constraints
 
- Future Considerations
- -------------------
- 1. **Performance Optimization**
-    - May need caching for large graphs.
-    - Consider batch processing for edge traces.
+3. **Component Organization**
+   - Separate modules for different visualization aspects.
+   - Clear hierarchy of functionality.
+   - Modular trace creation for maintainability.
 
- 2. **Extensibility**
-    - Design supports adding new edge/node types.
-    - Visualization system can be extended for new features.
+4. **Dominating Set Implementation**
+   - Chose greedy approach for balance of efficiency and solution quality
+   - Component Integration: Integrated with component analysis for granular insights
+   - Caching Strategy: Cached dominating set results with component statistics
 
- 3. **Data Validation**
-    - Currently implements basic validation.
-    - May need more robust error checking.
+Future Considerations
+-------------------
+1. **Performance Optimization**
+   - May need caching for large graphs.
+   - Consider batch processing for edge traces.
+
+2. **Extensibility**
+   - Design supports adding new edge/node types.
+   - Visualization system can be extended for new features.
+
+3. **Data Validation**
+   - Currently implements basic validation.
+   - May need more robust error checking.
+
+4. **Layout Extensions**
+   - Additional layout algorithms can be added by implementing BaseLayout
+   - Potential for hybrid layouts combining multiple strategies
+   - Could add interactive layout adjustment capabilities
+   - Support for custom layout constraints and parameters
