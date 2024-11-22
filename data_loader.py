@@ -194,3 +194,17 @@ def create_bipartite_graph(
     print(f"Total edges added: {len(edges_added)}")
 
     return B
+def get_excel_sheets(filepath: str) -> List[str]:
+    """Get all sheet names from an Excel file."""
+    try:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Excel file not found: {filepath}")
+            
+        print(f"Reading sheet names from: {filepath}")
+        xl = pd.ExcelFile(filepath)
+        sheets = xl.sheet_names
+        print(f"Found sheets: {sheets}")
+        return sheets
+    except Exception as e:
+        print(f"Error reading sheet names from {filepath}: {e}")
+        raise

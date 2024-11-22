@@ -58,9 +58,8 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
-HOME1_FILE = os.path.join(DATA_DIR, "HOME1.xlsx")
-BICLIQUES_FILE_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}.txt.biclusters")
-TIME_POINTS = ["0h", "2h", "4h", "8h", "12h", "24h", "36h", "48h"]
+DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
+BIPARTITE_GRAPH_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}.txt")
 
 
 _cached_data = None
