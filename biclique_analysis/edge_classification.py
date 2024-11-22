@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Set
 from collections import defaultdict
 import networkx as nx
 
-from .edge_info import EdgeInfo
+from utils.edge_info import EdgeInfo
 
 def analyze_bridge_edges(
     graph: nx.Graph, 
