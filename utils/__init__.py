@@ -9,6 +9,7 @@ from .json_utils import (
     convert_stats_for_json,
     convert_dict_keys_to_str,
 )
+from .graph_utils import create_node_biclique_map, get_node_position
 
 __all__ = [
     "EdgeInfo",
@@ -18,5 +19,7 @@ __all__ = [
     "convert_all_for_json",
     "convert_stats_for_json",
     "convert_dict_keys_to_str",
+    "create_node_biclique_map",
+    "get_node_position",
 ]
 """Utilities package"""
