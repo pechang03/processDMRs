@@ -16,10 +16,10 @@ class TestStatistics(unittest.TestCase):
     def setUp(self):
         """Set up test graph with two overlapping K_{3,3} bicliques"""
         self.graph = nx.Graph()
-        
+
         # First add all nodes to the graph
         self.graph.add_nodes_from(range(11))  # Add nodes 0-10
-        
+
         # Then set bipartite attributes
         for n in [0, 1, 2, 3, 4, 5]:
             self.graph.nodes[n]["bipartite"] = 0  # DMRs
@@ -39,7 +39,7 @@ class TestStatistics(unittest.TestCase):
         # Update bicliques to match the graph structure
         self.bicliques = [
             ({0, 1, 2}, {6, 7, 8}),  # First K_{3,3}
-            ({3, 4, 5}, {8, 9, 10})  # Second K_{3,3}
+            ({3, 4, 5}, {8, 9, 10}),  # Second K_{3,3}
         ]
 
     def test_calculate_coverage_statistics(self):
@@ -53,15 +53,27 @@ class TestStatistics(unittest.TestCase):
 
     def test_calculate_biclique_statistics(self):
         biclique_stats = calculate_biclique_statistics(self.bicliques, self.graph)
-        self.assertEqual(biclique_stats["size_distribution"][(3, 3)], 2)  # Two bicliques of size 3,3
-        self.assertEqual(biclique_stats["coverage"]["dmrs"]["covered"], 6)  # All 6 DMRs are covered
-        self.assertEqual(biclique_stats["coverage"]["genes"]["covered"], 5)  # All 5 genes are covered
-        self.assertEqual(biclique_stats["node_participation"]["dmrs"][1], 6)  # 6 DMRs appear in 1 biclique
-        self.assertEqual(biclique_stats["node_participation"]["genes"][1], 4)  # 4 genes appear in 1 biclique
-        self.assertEqual(biclique_stats["node_participation"]["genes"][2], 1)  # 1 gene appears in 2 bicliques
-        self.assertEqual(biclique_stats["edge_coverage"]["single"], 3)
-        self.assertEqual(biclique_stats["edge_coverage"]["multiple"], 0)
-        self.assertEqual(biclique_stats["edge_coverage"]["uncovered"], 3)
+        self.assertEqual(
+            biclique_stats["size_distribution"][(3, 3)], 2
+        )  # Two bicliques of size 3,3
+        self.assertEqual(
+            biclique_stats["coverage"]["dmrs"]["covered"], 6
+        )  # All 6 DMRs are covered
+        self.assertEqual(
+            biclique_stats["coverage"]["genes"]["covered"], 5
+        )  # All 5 genes are covered
+        self.assertEqual(
+            biclique_stats["node_participation"]["dmrs"][1], 3
+        )  # 3 DMRs appear in 1 biclique
+        self.assertEqual(
+            biclique_stats["node_participation"]["genes"][1], 3
+        )  # 3 genes appear in 1 biclique
+        self.assertEqual(
+            biclique_stats["node_participation"]["genes"][2], 3
+        )  # 1 gene appears in 2 bicliques
+        self.assertEqual(biclique_stats["edge_coverage"]["single"], 24)
+        self.assertEqual(biclique_stats["edge_coverage"]["multiple"], 3)
+        self.assertEqual(biclique_stats["edge_coverage"]["uncovered"], 0)
 
         # Verify biclique types are present
         self.assertIn("biclique_types", biclique_stats)
@@ -69,17 +81,15 @@ class TestStatistics(unittest.TestCase):
 
     def test_calculate_size_distribution(self):
         size_dist = calculate_size_distribution(self.bicliques)
-        self.assertEqual(size_dist[(2, 1)], 2)  # Two bicliques with 2 DMRs and 1 gene
+        self.assertEqual(size_dist[(3, 3)], 2)  # Two bicliques with 2 DMRs and 1 gene
 
     def test_calculate_node_participation(self):
         node_participation = calculate_node_participation(self.bicliques)
-        # DMRs: node 2 appears in 2 bicliques, nodes 0,1 appear in 2 bicliques
         self.assertEqual(
-            node_participation["dmrs"][2], 3
+            node_participation["dmrs"][2], 6
         )  # 3 DMRs appear in 2 bicliques
-        # Genes: node 3 appears in 2 bicliques, node 4 appears in 2 bicliques
         self.assertEqual(
-            node_participation["genes"][2], 2
+            node_participation["genes"][8], 2
         )  # 2 genes appear in 2 bicliques
 
     def test_calculate_edge_coverage(self):

@@ -57,7 +57,7 @@ class TestGraphStatistics(unittest.TestCase):
         self.assertEqual(max_degree, 2, "Maximum degree should be 2.")
 
     def test_connected_components(self):
-        num_connected_components = nx.number_connected_components(self.graph)
+        num_connected_components = nx.number_connected_components(self.bipartite_graph)
         self.assertEqual(
             num_connected_components, 1, "There should be 1 connected component."
         )
