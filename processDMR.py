@@ -132,6 +132,59 @@ def write_gene_mappings(
 import json
 
 
+def process_single_dataset(df, output_file, args):
+    """Process a single dataset and write the bipartite graph to a file."""
+    try:
+        # Create gene ID mapping
+        all_genes = set()
+        gene_col = (
+            "Gene_Symbol_Nearby"
+            if "Gene_Symbol_Nearby" in df.columns
+            else "Gene_Symbol"
+        )
+
+        # Add genes from gene column (case-insensitive)
+        gene_names = df[gene_col].dropna().str.strip().str.lower()
+        all_genes.update(gene_names)
+
+        # Add genes from enhancer info (case-insensitive)
+        for genes in df["Processed_Enhancer_Info"]:
+            if genes:  # Check if not None/empty
+                all_genes.update(g.strip().lower() for g in genes)
+
+        # Sort genes alphabetically for deterministic assignment
+        sorted_genes = sorted(all_genes)
+
+        # Create gene mapping starting after max DMR number
+        max_dmr = df["DMR_No."].max()
+        gene_id_mapping = {
+            gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
+        }
+
+        print("\nGene ID Mapping Statistics:")
+        print(f"Total unique genes (case-insensitive): {len(all_genes)}")
+        print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
+        print("\nFirst 5 gene mappings:")
+        for gene in sorted_genes[:5]:
+            print(f"{gene}: {gene_id_mapping[gene]}")
+
+        # Create bipartite graph
+        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+
+        # Validate graph
+        print("\n=== Graph Statistics ===")
+        validate_bipartite_graph(bipartite_graph)
+
+        # Write bipartite graph to file
+        write_bipartite_graph(bipartite_graph, output_file, df, gene_id_mapping)
+        write_gene_mappings(gene_id_mapping, f"{output_file}_gene_ids.csv", "Dataset")
+
+    except Exception as e:
+        print(f"Error processing dataset: {e}")
+        raise
+
+from data_loader import get_excel_sheets
+
 def main():
     args = parse_arguments()
 
