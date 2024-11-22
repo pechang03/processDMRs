@@ -42,7 +42,7 @@ from biclique_analysis.classifier import (
 )
 from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
 from utils.node_info import NodeInfo
-from graph_utils import read_excel_file, create_bipartite_graph
+from data_loader import read_excel_file, create_bipartite_graph
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,
