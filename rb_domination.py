@@ -145,6 +145,10 @@ def is_still_dominated(graph, dominating_set, dmr_to_remove):
     return True
 
 
+"""
+THIS IS A poor implementation as it doesn't use utility"""
+
+
 def minimize_dominating_set(graph, dominating_set):
     """Remove redundant DMRs while maintaining coverage"""
     redundant_dmrs = set()
@@ -203,22 +207,27 @@ def print_domination_statistics(
         area = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
         num_dominated = len(list(graph.neighbors(dmr)))
         print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
+
+
 from typing import Set
 
-def copy_dominating_set(source_graph: nx.Graph, target_graph: nx.Graph, dominating_set: Set[int]) -> Set[int]:
+
+def copy_dominating_set(
+    source_graph: nx.Graph, target_graph: nx.Graph, dominating_set: Set[int]
+) -> Set[int]:
     """
     Copy dominating set between graphs with same node IDs.
-    
+
     Args:
         source_graph: Original graph containing the dominating set
         target_graph: Target graph to verify dominating set
         dominating_set: Set of node IDs in the dominating set
-    
+
     Returns:
         Verified dominating set for target graph
     """
     # Verify nodes exist in target graph
     if not all(node in target_graph for node in dominating_set):
         raise ValueError("Some dominating set nodes not found in target graph")
-        
+
     return dominating_set
