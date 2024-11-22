@@ -186,7 +186,7 @@ def statistics_route():
         }
 
         # Convert numpy types and tuple keys before JSON serialization
-        from process_data import convert_dict_keys_to_str
+        from utils.json_utils import convert_dict_keys_to_str
         detailed_stats = convert_dict_keys_to_str(detailed_stats)
 
         # Update edge coverage from biclique statistics if available
