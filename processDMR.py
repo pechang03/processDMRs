@@ -2,19 +2,24 @@ import argparse
 import sys
 import os
 import pandas as pd
-from data_loader import (
-    get_excel_sheets, 
-    DSS1_FILE, 
-    DSS_PAIRWISE_FILE, 
-    BIPARTITE_GRAPH_TEMPLATE,
-    BIPARTITE_GRAPH_OVERALL
-)
-
 import networkx as nx
 import csv
 import time
 import psutil
 from typing import Dict, Tuple
+
+from data_loader import (
+    get_excel_sheets, 
+    DSS1_FILE, 
+    DSS_PAIRWISE_FILE, 
+    BIPARTITE_GRAPH_TEMPLATE,
+    BIPARTITE_GRAPH_OVERALL,
+    read_excel_file,
+    create_bipartite_graph,
+    create_dmr_id,
+    validate_bipartite_graph,
+    write_bipartite_graph
+)
 
 from biclique_analysis import (
     process_bicliques,
@@ -28,9 +33,6 @@ from biclique_analysis.reporting import print_bicliques_summary, print_bicliques
 from visualization import calculate_node_positions  # Import from package root
 from visualization.core import create_biclique_visualization
 from visualization import create_node_biclique_map
-from data_loader import validate_bipartite_graph
-from data_loader import create_bipartite_graph
-from data_loader import read_excel_file
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,  # Changed name
@@ -69,53 +71,8 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def create_dmr_id(dmr_num: int, timepoint: str) -> int:
-    """Create a unique DMR ID for a specific timepoint."""
-    # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap
-    timepoint_offsets = {
-        "P21-P28": 1000000,
-        "P21-P40": 2000000,
-        "P21-P60": 3000000,
-        "P21-P180": 4000000,
-        "TP28-TP180": 5000000,
-        "TP40-TP180": 6000000,
-        "TP60-TP180": 7000000,
-        "DSS1": 0  # Base timepoint uses original numbers
-    }
-    offset = timepoint_offsets.get(timepoint, 8000000)  # Default offset for unknown timepoints
-    return offset + dmr_num
-
-def write_bipartite_graph(
-    graph: nx.Graph, output_file: str, df: pd.DataFrame, 
-    gene_id_mapping: Dict[str, int], timepoint: str
-):
-    """Write bipartite graph to file using timepoint-specific DMR IDs."""
-    try:
-        unique_edges = set()
-        for edge in graph.edges():
-            dmr_node = edge[0] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[1]
-            gene_node = edge[1] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[0]
-            unique_edges.add((dmr_node, gene_node))
-
-        with open(output_file, "w") as file:
-            # Write header with timepoint info
-            n_dmrs = len(df["DMR_No."].unique())
-            n_genes = len(gene_id_mapping)
-            file.write(f"# Timepoint: {timepoint}\n")
-            file.write(f"{n_dmrs} {n_genes}\n")
-
-            # Write edges with DMR labels including timepoint
-            for dmr_id, gene_id in sorted(unique_edges):
-                file.write(f"{dmr_id} {gene_id} # DMR_{timepoint}_{dmr_id}\n")
-
-        print(f"\nWrote graph for timepoint {timepoint} to {output_file}:")
-        print(f"DMRs: {n_dmrs}")
-        print(f"Genes: {n_genes}")
-        print(f"Edges: {len(unique_edges)}")
-
-    except Exception as e:
-        print(f"Error writing {output_file}: {e}")
-        raise
+# Removed: create_dmr_id() and write_bipartite_graph()
+# These functions are now imported from data_loader
 
 
 def write_gene_mappings(
