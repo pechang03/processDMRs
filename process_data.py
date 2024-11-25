@@ -184,15 +184,14 @@ def process_data(timepoint=None):
 
         # Process bicliques
         print("Processing bicliques...")
+        bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint if timepoint else "total")
         bicliques_result = process_bicliques(
             bipartite_graph,
-            BICLIQUES_FILE,
+            bicliques_file,  # Use template here
             max(df["DMR_No."]),
-            "DSS1",
+            timepoint if timepoint else "total",  # Pass timepoint info
             gene_id_mapping=gene_id_mapping,
-            file_format=app.config.get(
-                "BICLIQUE_FORMAT", "gene-name"
-            ),  # Get format from app config
+            file_format=app.config.get("BICLIQUE_FORMAT", "gene-name"),
         )
 
         # Debug print for bicliques result
