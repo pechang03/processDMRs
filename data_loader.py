@@ -70,14 +70,19 @@ def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
     return True
 
 
-def read_excel_file(filepath):
+def read_excel_file(filepath, sheet_name=None):
     """Read and validate an Excel file."""
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Excel file not found: {filepath}")
 
         print(f"Reading Excel file from: {filepath}")
-        df = pd.read_excel(filepath, header=0)
+        if sheet_name:
+            print(f"Reading sheet: {sheet_name}")
+            df = pd.read_excel(filepath, sheet_name=sheet_name, header=0)
+        else:
+            df = pd.read_excel(filepath, header=0)
+            
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
 
