@@ -55,10 +55,10 @@ from rb_domination import (
 app = Flask(__name__)
 
 from data_loader import (
-    DSS1_FILE, 
-    DSS_PAIRWISE_FILE, 
+    DSS1_FILE,
+    DSS_PAIRWISE_FILE,
     BIPARTITE_GRAPH_TEMPLATE,
-    BIPARTITE_GRAPH_OVERALL
+    BIPARTITE_GRAPH_OVERALL,
 )
 
 
@@ -111,10 +111,10 @@ def convert_dict_keys_to_str(d):
 def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
-    
+
     try:
         print("Starting data processing...")
-        
+
         # Initialize storage for multiple graphs
         graphs = {}
         timepoint_results = {}
@@ -122,8 +122,10 @@ def process_data(timepoint=None):
         # Process overall DSS1 data first
         print("\nProcessing DSS1 overall data...")
         df_overall = read_excel_file(DSS1_FILE, sheet_name="DSS1")
-        df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-        
+        df_overall["Processed_Enhancer_Info"] = df_overall[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
+
         # Create gene mapping from overall data
         all_genes = set()
         gene_names = df_overall["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
@@ -131,7 +133,7 @@ def process_data(timepoint=None):
         for genes in df_overall["Processed_Enhancer_Info"]:
             if genes:
                 all_genes.update(g.strip().lower() for g in genes)
-        
+
         # Create consistent gene ID mapping to use across all graphs
         max_dmr = df_overall["DMR_No."].max()
         gene_id_mapping = {
@@ -212,15 +214,15 @@ def process_data(timepoint=None):
         print("\nBicliques result contents:")
         print("Number of bicliques:", len(bicliques_result.get("bicliques", [])))
         print("Keys in bicliques_result:", list(bicliques_result.keys()))
-        
+
         # Detailed biclique logging (commented out)
-        '''
+        """
         print("\nDetailed biclique contents:")
         for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result.get("bicliques", [])):
             print(f"\nBiclique {idx + 1}:")
             print("DMR nodes:", sorted(list(dmr_nodes)))
             print("Gene nodes:", sorted(list(gene_nodes)))
-        '''
+        """
 
         # Biclique type statistics
         biclique_type_stats = classify_biclique_types(
@@ -602,7 +604,9 @@ def process_data(timepoint=None):
                     if "error" not in timepoint_data:
                         timepoint_results[sheet] = timepoint_data
                     else:
-                        print(f"Skipping timepoint {sheet} due to error: {timepoint_data['error']}")
+                        print(
+                            f"Skipping timepoint {sheet} due to error: {timepoint_data['error']}"
+                        )
                 except Exception as e:
                     print(f"Error processing timepoint {sheet}: {e}")
                     continue  # Skip failed timepoints instead of failing completely
@@ -660,7 +664,7 @@ def process_data(timepoint=None):
             "edge_coverage": edge_coverage,  # Now guaranteed to be defined
             "biclique_stats": biclique_stats,  # Now guaranteed to be defined
             "biclique_types": biclique_stats.get("biclique_types", {}),
-            "timepoint_stats": timepoint_results if not timepoint else None
+            "timepoint_stats": timepoint_results if not timepoint else None,
         }
 
         # Debug print for cached data
@@ -678,26 +682,73 @@ def process_data(timepoint=None):
 
         traceback.print_exc()
         return {"error": str(e)}
+
+
+def write_bipartite_graph(
+    graph: nx.Graph, output_file: str, df: pd.DataFrame, gene_id_mapping: Dict[str, int]
+):
+    """Write bipartite graph to file using consistent gene IDs."""
+    try:
+        # Get unique edges (DMR first, gene second)
+        unique_edges = set()
+        for edge in graph.edges():
+            dmr_node = edge[0] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[1]
+            gene_node = edge[1] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[0]
+            unique_edges.add((dmr_node, gene_node))
+
+        # Sort edges for deterministic output
+        sorted_edges = sorted(unique_edges)
+
+        with open(output_file, "w") as file:
+            # Write header
+            n_dmrs = len(df["DMR_No."].unique())
+            n_genes = len(gene_id_mapping)
+            file.write(f"{n_dmrs} {n_genes}\n")
+
+            # Write edges
+            for dmr_id, gene_id in sorted_edges:
+                file.write(f"{dmr_id} {gene_id}\n")
+
+        # Validation output
+        print(f"\nWrote graph to {output_file}:")
+        print(f"DMRs: {n_dmrs}")
+        print(f"Genes: {n_genes}")
+        print(f"Edges: {len(sorted_edges)}")
+
+        # Debug first few edges
+        print("\nFirst 5 edges written:")
+        for dmr_id, gene_id in sorted_edges[:5]:
+            gene_name = [k for k, v in gene_id_mapping.items() if v == gene_id][0]
+            print(f"DMR_{dmr_id + 1} -> Gene_{gene_id} ({gene_name})")
+
+    except Exception as e:
+        print(f"Error writing {output_file}: {e}")
+        raise
+
+
 def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
     """Process a single timepoint's graph and return its results"""
     try:
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint_name}")
         from data_loader import validate_bipartite_graph
+
         graph_valid = validate_bipartite_graph(graph)
-        
+
         # Process bicliques for this timepoint
         bicliques_result = process_bicliques(
             graph,
             f"bipartite_graph_output_{timepoint_name}.txt",
             max(df["DMR_No."]),
             timepoint_name,
-            gene_id_mapping=gene_id_mapping
+            gene_id_mapping=gene_id_mapping,
         )
-        
+
         # Calculate statistics for this timepoint
-        biclique_type_stats = classify_biclique_types(bicliques_result.get("bicliques", []))
-        
+        biclique_type_stats = classify_biclique_types(
+            bicliques_result.get("bicliques", [])
+        )
+
         return {
             "bicliques": bicliques_result,
             "node_count": graph.number_of_nodes(),
@@ -705,7 +756,7 @@ def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
             "graph_valid": graph_valid,
             "biclique_type_stats": biclique_type_stats,
             "coverage": bicliques_result.get("coverage", {}),
-            "size_distribution": bicliques_result.get("size_distribution", {})
+            "size_distribution": bicliques_result.get("size_distribution", {}),
         }
     except Exception as e:
         return {"error": str(e)}
