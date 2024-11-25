@@ -2,6 +2,8 @@ import argparse
 import sys
 import os
 import pandas as pd
+from data_loader import get_excel_sheets
+
 import networkx as nx
 import csv
 import time
@@ -183,7 +185,6 @@ def process_single_dataset(df, output_file, args):
         print(f"Error processing dataset: {e}")
         raise
 
-from data_loader import get_excel_sheets
 
 def main():
     args = parse_arguments()
@@ -197,9 +198,13 @@ def main():
     print("\nProcessing DSS_PAIRWISE file...")
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
     print(f"Found {len(pairwise_sheets)} pairwise comparison sheets")
-    
+
     for sheet in pairwise_sheets:
         print(f"\nProcessing pairwise comparison: {sheet}")
         df_pairwise = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
         output_file = f"bipartite_graph_output_{sheet}.txt"
         process_single_dataset(df_pairwise, output_file, args)
+
+
+if __name__ == "__main__":
+    main()
