@@ -133,47 +133,42 @@ def write_gene_mappings(
 import json
 
 
-def process_single_dataset(df, output_file, args):
+def process_single_dataset(df, output_file, args, gene_id_mapping=None, max_dmr=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
-        # Process enhancer info first
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        # Process enhancer info if not already processed
+        if "Processed_Enhancer_Info" not in df.columns:
+            df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
 
-        # Create gene ID mapping
-        all_genes = set()
-        gene_col = (
-            "Gene_Symbol_Nearby"
-            if "Gene_Symbol_Nearby" in df.columns
-            else "Gene_Symbol"
-        )
+        # If no master mapping provided, create one
+        if gene_id_mapping is None or max_dmr is None:
+            all_genes = set()
+            gene_col = (
+                "Gene_Symbol_Nearby"
+                if "Gene_Symbol_Nearby" in df.columns
+                else "Gene_Symbol"
+            )
 
-        # Add genes from gene column (case-insensitive)
-        gene_names = df[gene_col].dropna().str.strip().str.lower()
-        all_genes.update(gene_names)
+            # Add genes from gene column (case-insensitive)
+            gene_names = df[gene_col].dropna().str.strip().str.lower()
+            all_genes.update(gene_names)
 
-        # Now we can safely process enhancer info
-        for genes in df["Processed_Enhancer_Info"]:
-            if genes:  # Check if not None/empty
-                all_genes.update(g.strip().lower() for g in genes)
+            # Now we can safely process enhancer info
+            for genes in df["Processed_Enhancer_Info"]:
+                if genes:  # Check if not None/empty
+                    all_genes.update(g.strip().lower() for g in genes)
 
-        # Sort genes alphabetically for deterministic assignment
-        sorted_genes = sorted(all_genes)
+            # Sort genes alphabetically for deterministic assignment
+            sorted_genes = sorted(all_genes)
 
-        # Create gene mapping starting after max DMR number
-        max_dmr = df["DMR_No."].max()
-        gene_id_mapping = {
-            gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
-        }
+            # Create gene mapping starting after max DMR number
+            max_dmr = df["DMR_No."].max()
+            gene_id_mapping = {
+                gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
+            }
 
-        print("\nGene ID Mapping Statistics:")
-        print(f"Total unique genes (case-insensitive): {len(all_genes)}")
-        print(f"ID range: {max_dmr + 1} to {max(gene_id_mapping.values())}")
-        print("\nFirst 5 gene mappings:")
-        for gene in sorted_genes[:5]:
-            print(f"{gene}: {gene_id_mapping[gene]}")
-
-        # Create bipartite graph
-        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        # Create bipartite graph using master mapping
+        bipartite_graph = create_bipartite_graph(df, gene_id_mapping, max_dmr)
 
         # Validate graph
         print("\n=== Graph Statistics ===")
@@ -181,7 +176,6 @@ def process_single_dataset(df, output_file, args):
 
         # Write bipartite graph to file
         write_bipartite_graph(bipartite_graph, output_file, df, gene_id_mapping)
-        write_gene_mappings(gene_id_mapping, f"{output_file}_gene_ids.csv", "Dataset")
 
     except Exception as e:
         print(f"Error processing dataset: {e}")
@@ -191,21 +185,72 @@ def process_single_dataset(df, output_file, args):
 def main():
     args = parse_arguments()
 
-    # Process DSS1 (overall) file first
-    print("\nProcessing DSS1 overall file...")
+    # First process DSS1 (overall) file to establish master node sets
+    print("\nProcessing DSS1 overall file to establish master node sets...")
     df_overall = read_excel_file(args.input)
-    process_single_dataset(df_overall, "bipartite_graph_output.txt", args)
+    
+    # Process enhancer info for overall file
+    df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+    
+    # Create master gene mapping from overall data
+    all_genes = set()
+    gene_names = df_overall["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+    all_genes.update(gene_names)
+    for genes in df_overall["Processed_Enhancer_Info"]:
+        if genes:
+            all_genes.update(g.strip().lower() for g in genes)
+    
+    # Get master DMR count
+    max_dmr = df_overall["DMR_No."].max()
+    print(f"\nMaster reference contains:")
+    print(f"Maximum DMR number: {max_dmr}")
+    print(f"Total unique genes: {len(all_genes)}")
+    
+    # Create master gene ID mapping
+    gene_id_mapping = {
+        gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted(all_genes))
+    }
 
-    # Process DSS_PAIRWISE file (pairwise comparisons)
+    # Write the single gene mappings file
+    write_gene_mappings(gene_id_mapping, "bipartite_graph_output_gene_ids.csv", "Master")
+
+    # Process overall file with master mapping
+    print("\nProcessing DSS1 overall file...")
+    process_single_dataset(df_overall, "bipartite_graph_output.txt", args, gene_id_mapping, max_dmr)
+
+    # Process DSS_PAIRWISE file using same mapping and DMR count
     print("\nProcessing DSS_PAIRWISE file...")
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
     print(f"Found {len(pairwise_sheets)} pairwise comparison sheets")
 
+    # Validation check for each timepoint
     for sheet in pairwise_sheets:
         print(f"\nProcessing pairwise comparison: {sheet}")
         df_pairwise = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
+        
+        # Validate DMR numbers
+        timepoint_max_dmr = df_pairwise["DMR_No."].max()
+        if timepoint_max_dmr > max_dmr:
+            print(f"WARNING: Timepoint {sheet} has larger DMR number ({timepoint_max_dmr}) than master set ({max_dmr})")
+        
+        # Validate gene sets
+        timepoint_genes = set()
+        tp_gene_names = df_pairwise["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+        timepoint_genes.update(tp_gene_names)
+        
+        df_pairwise["Processed_Enhancer_Info"] = df_pairwise["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        for genes in df_pairwise["Processed_Enhancer_Info"]:
+            if genes:
+                timepoint_genes.update(g.strip().lower() for g in genes)
+        
+        # Check for genes not in master set
+        new_genes = timepoint_genes - all_genes
+        if new_genes:
+            print(f"WARNING: Timepoint {sheet} contains {len(new_genes)} genes not in master set")
+            print(f"First 5 new genes: {list(new_genes)[:5]}")
+        
         output_file = f"bipartite_graph_output_{sheet}.txt"
-        process_single_dataset(df_pairwise, output_file, args)
+        process_single_dataset(df_pairwise, output_file, args, gene_id_mapping, max_dmr)
 
 
 if __name__ == "__main__":
