@@ -122,20 +122,21 @@ def create_bipartite_graph(
     gene_id_mapping: Dict[str, int],
     closest_gene_col: str = "Gene_Symbol_Nearby",
 ) -> nx.Graph:
-    """Create a bipartite graph from DataFrame."""
+    """Create a bipartite graph from DataFrame with consistent node sets."""
     B = nx.Graph()
 
-    # Add DMR nodes (0-based indexing)
-    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
+    # Add ALL DMR nodes (0-based indexing) up to max DMR number
+    max_dmr = max(df["DMR_No."]) - 1  # Get maximum DMR number (0-based)
+    dmr_nodes = set(range(max_dmr + 1))  # Include ALL possible DMR nodes
     for dmr in dmr_nodes:
         B.add_node(dmr, bipartite=0)
 
-    # Add all gene nodes from mapping
+    # Add ALL gene nodes from mapping (even if not used in this timepoint)
     for gene_name, gene_id in gene_id_mapping.items():
         B.add_node(gene_id, bipartite=1)
 
     # Process each row to add edges
-    edges_added = set()  # Track unique edges
+    edges_added = set()
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
 
@@ -149,7 +150,7 @@ def create_bipartite_graph(
                     B.add_edge(*edge)
                     edges_added.add(edge)
 
-        # Process enhancer genes if present
+        # Process enhancer genes
         if pd.notna(row.get("Processed_Enhancer_Info")):
             genes = row["Processed_Enhancer_Info"]
             if isinstance(genes, str):
@@ -168,38 +169,17 @@ def create_bipartite_graph(
                         B.add_edge(*edge)
                         edges_added.add(edge)
 
-        # Process Associated_Genes if present
-        if pd.notna(row.get("Associated_Genes")):
-            genes = row["Associated_Genes"]
-            if isinstance(genes, str):
-                genes = [g.strip() for g in genes.split(";")]
-            elif isinstance(genes, (list, set)):
-                genes = list(genes)
-            else:
-                continue
-
-            for gene_name in genes:
-                gene_name = str(gene_name).strip().lower()
-                if gene_name in gene_id_mapping:
-                    gene_id = gene_id_mapping[gene_name]
-                    edge = (dmr_id, gene_id)
-                    if edge not in edges_added:
-                        B.add_edge(*edge)
-                        edges_added.add(edge)
-
-    # For complete bipartite graphs, ensure all possible edges exist
-    if len(dmr_nodes) * len(gene_id_mapping) <= 100:  # Only for reasonably sized graphs
-        for dmr in dmr_nodes:
-            for gene_id in gene_id_mapping.values():
-                edge = (dmr, gene_id)
-                if edge not in edges_added:
-                    B.add_edge(*edge)
-                    edges_added.add(edge)
-
+    # Print detailed statistics
     print(f"\nGraph construction summary:")
-    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
-    print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
-    print(f"Total edges added: {len(edges_added)}")
+    print(f"Total DMR nodes: {len(dmr_nodes)}")
+    print(f"Total Gene nodes: {len(gene_id_mapping)}")
+    print(f"Active edges: {len(edges_added)}")
+    
+    # Print degree statistics
+    zero_degree_dmrs = sum(1 for n in dmr_nodes if B.degree(n) == 0)
+    zero_degree_genes = sum(1 for n in gene_id_mapping.values() if B.degree(n) == 0)
+    print(f"DMR nodes with degree 0: {zero_degree_dmrs}")
+    print(f"Gene nodes with degree 0: {zero_degree_genes}")
 
     return B
 
