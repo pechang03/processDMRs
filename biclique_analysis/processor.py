@@ -49,13 +49,32 @@ def process_bicliques(
 ) -> Dict:
     """Process bicliques and add detailed information."""
     print(f"Processing bicliques using format: {file_format}")
-    bicliques_result = read_bicliques_file(
-        bicliques_file,
-        max_dmr_id,
-        bipartite_graph,
-        gene_id_mapping=gene_id_mapping,
-        file_format=file_format,  # Pass through the format parameter
-    )
+    try:
+        bicliques_result = read_bicliques_file(
+            bicliques_file,
+            max_dmr_id,
+            bipartite_graph,
+            gene_id_mapping=gene_id_mapping,
+            file_format=file_format,  # Pass through the format parameter
+        )
+    except FileNotFoundError:
+        print(f"Warning: Bicliques file not found: {bicliques_file}")
+        # Return empty result structure instead of failing
+        return {
+            "bicliques": [],
+            "statistics": {},
+            "graph_info": {
+                "name": dataset_name,
+                "total_dmrs": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0),
+                "total_genes": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1),
+                "total_edges": len(bipartite_graph.edges()),
+            },
+            "coverage": {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {"single_coverage": 0, "multiple_coverage": 0, "uncovered": 0}
+            }
+        }
 
     return bicliques_result
 
