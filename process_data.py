@@ -22,7 +22,7 @@ import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template
-# import pandas as pd
+import pandas as pd
 # import numpy as np
 
 # from processDMR import read_excel_file,
@@ -111,7 +111,7 @@ def convert_dict_keys_to_str(d):
 def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
-    
+
     # Return cached data if available and no specific timepoint requested
     if _cached_data is not None and timepoint is None:
         print("\nReturning cached total data")
@@ -184,7 +184,9 @@ def process_data(timepoint=None):
 
         # Process bicliques
         print("Processing bicliques...")
-        bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint if timepoint else "total")
+        bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(
+            timepoint if timepoint else "total"
+        )
         bicliques_result = process_bicliques(
             bipartite_graph,
             bicliques_file,  # Use template here
@@ -456,41 +458,51 @@ def process_data(timepoint=None):
             for component in connected_components:
                 # Get all bicliques that have nodes in this component
                 component_bicliques = [
-                    (dmr_nodes, gene_nodes) 
+                    (dmr_nodes, gene_nodes)
                     for dmr_nodes, gene_nodes in bicliques_result["bicliques"]
                     if not (dmr_nodes | gene_nodes).isdisjoint(component)
                 ]
-            
+
                 if len(component_bicliques) > 1:
                     # This is a complex component with multiple bicliques
                     split_genes = {
-                        gene 
-                        for _, genes in component_bicliques 
+                        gene
+                        for _, genes in component_bicliques
                         for gene in genes
                         if sum(1 for _, g in component_bicliques if gene in g) > 1
                     }
-                
-                    if split_genes:  # Only count if there are actual split genes
-                        complex_components.append({
-                            "component": component,
-                            "bicliques": component_bicliques,
-                            "split_genes": split_genes
-                        })
 
-            print(f"\nFound {len(complex_components)} complex components with split genes")
-            print(f"Total split genes across components: {sum(len(c['split_genes']) for c in complex_components)}")
+                    if split_genes:  # Only count if there are actual split genes
+                        complex_components.append(
+                            {
+                                "component": component,
+                                "bicliques": component_bicliques,
+                                "split_genes": split_genes,
+                            }
+                        )
+
+            print(
+                f"\nFound {len(complex_components)} complex components with split genes"
+            )
+            print(
+                f"Total split genes across components: {sum(len(c['split_genes']) for c in complex_components)}"
+            )
 
             # Update biclique type statistics to include complex components
             total_components = len(bicliques_result["bicliques"])
-            complex_count = len([c for c in complex_components if len(c["bicliques"]) > 2])
-            interesting_count = len([c for c in complex_components if len(c["bicliques"]) == 2])
+            complex_count = len(
+                [c for c in complex_components if len(c["bicliques"]) > 2]
+            )
+            interesting_count = len(
+                [c for c in complex_components if len(c["bicliques"]) == 2]
+            )
             simple_count = total_components - (complex_count + interesting_count)
 
             biclique_stats["biclique_types"] = {
                 "empty": 0,
                 "simple": simple_count,
                 "interesting": interesting_count,
-                "complex": complex_count
+                "complex": complex_count,
             }
 
             # Add more detailed component statistics
@@ -499,14 +511,14 @@ def process_data(timepoint=None):
                 "split_genes": {
                     "total": sum(len(c["split_genes"]) for c in complex_components),
                     "per_component": {
-                        f"component_{i}": len(c["split_genes"]) 
+                        f"component_{i}": len(c["split_genes"])
                         for i, c in enumerate(complex_components)
-                    }
+                    },
                 },
                 "bicliques_per_component": {
-                    f"component_{i}": len(c["bicliques"]) 
+                    f"component_{i}": len(c["bicliques"])
                     for i, c in enumerate(complex_components)
-                }
+                },
             }
 
             # Also add the header statistics from the biclique file
@@ -558,6 +570,13 @@ def process_data(timepoint=None):
                     interesting_components.append(component_info)
 
             print(f"\nFound {len(interesting_components)} interesting components")
+        timepoint_results = {}
+        if not timepoint:
+            # Process each timepoint when doing total analysis
+            xl = pd.ExcelFile(DSS_PAIRWISE_FILE)
+            for sheet in xl.sheet_names:
+                print(f"\nProcessing timepoint: {sheet}")
+                timepoint_results[sheet] = process_data(sheet)
 
         # Create cached data with all information
         _cached_data = {
@@ -582,12 +601,20 @@ def process_data(timepoint=None):
             "timepoint_stats": {
                 timepoint: {
                     "total_bicliques": len(results.get("bicliques", [])),
-                    "biclique_types": results.get("statistics", {}).get("biclique_stats", {}).get("biclique_types", {}),
-                    "split_genes": results.get("statistics", {}).get("complex_components", {}).get("split_genes", {}),
-                    "edge_coverage": results.get("statistics", {}).get("edge_coverage", {})
+                    "biclique_types": results.get("statistics", {})
+                    .get("biclique_stats", {})
+                    .get("biclique_types", {}),
+                    "split_genes": results.get("statistics", {})
+                    .get("complex_components", {})
+                    .get("split_genes", {}),
+                    "edge_coverage": results.get("statistics", {}).get(
+                        "edge_coverage", {}
+                    ),
                 }
                 for timepoint, results in timepoint_results.items()
             }
+            if not timepoint
+            else None,
         }
 
         # Debug print for cached data
