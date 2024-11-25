@@ -198,11 +198,29 @@ def main():
     # Process DSS_PAIRWISE file first to get complete gene set
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
     for sheet in pairwise_sheets:
+        print(f"\nProcessing sheet: {sheet}")
         df = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
+        
+        # Debug: Print column names
+        print(f"Available columns in {sheet}:")
+        print(df.columns.tolist())
+        
+        # Determine which column contains gene symbols
+        gene_column = None
+        for possible_name in ['Gene_Symbol_Nearby', 'Gene_Symbol', 'Gene']:
+            if possible_name in df.columns:
+                gene_column = possible_name
+                print(f"Using column '{gene_column}' for gene symbols")
+                break
+                
+        if gene_column is None:
+            print(f"WARNING: No gene symbol column found in sheet {sheet}")
+            continue
+            
         df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
         
         # Add genes from gene column
-        gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+        gene_names = df[gene_column].dropna().str.strip().str.lower()
         all_genes.update(gene_names)
         
         # Add genes from enhancer info
@@ -211,9 +229,26 @@ def main():
                 all_genes.update(g.strip().lower() for g in genes)
 
     # Also process DSS1 file for genes
+    print("\nProcessing DSS1 file...")
     df_overall = read_excel_file(args.input)
+    
+    # Debug: Print column names for overall file
+    print(f"Available columns in DSS1:")
+    print(df_overall.columns.tolist())
+    
+    # Determine which column contains gene symbols in overall file
+    gene_column = None
+    for possible_name in ['Gene_Symbol_Nearby', 'Gene_Symbol', 'Gene']:
+        if possible_name in df_overall.columns:
+            gene_column = possible_name
+            print(f"Using column '{gene_column}' for gene symbols in overall file")
+            break
+            
+    if gene_column is None:
+        raise ValueError("No gene symbol column found in overall file")
+        
     df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-    gene_names = df_overall["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+    gene_names = df_overall[gene_column].dropna().str.strip().str.lower()
     all_genes.update(gene_names)
     for genes in df_overall["Processed_Enhancer_Info"]:
         if genes:
