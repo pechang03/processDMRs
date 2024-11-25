@@ -578,7 +578,40 @@ def process_data(timepoint=None):
                 print(f"\nProcessing timepoint: {sheet}")
                 timepoint_results[sheet] = process_data(sheet)
 
-        # Create cached data with all information
+        # Initialize these variables with default values
+        edge_coverage = {}
+        biclique_stats = {
+            "biclique_types": {},
+            "coverage": {},
+            "node_participation": {},
+            "edge_coverage": {},
+            "components": {}
+        }
+
+        # Calculate biclique statistics if we have bicliques
+        if bicliques_result and "bicliques" in bicliques_result:
+            print("\nCalculating biclique statistics...")
+            from biclique_analysis.statistics import (
+                calculate_biclique_statistics,
+                calculate_edge_coverage,
+            )
+
+            # Calculate edge coverage
+            edge_coverage = calculate_edge_coverage(
+                bicliques_result["bicliques"], bipartite_graph
+            )
+            print("Edge coverage calculated:", edge_coverage)
+
+            # Calculate full biclique statistics
+            biclique_stats = calculate_biclique_statistics(
+                bicliques_result["bicliques"], bipartite_graph, dominating_set
+            )
+            print(
+                "Biclique statistics calculated:",
+                json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
+            )
+
+        # Now create _cached_data with the guaranteed-defined variables
         _cached_data = {
             "stats": stats,
             "interesting_components": interesting_components,
@@ -595,8 +628,8 @@ def process_data(timepoint=None):
             "dominating_set": dominating_set_stats,
             "size_distribution": bicliques_result.get("size_distribution", {}),
             "node_participation": bicliques_result.get("node_participation", {}),
-            "edge_coverage": edge_coverage,
-            "biclique_stats": biclique_stats,
+            "edge_coverage": edge_coverage,  # Now guaranteed to be defined
+            "biclique_stats": biclique_stats,  # Now guaranteed to be defined
             "biclique_types": biclique_stats.get("biclique_types", {}),
             "timepoint_stats": {
                 timepoint: {
