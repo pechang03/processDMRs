@@ -116,82 +116,103 @@
       </div>
 
       <!-- Main Content - Split View -->
-      <div class="row">
-        <!-- Original Graph Statistics -->
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h3>Original Graph Components</h3>
-            </div>
-            <div class="card-body">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Total</th>
-                    <th>Single Node</th>
-                    <th>Small</th>
-                    <th>Interesting</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Connected</td>
-                    <td>
-                      {{ statistics.components.original.connected.total }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.connected.single_node }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.connected.small }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.connected.interesting }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Biconnected</td>
-                    <td>
-                      {{ statistics.components.original.biconnected.total }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.biconnected.single_node
-                      }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.biconnected.small }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.biconnected.interesting
-                      }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Triconnected</td>
-                    <td>
-                      {{ statistics.components.original.triconnected.total }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.triconnected.single_node }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.triconnected.small }}
-                    </td>
-                    <td>
-                      {{ statistics.components.original.triconnected.interesting }}
-                    </td>
-                  </tr>
-                  <tr class="text-muted">
-                    <td colspan="5" class="small">
-                      <em>Note: {{ statistics.components.original.triconnected.skipped_simple }} simple components skipped for triconnected analysis</em>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <div class="card mb-4">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="overall-tab" data-bs-toggle="tab" href="#overall" role="tab">
+                Overall Statistics
+              </a>
+            </li>
+            {% for timepoint in timepoint_info.keys() %}
+            <li class="nav-item">
+              <a class="nav-link" id="{{ timepoint }}-tab" data-bs-toggle="tab" href="#{{ timepoint }}" role="tab">
+                {{ timepoint }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
         </div>
+        <div class="card-body">
+          <div class="tab-content">
+            <!-- Overall Statistics Tab -->
+            <div class="tab-pane fade show active" id="overall" role="tabpanel">
+              <div class="row">
+                <!-- Original Graph Statistics -->
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h3>Original Graph Components</h3>
+                    </div>
+                    <div class="card-body">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th>Type</th>
+                            <th>Total</th>
+                            <th>Single Node</th>
+                            <th>Small</th>
+                            <th>Interesting</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Connected</td>
+                            <td>
+                              {{ statistics.components.original.connected.total }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.connected.single_node }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.connected.small }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.connected.interesting }}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Biconnected</td>
+                            <td>
+                              {{ statistics.components.original.biconnected.total }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.biconnected.single_node
+                              }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.biconnected.small }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.biconnected.interesting
+                              }}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Triconnected</td>
+                            <td>
+                              {{ statistics.components.original.triconnected.total }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.triconnected.single_node }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.triconnected.small }}
+                            </td>
+                            <td>
+                              {{ statistics.components.original.triconnected.interesting }}
+                            </td>
+                          </tr>
+                          <tr class="text-muted">
+                            <td colspan="5" class="small">
+                              <em>Note: {{ statistics.components.original.triconnected.skipped_simple }} simple components skipped for triconnected analysis</em>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
 
         <!-- Replace the existing Biclique Graph Components card with this -->
         <div class="col-md-6">
