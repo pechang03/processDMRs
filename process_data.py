@@ -680,3 +680,33 @@ def process_data(timepoint=None):
 
         traceback.print_exc()
         return {"error": str(e)}
+def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
+    """Process a single timepoint's graph and return its results"""
+    try:
+        # Validate graph
+        print(f"\nValidating graph for timepoint {timepoint_name}")
+        graph_valid = validate_bipartite_graph(graph)
+        
+        # Process bicliques for this timepoint
+        bicliques_result = process_bicliques(
+            graph,
+            f"bipartite_graph_output_{timepoint_name}.txt",
+            max(df["DMR_No."]),
+            timepoint_name,
+            gene_id_mapping=gene_id_mapping
+        )
+        
+        # Calculate statistics for this timepoint
+        biclique_type_stats = classify_biclique_types(bicliques_result.get("bicliques", []))
+        
+        return {
+            "bicliques": bicliques_result,
+            "node_count": graph.number_of_nodes(),
+            "edge_count": graph.number_of_edges(),
+            "graph_valid": graph_valid,
+            "biclique_type_stats": biclique_type_stats,
+            "coverage": bicliques_result.get("coverage", {}),
+            "size_distribution": bicliques_result.get("size_distribution", {})
+        }
+    except Exception as e:
+        return {"error": str(e)}
