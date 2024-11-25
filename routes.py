@@ -36,6 +36,25 @@ def index_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Get timepoint data
+        timepoint_stats = results.get("timepoint_stats", {})
+        
+        # Create list of timepoints with their status
+        timepoint_info = {}
+        for timepoint, data in timepoint_stats.items() if timepoint_stats else {}:
+            if "error" in data:
+                timepoint_info[timepoint] = {
+                    "status": "error",
+                    "message": data["error"]
+                }
+            else:
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": data.get("biclique_stats", {}),
+                    "coverage": data.get("coverage", {}),
+                    "components": data.get("component_stats", {}).get("components", {})
+                }
+
         # Limit to first two components
         if "interesting_components" in results:
             results["interesting_components"] = results["interesting_components"][:2]
