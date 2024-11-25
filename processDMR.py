@@ -10,12 +10,11 @@ import time
 import psutil
 from typing import Dict, Tuple
 
-from biclique_analysis.processor import process_enhancer_info
 from biclique_analysis import (
     process_bicliques,
     process_enhancer_info,
     create_node_metadata,
-    process_components,  # Add this import
+    process_components,
     reporting,
 )
 from biclique_analysis.reader import read_bicliques_file
@@ -137,6 +136,9 @@ import json
 def process_single_dataset(df, output_file, args):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
+        # Process enhancer info first
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+
         # Create gene ID mapping
         all_genes = set()
         gene_col = (
@@ -149,7 +151,7 @@ def process_single_dataset(df, output_file, args):
         gene_names = df[gene_col].dropna().str.strip().str.lower()
         all_genes.update(gene_names)
 
-        # Add genes from enhancer info (case-insensitive)
+        # Now we can safely process enhancer info
         for genes in df["Processed_Enhancer_Info"]:
             if genes:  # Check if not None/empty
                 all_genes.update(g.strip().lower() for g in genes)
