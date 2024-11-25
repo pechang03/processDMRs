@@ -161,6 +161,7 @@ def index_route():
             "index.html",
             results=results,
             statistics=detailed_stats,
+            timepoint_info=timepoint_info,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
             bicliques_result=results,
