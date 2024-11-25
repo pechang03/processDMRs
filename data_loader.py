@@ -6,6 +6,18 @@ import pandas as pd
 from typing import Dict, List, Set
 import os
 
+# Configuration constants
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
+DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
+BIPARTITE_GRAPH_TEMPLATE = os.path.join(
+    DATA_DIR, "bipartite_graph_output_{}_pairwise.txt"
+)
+BIPARTITE_GRAPH_OVERALL = os.path.join(
+    DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
+)
+
 def create_dmr_id(dmr_num: int, timepoint: str) -> int:
     """Create a unique DMR ID for a specific timepoint."""
     # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap

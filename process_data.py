@@ -54,16 +54,11 @@ from rb_domination import (
 
 app = Flask(__name__)
 
-# Configuration
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
-DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
-BIPARTITE_GRAPH_TEMPLATE = os.path.join(
-    DATA_DIR, "bipartite_graph_output_{}_pairwise.txt"
-)
-BIPARTITE_GRAPH_OVERALL = os.path.join(
-    DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
+from data_loader import (
+    DSS1_FILE, 
+    DSS_PAIRWISE_FILE, 
+    BIPARTITE_GRAPH_TEMPLATE,
+    BIPARTITE_GRAPH_OVERALL
 )
 
 
