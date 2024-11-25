@@ -210,6 +210,15 @@ def process_data(timepoint=None):
         print("\nBicliques result contents:")
         print("Number of bicliques:", len(bicliques_result.get("bicliques", [])))
         print("Keys in bicliques_result:", list(bicliques_result.keys()))
+        
+        # Detailed biclique logging (commented out)
+        '''
+        print("\nDetailed biclique contents:")
+        for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result.get("bicliques", [])):
+            print(f"\nBiclique {idx + 1}:")
+            print("DMR nodes:", sorted(list(dmr_nodes)))
+            print("Gene nodes:", sorted(list(gene_nodes)))
+        '''
 
         # Biclique type statistics
         biclique_type_stats = classify_biclique_types(
