@@ -59,8 +59,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
 DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
-BIPARTITE_GRAPH_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}_pairwise.txt")
-BIPARTITE_GRAPH_OVERALL = os.path.join(DATA_DIR, "bipartite_graph_output_DSS_overall.txt")
+BIPARTITE_GRAPH_TEMPLATE = os.path.join(
+    DATA_DIR, "bipartite_graph_output_{}_pairwise.txt"
+)
+BIPARTITE_GRAPH_OVERALL = os.path.join(
+    DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
+)
 
 
 _cached_data = None
@@ -587,7 +591,7 @@ def process_data(timepoint=None):
             "coverage": {},
             "node_participation": {},
             "edge_coverage": {},
-            "components": {}
+            "components": {},
         }
 
         # Calculate biclique statistics if we have bicliques
