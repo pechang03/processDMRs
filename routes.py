@@ -159,6 +159,25 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Get timepoint data
+        timepoint_stats = results.get("timepoint_stats", {})
+        
+        # Create list of timepoints with their status
+        timepoint_info = {}
+        for timepoint, data in timepoint_stats.items() if timepoint_stats else {}:
+            if "error" in data:
+                timepoint_info[timepoint] = {
+                    "status": "error",
+                    "message": data["error"]
+                }
+            else:
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": data.get("biclique_stats", {}),
+                    "coverage": data.get("coverage", {}),
+                    "components": data.get("component_stats", {}).get("components", {})
+                }
+
         # Create properly structured statistics dictionary
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
@@ -208,6 +227,7 @@ def statistics_route():
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=convert_dict_keys_to_str(results),
+            timepoint_info=timepoint_info
         )
     except Exception as e:
         import traceback
