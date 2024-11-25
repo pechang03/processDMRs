@@ -152,6 +152,9 @@ def process_data(timepoint=None):
         # First pass: Collect and normalize all gene names
         all_genes = set()
 
+        # Use the overall dataframe for processing
+        df = df_overall
+
         # Add genes from gene column (case-insensitive)
         gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
         all_genes.update(gene_names)
@@ -685,6 +688,7 @@ def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
     try:
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint_name}")
+        from data_loader import validate_bipartite_graph
         graph_valid = validate_bipartite_graph(graph)
         
         # Process bicliques for this timepoint
