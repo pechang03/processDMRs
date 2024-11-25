@@ -59,7 +59,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
 DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
-BIPARTITE_GRAPH_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}.txt")
+BIPARTITE_GRAPH_TEMPLATE = os.path.join(DATA_DIR, "bipartite_graph_output_{}_pairwise.txt")
+BIPARTITE_GRAPH_OVERALL = os.path.join(DATA_DIR, "bipartite_graph_output_DSS_overall.txt")
 
 
 _cached_data = None
@@ -184,9 +185,10 @@ def process_data(timepoint=None):
 
         # Process bicliques
         print("Processing bicliques...")
-        bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(
-            timepoint if timepoint else "total"
-        )
+        if timepoint:
+            bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
+        else:
+            bicliques_file = BIPARTITE_GRAPH_OVERALL
         bicliques_result = process_bicliques(
             bipartite_graph,
             bicliques_file,  # Use template here
