@@ -108,19 +108,25 @@ def convert_dict_keys_to_str(d):
     return d
 
 
-def process_data():
+def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
-
-    # Return cached data if available
-    if _cached_data is not None:
-        print("\nCached data keys:")
-        print(list(_cached_data.keys()))
+    
+    # Return cached data if available and no specific timepoint requested
+    if _cached_data is not None and timepoint is None:
+        print("\nReturning cached total data")
         return _cached_data
 
     try:
-        print("Starting initial data processing...")
+        print("Starting data processing...")
         print(f"Using data directory: {DATA_DIR}")
+        print(f"Processing timepoint: {timepoint if timepoint else 'total'}")
+
+        # Read appropriate data source based on timepoint
+        if timepoint:
+            df = pd.read_excel(DSS_PAIRWISE_FILE, sheet_name=timepoint)
+        else:
+            df = read_excel_file(DSS1_FILE)
 
         # Process DSS1 dataset
         df = read_excel_file(DSS1_FILE)
