@@ -129,7 +129,11 @@ def process_data(timepoint=None):
 
         # Read appropriate data source based on timepoint
         if timepoint:
-            df = pd.read_excel(DSS_PAIRWISE_FILE, sheet_name=timepoint)
+            try:
+                df = pd.read_excel(DSS_PAIRWISE_FILE, sheet_name=timepoint)
+            except Exception as e:
+                print(f"Error reading timepoint {timepoint}: {e}")
+                return {"error": f"Failed to read timepoint {timepoint}: {str(e)}"}
         else:
             df = read_excel_file(DSS1_FILE)
 
@@ -582,7 +586,15 @@ def process_data(timepoint=None):
             xl = pd.ExcelFile(DSS_PAIRWISE_FILE)
             for sheet in xl.sheet_names:
                 print(f"\nProcessing timepoint: {sheet}")
-                timepoint_results[sheet] = process_data(sheet)
+                try:
+                    timepoint_data = process_data(sheet)
+                    if "error" not in timepoint_data:
+                        timepoint_results[sheet] = timepoint_data
+                    else:
+                        print(f"Skipping timepoint {sheet} due to error: {timepoint_data['error']}")
+                except Exception as e:
+                    print(f"Error processing timepoint {sheet}: {e}")
+                    continue  # Skip failed timepoints instead of failing completely
 
         # Initialize these variables with default values
         edge_coverage = {}
@@ -637,23 +649,7 @@ def process_data(timepoint=None):
             "edge_coverage": edge_coverage,  # Now guaranteed to be defined
             "biclique_stats": biclique_stats,  # Now guaranteed to be defined
             "biclique_types": biclique_stats.get("biclique_types", {}),
-            "timepoint_stats": {
-                timepoint: {
-                    "total_bicliques": len(results.get("bicliques", [])),
-                    "biclique_types": results.get("statistics", {})
-                    .get("biclique_stats", {})
-                    .get("biclique_types", {}),
-                    "split_genes": results.get("statistics", {})
-                    .get("complex_components", {})
-                    .get("split_genes", {}),
-                    "edge_coverage": results.get("statistics", {}).get(
-                        "edge_coverage", {}
-                    ),
-                }
-                for timepoint, results in timepoint_results.items()
-            }
-            if not timepoint
-            else None,
+            "timepoint_stats": timepoint_results if not timepoint else None
         }
 
         # Debug print for cached data
