@@ -6,6 +6,22 @@ import pandas as pd
 from typing import Dict, List, Set
 import os
 
+def create_dmr_id(dmr_num: int, timepoint: str) -> int:
+    """Create a unique DMR ID for a specific timepoint."""
+    # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap
+    timepoint_offsets = {
+        "P21-P28": 1000000,
+        "P21-P40": 2000000,
+        "P21-P60": 3000000,
+        "P21-P180": 4000000,
+        "TP28-TP180": 5000000,
+        "TP40-TP180": 6000000,
+        "TP60-TP180": 7000000,
+        "DSS1": 0  # Base timepoint uses original numbers
+    }
+    offset = timepoint_offsets.get(timepoint, 8000000)  # Default offset for unknown timepoints
+    return offset + dmr_num
+
 
 def validate_bipartite_graph(B):
     """Validate the bipartite graph properties and print detailed statistics"""
