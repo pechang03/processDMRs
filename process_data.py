@@ -116,32 +116,36 @@ def convert_dict_keys_to_str(d):
 def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
-
-    # Return cached data if available and no specific timepoint requested
-    if _cached_data is not None and timepoint is None:
-        print("\nReturning cached total data")
-        return _cached_data
-
+    
     try:
         print("Starting data processing...")
-        print(f"Using data directory: {DATA_DIR}")
-        print(f"Processing timepoint: {timepoint if timepoint else 'total'}")
+        
+        # Initialize storage for multiple graphs
+        graphs = {}
+        timepoint_results = {}
 
-        # Read appropriate data source based on timepoint
-        if timepoint:
-            try:
-                df = pd.read_excel(DSS_PAIRWISE_FILE, sheet_name=timepoint)
-            except Exception as e:
-                print(f"Error reading timepoint {timepoint}: {e}")
-                return {"error": f"Failed to read timepoint {timepoint}: {str(e)}"}
-        else:
-            df = read_excel_file(DSS1_FILE, sheet_name="DSS1")
+        # Process overall DSS1 data first
+        print("\nProcessing DSS1 overall data...")
+        df_overall = read_excel_file(DSS1_FILE, sheet_name="DSS1")
+        df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        
+        # Create gene mapping from overall data
+        all_genes = set()
+        gene_names = df_overall["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
+        all_genes.update(gene_names)
+        for genes in df_overall["Processed_Enhancer_Info"]:
+            if genes:
+                all_genes.update(g.strip().lower() for g in genes)
+        
+        # Create consistent gene ID mapping to use across all graphs
+        max_dmr = df_overall["DMR_No."].max()
+        gene_id_mapping = {
+            gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted(all_genes))
+        }
 
-        # Process DSS1 dataset
-        df = read_excel_file(DSS1_FILE)
-        df["Processed_Enhancer_Info"] = df[
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-        ].apply(process_enhancer_info)
+        # Create overall graph
+        overall_graph = create_bipartite_graph(df_overall, gene_id_mapping)
+        graphs["overall"] = overall_graph
 
         # Create gene ID mapping
         all_genes = set()
