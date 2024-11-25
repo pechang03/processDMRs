@@ -135,7 +135,7 @@ def process_data(timepoint=None):
                 print(f"Error reading timepoint {timepoint}: {e}")
                 return {"error": f"Failed to read timepoint {timepoint}: {str(e)}"}
         else:
-            df = read_excel_file(DSS1_FILE)
+            df = read_excel_file(DSS1_FILE, sheet_name="DSS1")
 
         # Process DSS1 dataset
         df = read_excel_file(DSS1_FILE)
