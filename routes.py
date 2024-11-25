@@ -20,6 +20,7 @@ from biclique_analysis.classifier import (
     classify_biclique,
     classify_component,
 )
+from biclique_analysis.classifier import classify_biclique
 
 
 @app.template_filter("get_biclique_classification")
@@ -302,9 +303,6 @@ def component_detail_route(component_id, type="biconnected"):
 
         traceback.print_exc()
         return render_template("error.html", message=str(e))
-
-
-from biclique_analysis.classifier import classify_biclique
 
 
 @app.template_filter("get_biclique_classification")
