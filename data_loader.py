@@ -3,7 +3,7 @@
 
 import networkx as nx
 import pandas as pd
-from typing import Dict
+from typing import Dict, List, Set
 import os
 
 
@@ -116,7 +116,7 @@ def create_bipartite_graph(
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
-    
+
     # Add DMR nodes (0-based indexing)
     dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
     for dmr in dmr_nodes:
@@ -130,7 +130,7 @@ def create_bipartite_graph(
     edges_added = set()  # Track unique edges
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
-        
+
         # Process closest gene
         if pd.notna(row.get(closest_gene_col)):
             gene_name = str(row[closest_gene_col]).strip().lower()
@@ -145,12 +145,12 @@ def create_bipartite_graph(
         if pd.notna(row.get("Processed_Enhancer_Info")):
             genes = row["Processed_Enhancer_Info"]
             if isinstance(genes, str):
-                genes = [g.strip() for g in genes.split(';')]
+                genes = [g.strip() for g in genes.split(";")]
             elif isinstance(genes, (list, set)):
                 genes = list(genes)
             else:
                 continue
-                
+
             for gene_name in genes:
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
@@ -164,12 +164,12 @@ def create_bipartite_graph(
         if pd.notna(row.get("Associated_Genes")):
             genes = row["Associated_Genes"]
             if isinstance(genes, str):
-                genes = [g.strip() for g in genes.split(';')]
+                genes = [g.strip() for g in genes.split(";")]
             elif isinstance(genes, (list, set)):
                 genes = list(genes)
             else:
                 continue
-                
+
             for gene_name in genes:
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
@@ -194,12 +194,14 @@ def create_bipartite_graph(
     print(f"Total edges added: {len(edges_added)}")
 
     return B
+
+
 def get_excel_sheets(filepath: str) -> List[str]:
     """Get all sheet names from an Excel file."""
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Excel file not found: {filepath}")
-            
+
         print(f"Reading sheet names from: {filepath}")
         xl = pd.ExcelFile(filepath)
         sheets = xl.sheet_names
