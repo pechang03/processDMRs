@@ -136,16 +136,15 @@ def read_excel_file(filepath, sheet_name=None):
 def create_bipartite_graph(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
-    closest_gene_col: str = "Gene_Symbol_Nearby",
+    timepoint: str = "DSS1",
 ) -> nx.Graph:
-    """Create a bipartite graph from DataFrame with consistent node sets."""
+    """Create a bipartite graph from DataFrame with timepoint-specific DMR IDs."""
     B = nx.Graph()
 
-    # Add ALL DMR nodes (0-based indexing) up to max DMR number
-    max_dmr = max(df["DMR_No."]) - 1  # Get maximum DMR number (0-based)
-    dmr_nodes = set(range(max_dmr + 1))  # Include ALL possible DMR nodes
+    # Add DMR nodes with timepoint-specific IDs
+    dmr_nodes = set(create_dmr_id(dmr-1, timepoint) for dmr in df["DMR_No."])
     for dmr in dmr_nodes:
-        B.add_node(dmr, bipartite=0)
+        B.add_node(dmr, bipartite=0, timepoint=timepoint)
 
     # Add ALL gene nodes from mapping (even if not used in this timepoint)
     for gene_name, gene_id in gene_id_mapping.items():
@@ -154,11 +153,11 @@ def create_bipartite_graph(
     # Process each row to add edges
     edges_added = set()
     for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Zero-based indexing
+        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint)
 
         # Process closest gene
-        if pd.notna(row.get(closest_gene_col)):
-            gene_name = str(row[closest_gene_col]).strip().lower()
+        if pd.notna(row.get("Gene_Symbol_Nearby")):
+            gene_name = str(row["Gene_Symbol_Nearby"]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
                 edge = (dmr_id, gene_id)
@@ -186,7 +185,7 @@ def create_bipartite_graph(
                         edges_added.add(edge)
 
     # Print detailed statistics
-    print(f"\nGraph construction summary:")
+    print(f"\nGraph construction summary for timepoint {timepoint}:")
     print(f"Total DMR nodes: {len(dmr_nodes)}")
     print(f"Total Gene nodes: {len(gene_id_mapping)}")
     print(f"Active edges: {len(edges_added)}")
