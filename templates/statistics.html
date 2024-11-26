@@ -95,18 +95,17 @@
                 <tbody>
                   <tr>
                     <td>Size:</td>
-                    <td>{{ statistics.dominating_set.size }}</td>
+                    <td>{{ statistics.get('dominating_set', {}).get('size', 0) }}</td>
                   </tr>
                   <tr>
                     <td>Coverage:</td>
                     <td>
-                      {{ "%.1f"|format(statistics.dominating_set.percentage *
-                      100) }}%
+                      {{ "%.1f"|format(statistics.get('dominating_set', {}).get('percentage', 0) * 100) }}%
                     </td>
                   </tr>
                   <tr>
                     <td>Genes Dominated:</td>
-                    <td>{{ statistics.dominating_set.genes_dominated }}</td>
+                    <td>{{ statistics.get('dominating_set', {}).get('genes_dominated', 0) }}</td>
                   </tr>
                 </tbody>
               </table>
