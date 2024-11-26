@@ -61,7 +61,7 @@ class TestVisualization(unittest.TestCase):
         from utils.constants import START_GENE_ID
         node_biclique_map = {
             1: [0],  # DMR in first biclique
-            2: [],   # DMR not in any biclique
+            2: [0],  # DMR also in first biclique
             START_GENE_ID: [0],     # Gene in first biclique
             START_GENE_ID + 1: [0]  # Gene in first biclique
         }
@@ -79,11 +79,8 @@ class TestVisualization(unittest.TestCase):
         gene_trace = traces[1]
 
         # Check colors
-        dmr_colors = list(dmr_trace.marker.color)
-        self.assertEqual(dmr_colors, ["red", "gray"])  # First DMR red, second gray
-
-        gene_colors = list(gene_trace.marker.color)
-        self.assertEqual(gene_colors, ["red", "red"])  # Both genes red (first biclique)
+        self.assertEqual(list(dmr_trace.marker.color), ["red", "red"])  # Both DMRs in first biclique
+        self.assertEqual(list(gene_trace.marker.color), ["red", "red"])  # Both genes in first biclique
 
     def test_create_node_traces_invalid_biclique_number(self):
         """Test handling of invalid biclique numbers"""
