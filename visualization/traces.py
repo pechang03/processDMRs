@@ -26,16 +26,20 @@ def create_node_traces(
     """Create node traces with proper styling based on node type."""
     traces = []
 
-    # Handle empty bicliques case
-    if not biclique_colors:
-        biclique_colors = ["gray"]  # Default color
+    # Handle empty or None inputs
+    if not node_info or not node_positions:
+        return []
 
-    # Create traces in order: DMRs, regular genes, split genes
+    # Ensure we have at least one color
+    if not biclique_colors:
+        biclique_colors = ["gray"]
+
+    # Create DMR trace first
     dmr_trace = create_dmr_trace(
         node_info.dmr_nodes,
         node_positions,
         node_labels,
-        node_biclique_map,
+        node_biclique_map or {},  # Handle None case
         biclique_colors,
         dominating_set,
         dmr_metadata,
@@ -43,13 +47,12 @@ def create_node_traces(
     if dmr_trace:
         traces.append(dmr_trace)
 
-    # Combine regular and split genes
-    all_genes = node_info.regular_genes | node_info.split_genes
+    # Create gene trace
     gene_trace = create_gene_trace(
-        all_genes,
+        node_info.regular_genes | node_info.split_genes,  # Combine regular and split genes
         node_positions,
         node_labels,
-        node_biclique_map,
+        node_biclique_map or {},  # Handle None case
         biclique_colors,
         gene_metadata,
     )
