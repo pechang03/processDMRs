@@ -115,40 +115,39 @@ def convert_dict_keys_to_str(d):
     return d
 
 
-def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
-    """Process a single timepoint's graph and return its statistics"""
+def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int] = None) -> Dict:
+    """Process a single timepoint and return its results"""
     try:
-        # Calculate basic statistics
-        dmr_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 0}
-        gene_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 1}
+        # Create bipartite graph
+        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        
+        # Validate graph
+        print(f"\nValidating graph for timepoint {timepoint}")
+        graph_valid = validate_bipartite_graph(graph)
 
-        stats = {
-            "coverage": {
-                "dmrs": {
-                    "covered": len(dmr_nodes),
-                    "total": len(dmr_nodes),
-                    "percentage": 1.0,
-                },
-                "genes": {
-                    "covered": len(gene_nodes),
-                    "total": len(gene_nodes),
-                    "percentage": 1.0,
-                },
-            },
-            "edge_coverage": calculate_edge_coverage(
-                [], graph
-            ),  # Empty bicliques for timepoints
-            "dominating_set": {
-                "size": len(calculate_dominating_sets(graph, df, timepoint_name)),
-                "percentage": len(calculate_dominating_sets(graph, df, timepoint_name))
-                / len(dmr_nodes)
-                if dmr_nodes
-                else 0,
-                "genes_dominated": len(gene_nodes),
-            },
+        # Process bicliques for this timepoint
+        bicliques_result = process_bicliques(
+            graph,
+            f"bipartite_graph_output_{timepoint}.txt",
+            timepoint,
+            gene_id_mapping=gene_id_mapping,
+        )
+
+        # Calculate statistics for this timepoint
+        biclique_type_stats = classify_biclique_types(
+            bicliques_result.get("bicliques", [])
+        )
+
+        return {
+            "bicliques": bicliques_result,
+            "node_count": graph.number_of_nodes(),
+            "edge_count": graph.number_of_edges(),
+            "graph_valid": graph_valid,
+            "biclique_type_stats": biclique_type_stats,
+            "coverage": bicliques_result.get("coverage", {}),
+            "size_distribution": bicliques_result.get("size_distribution", {}),
+            "gene_id_mapping": gene_id_mapping  # Add this to return the mapping
         }
-
-        return stats
     except Exception as e:
         return {"error": str(e)}
 
@@ -393,36 +392,4 @@ def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List
     return []
 
 
-def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
-    """Process a single timepoint's graph and return its results"""
-    try:
-        # Validate graph
-        print(f"\nValidating graph for timepoint {timepoint_name}")
-
-        graph_valid = validate_bipartite_graph(graph)
-
-        # Process bicliques for this timepoint
-        bicliques_result = process_bicliques(
-            graph,
-            f"bipartite_graph_output_{timepoint_name}.txt",
-            max(df["DMR_No."]),
-            timepoint_name,
-            gene_id_mapping=gene_id_mapping,
-        )
-
-        # Calculate statistics for this timepoint
-        biclique_type_stats = classify_biclique_types(
-            bicliques_result.get("bicliques", [])
-        )
-
-        return {
-            "bicliques": bicliques_result,
-            "node_count": graph.number_of_nodes(),
-            "edge_count": graph.number_of_edges(),
-            "graph_valid": graph_valid,
-            "biclique_type_stats": biclique_type_stats,
-            "coverage": bicliques_result.get("coverage", {}),
-            "size_distribution": bicliques_result.get("size_distribution", {}),
-        }
-    except Exception as e:
-        return {"error": str(e)}
+# Removed duplicate function definition
