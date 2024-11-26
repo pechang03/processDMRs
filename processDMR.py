@@ -98,6 +98,9 @@ import json
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
+        # Get correct max_dmr_id (number of rows minus 1 for 0-based indexing)
+        max_dmr_id = len(df) - 1  # This ensures DMR IDs go from 0 to 2108 for 2109 rows
+        
         # Use the correct column name based on timepoint
         if timepoint == "DSS1":
             interaction_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
@@ -129,11 +132,8 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
                 if genes:  # Check if not None/empty
                     all_genes.update(g.strip().lower() for g in genes)
 
-            # Sort genes alphabetically for deterministic assignment
-            sorted_genes = sorted(all_genes)
-
-            # Create gene mapping
-            gene_id_mapping = {gene: idx + 1 for idx, gene in enumerate(sorted_genes)}
+            # Create gene mapping starting after max DMR ID
+            gene_id_mapping = create_gene_mapping(all_genes, max_dmr_id)
 
         # Create bipartite graph using master mapping
         bipartite_graph = create_bipartite_graph(
