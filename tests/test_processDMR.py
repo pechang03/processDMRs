@@ -6,12 +6,13 @@ import os
 import sys
 
 # Add the parent directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Now import the modules
 from processDMR import create_bipartite_graph, process_enhancer_info
 from rb_domination import greedy_rb_domination
 from visualization.core import create_biclique_visualization
+from utils.constants import START_GENE_ID
 
 
 class TestBipartiteGraph(unittest.TestCase):
@@ -77,10 +78,12 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        from utils.constants import START_GENE_ID
-        mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1}  # Use START_GENE_ID
+        mapping = {
+            "GeneA": START_GENE_ID,
+            "GeneB": START_GENE_ID + 1,
+        }  # Use START_GENE_ID
         graph = create_bipartite_graph(test_df, mapping)
-        
+
         self.assertEqual(len(graph.nodes()), 4)
         self.assertEqual(len(graph.edges()), 2)
 
@@ -113,8 +116,13 @@ class TestBipartiteGraph(unittest.TestCase):
             num_genes = random.randint(1, 10)
             data = {
                 "DMR_No.": list(range(1, num_dmrs + 1)),
-                "Gene_Symbol_Nearby": [f"Gene{j % num_genes}" for j in range(num_dmrs)],  # Ensure each DMR has a corresponding gene
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [";".join([f"Gene{k}" for k in range(num_genes)]) for _ in range(num_dmrs)],  # Connect each DMR to all genes
+                "Gene_Symbol_Nearby": [
+                    f"Gene{j % num_genes}" for j in range(num_dmrs)
+                ],  # Ensure each DMR has a corresponding gene
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                    ";".join([f"Gene{k}" for k in range(num_genes)])
+                    for _ in range(num_dmrs)
+                ],  # Connect each DMR to all genes
             }
             df = pd.DataFrame(data)
             df["Processed_Enhancer_Info"] = df[
@@ -125,8 +133,13 @@ class TestBipartiteGraph(unittest.TestCase):
             graph = create_bipartite_graph(df, mapping)
 
             # Add debugging output
-            if len(graph.nodes()) != num_dmrs + num_genes or len(graph.edges()) != num_dmrs * num_genes:
-                print(f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}, graph_edges={len(graph.edges())}")
+            if (
+                len(graph.nodes()) != num_dmrs + num_genes
+                or len(graph.edges()) != num_dmrs * num_genes
+            ):
+                print(
+                    f"Debug: num_dmrs={num_dmrs}, num_genes={num_genes}, graph_nodes={len(graph.nodes())}, graph_edges={len(graph.edges())}"
+                )
                 print(f"Graph nodes: {graph.nodes()}")
                 print(f"Gene ID Mapping: {mapping}")
                 print(f"Associated Genes: {[f'Gene{j}' for j in range(num_genes)]}")
@@ -147,8 +160,11 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        from utils.constants import START_GENE_ID
-        sparse_mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1, "GeneC": START_GENE_ID + 2}
+        sparse_mapping = {
+            "GeneA": START_GENE_ID,
+            "GeneB": START_GENE_ID + 1,
+            "GeneC": START_GENE_ID + 2,
+        }
         sparse_graph = create_bipartite_graph(sparse_df, sparse_mapping)
         self.assertEqual(len(sparse_graph.nodes()), 6)
         self.assertEqual(len(sparse_graph.edges()), 3)
@@ -198,22 +214,33 @@ class TestBipartiteGraph(unittest.TestCase):
                 self.assertIn(neighbor, dominating_set)
 
     def test_complete_bipartite_graphs(self):
-        # Test K_{2,3}
-        df_k23 = pd.DataFrame({
-            "DMR_No.": [1, 2, 3],
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC", "GeneA;GeneB;GeneC"],
-        })
+        # Test K_{3,3}
+        df_k23 = pd.DataFrame(
+            {
+                "DMR_No.": [1, 2, 3],
+                "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                    "GeneA;GeneB;GeneC",
+                    "GeneA;GeneB;GeneC",
+                    "GeneA;GeneB;GeneC",
+                ],
+            }
+        )
         df_k23["Processed_Enhancer_Info"] = df_k23[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        mapping_k23 = {"GeneA": 3, "GeneB": 4, "GeneC": 5}
+        mapping_k23 = {
+            "GeneA": START_GENE_ID,
+            "GeneB": START_GENE_ID + 1,
+            "GeneC": START_GENE_ID + 2,
+        }
         graph_k23 = create_bipartite_graph(df_k23, mapping_k23)
 
-        self.assertEqual(len(graph_k23.edges()), 9)  # Update expected edges to 9 for K_{3,3}
+        self.assertEqual(
+            len(graph_k23.edges()), 9
+        )  # Update expected edges to 9 for K_{3,3}
 
 
 if __name__ == "__main__":
     unittest.main()
-from visualization.core import create_biclique_visualization
