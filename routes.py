@@ -207,7 +207,13 @@ def statistics_route():
         # Create properly structured statistics dictionary
         detailed_stats = {
             "components": results.get("component_stats", {}).get("components", {}),
-            "dominating_set": results.get("dominating_set", {}),
+            "dominating_set": {
+                "size": results.get("dominating_set", {}).get("size", 0),
+                "percentage": results.get("dominating_set", {}).get("percentage", 0.0),
+                "genes_dominated": results.get("dominating_set", {}).get("genes_dominated", 0),
+                "components_with_ds": results.get("dominating_set", {}).get("components_with_ds", 0),
+                "avg_size_per_component": results.get("dominating_set", {}).get("avg_size_per_component", 0.0),
+            },
             "coverage": results.get(
                 "coverage",
                 {
