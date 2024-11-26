@@ -25,6 +25,8 @@ from flask import Flask, render_template, current_app
 import pandas as pd
 # import numpy as np
 
+from utils.constants import START_GENE_ID
+
 # from processDMR import read_excel_file,
 from biclique_analysis import (
     process_bicliques,
@@ -45,6 +47,7 @@ from utils.node_info import NodeInfo
 from utils.json_utils import convert_dict_keys_to_str
 
 from data_loader import read_excel_file, create_bipartite_graph
+from data_loader import validate_bipartite_graph
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,
@@ -118,129 +121,144 @@ def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
         # Calculate basic statistics
         dmr_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 1}
-        
+
         stats = {
             "coverage": {
                 "dmrs": {
                     "covered": len(dmr_nodes),
                     "total": len(dmr_nodes),
-                    "percentage": 1.0
+                    "percentage": 1.0,
                 },
                 "genes": {
                     "covered": len(gene_nodes),
                     "total": len(gene_nodes),
-                    "percentage": 1.0
-                }
+                    "percentage": 1.0,
+                },
             },
-            "edge_coverage": calculate_edge_coverage([], graph),  # Empty bicliques for timepoints
+            "edge_coverage": calculate_edge_coverage(
+                [], graph
+            ),  # Empty bicliques for timepoints
             "dominating_set": {
                 "size": len(calculate_dominating_sets(graph, df, timepoint_name)),
-                "percentage": len(calculate_dominating_sets(graph, df, timepoint_name)) / len(dmr_nodes) if dmr_nodes else 0,
-                "genes_dominated": len(gene_nodes)
-            }
+                "percentage": len(calculate_dominating_sets(graph, df, timepoint_name))
+                / len(dmr_nodes)
+                if dmr_nodes
+                else 0,
+                "genes_dominated": len(gene_nodes),
+            },
         }
-        
+
         return stats
     except Exception as e:
         return {"error": str(e)}
+
 
 def process_data():
     """Process all timepoints including overall/DSS1"""
     try:
         timepoint_data = {}
-        
+
         # Process overall/DSS1 timepoint first
         print("\nProcessing overall timepoint (DSS1)...")
         df_overall = read_excel_file(current_app.config["DSS1_FILE"])
         overall_results = process_single_timepoint(
             df=df_overall,
             timepoint="overall",
-            gene_id_mapping=None  # Will create master mapping
+            gene_id_mapping=None,  # Will create master mapping
         )
         timepoint_data["overall"] = overall_results
-        
+
         # Use the master gene mapping for all other timepoints
         gene_id_mapping = overall_results["gene_id_mapping"]
-        
+
         # Process each pairwise timepoint
         xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
         for sheet in xl.sheet_names:
             print(f"\nProcessing timepoint: {sheet}")
-            df = read_excel_file(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
+            df = read_excel_file(
+                current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet
+            )
             timepoint_results = process_single_timepoint(
-                df=df,
-                timepoint=sheet,
-                gene_id_mapping=gene_id_mapping
+                df=df, timepoint=sheet, gene_id_mapping=gene_id_mapping
             )
             timepoint_data[sheet] = timepoint_results
-            
+
         return timepoint_data
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
-def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int] = None) -> Dict:
+
+def process_single_timepoint(
+    df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int] = None
+) -> Dict:
     """Process a single timepoint and return its complete analysis"""
-    
+
     # Create bipartite graph
     if gene_id_mapping is None:
         # Create master mapping for overall timepoint
         gene_id_mapping = create_master_gene_mapping(df)
-    
+
     graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-    
+
     # Remove degree-0 gene nodes before analysis
     filtered_graph = remove_isolated_genes(graph)
     print(f"\nTimepoint {timepoint}:")
     print(f"Original graph: {len(graph.nodes())} nodes, {len(graph.edges())} edges")
-    print(f"Filtered graph: {len(filtered_graph.nodes())} nodes, {len(filtered_graph.edges())} edges")
-    
+    print(
+        f"Filtered graph: {len(filtered_graph.nodes())} nodes, {len(filtered_graph.edges())} edges"
+    )
+
     # Process bicliques on filtered graph
     bicliques_result = process_bicliques(
         filtered_graph,
         f"bipartite_graph_output_{timepoint}.txt",
         timepoint,
-        gene_id_mapping=gene_id_mapping
+        gene_id_mapping=gene_id_mapping,
     )
-    
+
     # Calculate component data
     component_results = process_components(graph, bicliques_result)
-    
+
     # Generate embeddings for both types of components
     triconnected_embeddings = generate_triconnected_embeddings(graph)
     biclique_embeddings = generate_biclique_embeddings(bicliques_result["bicliques"])
-    
+
     return {
         "summary": {
             "coverage": bicliques_result["coverage"],
-            "edge_coverage": calculate_edge_coverage(bicliques_result["bicliques"], graph),
+            "edge_coverage": calculate_edge_coverage(
+                bicliques_result["bicliques"], graph
+            ),
             "component_stats": component_results["statistics"],
             "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
-            "size_distribution": bicliques_result["size_distribution"]
+            "size_distribution": bicliques_result["size_distribution"],
         },
         "graphs": {
             "original": graph,
-            "biclique": create_biclique_graph(bicliques_result["bicliques"])
+            "biclique": create_biclique_graph(bicliques_result["bicliques"]),
         },
         "interesting_components": component_results["interesting_components"],
         "component_tables": {
             "triconnected": {
                 "embeddings": triconnected_embeddings,
-                "metadata": create_triconnected_metadata(graph)
+                "metadata": create_triconnected_metadata(graph),
             },
             "biclique": {
                 "embeddings": biclique_embeddings,
-                "metadata": create_biclique_metadata(bicliques_result["bicliques"])
-            }
+                "metadata": create_biclique_metadata(bicliques_result["bicliques"]),
+            },
         },
         "gene_id_mapping": gene_id_mapping,
         "node_metadata": {
             "dmr": create_dmr_metadata(df),
-            "gene": create_gene_metadata(df)
-        }
+            "gene": create_gene_metadata(df),
+        },
     }
+
 
 # Add placeholder functions for missing metadata creation
 def create_dmr_metadata(df: pd.DataFrame) -> Dict:
@@ -248,17 +266,22 @@ def create_dmr_metadata(df: pd.DataFrame) -> Dict:
     return {
         str(row["DMR_No."]): {
             "area": row.get("Area_Stat", "N/A"),
-            "description": row.get("Gene_Description", "N/A")
-        } for _, row in df.iterrows()
+            "description": row.get("Gene_Description", "N/A"),
+        }
+        for _, row in df.iterrows()
     }
+
 
 def create_gene_metadata(df: pd.DataFrame) -> Dict:
     """Create metadata for genes"""
     gene_metadata = {}
-    
+
     # Check for gene symbol column
-    gene_col = next((col for col in ["Gene_Symbol_Nearby", "Gene_Symbol"] if col in df.columns), None)
-    
+    gene_col = next(
+        (col for col in ["Gene_Symbol_Nearby", "Gene_Symbol"] if col in df.columns),
+        None,
+    )
+
     if gene_col:
         for _, row in df.iterrows():
             gene_name = row.get(gene_col)
@@ -266,13 +289,14 @@ def create_gene_metadata(df: pd.DataFrame) -> Dict:
                 gene_metadata[gene_name] = {
                     "description": row.get("Gene_Description", "N/A")
                 }
-    
+
     return gene_metadata
+
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     """Create a master gene mapping from a DataFrame"""
     all_genes = set()
-    
+
     # Add genes from gene column (case-insensitive)
     gene_names = df["Gene_Symbol_Nearby"].dropna().str.strip().str.lower()
     all_genes.update(gene_names)
@@ -281,9 +305,9 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     df["Processed_Enhancer_Info"] = df[
         "ENCODE_Enhancer_Interaction(BingRen_Lab)"
     ].apply(process_enhancer_info)
-    
+
     for genes in df["Processed_Enhancer_Info"]:
-        if genes: 
+        if genes:
             all_genes.update(g.strip().lower() for g in genes)
 
     # Sort genes alphabetically for deterministic assignment
@@ -291,13 +315,13 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     max_dmr = df["DMR_No."].max()
 
     # Create gene mapping starting after max DMR number
-    from utils.constants import START_GENE_ID
 
     gene_id_mapping = {
         gene: START_GENE_ID + idx for idx, gene in enumerate(sorted_genes)
     }
 
     return gene_id_mapping
+
 
 def create_biclique_graph(bicliques: List[Tuple[Set[int], Set[int]]]) -> nx.Graph:
     """Create a biclique graph from bicliques"""
@@ -310,49 +334,58 @@ def create_biclique_graph(bicliques: List[Tuple[Set[int], Set[int]]]) -> nx.Grap
         )
     return biclique_graph
 
+
 def remove_isolated_genes(graph: nx.Graph) -> nx.Graph:
     """Remove gene nodes with degree 0 from the graph."""
     filtered_graph = graph.copy()
-    
+
     # Find gene nodes with degree 0
     isolated_genes = [
-        node for node, degree in filtered_graph.degree()
+        node
+        for node, degree in filtered_graph.degree()
         if degree == 0 and filtered_graph.nodes[node]["bipartite"] == 1
     ]
-    
+
     # Remove isolated genes
     filtered_graph.remove_nodes_from(isolated_genes)
-    
+
     return filtered_graph
 
-def get_isolated_genes(graph: nx.Graph, gene_id_mapping: Dict[str, int]) -> Dict[str, List[str]]:
+
+def get_isolated_genes(
+    graph: nx.Graph, gene_id_mapping: Dict[str, int]
+) -> Dict[str, List[str]]:
     """Get information about isolated genes for reporting."""
     reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
-    
+
     isolated_genes = [
-        reverse_mapping[node] for node, degree in graph.degree()
+        reverse_mapping[node]
+        for node, degree in graph.degree()
         if degree == 0 and graph.nodes[node]["bipartite"] == 1
     ]
-    
-    return {
-        "count": len(isolated_genes),
-        "genes": sorted(isolated_genes)
-    }
+
+    return {"count": len(isolated_genes), "genes": sorted(isolated_genes)}
+
 
 def generate_triconnected_embeddings(graph: nx.Graph) -> List[Dict]:
     """Generate embeddings for triconnected components"""
     # Placeholder implementation
     return []
 
-def generate_biclique_embeddings(bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Dict]:
+
+def generate_biclique_embeddings(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+) -> List[Dict]:
     """Generate embeddings for biclique components"""
     # Placeholder implementation
     return []
+
 
 def create_triconnected_metadata(graph: nx.Graph) -> List[Dict]:
     """Create metadata for triconnected components"""
     # Placeholder implementation
     return []
+
 
 def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Dict]:
     """Create metadata for biclique components"""
@@ -365,7 +398,6 @@ def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
     try:
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint_name}")
-        from data_loader import validate_bipartite_graph
 
         graph_valid = validate_bipartite_graph(graph)
 
