@@ -309,7 +309,7 @@ def process_components(
             )
 
     # Analyze components for both graphs
-    print(f"\nAnalyzing graph components for {timepoint}")
+    print("\nAnalyzing graph components")
 
     # Original graph components
     print(f"Found {len(connected_components)} connected components in original graph")
