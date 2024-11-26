@@ -11,11 +11,11 @@ from .statistics import (
 from .reporting import print_bicliques_summary, print_bicliques_detail
 from .processor import (
     process_bicliques,
-    process_enhancer_info,
     process_dataset,
     create_node_metadata,
 )
 from .edge_classification import classify_edges
+from utils import process_enhancer_info
 
 # Use a set to ensure uniqueness and then convert back to a list
 __all__ = list(
