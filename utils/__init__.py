@@ -18,26 +18,31 @@ from .id_mapping import create_dmr_id
 
 def process_enhancer_info(enhancer_str):
     """
-    Process enhancer interaction string and return list of genes.
+    Process enhancer interaction string and return set of gene names.
     
     Args:
         enhancer_str (str): Raw enhancer interaction string
     
     Returns:
-        list: List of unique gene names
+        set: Set of unique gene names
     """
     if pd.isna(enhancer_str) or not isinstance(enhancer_str, str):
-        return []
+        return set()
     
-    # Split by various delimiters and clean
-    genes = re.split(r'[,;/]', str(enhancer_str))
-    genes = [g.strip() for g in genes if g.strip()]
+    # Split by semicolon first, then handle potential gene/number pairs
+    genes = set()
+    for entry in str(enhancer_str).strip().split(';'):
+        entry = entry.strip()
+        if entry:
+            # Split on / and take only the gene part
+            if '/' in entry:
+                gene = entry.split('/')[0].strip()
+            else:
+                gene = entry.strip()
+            if gene:  # Only add non-empty genes
+                genes.add(gene)
     
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_genes = [g for g in genes if not (g in seen or seen.add(g))]
-    
-    return unique_genes
+    return genes
 
 __all__ = [
     "EdgeInfo",
