@@ -19,11 +19,15 @@
 
 import os
 import json
+import logging
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template, current_app
 import pandas as pd
 # import numpy as np
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from utils.constants import START_GENE_ID
 from utils.id_mapping import create_gene_mapping
