@@ -300,25 +300,48 @@ def process_timepoint(
 
         # Calculate component statistics
         component_stats = {
-            "components": {
-                "original": {
-                    "connected": analyze_components(connected_components, graph),
-                    "biconnected": analyze_components(biconnected_components, graph),
-                    "triconnected": triconnected_stats,
-                }
+            "original": {
+                "connected": analyze_components(connected_components, graph),
+                "biconnected": analyze_components(biconnected_components, graph),
+                "triconnected": triconnected_stats
+            },
+            "biclique": {
+                "connected": {},
+                "biconnected": {},
+                "triconnected": {}
             }
         }
+
+        # Calculate coverage statistics
+        coverage_stats = calculate_coverage_statistics([], graph)  # Empty bicliques for now
 
         # Structure the return data to match template expectations
         return {
             "status": "success",
             "stats": {
-                "components": component_stats["components"]  # Nest under components key
+                "components": component_stats,
+                "coverage": coverage_stats,
+                "edge_coverage": calculate_edge_coverage([], graph),
+                "biclique_types": {
+                    "empty": 0,
+                    "simple": 0,
+                    "interesting": 0,
+                    "complex": 0
+                },
+                "size_distribution": {},
+                "dominating_set": {
+                    "size": 0,
+                    "percentage": 0,
+                    "genes_dominated": 0,
+                    "components_with_ds": 0,
+                    "avg_size_per_component": 0
+                }
             },
-            "coverage": calculate_coverage_statistics([], graph),  # Empty bicliques for now
-            "components": component_stats["components"],  # Direct access path
-            "layout_used": layout_options,
+            "coverage": coverage_stats,
+            "components": component_stats,  # Direct access path
+            "layout_used": layout_options
         }
+
     except Exception as e:
         print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
         return {
