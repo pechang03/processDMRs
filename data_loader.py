@@ -154,6 +154,7 @@ def read_excel_file(filepath, sheet_name=None):
         
         # Add Processed_Enhancer_Info column if not already present
         if "Processed_Enhancer_Info" not in df.columns:
+            from biclique_analysis import process_enhancer_info
             df["Processed_Enhancer_Info"] = df[
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
