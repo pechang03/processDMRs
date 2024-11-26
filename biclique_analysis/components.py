@@ -308,25 +308,55 @@ def process_components(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
 
+    # Analyze components for both graphs
+    print(f"\nAnalyzing graph components for {timepoint}")
+
+    # Original graph components
+    print(f"Found {len(connected_components)} connected components in original graph")
+    original_stats = analyze_components(connected_components, bipartite_graph)
+
+    biconn_comps, biconn_stats = analyze_biconnected_components(bipartite_graph)
+    triconn_comps, triconn_stats = analyze_triconnected_components(bipartite_graph)
+
+    # Biclique graph components
+    biclique_connected_comps = list(nx.connected_components(biclique_graph))
+    print(f"Found {len(biclique_connected_comps)} connected components in biclique graph")
+    biclique_stats = analyze_components(biclique_connected_comps, biclique_graph)
+
+    biclique_biconn_comps, biclique_biconn_stats = analyze_biconnected_components(biclique_graph)
+    biclique_triconn_comps, biclique_triconn_stats = analyze_triconnected_components(biclique_graph)
+
     # Get component statistics for both graphs
     component_stats = {
         "components": {
             "original": {
-                "connected": analyze_components(connected_components, bipartite_graph),
-                "biconnected": biconnected_stats,
-                "triconnected": tri_stats,
+                "connected": {
+                    "components": connected_components,
+                    "stats": original_stats
+                },
+                "biconnected": {
+                    "components": biconn_comps,
+                    "stats": biconn_stats
+                },
+                "triconnected": {
+                    "components": triconn_comps,
+                    "stats": triconn_stats
+                }
             },
             "biclique": {
-                "connected": analyze_components(
-                    list(nx.connected_components(biclique_graph)), biclique_graph
-                ),
-                "biconnected": analyze_biconnected_components(biclique_graph)[
-                    1
-                ],  # Get just the stats
-                "triconnected": analyze_triconnected_components(biclique_graph)[
-                    1
-                ],  # Get just the stats
-            },
+                "connected": {
+                    "components": biclique_connected_comps,
+                    "stats": biclique_stats
+                },
+                "biconnected": {
+                    "components": biclique_biconn_comps,
+                    "stats": biclique_biconn_stats
+                },
+                "triconnected": {
+                    "components": biclique_triconn_comps,
+                    "stats": biclique_triconn_stats
+                }
+            }
         }
     }
 
