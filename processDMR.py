@@ -234,8 +234,27 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
 def create_gene_mapping(genes: Set[str], max_dmr_id: int) -> Dict[str, int]:
     """Create a mapping of gene names to IDs starting after max_dmr_id."""
     print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
+    
+    # Convert all gene names to lowercase and remove any empty strings
+    cleaned_genes = {gene.strip().lower() for gene in genes if gene and isinstance(gene, str)}
+    
+    # Remove any empty strings that might have resulted from the cleaning
+    cleaned_genes.discard('')
+    
+    print(f"After cleaning: {len(cleaned_genes)} unique genes")
+    
     # Start gene IDs after the max DMR ID (which is 0-based)
-    return {gene: idx + max_dmr_id + 1 for idx, gene in enumerate(sorted(genes))}
+    gene_id_mapping = {
+        gene: idx + max_dmr_id + 1 
+        for idx, gene in enumerate(sorted(cleaned_genes))
+    }
+    
+    # Debug output
+    print("\nFirst few gene mappings:")
+    for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
+        print(f"{gene}: {gene_id}")
+    
+    return gene_id_mapping
 
 
 if __name__ == "__main__":
