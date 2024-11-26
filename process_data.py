@@ -80,6 +80,14 @@ from data_loader import (
     get_excel_sheets,
 )
 
+from biclique_analysis.embeddings import (
+    generate_triconnected_embeddings,
+    generate_biclique_embeddings,
+)
+from biclique_analysis.processor import (
+    create_triconnected_metadata,
+    create_biclique_metadata,
+)
 
 _cached_data = None
 
@@ -325,7 +333,9 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
                     biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
                     biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+                    biclique_graph.add_edges_from(
+                        (d, g) for d in dmr_nodes for g in gene_nodes
+                    )
 
                 # Update component stats with both original and biclique graph analysis
                 component_stats = {
@@ -340,15 +350,17 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     },
                     "biclique": {
                         "connected": analyze_components(
-                            list(nx.connected_components(biclique_graph)), 
-                            biclique_graph
+                            list(nx.connected_components(biclique_graph)),
+                            biclique_graph,
                         ),
                         "biconnected": analyze_components(
-                            list(nx.biconnected_components(biclique_graph)), 
-                            biclique_graph
+                            list(nx.biconnected_components(biclique_graph)),
+                            biclique_graph,
                         ),
-                        "triconnected": analyze_triconnected_components(biclique_graph)[1]
-                    }
+                        "triconnected": analyze_triconnected_components(biclique_graph)[
+                            1
+                        ],
+                    },
                 }
 
                 return {
@@ -520,32 +532,3 @@ def get_isolated_genes(
     ]
 
     return {"count": len(isolated_genes), "genes": sorted(isolated_genes)}
-
-
-def generate_triconnected_embeddings(graph: nx.Graph) -> List[Dict]:
-    """Generate embeddings for triconnected components"""
-    # Placeholder implementation
-    return []
-
-
-def generate_biclique_embeddings(
-    bicliques: List[Tuple[Set[int], Set[int]]],
-) -> List[Dict]:
-    """Generate embeddings for biclique components"""
-    # Placeholder implementation
-    return []
-
-
-def create_triconnected_metadata(graph: nx.Graph) -> List[Dict]:
-    """Create metadata for triconnected components"""
-    # Placeholder implementation
-    return []
-
-
-def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Dict]:
-    """Create metadata for biclique components"""
-    # Placeholder implementation
-    return []
-
-
-# Removed duplicate function definition
