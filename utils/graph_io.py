@@ -56,8 +56,11 @@ def write_bipartite_graph(
         
         for edge in graph.edges():
             total_edges += 1
-            dmr_node = edge[0] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[1]
-            gene_node = edge[1] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[0]
+            # Ensure DMR is first and gene is second in edge
+            if graph.nodes[edge[0]]["bipartite"] == 0:
+                dmr_node, gene_node = edge
+            else:
+                gene_node, dmr_node = edge
             
             # Always order edges as (DMR, gene)
             ordered_edge = (dmr_node, gene_node)
@@ -75,14 +78,16 @@ def write_bipartite_graph(
         # Sort edges for deterministic output
         sorted_edges = sorted(unique_edges)
 
+        # Get the actual first gene ID from the mapping
+        first_gene_id = min(gene_id_mapping.values())
+
         with open(output_file, "w") as file:
-            # Write header
+            # Write header with correct counts
             n_dmrs = len(dmr_nodes)
-            n_genes = len(gene_id_mapping)
+            n_genes = len(set(gene_id_mapping.values()))  # Use unique gene IDs
             file.write(f"{n_dmrs} {n_genes}\n")
             
             # Write first gene ID on second line
-            first_gene_id = min(gene_id_mapping.values())
             file.write(f"{first_gene_id}\n")
 
             # Write edges with sequential DMR IDs
@@ -90,13 +95,14 @@ def write_bipartite_graph(
                 sequential_dmr_id = dmr_id_mapping[dmr_id]
                 file.write(f"{sequential_dmr_id} {gene_id}\n")
 
-        # Validation output
+        # Debug output
         print(f"\nWrote graph to {output_file}:")
-        print(f"Total edges found: {total_edges}")
+        print(f"Total edges processed: {total_edges}")
         print(f"Duplicate edges removed: {duplicate_edges}")
         print(f"Final unique edges: {len(sorted_edges)}")
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
+        print(f"First gene ID: {first_gene_id}")
         
         # Debug first few edges
         print("\nFirst 5 edges written:")
@@ -104,11 +110,6 @@ def write_bipartite_graph(
             sequential_dmr_id = dmr_id_mapping[dmr_id]
             gene_name = [k for k, v in gene_id_mapping.items() if v == gene_id][0]
             print(f"DMR_{sequential_dmr_id} -> Gene_{gene_id} ({gene_name})")
-
-        # Debug mapping
-        print("\nDMR ID mapping sample (first 5):")
-        for original_id in sorted(dmr_nodes)[:5]:
-            print(f"Original ID: {original_id} -> Sequential ID: {dmr_id_mapping[original_id]}")
 
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
