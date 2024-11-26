@@ -211,16 +211,20 @@ def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
     timepoint_data = {}
     try:
         # Read Excel file
-        xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
+        pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
+        print(f"\nReading pairwise file: {pairwise_file}", flush=True)
+        
+        # Read all sheets at once
+        all_sheets = pd.read_excel(pairwise_file, sheet_name=None)
         
         # Process each sheet
-        for sheet in xl.sheet_names:
-            print(f"\nProcessing pairwise timepoint: {sheet}", flush=True)
-            # Read the sheet into a DataFrame
-            df = pd.read_excel(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
-            if df is not None:
-                # Process the timepoint with the DataFrame
-                timepoint_data[sheet] = process_timepoint(df, sheet, gene_id_mapping)
+        for sheet_name, df in all_sheets.items():
+            print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
+            if not df.empty:
+                timepoint_data[sheet_name] = process_timepoint(df, sheet_name, gene_id_mapping)
+            else:
+                print(f"Empty sheet: {sheet_name}", flush=True)
+                
     except Exception as e:
         print(f"Error processing pairwise timepoints: {str(e)}", flush=True)
         import traceback
@@ -288,44 +292,37 @@ def process_timepoint(
     layout_options=None
 ):
     """Process a single timepoint with configurable layout options."""
-    if layout_options is None:
-        layout_options = {
-            "triconnected": "spring",
-            "bicliques": "circular",
-            "default": "original"
-        }
-    
-    print(f"\nProcessing timepoint: {timepoint}", flush=True)
-    
     try:
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         
-        # Get connected components with layout options
+        # Get connected components
         connected_components = list(nx.connected_components(graph))
         biconnected_components = list(nx.biconnected_components(graph))
-        triconnected_components, triconnected_stats = analyze_triconnected_components(
-            graph, 
-            layout=layout_options.get("triconnected", "spring")
-        )
+        
+        # Call without layout parameter
+        triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
 
         # Calculate component statistics
         component_stats = {
             "components": {
                 "original": {
-                    "connected": analyze_components(
-                        connected_components, 
-                        graph, 
-                        layout=layout_options.get("default", "original")
-                    ),
-                    "biconnected": analyze_components(
-                        biconnected_components, 
-                        graph, 
-                        layout=layout_options.get("default", "original")
-                    ),
+                    "connected": analyze_components(connected_components, graph),
+                    "biconnected": analyze_components(biconnected_components, graph),
                     "triconnected": triconnected_stats,
                 }
             }
+        }
+
+        # Structure the return data to match template expectations
+        return {
+            "status": "success",
+            "stats": {
+                "components": component_stats["components"]  # Nest under components key
+            },
+            "coverage": calculate_coverage_statistics([], graph),  # Empty bicliques for now
+            "components": component_stats["components"],  # Direct access path
+            "layout_used": layout_options,
         }
 
         # Try to process bicliques if file exists
