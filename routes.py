@@ -299,7 +299,11 @@ def statistics_route():
             "statistics.html",
             statistics=detailed_stats,
             timepoint_info=timepoint_info,
-            data={"stats": detailed_stats}  # Add this line to provide the expected data structure
+            data={
+                "stats": {
+                    "components": detailed_stats["components"]
+                }
+            }  # Add this line to provide the expected data structure
         )
 
     except Exception as e:
