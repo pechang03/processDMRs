@@ -271,10 +271,13 @@ def create_bipartite_graph(
     # Convert gene mapping to lowercase for case-insensitive matching
     gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items()}
     
-    # Add DMR nodes (0-based indexing)
-    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
-    for dmr in dmr_nodes:
-        B.add_node(dmr, bipartite=0, timepoint=timepoint)
+    # Add DMR nodes with proper timepoint-specific IDs
+    dmr_nodes = set()
+    for _, row in df.iterrows():
+        dmr_num = row["DMR_No."] - 1  # Convert to 0-based index
+        dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
+        dmr_nodes.add(dmr_id)
+        B.add_node(dmr_id, bipartite=0, timepoint=timepoint)
 
     # Add gene nodes
     for gene_name, gene_id in gene_id_mapping.items():

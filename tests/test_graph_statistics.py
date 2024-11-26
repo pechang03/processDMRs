@@ -17,7 +17,11 @@ class TestGraphStatistics(unittest.TestCase):
         data = {
             "DMR_No.": [1, 2, 3],
             "Gene_Symbol_Nearby": ["genea", "geneb", "genec"],  # Make lowercase
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["gened;genee", "genef", None],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                "genea;geneb;genec",  # Each DMR connects to all genes
+                "genea;geneb;genec",
+                "genea;geneb;genec"
+            ],
             "Gene_Description": ["Desc1", "Desc2", "Desc3"],
         }
         self.df = pd.DataFrame(data)
