@@ -15,7 +15,7 @@ from .processor import (
     process_dataset,
     create_node_metadata,
 )
-from .edge_claification import classify_edges
+from .edge_classification import classify_edges
 from .writer import write_bicliques, write_analysis_results, write_component_details
 
 # Use a set to ensure uniqueness and then convert back to a list
