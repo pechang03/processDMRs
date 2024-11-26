@@ -291,40 +291,8 @@ def process_timepoint(
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         
-        # Get connected components and calculate statistics
-        connected_components = list(nx.connected_components(graph))
-        biconnected_components = list(nx.biconnected_components(graph))
-        triconnected_components, tri_stats = analyze_triconnected_components(graph)
+        # ... [rest of the existing code] ...
         
-        # Calculate component statistics using analyze_components
-        component_stats = {
-            "original": {  # Make sure this matches template structure
-                "connected": analyze_components(connected_components, graph),
-                "biconnected": analyze_components(biconnected_components, graph),
-                "triconnected": tri_stats
-            },
-            "biclique": {  # Add biclique structure even if empty
-                "connected": {
-                    "total": 0,
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": 0
-                },
-                "biconnected": {
-                    "total": 0,
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": 0
-                },
-                "triconnected": {
-                    "total": 0,
-                    "single_node": 0,
-                    "small": 0,
-                    "interesting": 0
-                }
-            }
-        }
-
         # Look for biclique file
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
         
@@ -338,6 +306,10 @@ def process_timepoint(
             )
             
             if bicliques_result and "bicliques" in bicliques_result:
+                # Calculate coverage statistics
+                coverage_stats = calculate_coverage_statistics(bicliques_result["bicliques"], graph)
+                edge_coverage = calculate_edge_coverage(bicliques_result["bicliques"], graph)
+                
                 # Calculate biclique statistics
                 biclique_stats = calculate_biclique_statistics(
                     bicliques_result["bicliques"], 
@@ -353,15 +325,21 @@ def process_timepoint(
                     )
                 
                 # Update component stats with biclique information
-                if "components" in comp_stats and "biclique" in comp_stats["components"]:
-                    component_stats["biclique"] = comp_stats["components"]["biclique"]
+                component_stats = {
+                    "original": {
+                        "connected": analyze_components(list(nx.connected_components(graph)), graph),
+                        "biconnected": analyze_components(list(nx.biconnected_components(graph)), graph),
+                        "triconnected": analyze_triconnected_components(graph)[1]
+                    },
+                    "biclique": comp_stats.get("components", {}).get("biclique", {})
+                }
                 
                 return {
                     "status": "success",
                     "stats": {
-                        "components": component_stats,  # Now has correct structure
-                        "coverage": calculate_coverage_statistics(bicliques_result["bicliques"], graph),
-                        "edge_coverage": calculate_edge_coverage(bicliques_result["bicliques"], graph),
+                        "components": component_stats,
+                        "coverage": coverage_stats,  # Make sure this is included
+                        "edge_coverage": edge_coverage,
                         "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
                         "size_distribution": biclique_stats.get("size_distribution", {}),
                         "dominating_set": statistics.get("dominating_set", {})

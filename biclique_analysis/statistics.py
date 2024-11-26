@@ -317,27 +317,29 @@ def calculate_edge_coverage(
     print(f"Number of bicliques: {len(bicliques)}")
     print(f"Number of edges in graph: {len(graph.edges())}")
     
-    # Get all edges from original graph
-    original_edges = set(map(tuple, map(sorted, graph.edges())))
-    
     # Track coverage for each edge
     edge_coverage = {}
     
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
-        # Only create edges that exist in original graph
+        # Create edges for each DMR-gene pair in the biclique
         for dmr in dmr_nodes:
             for gene in gene_nodes:
-                edge = tuple(sorted([dmr, gene]))
-                if edge in original_edges:  # Only count edges that exist in original graph
+                # Try both orderings of the edge
+                edge1 = tuple(sorted([dmr, gene]))
+                edge2 = tuple(sorted([gene, dmr]))
+                
+                # Check if either ordering exists in the graph
+                if graph.has_edge(dmr, gene) or graph.has_edge(gene, dmr):
+                    edge = edge1  # Use consistent ordering
                     edge_coverage[edge] = edge_coverage.get(edge, 0) + 1
 
     # Calculate coverage statistics
-    total_edges = len(original_edges)
+    total_edges = len(graph.edges())
     covered_edges = set(edge_coverage.keys())
     single_covered = {e for e in covered_edges if edge_coverage[e] == 1}
     multiple_covered = {e for e in covered_edges if edge_coverage[e] > 1}
-    uncovered = original_edges - covered_edges
+    uncovered = set(map(tuple, map(sorted, graph.edges()))) - covered_edges
 
     # Debug output
     print(f"\nEdge coverage details:")
@@ -345,10 +347,17 @@ def calculate_edge_coverage(
     print(f"Single covered edges: {len(single_covered)}")
     print(f"Multiple covered edges: {len(multiple_covered)}")
     print(f"Uncovered edges: {len(uncovered)}")
+    
+    # If all edges are uncovered, print some debug info
+    if len(uncovered) == total_edges:
+        print("\nWARNING: All edges uncovered! Debug info:")
+        print(f"First biclique DMRs: {list(next(iter(bicliques))[0]) if bicliques else []}")
+        print(f"First biclique genes: {list(next(iter(bicliques))[1]) if bicliques else []}")
+        print("First few graph edges:", list(graph.edges())[:5])
 
     return {
-        "single": len(single_covered),
-        "multiple": len(multiple_covered),
+        "single_coverage": len(single_covered),
+        "multiple_coverage": len(multiple_covered),
         "uncovered": len(uncovered),
         "total": total_edges,
         "single_percentage": len(single_covered) / total_edges if total_edges else 0,
