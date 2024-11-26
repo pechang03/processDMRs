@@ -47,77 +47,71 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
 
 def validate_bipartite_graph(B):
     """Validate the bipartite graph properties and print detailed statistics"""
+    # Create a copy of the graph to work with
+    G = B.copy()
+    
+    # Find and remove isolated nodes
+    isolated_nodes = list(nx.isolates(G))
+    if isolated_nodes:
+        print(f"\nRemoving {len(isolated_nodes)} isolated nodes")
+        # Only remove isolated gene nodes (bipartite=1)
+        isolated_genes = [n for n in isolated_nodes if G.nodes[n].get('bipartite') == 1]
+        G.remove_nodes_from(isolated_genes)
+        print(f"Removed {len(isolated_genes)} isolated gene nodes")
+
     # Check total degree sum
-    total_degree = sum(dict(B.degree()).values())
+    total_degree = sum(dict(G.degree()).values())
     print(f"\nDegree Analysis:")
-    print(f"Total edges: {B.number_of_edges()}")
+    print(f"Total edges: {G.number_of_edges()}")
     print(f"Sum of degrees: {total_degree}")
-    print(f"Expected sum of degrees: {2 * B.number_of_edges()}")
+    print(f"Expected sum of degrees: {2 * G.number_of_edges()}")
 
     # Validate node types
-    dmr_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}
-    gene_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 1}
+    dmr_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 0}
+    gene_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 1}
 
     print(f"\nNode type validation:")
     print(f"Total DMR nodes: {len(dmr_nodes)}")
     print(f"Total Gene nodes: {len(gene_nodes)}")
 
     # Check for nodes without proper bipartite attribute
-    invalid_nodes = {n for n, d in B.nodes(data=True) if "bipartite" not in d}
+    invalid_nodes = {n for n, d in G.nodes(data=True) if "bipartite" not in d}
     if invalid_nodes:
         print(f"\nWARNING: {len(invalid_nodes)} nodes without bipartite attribute")
         print(f"First 5 invalid nodes: {list(invalid_nodes)[:5]}")
 
-    # Check for nodes with degree 0
-    zero_degree_nodes = [n for n, d in B.degree() if d == 0]
-    if zero_degree_nodes:
-        print(f"\nWARNING: Found {len(zero_degree_nodes)} nodes with degree 0:")
-        print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
-
-        # Analyze distribution of zero-degree nodes
-        dmr_zeros = [n for n in zero_degree_nodes if B.nodes[n].get("bipartite") == 0]
-        gene_zeros = [n for n in zero_degree_nodes if B.nodes[n].get("bipartite") == 1]
-        print(f"Zero-degree DMRs: {len(dmr_zeros)}")
-        print(f"Zero-degree Genes: {len(gene_zeros)}")
-
     # Get node sets by bipartite attribute
-    top_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
-    bottom_nodes = {
-        n for n, d in B.nodes(data=True) if d.get("bipartite") == 1
-    }  # Genes
+    top_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
+    bottom_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 1}  # Genes
 
     print(f"\nNode distribution:")
     print(f"  - DMR nodes (bipartite=0): {len(top_nodes)}")
     print(f"  - Gene nodes (bipartite=1): {len(bottom_nodes)}")
 
     # Detailed degree statistics
-    dmr_degrees = [d for n, d in B.degree() if B.nodes[n].get("bipartite") == 0]
-    gene_degrees = [d for n, d in B.degree() if B.nodes[n].get("bipartite") == 1]
+    dmr_degrees = [d for n, d in G.degree() if G.nodes[n].get("bipartite") == 0]
+    gene_degrees = [d for n, d in G.degree() if G.nodes[n].get("bipartite") == 1]
 
-    print(f"\nDegree statistics:")
-    print(
-        f"DMR degrees - min: {min(dmr_degrees)}, max: {max(dmr_degrees)}, avg: {sum(dmr_degrees)/len(dmr_degrees):.2f}"
-    )
-    print(
-        f"Gene degrees - min: {min(gene_degrees)}, max: {max(gene_degrees)}, avg: {sum(gene_degrees)/len(gene_degrees):.2f}"
-    )
-
-    # Instead of raising an error, just warn about zero-degree nodes
-    if zero_degree_nodes:
-        print("\nWARNING: Graph contains nodes with degree 0")
-        return False
+    if dmr_degrees and gene_degrees:  # Only calculate if we have nodes
+        print(f"\nDegree statistics:")
+        print(
+            f"DMR degrees - min: {min(dmr_degrees)}, max: {max(dmr_degrees)}, avg: {sum(dmr_degrees)/len(dmr_degrees):.2f}"
+        )
+        print(
+            f"Gene degrees - min: {min(gene_degrees)}, max: {max(gene_degrees)}, avg: {sum(gene_degrees)/len(gene_degrees):.2f}"
+        )
 
     # Verify bipartite property
-    if not nx.is_bipartite(B):
+    if not nx.is_bipartite(G):
         print("\nERROR: Graph is not bipartite")
         return False
 
     # Print overall graph size
     print(f"\nTotal graph size:")
-    print(f"  - Nodes: {B.number_of_nodes()}")
-    print(f"  - Edges: {B.number_of_edges()}")
+    print(f"  - Nodes: {G.number_of_nodes()}")
+    print(f"  - Edges: {G.number_of_edges()}")
 
-    return True
+    return G  # Return the cleaned graph instead of True
 
 
 def validate_node_ids(dmr, gene_id, gene_id_mapping):
