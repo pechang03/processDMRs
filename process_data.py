@@ -724,27 +724,22 @@ def process_data(timepoint=None):
                 json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
             )
 
-        # Now create _cached_data with the guaranteed-defined variables
+        # Now create _cached_data with overall graph statistics
         _cached_data = {
-            "stats": stats,
+            "stats": overall_stats,
             "interesting_components": interesting_components,
-            "simple_connections": [],
-            "coverage": bicliques_result.get("coverage", {}),
+            "coverage": overall_stats["coverage"],
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
             "gene_id_mapping": gene_id_mapping,
             "node_positions": node_positions,
             "node_labels": node_labels,
-            "bipartite_graph": bipartite_graph,
-            "biclique_graph": biclique_graph,
+            "bipartite_graph": overall_graph,
             "component_stats": component_stats,
-            "dominating_set": dominating_set_stats,
-            "size_distribution": bicliques_result.get("size_distribution", {}),
-            "node_participation": bicliques_result.get("node_participation", {}),
-            "edge_coverage": edge_coverage,  # Now guaranteed to be defined
-            "biclique_stats": biclique_stats,  # Now guaranteed to be defined
-            "biclique_types": biclique_stats.get("biclique_types", {}),
-            "timepoint_stats": timepoint_results if not timepoint else None,
+            "dominating_set": overall_stats["dominating_set"],
+            "edge_coverage": overall_stats["edge_coverage"],
+            "biclique_stats": biclique_stats,
+            "timepoint_stats": timepoint_results,
         }
 
         # Debug print for cached data
