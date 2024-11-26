@@ -191,9 +191,15 @@ def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: 
     
     graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
     
-    # Process bicliques
+    # Remove degree-0 gene nodes before analysis
+    filtered_graph = remove_isolated_genes(graph)
+    print(f"\nTimepoint {timepoint}:")
+    print(f"Original graph: {len(graph.nodes())} nodes, {len(graph.edges())} edges")
+    print(f"Filtered graph: {len(filtered_graph.nodes())} nodes, {len(filtered_graph.edges())} edges")
+    
+    # Process bicliques on filtered graph
     bicliques_result = process_bicliques(
-        graph,
+        filtered_graph,
         f"bipartite_graph_output_{timepoint}.txt",
         max(df["DMR_No."]),
         timepoint,
@@ -302,6 +308,35 @@ def create_biclique_graph(bicliques: List[Tuple[Set[int], Set[int]]]) -> nx.Grap
             (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
         )
     return biclique_graph
+
+def remove_isolated_genes(graph: nx.Graph) -> nx.Graph:
+    """Remove gene nodes with degree 0 from the graph."""
+    filtered_graph = graph.copy()
+    
+    # Find gene nodes with degree 0
+    isolated_genes = [
+        node for node, degree in filtered_graph.degree()
+        if degree == 0 and filtered_graph.nodes[node]["bipartite"] == 1
+    ]
+    
+    # Remove isolated genes
+    filtered_graph.remove_nodes_from(isolated_genes)
+    
+    return filtered_graph
+
+def get_isolated_genes(graph: nx.Graph, gene_id_mapping: Dict[str, int]) -> Dict[str, List[str]]:
+    """Get information about isolated genes for reporting."""
+    reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
+    
+    isolated_genes = [
+        reverse_mapping[node] for node, degree in graph.degree()
+        if degree == 0 and graph.nodes[node]["bipartite"] == 1
+    ]
+    
+    return {
+        "count": len(isolated_genes),
+        "genes": sorted(isolated_genes)
+    }
 
 def generate_triconnected_embeddings(graph: nx.Graph) -> List[Dict]:
     """Generate embeddings for triconnected components"""
