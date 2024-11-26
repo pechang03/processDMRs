@@ -209,27 +209,72 @@ def statistics_route():
             # Use functions from biclique_analysis
             from biclique_analysis.statistics import (
                 analyze_components,
-                calculate_component_statistics
+                calculate_component_statistics,
+                calculate_coverage_statistics,
+                calculate_edge_coverage
             )
             from biclique_analysis.triconnected import analyze_triconnected_components
 
-            # Calculate component statistics using the proper function
-            component_stats = calculate_component_statistics(
-                overall_data.get("bicliques", []),  # Pass bicliques if available
-                graph
-            )
+            # Calculate all statistics
+            bicliques = overall_data.get("bicliques", [])
             
-            # Create detailed statistics with actual component data
+            # Calculate component statistics
+            component_stats = calculate_component_statistics(bicliques, graph)
+            
+            # Calculate coverage statistics
+            coverage_stats = calculate_coverage_statistics(bicliques, graph)
+            
+            # Calculate edge coverage
+            edge_coverage = calculate_edge_coverage(bicliques, graph)
+            
+            # Create detailed statistics with proper structure
             detailed_stats = {
                 "components": component_stats,
+                "coverage": {
+                    "dmrs": coverage_stats.get("dmrs", {
+                        "covered": 0,
+                        "total": 0,
+                        "percentage": 0
+                    }),
+                    "genes": coverage_stats.get("genes", {
+                        "covered": 0,
+                        "total": 0,
+                        "percentage": 0
+                    }),
+                    "edges": edge_coverage
+                },
+                "edge_coverage": edge_coverage,
+                "biclique_types": overall_data.get("biclique_types", {
+                    "empty": 0,
+                    "simple": 0,
+                    "interesting": 0,
+                    "complex": 0
+                }),
+                "size_distribution": overall_data.get("size_distribution", {}),
                 "dominating_set": {
                     "size": 0,
                     "percentage": 0,
                     "genes_dominated": 0,
                     "components_with_ds": 0,
                     "avg_size_per_component": 0
+                }
+            }
+        else:
+            # Provide default empty statistics structure if no graph
+            detailed_stats = {
+                "components": {
+                    "original": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                    },
+                    "biclique": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                    }
                 },
-                "coverage": overall_data.get("coverage", {
+                "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
                     "edges": {
@@ -239,31 +284,18 @@ def statistics_route():
                         "total": 0,
                         "single_percentage": 0,
                         "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
-                }),
-                "edge_coverage": overall_data.get("edge_coverage", {}),
-                "biclique_types": overall_data.get("biclique_types", {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0
-                }),
-                "size_distribution": overall_data.get("size_distribution", {})
-            }
-        else:
-            detailed_stats = {
-                "components": {
-                    "original": {
-                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                    },
-                    "biclique": {
-                        "connected": {},
-                        "biconnected": {},
-                        "triconnected": {}
+                        "uncovered_percentage": 0
                     }
+                },
+                "edge_coverage": {},
+                "biclique_types": {"empty": 0, "simple": 0, "interesting": 0, "complex": 0},
+                "size_distribution": {},
+                "dominating_set": {
+                    "size": 0,
+                    "percentage": 0,
+                    "genes_dominated": 0,
+                    "components_with_ds": 0,
+                    "avg_size_per_component": 0
                 }
             }
 
@@ -279,17 +311,7 @@ def statistics_route():
                 else:
                     timepoint_info[timepoint] = {
                         "status": "success",
-                        "stats": detailed_stats if timepoint == "overall" else {
-                            "components": data.get("components", {
-                                "original": {
-                                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                                    "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                                }
-                            }),
-                            "coverage": data.get("coverage", {}),
-                            "edge_coverage": data.get("edge_coverage", {})
-                        }
+                        "stats": detailed_stats if timepoint == "overall" else data.get("stats", {})
                     }
 
         print("\nRendering template with data:", flush=True)
@@ -301,7 +323,7 @@ def statistics_route():
             "statistics": detailed_stats,
             "timepoint_info": timepoint_info,
             "data": {
-                "stats": detailed_stats  # Pass the entire detailed_stats as stats
+                "stats": detailed_stats
             }
         }
 
