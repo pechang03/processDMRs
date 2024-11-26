@@ -199,40 +199,7 @@ def process_overall_timepoint(df: pd.DataFrame) -> Dict:
     return process_timepoint(df, "DSS1", gene_id_mapping)
 
 
-def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
-    """Process all pairwise timepoints."""
-    timepoint_data = {}
-    try:
-        # Read Excel file
-        pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
-        print(f"\nReading pairwise file: {pairwise_file}", flush=True)
-        
-        # Read all sheets at once
-        xl = pd.ExcelFile(pairwise_file)
-        
-        # Process each sheet
-        for sheet_name in xl.sheet_names:
-            print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
-            try:
-                # Read the sheet into a DataFrame
-                df = pd.read_excel(xl, sheet_name=sheet_name)
-                if not df.empty:
-                    timepoint_data[sheet_name] = process_timepoint(df, sheet_name, gene_id_mapping)
-                else:
-                    print(f"Empty sheet: {sheet_name}", flush=True)
-            except Exception as e:
-                print(f"Error processing sheet {sheet_name}: {str(e)}", flush=True)
-                timepoint_data[sheet_name] = {
-                    "status": "error",
-                    "message": str(e)
-                }
-                
-    except Exception as e:
-        print(f"Error processing pairwise timepoints: {str(e)}", flush=True)
-        import traceback
-        traceback.print_exc()
-    
-    return timepoint_data
+# Removed process_pairwise_timepoints function
 
 
 def process_data():
@@ -259,24 +226,46 @@ def process_data():
         # Create master gene mapping
         gene_id_mapping = create_master_gene_mapping(df_overall)
 
-        # Process timepoints with layout options
-        timepoint_data = {
-            "overall": process_timepoint(
-                df_overall, 
-                "DSS1", 
-                gene_id_mapping, 
-                layout_options["overall"]
-            ),
-            **{
-                tp: process_timepoint(
-                    df, 
-                    tp, 
-                    gene_id_mapping, 
-                    layout_options["pairwise"]
-                ) 
-                for tp, df in process_pairwise_timepoints(gene_id_mapping).items()
-            }
-        }
+        # Initialize timepoint data dictionary
+        timepoint_data = {}
+
+        # Process DSS1 timepoint
+        timepoint_data["overall"] = process_timepoint(
+            df_overall, 
+            "DSS1", 
+            gene_id_mapping, 
+            layout_options["overall"]
+        )
+
+        # Process pairwise timepoints
+        pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
+        xl = pd.ExcelFile(pairwise_file)
+        
+        for sheet_name in xl.sheet_names:
+            print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
+            try:
+                # Read each sheet directly into a DataFrame
+                df = pd.read_excel(pairwise_file, sheet_name=sheet_name)
+                if not df.empty:
+                    # Process the timepoint with the DataFrame
+                    timepoint_data[sheet_name] = process_timepoint(
+                        df,
+                        sheet_name,
+                        gene_id_mapping,
+                        layout_options["pairwise"]
+                    )
+                else:
+                    print(f"Empty sheet: {sheet_name}", flush=True)
+                    timepoint_data[sheet_name] = {
+                        "status": "error",
+                        "message": "Empty sheet"
+                    }
+            except Exception as e:
+                print(f"Error processing sheet {sheet_name}: {str(e)}", flush=True)
+                timepoint_data[sheet_name] = {
+                    "status": "error",
+                    "message": str(e)
+                }
 
         return timepoint_data
 
