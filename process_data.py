@@ -52,6 +52,9 @@ from rb_domination import (
     copy_dominating_set,
 )
 
+# Add missing imports and placeholder functions
+from biclique_analysis.statistics import calculate_edge_coverage
+
 app = Flask(__name__)
 
 from data_loader import (
@@ -233,6 +236,33 @@ def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: 
             "gene": create_gene_metadata(df)
         }
     }
+
+# Add placeholder functions for missing metadata creation
+def create_dmr_metadata(df: pd.DataFrame) -> Dict:
+    """Create metadata for DMRs"""
+    return {
+        str(row["DMR_No."]): {
+            "area": row.get("Area_Stat", "N/A"),
+            "description": row.get("Gene_Description", "N/A")
+        } for _, row in df.iterrows()
+    }
+
+def create_gene_metadata(df: pd.DataFrame) -> Dict:
+    """Create metadata for genes"""
+    gene_metadata = {}
+    
+    # Check for gene symbol column
+    gene_col = next((col for col in ["Gene_Symbol_Nearby", "Gene_Symbol"] if col in df.columns), None)
+    
+    if gene_col:
+        for _, row in df.iterrows():
+            gene_name = row.get(gene_col)
+            if gene_name:
+                gene_metadata[gene_name] = {
+                    "description": row.get("Gene_Description", "N/A")
+                }
+    
+    return gene_metadata
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     """Create a master gene mapping from a DataFrame"""
