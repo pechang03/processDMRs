@@ -227,4 +227,10 @@ The small number of undominated genes (20) may represent:
 
 This analysis complements the bicliques analysis by identifying key DMRs that could serve as regulatory hubs in the network.
 
+Pairwise DMR graphs
+The gene names naturally should relate to the same genes across all sheets, but the later timepoints will likelly have the m
+ost genes. Neverthelese we should have the same node_id for the same gene name across all graphs. The DMR_id/DMR_names do NOT corresond across sheets. Ind
+eed if we could use topological containment of the bicliques or minor orders between graphs to propose possible mappings of DMRs across sheets this will b
+e very useful. In short we need different DMR nodes for each graph. And we could perhaps lable them using a graph subscript like DMR_{P21}7 rather than ju
+st DMR7 it may help avoid confusion.
 \end{document}
