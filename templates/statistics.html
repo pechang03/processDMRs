@@ -191,21 +191,21 @@
                           <tr>
                             <td>Triconnected</td>
                             <td>
-                              {{ statistics.components.original.triconnected.total }}
+                              {{ statistics.components.original.get('triconnected', {}).get('total', 0) }}
                             </td>
                             <td>
-                              {{ statistics.components.original.triconnected.single_node }}
+                              {{ statistics.components.original.get('triconnected', {}).get('single_node', 0) }}
                             </td>
                             <td>
-                              {{ statistics.components.original.triconnected.small }}
+                              {{ statistics.components.original.get('triconnected', {}).get('small', 0) }}
                             </td>
                             <td>
-                              {{ statistics.components.original.triconnected.interesting }}
+                              {{ statistics.components.original.get('triconnected', {}).get('interesting', 0) }}
                             </td>
                           </tr>
                           <tr class="text-muted">
                             <td colspan="5" class="small">
-                              <em>Note: {{ statistics.components.original.triconnected.skipped_simple }} simple components skipped for triconnected analysis</em>
+                              <em>Note: {{ statistics.components.original.get('triconnected', {}).get('skipped_simple', 0) }} simple components skipped for triconnected analysis</em>
                             </td>
                           </tr>
                         </tbody>
