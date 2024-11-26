@@ -269,18 +269,20 @@ def create_bipartite_graph(
     print(f"\nCreating bipartite graph for timepoint: {timepoint}")
     
     # Convert gene mapping to lowercase for case-insensitive matching
-    gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items()}
+    gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items() if k}
     
-    # Add DMR nodes with proper timepoint-specific IDs
+    # Add DMR nodes first with proper timepoint-specific IDs
     dmr_nodes = set()
     for _, row in df.iterrows():
         dmr_num = row["DMR_No."] - 1  # Convert to 0-based index
         dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
         dmr_nodes.add(dmr_id)
+        # Explicitly set bipartite attribute when adding node
         B.add_node(dmr_id, bipartite=0, timepoint=timepoint)
 
-    # Add gene nodes
+    # Add gene nodes with bipartite attribute
     for gene_name, gene_id in gene_id_mapping.items():
+        # Explicitly set bipartite attribute when adding node
         B.add_node(gene_id, bipartite=1)
 
     # Track edges to avoid duplicates
@@ -288,7 +290,8 @@ def create_bipartite_graph(
 
     # Process each row
     for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+        dmr_num = row["DMR_No."] - 1
+        dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
         
         # Add edge for closest gene
         if pd.notna(row.get(closest_gene_col)):
@@ -311,6 +314,11 @@ def create_bipartite_graph(
                     if edge not in edges_added:
                         B.add_edge(*edge)
                         edges_added.add(edge)
+
+    # Verify all nodes have bipartite attribute
+    for node in B.nodes():
+        if 'bipartite' not in B.nodes[node]:
+            B.nodes[node]['bipartite'] = 1 if node in gene_id_mapping.values() else 0
 
     print(f"\nGraph construction summary for {timepoint}:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
