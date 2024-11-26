@@ -51,156 +51,45 @@ def index_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Get timepoint data
-        timepoint_stats = results.get("timepoint_stats", {})
-
-        # Create list of timepoints with their status
+        # Process each timepoint's data
         timepoint_info = {}
-
-        # Only process if we have timepoint stats
-        if timepoint_stats:
-            for timepoint, data in timepoint_stats.items():
+        for timepoint, data in results.items():
+            if isinstance(data, dict):
                 if "error" in data:
                     timepoint_info[timepoint] = {
                         "status": "error",
-                        "message": data["error"],
+                        "message": data["error"]
                     }
                 else:
+                    # Extract statistics and component info for this timepoint
                     timepoint_info[timepoint] = {
                         "status": "success",
-                        "stats": data.get("biclique_stats", {}),
-                        "coverage": data.get("coverage", {}),
-                        "components": data.get("component_stats", {}).get(
-                            "components", {}
-                        ),
+                        "stats": data.get("stats", {}),
+                        "coverage": data.get("stats", {}).get("coverage", {}),
+                        "components": data.get("stats", {}).get("components", {}),
+                        "interesting_components": data.get("interesting_components", []),
+                        "complex_components": data.get("complex_components", []),
+                        "biclique_types": data.get("stats", {}).get("biclique_types", {})
                     }
 
-        # Limit to first two components
-        if "interesting_components" in results:
-            results["interesting_components"] = results["interesting_components"][:2]
-
-        bicliques = []
-        if "interesting_components" in results:
-            for component in results["interesting_components"]:
-                if "raw_bicliques" in component:
-                    bicliques.extend(component["raw_bicliques"])
-
-        # Create properly structured statistics dictionary
-        detailed_stats = {
-            "coverage": results.get(
-                "coverage",
-                {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
-                },
-            ),
-            "components": {
-                "original": {
-                    "connected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "biconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "triconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                },
-                "biclique": {
-                    "connected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "biconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "triconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                },
-            },
-            "dominating_set": {
-                "size": results.get("dominating_set", {}).get("size", 0),
-                "percentage": results.get("dominating_set", {}).get("percentage", 0),
-                "genes_dominated": results.get("dominating_set", {}).get(
-                    "genes_dominated", 0
-                ),
-                "components_with_ds": results.get("dominating_set", {}).get(
-                    "components_with_ds", 0
-                ),
-                "avg_size_per_component": results.get("dominating_set", {}).get(
-                    "avg_size_per_component", 0
-                ),
-            },
-            "size_distribution": results.get("size_distribution", {}),
-            "node_participation": results.get("node_participation", {}),
-            "edge_coverage": {  # Restructure edge coverage to match template expectations
-                "single_coverage": results.get("edge_coverage", {}).get("single", 0),
-                "multiple_coverage": results.get("edge_coverage", {}).get(
-                    "multiple", 0
-                ),
-                "uncovered": results.get("edge_coverage", {}).get("uncovered", 0),
-                "total": sum(results.get("edge_coverage", {}).values()),
-                "single_percentage": 0,
-                "multiple_percentage": 0,
-                "uncovered_percentage": 0,
-            },
-        }
-
-        # Calculate percentages if we have a total
-        total_edges = detailed_stats["edge_coverage"]["total"]
-        if total_edges > 0:
-            detailed_stats["edge_coverage"]["single_percentage"] = (
-                detailed_stats["edge_coverage"]["single_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["multiple_percentage"] = (
-                detailed_stats["edge_coverage"]["multiple_coverage"] / total_edges
-            )
-            detailed_stats["edge_coverage"]["uncovered_percentage"] = (
-                detailed_stats["edge_coverage"]["uncovered"] / total_edges
-            )
-
+        # Get overall data if available
+        overall_data = results.get("overall", {})
+        
         return render_template(
             "index.html",
-            results=results,
-            statistics=detailed_stats,
+            results=overall_data,
+            statistics=overall_data.get("stats", {}),
             timepoint_info=timepoint_info,
-            dmr_metadata=results.get("dmr_metadata", {}),
-            gene_metadata=results.get("gene_metadata", {}),
-            bicliques_result=results,
-            coverage=results.get("coverage", {}),
-            node_labels=results.get("node_labels", {}),
-            dominating_set=results.get("dominating_set", {}),
+            dmr_metadata=overall_data.get("dmr_metadata", {}),
+            gene_metadata=overall_data.get("gene_metadata", {}),
+            bicliques_result=overall_data,
+            coverage=overall_data.get("coverage", {}),
+            node_labels=overall_data.get("node_labels", {}),
+            dominating_set=overall_data.get("dominating_set", {})
         )
+
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
