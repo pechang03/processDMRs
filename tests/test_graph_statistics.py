@@ -13,14 +13,16 @@ from biclique_analysis.statistics import validate_graph
 
 class TestGraphStatistics(unittest.TestCase):
     def setUp(self):
-        """Set up test graph with proper K_{2,2} structure"""
+        """Set up test graph with proper K_{2,2} structure and correct ID ranges"""
+        from utils.constants import START_GENE_ID
+    
         # Sample DataFrame setup for testing
         data = {
-            "DMR_No.": [1, 2],  # Only 2 DMRs
-            "Gene_Symbol_Nearby": ["GeneA", "GeneB"],  # Only 2 genes
+            "DMR_No.": [1, 2],  # DMR IDs will be 0,1 
+            "Gene_Symbol_Nearby": ["genea", "geneb"],  # Will map to START_GENE_ID, START_GENE_ID+1
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                "GeneA;GeneB",  # Each DMR connects to both genes
-                "GeneA;GeneB"
+                "genec",  # Additional gene to test with
+                "genec"   # Same gene for both DMRs
             ],
             "Gene_Description": ["Desc1", "Desc2"],
         }
@@ -29,16 +31,11 @@ class TestGraphStatistics(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        # Create gene_id_mapping starting at START_GENE_ID (10000)
-        all_genes = set()
-        all_genes.update(self.df["Gene_Symbol_Nearby"].str.strip().str.lower())
-        for genes in self.df["Processed_Enhancer_Info"]:
-            if genes:
-                all_genes.update(g.strip().lower() for g in genes)
-
-        from utils.constants import START_GENE_ID
+        # Create gene_id_mapping with explicit IDs starting at START_GENE_ID (10000)
         self.gene_id_mapping = {
-            gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(all_genes))
+            'genea': START_GENE_ID,      # 10000
+            'geneb': START_GENE_ID + 1,  # 10001
+            'genec': START_GENE_ID + 2   # 10002
         }
 
         # Create the bipartite graph
