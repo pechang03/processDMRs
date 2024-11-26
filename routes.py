@@ -96,112 +96,21 @@ def index_route():
 
 def statistics_route():
     """Handle statistics page requests with enhanced error handling and debugging."""
-    import sys
-
     try:
         print("\n=== Starting Statistics Route ===", flush=True)
         results = process_data()
 
-        print("\nResults from process_data():", flush=True)
-        print(f"Type: {type(results)}", flush=True)
-        print(
-            f"Keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}",
-            flush=True,
-        )
-
         if "error" in results:
-            print(f"Error found in results: {results['error']}", flush=True)
             return render_template("error.html", message=results["error"])
 
-        # Get overall graph from results
+        # Get overall data from results
         overall_data = results.get("overall", {})
-        if "bipartite_graph" in overall_data:
-            graph = overall_data["bipartite_graph"]
-
-            # Calculate all statistics
-            bicliques = overall_data.get("bicliques", [])
-
-            # Calculate component statistics
-            component_stats = calculate_component_statistics(bicliques, graph)
-
-            # Calculate coverage statistics
-            coverage_stats = calculate_coverage_statistics(bicliques, graph)
-
-            # Calculate edge coverage
-            edge_coverage = calculate_edge_coverage(bicliques, graph)
-
-            # Create detailed statistics with proper structure
-            detailed_stats = {
-                "components": component_stats,
-                "coverage": {
-                    "dmrs": coverage_stats.get(
-                        "dmrs", {"covered": 0, "total": 0, "percentage": 0}
-                    ),
-                    "genes": coverage_stats.get(
-                        "genes", {"covered": 0, "total": 0, "percentage": 0}
-                    ),
-                    "edges": edge_coverage,
-                },
-                "edge_coverage": edge_coverage,
-                "biclique_types": overall_data.get(
-                    "biclique_types",
-                    {"empty": 0, "simple": 0, "interesting": 0, "complex": 0},
-                ),
-                "size_distribution": overall_data.get("size_distribution", {}),
-                "dominating_set": {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
-            }
-        else:
-            # Provide default empty statistics structure if no graph
-            detailed_stats = {
-                "components": {
-                    "original": {
-                        "connected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "biconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "triconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                    },
-                    "biclique": {
-                        "connected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "biconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "triconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                    },
-                },
-                "coverage": {
+        
+        # Structure the template data correctly
+        template_data = {
+            "data": {  # Add this wrapper level
+                "stats": overall_data.get("stats", {}),
+                "coverage": overall_data.get("stats", {}).get("coverage", {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
                     "edges": {
@@ -211,77 +120,38 @@ def statistics_route():
                         "total": 0,
                         "single_percentage": 0,
                         "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
+                        "uncovered_percentage": 0
+                    }
+                }),
+                "components": overall_data.get("stats", {}).get("components", {
+                    "original": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
                     },
-                },
-                "edge_coverage": {},
-                "biclique_types": {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0,
-                },
-                "size_distribution": {},
-                "dominating_set": {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
+                    "biclique": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                    }
+                })
+            },
+            "statistics": overall_data.get("stats", {}),
+            "timepoint_info": {
+                timepoint: {
+                    "status": data.get("status", "error"),
+                    "stats": data.get("stats", {})
+                }
+                for timepoint, data in results.items()
+                if timepoint != "overall"
             }
-
-        # Process timepoint data
-        timepoint_info = {}
-        for timepoint, data in results.items():
-            if isinstance(data, dict):
-                if "error" in data:
-                    timepoint_info[timepoint] = {
-                        "status": "error",
-                        "message": data["error"],
-                    }
-                else:
-                    timepoint_info[timepoint] = {
-                        "status": "success",
-                        "stats": detailed_stats
-                        if timepoint == "overall"
-                        else data.get("stats", {}),
-                    }
-
-        print("\nRendering template with data:", flush=True)
-        print(f"Number of timepoints: {len(timepoint_info)}", flush=True)
-        print(f"Detailed stats keys: {list(detailed_stats.keys())}", flush=True)
-
-        # Create template data with correct structure
-        template_data = {
-            "statistics": detailed_stats,
-            "timepoint_info": timepoint_info,
-            "data": {"stats": detailed_stats},
         }
-
-        # Debug the structure
-        print("\nTemplate data structure:")
-        print("data.stats keys:", list(template_data["data"]["stats"].keys()))
-        if "components" in template_data["data"]["stats"]:
-            print(
-                "data.stats.components keys:",
-                list(template_data["data"]["stats"]["components"].keys()),
-            )
-            if "original" in template_data["data"]["stats"]["components"]:
-                print(
-                    "data.stats.components.original keys:",
-                    list(
-                        template_data["data"]["stats"]["components"]["original"].keys()
-                    ),
-                )
 
         return render_template("statistics.html", **template_data)
 
     except Exception as e:
         import traceback
-
-        traceback.print_exc(file=sys.stdout)
-        sys.stdout.flush()
+        traceback.print_exc()
         return render_template("error.html", message=str(e))
 
 
