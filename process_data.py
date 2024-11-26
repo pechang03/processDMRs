@@ -304,17 +304,31 @@ def process_timepoint(
 
         # Look for biclique file
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-        print(f"Looking for biclique file: {biclique_file}")
-        
+        print(f"\nLooking for biclique file: {biclique_file}")
+
         bicliques_result = None
         if os.path.exists(biclique_file):
             print(f"Processing bicliques from {biclique_file}")
-            bicliques_result = process_bicliques(
-                graph,
-                biclique_file,
-                timepoint,
-                gene_id_mapping=gene_id_mapping
-            )
+            try:
+                bicliques_result = process_bicliques(
+                    graph,
+                    biclique_file,
+                    timepoint,
+                    gene_id_mapping=gene_id_mapping,
+                    file_format="gene-name"  # Make sure to use correct format
+                )
+                
+                # Calculate component statistics using the processed results
+                if bicliques_result and "bicliques" in bicliques_result:
+                    component_stats["biclique"] = bicliques_result.get("component_stats", {})
+                    biclique_types = classify_biclique_types(bicliques_result["bicliques"])
+                    
+                    print(f"\nBiclique processing results:")
+                    print(f"Total bicliques: {len(bicliques_result['bicliques'])}")
+                    print(f"Component types: {biclique_types}")
+            except Exception as e:
+                print(f"Error processing bicliques for {timepoint}: {str(e)}")
+                bicliques_result = None
 
         # Calculate component statistics
         component_stats = {
