@@ -109,6 +109,38 @@ def convert_dict_keys_to_str(d):
     return d
 
 
+def process_single_timepoint(graph, df, gene_id_mapping, timepoint_name):
+    """Process a single timepoint's graph and return its statistics"""
+    try:
+        # Calculate basic statistics
+        dmr_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 0}
+        gene_nodes = {n for n in graph.nodes() if graph.nodes[n]["bipartite"] == 1}
+        
+        stats = {
+            "coverage": {
+                "dmrs": {
+                    "covered": len(dmr_nodes),
+                    "total": len(dmr_nodes),
+                    "percentage": 1.0
+                },
+                "genes": {
+                    "covered": len(gene_nodes),
+                    "total": len(gene_nodes),
+                    "percentage": 1.0
+                }
+            },
+            "edge_coverage": calculate_edge_coverage([], graph),  # Empty bicliques for timepoints
+            "dominating_set": {
+                "size": len(calculate_dominating_sets(graph, df, timepoint_name)),
+                "percentage": len(calculate_dominating_sets(graph, df, timepoint_name)) / len(dmr_nodes) if dmr_nodes else 0,
+                "genes_dominated": len(gene_nodes)
+            }
+        }
+        
+        return stats
+    except Exception as e:
+        return {"error": str(e)}
+
 def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
@@ -641,7 +673,14 @@ def process_data(timepoint=None):
             for sheet in xl.sheet_names:
                 print(f"\nProcessing timepoint: {sheet}")
                 try:
-                    timepoint_data = process_data(sheet)
+                    timepoint_df = read_excel_file(DSS_PAIRWISE_FILE, sheet_name=sheet)
+                    timepoint_graph = create_bipartite_graph(timepoint_df, gene_id_mapping, timepoint=sheet)
+                    timepoint_data = process_single_timepoint(
+                        graph=timepoint_graph,
+                        df=timepoint_df,
+                        gene_id_mapping=gene_id_mapping,
+                        timepoint_name=sheet
+                    )
                     if "error" not in timepoint_data:
                         timepoint_results[sheet] = timepoint_data
                     else:
