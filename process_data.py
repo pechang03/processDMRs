@@ -356,7 +356,7 @@ def process_timepoint(
             print(f"\nProcessing components for {timepoint}")
             try:
                 # Use process_components from components.py
-                complex_components, interesting_components, non_simple_components, component_stats, statistics = \
+                complex_components, interesting_components, simple_connections, non_simple_components, component_stats, statistics = \
                     process_components(
                         graph,  # Original bipartite graph
                         bicliques_result,  # Results from read_bicliques_file
@@ -367,6 +367,7 @@ def process_timepoint(
                 bicliques_result.update({
                     "complex_components": complex_components,
                     "interesting_components": interesting_components,
+                    "simple_connections": simple_connections,
                     "non_simple_components": non_simple_components,
                     "component_stats": component_stats,
                     "statistics": statistics
@@ -375,6 +376,7 @@ def process_timepoint(
                 print(f"\nComponent processing results:")
                 print(f"Complex components: {len(complex_components)}")
                 print(f"Interesting components: {len(interesting_components)}")
+                print(f"Simple connections: {len(simple_connections)}")
                 print(f"Non-simple components: {len(non_simple_components)}")
 
                 # Calculate biclique types
