@@ -241,7 +241,7 @@ def process_single_timepoint(
             ),
             "component_stats": component_stats,  # Use the unpacked value
             "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
-            "size_distribution": bicliques_result["size_distribution"],
+            "size_distribution": statistics.get("size_distribution", {}),  # Get from statistics instead
         },
         "graphs": {
             "original": graph,
