@@ -232,18 +232,24 @@ def process_data(timepoint=None):
 
         # Process bicliques
         print("Processing bicliques...")
-        if timepoint:
-            bicliques_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
-        else:
+        if not timepoint:  # This is the overall graph
             bicliques_file = BIPARTITE_GRAPH_OVERALL
-        bicliques_result = process_bicliques(
-            bipartite_graph,
-            bicliques_file,  # Use template here
-            max(df["DMR_No."]),
-            timepoint if timepoint else "total",  # Pass timepoint info
-            gene_id_mapping=gene_id_mapping,
-            file_format=app.config.get("BICLIQUE_FORMAT", "gene-name"),
-        )
+            bicliques_result = process_bicliques(
+                bipartite_graph,
+                bicliques_file,
+                max(df["DMR_No."]),
+                "total",
+                gene_id_mapping=gene_id_mapping,
+                file_format=app.config.get("BICLIQUE_FORMAT", "gene-name"),
+            )
+        else:
+            # For timepoint graphs, just store minimal information
+            bicliques_result = {
+                "bicliques": [],
+                "statistics": {},
+                "coverage": {},
+                "size_distribution": {}
+            }
 
         # Debug print for bicliques result
         print("\nBicliques result contents:")
