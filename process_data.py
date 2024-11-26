@@ -288,6 +288,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 (
                     complex_components,
                     interesting_components,
+                    simple_components,  # Add this variable
                     non_simple_components,
                     component_stats,
                     statistics,
