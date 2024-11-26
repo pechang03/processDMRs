@@ -35,7 +35,7 @@ from utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
 # from utils.node_info import NodeInfo
-from utils.json_utils import convert_dict_keys_to_str
+from utils.json_utils import convert_dict_keys_to_str, convert_for_json
 
 # from processDMR import read_excel_file,
 from biclique_analysis import (
@@ -350,7 +350,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 }
                 
                 print("\nFinal component statistics for original graph:")
-                print(json.dumps(component_stats["components"]["original"], indent=2))
+                print(json.dumps(convert_for_json(component_stats["components"]["original"]), indent=2))
 
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(
