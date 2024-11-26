@@ -12,6 +12,7 @@ from typing import Dict
 import networkx as nx
 import pandas as pd
 from .reader import read_bicliques_file
+from .components import process_components
 
 
 def process_bicliques(
