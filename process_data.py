@@ -295,6 +295,10 @@ def process_timepoint(
 ):
     """Process a single timepoint with configurable layout options."""
     try:
+        # Verify we have a DataFrame
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError(f"Expected DataFrame for {timepoint}, got {type(df)}")
+            
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         
@@ -332,8 +336,6 @@ def process_timepoint(
             "status": "error",
             "message": str(e)
         }
-
-        # Try to process bicliques if file exists
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
         if os.path.exists(biclique_file):
             print(f"Processing bicliques from {biclique_file}", flush=True)
