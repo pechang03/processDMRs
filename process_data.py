@@ -331,7 +331,26 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                         ),
                         "triconnected": analyze_triconnected_components(graph)[1],
                     },
-                    "biclique": comp_stats.get("components", {}).get("biclique", {}),
+                    "biclique": {
+                        "connected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                        "biconnected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                        "triconnected": {
+                            "total": 0,
+                            "single_node": 0,
+                            "small": 0,
+                            "interesting": 0,
+                        },
+                    },
                 }
 
                 return {
