@@ -165,8 +165,32 @@ def process_data():
         print("\nProcessing overall timepoint (DSS1)...")
         df_overall = read_excel_file(current_app.config["DSS1_FILE"])
         
-        # Create bipartite graph
-        graph = create_bipartite_graph(df=df_overall, gene_id_mapping=None, timepoint="overall")
+        # Create master gene mapping first
+        from utils.id_mapping import create_gene_mapping
+        
+        # Get all genes from the overall dataset
+        all_genes = set()
+        
+        # Add genes from gene column (case-insensitive)
+        gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df_overall.columns else "Gene_Symbol"
+        gene_names = df_overall[gene_col].dropna().str.strip().str.lower()
+        all_genes.update(gene_names)
+
+        # Add genes from enhancer info
+        df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+        for genes in df_overall["Processed_Enhancer_Info"]:
+            if genes:
+                all_genes.update(g.strip().lower() for g in genes)
+
+        # Create gene mapping
+        gene_id_mapping = create_gene_mapping(all_genes)
+        
+        # Now create bipartite graph with the mapping
+        graph = create_bipartite_graph(
+            df=df_overall, 
+            gene_id_mapping=gene_id_mapping, 
+            timepoint="overall"
+        )
         
         # Get connected components
         connected_components = list(nx.connected_components(graph))
