@@ -264,15 +264,19 @@ def read_bipartite_graph(
 def create_bipartite_graph(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
+    timepoint: str = "DSS1",
     closest_gene_col: str = "Gene_Symbol_Nearby",
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
 
+    print(f"\nCreating bipartite graph for timepoint: {timepoint}")
+    
     # Add DMR nodes (0-based indexing)
-    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
+    dmr_nodes = set(create_dmr_id(row["DMR_No."] - 1, timepoint, max(gene_id_mapping.values()) + 1) 
+                    for _, row in df.iterrows())
     for dmr in dmr_nodes:
-        B.add_node(dmr, bipartite=0)
+        B.add_node(dmr, bipartite=0, timepoint=timepoint)
 
     # Add all gene nodes from mapping
     for gene_name, gene_id in gene_id_mapping.items():
@@ -281,7 +285,7 @@ def create_bipartite_graph(
     # Process each row to add edges
     edges_added = set()  # Track unique edges
     for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Zero-based indexing
+        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint, max(gene_id_mapping.values()) + 1)
 
         # Process closest gene
         if isinstance(row.get(closest_gene_col), str):
@@ -309,7 +313,7 @@ def create_bipartite_graph(
                         B.add_edge(*edge)
                         edges_added.add(edge)
 
-    print(f"\nGraph construction summary:")
+    print(f"\nGraph construction summary for {timepoint}:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
     print(f"Total edges added: {len(edges_added)}")
