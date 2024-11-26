@@ -85,7 +85,6 @@ from biclique_analysis.embeddings import (
     generate_biclique_embeddings,
 )
 from biclique_analysis.processor import (
-    create_triconnected_metadata,
     create_biclique_metadata,
 )
 
