@@ -38,18 +38,18 @@
                   <tr>
                     <td>DMR Coverage:</td>
                     <td>
-                      {{ statistics.coverage.dmrs.covered }}/{{
-                      statistics.coverage.dmrs.total }} ({{
-                      "%.1f"|format(statistics.coverage.dmrs.percentage * 100)
+                      {{ statistics.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{
+                      statistics.get('coverage', {}).get('dmrs', {}).get('total', 0) }} ({{
+                      "%.1f"|format(statistics.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100)
                       }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Gene Coverage:</td>
                     <td>
-                      {{ statistics.coverage.genes.covered }}/{{
-                      statistics.coverage.genes.total }} ({{
-                      "%.1f"|format(statistics.coverage.genes.percentage * 100)
+                      {{ statistics.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{
+                      statistics.get('coverage', {}).get('genes', {}).get('total', 0) }} ({{
+                      "%.1f"|format(statistics.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100)
                       }}%)
                     </td>
                   </tr>
