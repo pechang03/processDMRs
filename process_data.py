@@ -724,7 +724,7 @@ def process_data(timepoint=None):
                 json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
             )
 
-        # Calculate overall statistics
+        # Calculate statistics for the overall timepoint (DSS1 spreadsheet)
         overall_stats = {
             "coverage": bicliques_result.get("coverage", {
                 "dmrs": {"covered": 0, "total": 0, "percentage": 0},
@@ -751,9 +751,9 @@ def process_data(timepoint=None):
             "size_distribution": bicliques_result.get("size_distribution", {})
         }
 
-        # Now create _cached_data with overall graph statistics
+        # Create _cached_data with overall timepoint statistics and separate timepoint results
         _cached_data = {
-            "stats": overall_stats,
+            "stats": overall_stats,  # Statistics for the overall timepoint (DSS1)
             "interesting_components": interesting_components,
             "coverage": overall_stats["coverage"],
             "dmr_metadata": dmr_metadata,
@@ -766,7 +766,7 @@ def process_data(timepoint=None):
             "dominating_set": overall_stats["dominating_set"],
             "edge_coverage": overall_stats["edge_coverage"],
             "biclique_stats": biclique_stats,
-            "timepoint_stats": timepoint_results,
+            "timepoint_stats": timepoint_results,  # Keep separate timepoint results
         }
 
         # Debug print for cached data
