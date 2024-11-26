@@ -182,7 +182,7 @@ def calculate_coverage_statistics(
     }
 
 
-def analyze_biconnected_components(graph: nx.Graph) -> Dict:
+def analyze_biconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     """Analyze biconnected components of a graph."""
     # Get biconnected components
     biconn_comps = list(nx.biconnected_components(graph))
@@ -210,7 +210,7 @@ def analyze_biconnected_components(graph: nx.Graph) -> Dict:
             total_dmrs += len(dmrs)
             total_genes += len(genes)
     
-    return {
+    stats = {
         "total": len(biconn_comps),
         "single_node": single_node,
         "small": small,
@@ -218,6 +218,8 @@ def analyze_biconnected_components(graph: nx.Graph) -> Dict:
         "avg_dmrs": total_dmrs / interesting if interesting else 0,
         "avg_genes": total_genes / interesting if interesting else 0
     }
+    
+    return biconn_comps, stats  # Return both components and stats
 
 def calculate_dominating_set_statistics(graph: nx.Graph, dominating_set: Set[int]) -> Dict:
     """Calculate statistics about the dominating set."""
