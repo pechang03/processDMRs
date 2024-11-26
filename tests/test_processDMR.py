@@ -30,12 +30,13 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        # Create gene_id_mapping
+        # Create gene_id_mapping using START_GENE_ID
+        from utils.constants import START_GENE_ID
         all_genes = set()
-        all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-        all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
+        all_genes.update(df["Gene_Symbol_Nearby"].str.strip().str.lower())
+        all_genes.update([g.strip().lower() for genes in df["Processed_Enhancer_Info"] for g in genes])
         self.gene_id_mapping = {
-            gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
+            gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(all_genes))
         }
 
         self.df = df  # Store df for use in tests
