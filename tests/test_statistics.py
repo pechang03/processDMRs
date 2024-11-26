@@ -15,31 +15,32 @@ from biclique_analysis.classifier import BicliqueSizeCategory
 class TestStatistics(unittest.TestCase):
     def setUp(self):
         """Set up test graph with two overlapping K_{3,3} bicliques"""
+        from utils.constants import START_GENE_ID
         self.graph = nx.Graph()
 
         # First add all nodes to the graph
-        self.graph.add_nodes_from(range(11))  # Add nodes 0-10
+        self.graph.add_nodes_from(range(6))  # Add DMR nodes 0-5
 
         # Then set bipartite attributes
         for n in [0, 1, 2, 3, 4, 5]:
             self.graph.nodes[n]["bipartite"] = 0  # DMRs
-        for n in [6, 7, 8, 9, 10]:
-            self.graph.nodes[n]["bipartite"] = 1  # Genes
+        for n in range(5):
+            self.graph.add_node(START_GENE_ID + n, bipartite=1)  # Genes
 
         # Add edges for first K_{3,3}
         for n in [0, 1, 2]:
-            for m in [6, 7, 8]:
+            for m in [START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2]:
                 self.graph.add_edge(n, m)
 
         # Add edges for second K_{3,3}
         for n in [3, 4, 5]:
-            for m in [8, 9, 10]:
+            for m in [START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4]:
                 self.graph.add_edge(n, m)
 
         # Update bicliques to match the graph structure
         self.bicliques = [
-            ({0, 1, 2}, {6, 7, 8}),  # First K_{3,3}
-            ({3, 4, 5}, {8, 9, 10}),  # Second K_{3,3}
+            ({0, 1, 2}, {START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2}),  # First K_{3,3}
+            ({3, 4, 5}, {START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4}),  # Second K_{3,3}
         ]
 
     def test_calculate_coverage_statistics(self):
