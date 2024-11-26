@@ -18,7 +18,7 @@ BIPARTITE_GRAPH_OVERALL = os.path.join(
     DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
 )
 
-def create_dmr_id(dmr_num: int, timepoint: str) -> int:
+def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint."""
     # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap
     timepoint_offsets = {
@@ -32,7 +32,9 @@ def create_dmr_id(dmr_num: int, timepoint: str) -> int:
         "DSS1": 0  # Base timepoint uses original numbers
     }
     offset = timepoint_offsets.get(timepoint, 8000000)  # Default offset for unknown timepoints
-    return offset + dmr_num
+    
+    # Ensure DMR IDs are below the first gene ID
+    return min(first_gene_id - 1, offset + dmr_num)
 
 
 def validate_bipartite_graph(B):
@@ -43,6 +45,20 @@ def validate_bipartite_graph(B):
     print(f"Total edges: {B.number_of_edges()}")
     print(f"Sum of degrees: {total_degree}")
     print(f"Expected sum of degrees: {2 * B.number_of_edges()}")
+    
+    # Validate node types
+    dmr_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 0}
+    gene_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 1}
+    
+    print(f"\nNode type validation:")
+    print(f"Total DMR nodes: {len(dmr_nodes)}")
+    print(f"Total Gene nodes: {len(gene_nodes)}")
+    
+    # Check for nodes without proper bipartite attribute
+    invalid_nodes = {n for n, d in B.nodes(data=True) if 'bipartite' not in d}
+    if invalid_nodes:
+        print(f"\nWARNING: {len(invalid_nodes)} nodes without bipartite attribute")
+        print(f"First 5 invalid nodes: {list(invalid_nodes)[:5]}")
 
     # Check for nodes with degree 0
     zero_degree_nodes = [n for n, d in B.degree() if d == 0]
@@ -135,6 +151,13 @@ def read_excel_file(filepath, sheet_name=None):
                 ]
             ].head(10)
         )
+        
+        # Add Processed_Enhancer_Info column if not already present
+        if "Processed_Enhancer_Info" not in df.columns:
+            df["Processed_Enhancer_Info"] = df[
+                "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+            ].apply(process_enhancer_info)
+        
         return df
     except FileNotFoundError:
         error_msg = f"Error: The file {filepath} was not found."
@@ -149,12 +172,17 @@ def create_bipartite_graph(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
     timepoint: str = "DSS1",
+    first_gene_id: int = None  # Add this parameter
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame with timepoint-specific DMR IDs."""
     B = nx.Graph()
+    
+    if first_gene_id is None:
+        first_gene_id = min(gene_id_mapping.values())
 
     # Add DMR nodes with timepoint-specific IDs
-    dmr_nodes = set(create_dmr_id(dmr-1, timepoint) for dmr in df["DMR_No."])
+    # Now using first_gene_id to ensure DMR IDs don't overlap with gene IDs
+    dmr_nodes = set(create_dmr_id(dmr-1, timepoint, first_gene_id) for dmr in df["DMR_No."])
     for dmr in dmr_nodes:
         B.add_node(dmr, bipartite=0, timepoint=timepoint)
 
@@ -165,7 +193,7 @@ def create_bipartite_graph(
     # Process each row to add edges
     edges_added = set()
     for _, row in df.iterrows():
-        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint)
+        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint, first_gene_id)
 
         # Process closest gene
         if pd.notna(row.get("Gene_Symbol_Nearby")):
@@ -224,4 +252,43 @@ def get_excel_sheets(filepath: str) -> List[str]:
         return sheets
     except Exception as e:
         print(f"Error reading sheet names from {filepath}: {e}")
+        raise
+
+def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> Tuple[nx.Graph, int]:
+    """
+    Read a bipartite graph from file, including the first gene ID.
+    
+    Returns:
+        Tuple of (graph, first_gene_id)
+    """
+    try:
+        B = nx.Graph()
+        
+        with open(filepath, 'r') as f:
+            # Read header
+            n_dmrs, n_genes = map(int, f.readline().strip().split())
+            # Read first gene ID
+            first_gene_id = int(f.readline().strip())
+            
+            # Read edges
+            for line in f:
+                dmr_id, gene_id = map(int, line.strip().split())
+                # Map the DMR ID to its timepoint-specific range
+                actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id)
+                # Add nodes with proper bipartite attributes
+                B.add_node(actual_dmr_id, bipartite=0, timepoint=timepoint)
+                B.add_node(gene_id, bipartite=1)
+                # Add edge
+                B.add_edge(actual_dmr_id, gene_id)
+                
+        print(f"\nRead graph from {filepath}:")
+        print(f"DMRs: {n_dmrs}")
+        print(f"Genes: {n_genes}")
+        print(f"First Gene ID: {first_gene_id}")
+        print(f"Edges: {B.number_of_edges()}")
+        
+        return B, first_gene_id
+        
+    except Exception as e:
+        print(f"Error reading graph from {filepath}: {e}")
         raise
