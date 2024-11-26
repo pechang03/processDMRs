@@ -69,18 +69,10 @@ def parse_arguments():
 # These functions are now imported from data_loader
 
 
-
-
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
         # Use START_GENE_ID for gene mapping
-=======REPLACE
-```
-
-processDMR.py
-```python
-<<<<<<< SEARCH
         max_dmr_id = None
 
         # Use the correct column name based on timepoint
@@ -228,35 +220,6 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
                 genes.update(g.strip().lower() for g in gene_list)
 
     return genes
-
-
-def create_gene_mapping(genes: Set[str]) -> Dict[str, int]:
-    """Create a mapping of gene names to IDs starting at START_GENE_ID."""
-    from utils.constants import START_GENE_ID
-    
-    print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
-
-    # Convert all gene names to lowercase and remove any empty strings
-    cleaned_genes = {
-        gene.strip().lower() for gene in genes if gene and isinstance(gene, str)
-    }
-
-    # Remove any empty strings that might have resulted from the cleaning
-    cleaned_genes.discard("")
-
-    print(f"After cleaning: {len(cleaned_genes)} unique genes")
-
-    # Create mapping starting at START_GENE_ID
-    gene_id_mapping = {
-        gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(cleaned_genes))
-    }
-
-    # Debug output for first few mappings
-    print("\nFirst few gene mappings:")
-    for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
-        print(f"{gene}: {gene_id}")
-
-    return gene_id_mapping
 
 
 if __name__ == "__main__":
