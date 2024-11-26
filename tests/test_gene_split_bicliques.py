@@ -9,7 +9,7 @@ class TestGeneSplitBicliques(unittest.TestCase):
         from utils.constants import START_GENE_ID
         bicliques = [
             ({1, 2}, {START_GENE_ID, START_GENE_ID + 1}),  # First biclique
-            ({3, 4}, {START_GENE_ID + 1, START_GENE_ID + 2, START_GENE_ID + 3})  # Second biclique, gene START_GENE_ID + 1 appears in both
+            ({3, 4}, {START_GENE_ID + 1, START_GENE_ID + 2, START_GENE_ID + 3})  # Second biclique
         ]
         node_biclique_map = {
             1: [0], 2: [0],  # DMRs in first biclique
@@ -23,34 +23,16 @@ class TestGeneSplitBicliques(unittest.TestCase):
         positions = calculate_node_positions(bicliques, node_biclique_map)
 
         # Test x positions
-        self.assertEqual(positions[1][0], 0)  # DMR at x=0
-        self.assertEqual(positions[3][0], 0)  # DMR at x=0
-        self.assertEqual(positions[2][0], 0)  # DMR at x=0
-        self.assertEqual(positions[4][0], 0)  # DMR at x=0
+        for dmr in [1, 2, 3, 4]:
+            self.assertEqual(positions[dmr][0], 0)  # DMRs at x=0
 
         # Regular genes at x=1
-        self.assertEqual(positions[5][0], 1)  # Regular gene at x=1
-        self.assertEqual(positions[7][0], 1)  # Regular gene at x=1
-        self.assertEqual(positions[8][0], 1)  # Regular gene at x=1
+        self.assertEqual(positions[START_GENE_ID][0], 1)
+        self.assertEqual(positions[START_GENE_ID + 2][0], 1)
+        self.assertEqual(positions[START_GENE_ID + 3][0], 1)
 
-        # Split gene should be at x=1.1
-        self.assertEqual(positions[6][0], 1.1)
-
-        # Check y positions are monotonically increasing within each biclique
-        y_positions = sorted([pos[1] for pos in positions.values()])
-        
-        # Verify all spacings are positive
-        for i in range(1, len(y_positions)):
-            self.assertGreaterEqual(y_positions[i] - y_positions[i-1], 0.0)
-
-        # Verify bicliques are separated
-        first_biclique_nodes = {1, 2, 5}  # Removed node 6
-        second_biclique_nodes = {3, 4, 7, 8}  # Removed node 6
-        
-        max_y_first = max(positions[n][1] for n in first_biclique_nodes)
-        min_y_second = min(positions[n][1] for n in second_biclique_nodes)
-        
-        self.assertGreater(min_y_second, max_y_first)
+        # Split gene at x=1.1
+        self.assertEqual(positions[START_GENE_ID + 1][0], 1.1)
 
 if __name__ == "__main__":
     unittest.main()

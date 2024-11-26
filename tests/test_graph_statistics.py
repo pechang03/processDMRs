@@ -60,10 +60,29 @@ class TestGraphStatistics(unittest.TestCase):
         self.assertEqual(max_degree, 2, "Maximum degree should be 2.")
 
     def test_connected_components(self):
-        num_connected_components = nx.number_connected_components(self.bipartite_graph)
-        self.assertEqual(
-            num_connected_components, 1, "There should be 1 connected component."
-        )
+        """Test connected components in graph"""
+        # Create a single connected component
+        from utils.constants import START_GENE_ID
+        data = {
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                "GeneD;GeneE",
+                "GeneE;GeneF",
+                "GeneF;GeneD"
+            ]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+    
+        mapping = {
+            name: START_GENE_ID + i 
+            for i, name in enumerate(['GeneA', 'GeneB', 'GeneC', 'GeneD', 'GeneE', 'GeneF'])
+        }
+    
+        graph = create_bipartite_graph(df, mapping)
+        num_components = nx.number_connected_components(graph)
+        self.assertEqual(num_components, 1, "There should be 1 connected component.")
 
     def test_graph_structure(self):
         """Test the basic structure of the graph"""
