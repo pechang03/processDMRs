@@ -26,8 +26,7 @@ def process_bicliques(
     try:
         bicliques_result = read_bicliques_file(
             bicliques_file,
-            max_dmr_id,
-            bipartite_graph,
+            bipartite_graph,  # Remove max_dmr_id parameter
             gene_id_mapping=gene_id_mapping,
             file_format=file_format,  # Pass through the format parameter
         )
