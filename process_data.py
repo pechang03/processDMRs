@@ -123,7 +123,11 @@ def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: 
         
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint}")
-        graph_valid = validate_bipartite_graph(graph)
+        filtered_graph = validate_bipartite_graph(graph)
+        if filtered_graph is False:
+            return {"error": "Graph validation failed"}
+        graph = filtered_graph  # Use the filtered graph going forward
+        graph_valid = True
 
         # Process bicliques for this timepoint
         bicliques_result = process_bicliques(
