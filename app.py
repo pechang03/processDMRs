@@ -1,9 +1,10 @@
 import argparse
+import os
 from flask import render_template
 from extensions import app
 from routes import index_route, statistics_route, component_detail_route
 from process_data import process_data
-from data_loader import get_excel_sheets
+from data_loader import get_excel_sheets, DSS1_FILE, DSS_PAIRWISE_FILE
 
 # Version constant
 __version__ = "0.0.1-alpha"
@@ -27,27 +28,69 @@ def parse_arguments():
         default="gene-name",
         help="Format for biclique file parsing (gene-name or number)",
     )
+    # Add data directory argument
+    parser.add_argument(
+        "--data-dir",
+        default="./data",
+        help="Directory containing DSS1.xlsx and DSS_PAIRWISE.xlsx"
+    )
     return parser.parse_args()
 
-# Register routes once
-app.add_url_rule("/", "index_route", index_route)
-app.add_url_rule("/statistics", "statistics_route", statistics_route)
-app.add_url_rule(
-    "/component/<int:component_id>", "component_detail", component_detail_route
-)
-app.add_url_rule(
-    "/component/<int:component_id>/<type>", "component_detail", component_detail_route
-)
+def validate_data_files(data_dir: str) -> bool:
+    """Validate that required data files exist."""
+    dss1_path = os.path.join(data_dir, "DSS1.xlsx")
+    pairwise_path = os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
+    
+    files_exist = True
+    if not os.path.exists(dss1_path):
+        print(f"Error: DSS1.xlsx not found in {data_dir}")
+        files_exist = False
+    if not os.path.exists(pairwise_path):
+        print(f"Error: DSS_PAIRWISE.xlsx not found in {data_dir}")
+        files_exist = False
+        
+    return files_exist
+
+def configure_data_paths(data_dir: str):
+    """Configure data file paths in the application."""
+    # Update the constants in data_loader
+    global DSS1_FILE, DSS_PAIRWISE_FILE
+    DSS1_FILE = os.path.join(data_dir, "DSS1.xlsx")
+    DSS_PAIRWISE_FILE = os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
+    
+    # Store paths in app config for access in routes
+    app.config["DSS1_FILE"] = DSS1_FILE
+    app.config["DSS_PAIRWISE_FILE"] = DSS_PAIRWISE_FILE
+    app.config["DATA_DIR"] = data_dir
 
 def main():
     """Main entry point for the application."""
     args = parse_arguments()
     
+    # Validate and configure data paths
+    if not validate_data_files(args.data_dir):
+        print("Error: Required data files not found. Please check your data directory.")
+        return 1
+        
+    # Configure data paths
+    configure_data_paths(args.data_dir)
+    
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
     
+    # Register routes
+    app.add_url_rule("/", "index_route", index_route)
+    app.add_url_rule("/statistics", "statistics_route", statistics_route)
+    app.add_url_rule(
+        "/component/<int:component_id>", "component_detail", component_detail_route
+    )
+    app.add_url_rule(
+        "/component/<int:component_id>/<type>", "component_detail", component_detail_route
+    )
+    
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit(main())
