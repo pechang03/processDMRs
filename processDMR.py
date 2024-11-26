@@ -23,18 +23,7 @@ from data_loader import (
 from utils import create_dmr_id
 
 from utils import write_bipartite_graph
-from biclique_analysis import (
-    process_bicliques,
-    process_enhancer_info,
-    #   create_node_metadata,
-    #   process_components,
-    #   reporting,
-)
-from biclique_analysis.reader import read_bicliques_file
-from biclique_analysis.reporting import print_bicliques_summary, print_bicliques_detail
-from visualization import calculate_node_positions  # Import from package root
-from visualization.core import create_biclique_visualization
-from visualization import create_node_biclique_map
+from utils import process_enhancer_info
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,  # Changed name
