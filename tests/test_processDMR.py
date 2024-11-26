@@ -67,7 +67,6 @@ class TestBipartiteGraph(unittest.TestCase):
 
     def test_dmr_without_genes(self):
         """Test graph with DMRs that have no associated genes"""
-        # Create a new graph just for this test
         data = {
             "DMR_No.": [1, 2],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
@@ -78,7 +77,8 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        mapping = {"GeneA": 2, "GeneB": 3}
+        from utils.constants import START_GENE_ID
+        mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1}  # Use START_GENE_ID
         graph = create_bipartite_graph(test_df, mapping)
         
         self.assertEqual(len(graph.nodes()), 4)

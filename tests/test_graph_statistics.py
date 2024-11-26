@@ -25,7 +25,7 @@ class TestGraphStatistics(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        # Create gene_id_mapping
+        # Create gene_id_mapping starting at START_GENE_ID (10000)
         all_genes = set()
         all_genes.update(self.df["Gene_Symbol_Nearby"].str.strip().str.lower())
         for genes in self.df["Processed_Enhancer_Info"]:
