@@ -284,7 +284,7 @@ def create_bipartite_graph(
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
 
         # Process closest gene
-        if isinstance(row.get(closest_gene_col), str):  # Changed this check
+        if isinstance(row.get(closest_gene_col), str):
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
@@ -295,7 +295,7 @@ def create_bipartite_graph(
 
         # Process enhancer genes if present
         enhancer_info = row.get("Processed_Enhancer_Info")
-        if isinstance(enhancer_info, (list, str)):  # Changed this check
+        if isinstance(enhancer_info, (list, str)):
             genes = enhancer_info
             if isinstance(genes, str):
                 genes = [g.strip() for g in genes.split(";")]
@@ -308,29 +308,6 @@ def create_bipartite_graph(
                     if edge not in edges_added:
                         B.add_edge(*edge)
                         edges_added.add(edge)
-
-        # Process Associated_Genes if present
-        associated_genes = row.get("Associated_Genes")
-        if isinstance(associated_genes, str):  # Changed this check
-            genes = [g.strip() for g in associated_genes.split(";")]
-            
-            for gene_name in genes:
-                gene_name = str(gene_name).strip().lower()
-                if gene_name in gene_id_mapping:
-                    gene_id = gene_id_mapping[gene_name]
-                    edge = (dmr_id, gene_id)
-                    if edge not in edges_added:
-                        B.add_edge(*edge)
-                        edges_added.add(edge)
-
-    # For complete bipartite graphs, ensure all possible edges exist
-    if len(dmr_nodes) * len(gene_id_mapping) <= 100:  # Only for reasonably sized graphs
-        for dmr in dmr_nodes:
-            for gene_id in gene_id_mapping.values():
-                edge = (dmr, gene_id)
-                if edge not in edges_added:
-                    B.add_edge(*edge)
-                    edges_added.add(edge)
 
     print(f"\nGraph construction summary:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
