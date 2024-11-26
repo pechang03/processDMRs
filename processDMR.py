@@ -171,7 +171,7 @@ def main():
         max_dmr_id = len(df_overall) - 1  # Set max_dmr_id based on number of rows
 
     # Create and write gene mapping
-    gene_id_mapping = create_gene_mapping(all_genes, max_dmr_id)
+    gene_id_mapping = create_gene_mapping(all_genes)
     write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
 
     # Process each timepoint
@@ -230,8 +230,10 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
     return genes
 
 
-def create_gene_mapping(genes: Set[str], max_dmr_id: int) -> Dict[str, int]:
-    """Create a mapping of gene names to IDs starting after max_dmr_id."""
+def create_gene_mapping(genes: Set[str]) -> Dict[str, int]:
+    """Create a mapping of gene names to IDs starting at START_GENE_ID."""
+    from utils.constants import START_GENE_ID
+    
     print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
 
     # Convert all gene names to lowercase and remove any empty strings
@@ -244,12 +246,12 @@ def create_gene_mapping(genes: Set[str], max_dmr_id: int) -> Dict[str, int]:
 
     print(f"After cleaning: {len(cleaned_genes)} unique genes")
 
-    # Start gene IDs after the max DMR ID (which is 0-based)
+    # Create mapping starting at START_GENE_ID
     gene_id_mapping = {
-        gene: idx + max_dmr_id + 1 for idx, gene in enumerate(sorted(cleaned_genes))
+        gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(cleaned_genes))
     }
 
-    # Debug output
+    # Debug output for first few mappings
     print("\nFirst few gene mappings:")
     for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
         print(f"{gene}: {gene_id}")
