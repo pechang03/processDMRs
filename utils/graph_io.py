@@ -47,9 +47,13 @@ def write_bipartite_graph(
 ):
     """Write bipartite graph to file using consistent gene IDs and sequential DMR IDs."""
     try:
+        # Convert all gene names to lowercase in mapping
+        gene_id_mapping = {k.strip().lower(): v for k, v in gene_id_mapping.items() if k}
+        
         # Get unique edges (DMR first, gene second) and collect DMR nodes
         unique_edges = set()
         dmr_nodes = set()
+        gene_nodes = set()
         
         # Debug counters
         total_edges = 0
@@ -71,25 +75,24 @@ def write_bipartite_graph(
                 
             unique_edges.add(ordered_edge)
             dmr_nodes.add(dmr_node)
+            gene_nodes.add(gene_node)
 
-        # Create sequential mapping for DMR IDs
+        # Create sequential mapping for DMR IDs starting from 0
         sorted_dmrs = sorted(dmr_nodes)
         dmr_id_mapping = {original_id: idx for idx, original_id in enumerate(sorted_dmrs)}
 
         # Sort edges for deterministic output
         sorted_edges = sorted(unique_edges)
 
-        # Get the actual first gene ID from the mapping
-        first_gene_id = min(gene_id_mapping.values())
-
         with open(output_file, "w") as file:
             # Write header with correct counts
             n_dmrs = len(dmr_nodes)
-            n_genes = len(set(gene_id_mapping.values()))  # Use unique gene IDs
+            n_genes = len(gene_nodes)
             file.write(f"{n_dmrs} {n_genes}\n")
             
-            # Write first gene ID on second line
-            file.write(f"{first_gene_id}\n")
+            # Write first gene ID (minimum gene ID) on second line
+            min_gene_id = min(gene_nodes)
+            file.write(f"{min_gene_id}\n")
 
             # Write edges with sequential DMR IDs
             for dmr_id, gene_id in sorted_edges:
@@ -103,13 +106,13 @@ def write_bipartite_graph(
         print(f"Final unique edges: {len(sorted_edges)}")
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
-        print(f"First gene ID: {first_gene_id}")
+        print(f"First gene ID: {min_gene_id}")
         
         # Debug first few edges
         print("\nFirst 5 edges written:")
         for dmr_id, gene_id in sorted_edges[:5]:
             sequential_dmr_id = dmr_id_mapping[dmr_id]
-            gene_name = [k for k, v in gene_id_mapping.items() if v == gene_id][0]
+            gene_name = next((k for k, v in gene_id_mapping.items() if v == gene_id), "Unknown")
             print(f"DMR_{sequential_dmr_id} -> Gene_{gene_id} ({gene_name})")
 
     except Exception as e:
