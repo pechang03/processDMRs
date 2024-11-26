@@ -3,8 +3,9 @@
 
 import networkx as nx
 import pandas as pd
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 import os
+from biclique_analysis import process_enhancer_info
 
 # Configuration constants
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
