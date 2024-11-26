@@ -4,71 +4,51 @@ from typing import List, Dict, Tuple, Set
 import numpy as np
 from sklearn.manifold import MDS
 import networkx as nx
-from biclique_analysis.triconnected import analyze_triconnected_components
+from rb_domination import greedy_rb_domination
 
 def generate_biclique_embeddings(
     bicliques: List[Tuple[Set[int], Set[int]]],
+    graph: nx.Graph,
+    connected_component_info: Dict,
     node_info: Dict[int, Dict] = None,
     dimensions: int = 2,
-    perplexity: float = 30.0,
     random_state: int = 42
 ) -> List[Dict]:
     """
-    Generate embeddings for biclique visualization.
+    Generate embeddings for biclique visualization within connected components.
     
     Args:
         bicliques: List of (dmr_nodes, gene_nodes) tuples
+        graph: Original bipartite graph
+        connected_component_info: Dict containing RB dominating sets per component
         node_info: Optional dict of node metadata
-        dimensions: Number of dimensions for embedding (default 2)
-        perplexity: Perplexity parameter for t-SNE (if used)
+        dimensions: Number of dimensions for embedding
         random_state: Random seed for reproducibility
-        
-    Returns:
-        List of dictionaries containing embedding info for each biclique
     """
     if not bicliques:
         return []
         
-    # Create distance matrix between bicliques
-    n_bicliques = len(bicliques)
-    distances = np.zeros((n_bicliques, n_bicliques))
-    
-    # Calculate Jaccard distances between bicliques
-    for i in range(n_bicliques):
-        dmrs_i, genes_i = bicliques[i]
-        nodes_i = dmrs_i | genes_i
-        
-        for j in range(i+1, n_bicliques):
-            dmrs_j, genes_j = bicliques[j]
-            nodes_j = dmrs_j | genes_j
-            
-            # Calculate Jaccard distance
-            intersection = len(nodes_i & nodes_j)
-            union = len(nodes_i | nodes_j)
-            distance = 1 - (intersection / union if union > 0 else 0)
-            
-            distances[i,j] = distance
-            distances[j,i] = distance
-    
-    # Use MDS for initial embedding
-    mds = MDS(n_components=dimensions, 
-              dissimilarity='precomputed',
-              random_state=random_state)
-    
-    embeddings = mds.fit_transform(distances)
-    
-    # Create result dictionaries
     result = []
     for idx, (dmrs, genes) in enumerate(bicliques):
+        # Find which connected component this biclique belongs to
+        biclique_nodes = dmrs | genes
+        for comp_id, comp_info in connected_component_info.items():
+            if biclique_nodes & comp_info['nodes']:  # If there's overlap
+                dominating_nodes = dmrs & comp_info['dominating_set']
+                break
+        else:
+            dominating_nodes = set()  # No matching component found
+            
         embedding_dict = {
             "id": idx,
-            "position": embeddings[idx].tolist(),
             "size": len(dmrs) + len(genes),
             "dmr_count": len(dmrs),
             "gene_count": len(genes),
             "nodes": sorted(dmrs | genes),
+            "dominating_nodes": sorted(dominating_nodes),
             "metadata": {
                 "density": len(dmrs) * len(genes) / ((len(dmrs) + len(genes)) ** 2),
+                "domination_ratio": len(dominating_nodes) / len(dmrs) if dmrs else 0,
                 "node_info": {
                     node: node_info.get(node, {}) for node in (dmrs | genes)
                 } if node_info else {}
