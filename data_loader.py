@@ -5,8 +5,11 @@ import networkx as nx
 import pandas as pd
 from typing import Dict, List, Set, Tuple
 import os
-from biclique_analysis import process_enhancer_info
+
+# from biclique_analysis import process_enhancer_info
 from utils import create_dmr_id, read_bipartite_graph, write_bipartite_graph
+from utils.data_processing import process_enhancer_info
+
 
 # Configuration constants
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +23,7 @@ BIPARTITE_GRAPH_OVERALL = os.path.join(
     DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
 )
 
+
 def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint."""
     # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap
@@ -31,10 +35,12 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         "TP28-TP180": 5000000,
         "TP40-TP180": 6000000,
         "TP60-TP180": 7000000,
-        "DSS1": 0  # Base timepoint uses original numbers
+        "DSS1": 0,  # Base timepoint uses original numbers
     }
-    offset = timepoint_offsets.get(timepoint, 8000000)  # Default offset for unknown timepoints
-    
+    offset = timepoint_offsets.get(
+        timepoint, 8000000
+    )  # Default offset for unknown timepoints
+
     # Ensure DMR IDs are below the first gene ID
     return min(first_gene_id - 1, offset + dmr_num)
 
@@ -47,17 +53,17 @@ def validate_bipartite_graph(B):
     print(f"Total edges: {B.number_of_edges()}")
     print(f"Sum of degrees: {total_degree}")
     print(f"Expected sum of degrees: {2 * B.number_of_edges()}")
-    
+
     # Validate node types
-    dmr_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 0}
-    gene_nodes = {n for n, d in B.nodes(data=True) if d.get('bipartite') == 1}
-    
+    dmr_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}
+    gene_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 1}
+
     print(f"\nNode type validation:")
     print(f"Total DMR nodes: {len(dmr_nodes)}")
     print(f"Total Gene nodes: {len(gene_nodes)}")
-    
+
     # Check for nodes without proper bipartite attribute
-    invalid_nodes = {n for n, d in B.nodes(data=True) if 'bipartite' not in d}
+    invalid_nodes = {n for n, d in B.nodes(data=True) if "bipartite" not in d}
     if invalid_nodes:
         print(f"\nWARNING: {len(invalid_nodes)} nodes without bipartite attribute")
         print(f"First 5 invalid nodes: {list(invalid_nodes)[:5]}")
@@ -67,34 +73,40 @@ def validate_bipartite_graph(B):
     if zero_degree_nodes:
         print(f"\nWARNING: Found {len(zero_degree_nodes)} nodes with degree 0:")
         print(f"First 5 zero-degree nodes: {zero_degree_nodes[:5]}")
-        
+
         # Analyze distribution of zero-degree nodes
-        dmr_zeros = [n for n in zero_degree_nodes if B.nodes[n].get('bipartite') == 0]
-        gene_zeros = [n for n in zero_degree_nodes if B.nodes[n].get('bipartite') == 1]
+        dmr_zeros = [n for n in zero_degree_nodes if B.nodes[n].get("bipartite") == 0]
+        gene_zeros = [n for n in zero_degree_nodes if B.nodes[n].get("bipartite") == 1]
         print(f"Zero-degree DMRs: {len(dmr_zeros)}")
         print(f"Zero-degree Genes: {len(gene_zeros)}")
 
     # Get node sets by bipartite attribute
     top_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
-    bottom_nodes = {n for n, d in B.nodes(data=True) if d.get("bipartite") == 1}  # Genes
+    bottom_nodes = {
+        n for n, d in B.nodes(data=True) if d.get("bipartite") == 1
+    }  # Genes
 
     print(f"\nNode distribution:")
     print(f"  - DMR nodes (bipartite=0): {len(top_nodes)}")
     print(f"  - Gene nodes (bipartite=1): {len(bottom_nodes)}")
 
     # Detailed degree statistics
-    dmr_degrees = [d for n, d in B.degree() if B.nodes[n].get('bipartite') == 0]
-    gene_degrees = [d for n, d in B.degree() if B.nodes[n].get('bipartite') == 1]
-    
+    dmr_degrees = [d for n, d in B.degree() if B.nodes[n].get("bipartite") == 0]
+    gene_degrees = [d for n, d in B.degree() if B.nodes[n].get("bipartite") == 1]
+
     print(f"\nDegree statistics:")
-    print(f"DMR degrees - min: {min(dmr_degrees)}, max: {max(dmr_degrees)}, avg: {sum(dmr_degrees)/len(dmr_degrees):.2f}")
-    print(f"Gene degrees - min: {min(gene_degrees)}, max: {max(gene_degrees)}, avg: {sum(gene_degrees)/len(gene_degrees):.2f}")
+    print(
+        f"DMR degrees - min: {min(dmr_degrees)}, max: {max(dmr_degrees)}, avg: {sum(dmr_degrees)/len(dmr_degrees):.2f}"
+    )
+    print(
+        f"Gene degrees - min: {min(gene_degrees)}, max: {max(gene_degrees)}, avg: {sum(gene_degrees)/len(gene_degrees):.2f}"
+    )
 
     # Instead of raising an error, just warn about zero-degree nodes
     if zero_degree_nodes:
         print("\nWARNING: Graph contains nodes with degree 0")
         return False
-    
+
     # Verify bipartite property
     if not nx.is_bipartite(B):
         print("\nERROR: Graph is not bipartite")
@@ -131,7 +143,7 @@ def read_excel_file(filepath, sheet_name=None):
             df = pd.read_excel(filepath, sheet_name=sheet_name, header=0)
         else:
             df = pd.read_excel(filepath, header=0)
-            
+
         print(f"Column names: {df.columns.tolist()}")
         print("\nSample of input data:")
 
@@ -153,14 +165,13 @@ def read_excel_file(filepath, sheet_name=None):
                 ]
             ].head(10)
         )
-        
+
         # Add Processed_Enhancer_Info column if not already present
         if "Processed_Enhancer_Info" not in df.columns:
-            from biclique_analysis import process_enhancer_info
             df["Processed_Enhancer_Info"] = df[
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
-        
+
         return df
     except FileNotFoundError:
         error_msg = f"Error: The file {filepath} was not found."
@@ -169,9 +180,6 @@ def read_excel_file(filepath, sheet_name=None):
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         raise
-
-
-from graph_utils import create_bipartite_graph
 
 
 def get_excel_sheets(filepath: str) -> List[str]:
@@ -189,22 +197,25 @@ def get_excel_sheets(filepath: str) -> List[str]:
         print(f"Error reading sheet names from {filepath}: {e}")
         raise
 
-def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> Tuple[nx.Graph, int]:
+
+def read_bipartite_graph(
+    filepath: str, timepoint: str = "DSS1"
+) -> Tuple[nx.Graph, int]:
     """
     Read a bipartite graph from file, including the first gene ID.
-    
+
     Returns:
         Tuple of (graph, first_gene_id)
     """
     try:
         B = nx.Graph()
-        
-        with open(filepath, 'r') as f:
+
+        with open(filepath, "r") as f:
             # Read header
             n_dmrs, n_genes = map(int, f.readline().strip().split())
             # Read first gene ID
             first_gene_id = int(f.readline().strip())
-            
+
             # Read edges
             for line in f:
                 dmr_id, gene_id = map(int, line.strip().split())
@@ -215,15 +226,102 @@ def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> Tuple[nx.Gra
                 B.add_node(gene_id, bipartite=1)
                 # Add edge
                 B.add_edge(actual_dmr_id, gene_id)
-                
+
         print(f"\nRead graph from {filepath}:")
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
         print(f"First Gene ID: {first_gene_id}")
         print(f"Edges: {B.number_of_edges()}")
-        
+
         return B, first_gene_id
-        
+
     except Exception as e:
         print(f"Error reading graph from {filepath}: {e}")
         raise
+
+
+def create_bipartite_graph(
+    df: pd.DataFrame,
+    gene_id_mapping: Dict[str, int],
+    closest_gene_col: str = "Gene_Symbol_Nearby",
+) -> nx.Graph:
+    """Create a bipartite graph from DataFrame."""
+    B = nx.Graph()
+
+    # Add DMR nodes (0-based indexing)
+    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
+    for dmr in dmr_nodes:
+        B.add_node(dmr, bipartite=0)
+
+    # Add all gene nodes from mapping
+    for gene_name, gene_id in gene_id_mapping.items():
+        B.add_node(gene_id, bipartite=1)
+
+    # Process each row to add edges
+    edges_added = set()  # Track unique edges
+    for _, row in df.iterrows():
+        dmr_id = row["DMR_No."] - 1  # Zero-based indexing
+
+        # Process closest gene
+        if pd.notna(row.get(closest_gene_col)):
+            gene_name = str(row[closest_gene_col]).strip().lower()
+            if gene_name in gene_id_mapping:
+                gene_id = gene_id_mapping[gene_name]
+                edge = (dmr_id, gene_id)
+                if edge not in edges_added:
+                    B.add_edge(*edge)
+                    edges_added.add(edge)
+
+        # Process enhancer genes if present
+        if pd.notna(row.get("Processed_Enhancer_Info")):
+            genes = row["Processed_Enhancer_Info"]
+            if isinstance(genes, str):
+                genes = [g.strip() for g in genes.split(";")]
+            elif isinstance(genes, (list, set)):
+                genes = list(genes)
+            else:
+                continue
+
+            for gene_name in genes:
+                gene_name = str(gene_name).strip().lower()
+                if gene_name in gene_id_mapping:
+                    gene_id = gene_id_mapping[gene_name]
+                    edge = (dmr_id, gene_id)
+                    if edge not in edges_added:
+                        B.add_edge(*edge)
+                        edges_added.add(edge)
+
+        # Process Associated_Genes if present
+        if pd.notna(row.get("Associated_Genes")):
+            genes = row["Associated_Genes"]
+            if isinstance(genes, str):
+                genes = [g.strip() for g in genes.split(";")]
+            elif isinstance(genes, (list, set)):
+                genes = list(genes)
+            else:
+                continue
+
+            for gene_name in genes:
+                gene_name = str(gene_name).strip().lower()
+                if gene_name in gene_id_mapping:
+                    gene_id = gene_id_mapping[gene_name]
+                    edge = (dmr_id, gene_id)
+                    if edge not in edges_added:
+                        B.add_edge(*edge)
+                        edges_added.add(edge)
+
+    # For complete bipartite graphs, ensure all possible edges exist
+    if len(dmr_nodes) * len(gene_id_mapping) <= 100:  # Only for reasonably sized graphs
+        for dmr in dmr_nodes:
+            for gene_id in gene_id_mapping.values():
+                edge = (dmr, gene_id)
+                if edge not in edges_added:
+                    B.add_edge(*edge)
+                    edges_added.add(edge)
+
+    print(f"\nGraph construction summary:")
+    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
+    print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
+    print(f"Total edges added: {len(edges_added)}")
+
+    return B
