@@ -134,66 +134,6 @@ def convert_dict_keys_to_str(d):
     return d
 
 
-def process_single_timepoint(
-    df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int] = None
-) -> Dict:
-    """Process a single timepoint and return its results"""
-    try:
-        # Create bipartite graph
-        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-
-        # Validate graph
-        print(f"\nValidating graph for timepoint {timepoint}")
-        filtered_graph = validate_bipartite_graph(graph)
-        if filtered_graph is False:
-            return {"error": "Graph validation failed"}
-        graph = filtered_graph  # Use the filtered graph going forward
-        graph_valid = True
-
-        # Analyze original graph components first
-        connected_components = list(nx.connected_components(graph))
-        biconnected_components = list(nx.biconnected_components(graph))
-        triconnected_components, tri_stats = analyze_triconnected_components(graph)
-
-        component_stats = {
-            "original": {
-                "connected": analyze_components(connected_components, graph),
-                "biconnected": analyze_components(biconnected_components, graph),
-                "triconnected": tri_stats
-            },
-            "biclique": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-            }
-        }
-
-        # Process bicliques for this timepoint
-        bicliques_result = process_bicliques(
-            graph,
-            f"bipartite_graph_output_{timepoint}.txt",
-            timepoint,
-            gene_id_mapping=gene_id_mapping,
-        )
-
-        # Calculate statistics for this timepoint
-        biclique_type_stats = classify_biclique_types(
-            bicliques_result.get("bicliques", [])
-        )
-
-        return {
-            "bicliques": bicliques_result,
-            "node_count": graph.number_of_nodes(),
-            "edge_count": graph.number_of_edges(),
-            "graph_valid": graph_valid,
-            "biclique_type_stats": biclique_type_stats,
-            "coverage": bicliques_result.get("coverage", {}),
-            "size_distribution": bicliques_result.get("size_distribution", {}),
-            "gene_id_mapping": gene_id_mapping,  # Add this to return the mapping
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     """Create a master gene mapping from a DataFrame."""
