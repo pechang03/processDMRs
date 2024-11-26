@@ -21,7 +21,7 @@ import os
 import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
-from flask import Flask, render_template
+from flask import Flask, render_template, current_app
 import pandas as pd
 # import numpy as np
 
@@ -111,17 +111,21 @@ def convert_dict_keys_to_str(d):
 def process_data(timepoint=None):
     """Process the DMR data and return results"""
     global _cached_data
-
+    
     try:
         print("Starting data processing...")
-
+        
+        # Get file paths from Flask config
+        dss1_file = current_app.config["DSS1_FILE"]
+        pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
+        
         # Initialize storage for multiple graphs
         graphs = {}
         timepoint_results = {}
 
         # Process overall DSS1 data first
         print("\nProcessing DSS1 overall data...")
-        df_overall = read_excel_file(DSS1_FILE, sheet_name="DSS1")
+        df_overall = read_excel_file(dss1_file, sheet_name="DSS1")
         df_overall["Processed_Enhancer_Info"] = df_overall[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
