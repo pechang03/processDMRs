@@ -134,13 +134,17 @@ def process_data(timepoint=None):
         # Try to find the right sheet
         sheet_name = None
         for sheet in available_sheets:
-            if sheet.lower() == "dss1" or "overall" in sheet.lower():
+            if (sheet.lower() == "dss_time_series" or 
+                sheet.lower() == "dss1" or 
+                "time_series" in sheet.lower() or
+                "overall" in sheet.lower()):
                 sheet_name = sheet
                 break
         
         if not sheet_name:
             sheet_name = available_sheets[0]  # Use first sheet as fallback
-            print(f"Warning: No DSS1 sheet found, using first available sheet: {sheet_name}")
+            print(f"Warning: No DSS_Time_Series sheet found, using first available sheet: {sheet_name}")
+            print(f"Available sheets: {available_sheets}")
             
         df_overall = read_excel_file(dss1_file, sheet_name=sheet_name)
         df_overall["Processed_Enhancer_Info"] = df_overall[
