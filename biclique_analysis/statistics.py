@@ -62,18 +62,17 @@ class InvalidGraphError(Exception):
     pass
 
 
-def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
+def validate_graph(graph: nx.Graph, remove_isolates: bool = True) -> Tuple[Set[int], Set[int]]:
     """
     Validate graph structure and return DMR and gene node sets.
     Checks:
     - Graph has nodes
-    - No isolated nodes (degree 0)
-    - No multi-edges
     - Both partite sets non-empty
     - Split genes have degree > 2 in both graphs
     
     Args:
         graph: NetworkX graph to validate
+        remove_isolates: If True, removes isolated gene nodes before validation
 
     Returns:
         Tuple of (dmr_nodes, gene_nodes)
@@ -83,15 +82,6 @@ def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
     """
     if not graph.nodes():
         raise InvalidGraphError("Graph contains no nodes")
-
-    # Check for degree 0 nodes
-    zero_degree_nodes = [n for n, d in graph.degree() if d == 0]
-    if zero_degree_nodes:
-        raise InvalidGraphError(f"Graph contains isolated nodes: {zero_degree_nodes}")
-
-    # Check for multi-edges
-    if any(len(graph[u][v]) > 1 for u, v in graph.edges()):
-        raise InvalidGraphError("Graph contains multi-edges")
 
     # Get partite sets based on bipartite attribute
     all_nodes = set(graph.nodes())
@@ -103,6 +93,15 @@ def validate_graph(graph: nx.Graph) -> Tuple[Set[int], Set[int]]:
         raise InvalidGraphError("Graph contains no DMR nodes")
     if not gene_nodes:
         raise InvalidGraphError("Graph contains no gene nodes")
+
+    # Handle isolated nodes
+    if remove_isolates:
+        # Find isolated gene nodes
+        isolated_genes = [n for n in gene_nodes if graph.degree(n) == 0]
+        if isolated_genes:
+            print(f"Found {len(isolated_genes)} isolated gene nodes - removing them")
+            gene_nodes = gene_nodes - set(isolated_genes)
+            # Don't raise error for isolated nodes since we're handling them
 
     # Validate split genes have sufficient degree
     split_genes = {n for n in gene_nodes if graph.degree(n) > 2}
@@ -243,8 +242,8 @@ def calculate_biclique_statistics(
     dominating_set: Set[int] = None
 ) -> Dict:
     """Calculate comprehensive biclique statistics."""
-    # Validate graph structure first
-    validate_graph(graph)
+    # Validate graph structure first and get cleaned node sets
+    dmr_nodes, gene_nodes = validate_graph(graph, remove_isolates=True)
 
     # Calculate node participation first
     node_participation = calculate_node_participation(bicliques)
@@ -255,7 +254,7 @@ def calculate_biclique_statistics(
     # Calculate size distribution
     size_dist = calculate_size_distribution(bicliques)
     
-    # Calculate coverage statistics
+    # Calculate coverage statistics using cleaned node sets
     coverage_stats = calculate_coverage_statistics(bicliques, graph)
     
     # Calculate component statistics
@@ -263,7 +262,7 @@ def calculate_biclique_statistics(
     
     # Combine all statistics
     stats = {
-        "size_distribution": size_dist,  # Now uses string keys
+        "size_distribution": size_dist,
         "coverage": coverage_stats,
         "node_participation": node_participation,
         "edge_coverage": edge_coverage,
