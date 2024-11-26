@@ -209,13 +209,22 @@ def process_overall_timepoint(df: pd.DataFrame) -> Dict:
 def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
     """Process all pairwise timepoints."""
     timepoint_data = {}
-    xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
-    
-    for sheet in xl.sheet_names:
-        print(f"\nProcessing pairwise timepoint: {sheet}", flush=True)
-        df = read_excel_file(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
-        if df is not None:
-            timepoint_data[sheet] = process_timepoint(df, sheet, gene_id_mapping)
+    try:
+        # Read Excel file
+        xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
+        
+        # Process each sheet
+        for sheet in xl.sheet_names:
+            print(f"\nProcessing pairwise timepoint: {sheet}", flush=True)
+            # Read the sheet into a DataFrame
+            df = pd.read_excel(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
+            if df is not None:
+                # Process the timepoint with the DataFrame
+                timepoint_data[sheet] = process_timepoint(df, sheet, gene_id_mapping)
+    except Exception as e:
+        print(f"Error processing pairwise timepoints: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
     
     return timepoint_data
 

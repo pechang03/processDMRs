@@ -137,55 +137,11 @@ def read_excel_file(filepath, sheet_name=None):
 
         print(f"Reading Excel file from: {filepath}")
 
-        # First get available sheets
-        xl = pd.ExcelFile(filepath)
-        available_sheets = xl.sheet_names
-        print(f"Available sheets: {available_sheets}")
-
-        # If no sheet specified and only one sheet exists, use that
-        if sheet_name is None and len(available_sheets) == 1:
-            sheet_name = available_sheets[0]
-            print(f"Using only available sheet: {sheet_name}")
-
-        # If sheet specified but not found, try to find a case-insensitive match
-        if sheet_name and sheet_name not in available_sheets:
-            sheet_map = {s.lower(): s for s in available_sheets}
-            if sheet_name.lower() in sheet_map:
-                actual_sheet = sheet_map[sheet_name.lower()]
-                print(f"Using sheet '{actual_sheet}' for requested '{sheet_name}'")
-                sheet_name = actual_sheet
-            else:
-                raise ValueError(
-                    f"Sheet '{sheet_name}' not found. Available sheets: {available_sheets}"
-                )
-
+        # Read the Excel file
         if sheet_name:
-            print(f"Reading sheet: {sheet_name}")
-            df = pd.read_excel(filepath, sheet_name=sheet_name, header=0)
+            df = pd.read_excel(filepath, sheet_name=sheet_name)
         else:
-            df = pd.read_excel(filepath, header=0)
-
-        print(f"Column names: {df.columns.tolist()}")
-        print("\nSample of input data:")
-
-        # Determine which columns to display based on what's available
-        if "Gene_Symbol_Nearby" in df.columns:
-            gene_col = "Gene_Symbol_Nearby"
-        elif "Gene_Symbol" in df.columns:
-            gene_col = "Gene_Symbol"
-        else:
-            raise KeyError("No gene symbol column found in the file")
-
-        print(
-            df[
-                [
-                    "DMR_No.",
-                    gene_col,
-                    "ENCODE_Enhancer_Interaction(BingRen_Lab)",
-                    "Gene_Description",
-                ]
-            ].head(10)
-        )
+            df = pd.read_excel(filepath)
 
         # Add Processed_Enhancer_Info column if not already present
         if "Processed_Enhancer_Info" not in df.columns:
@@ -193,11 +149,8 @@ def read_excel_file(filepath, sheet_name=None):
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
 
-        return df
-    except FileNotFoundError:
-        error_msg = f"Error: The file {filepath} was not found."
-        print(error_msg)
-        raise
+        return df  # Return the DataFrame directly
+
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         raise
