@@ -22,34 +22,72 @@ def process_bicliques(
     file_format: str = "gene_name",
 ) -> Dict:
     """Process bicliques and add detailed information."""
-    print(f"Processing bicliques using format: {file_format}")
+    print(f"\nProcessing bicliques for {dataset_name}")
+    print(f"Using format: {file_format}")
+    
     try:
+        # Read bicliques using reader.py
         bicliques_result = read_bicliques_file(
             bicliques_file,
-            bipartite_graph,  # Remove max_dmr_id parameter
+            bipartite_graph,
             gene_id_mapping=gene_id_mapping,
-            file_format=file_format,  # Pass through the format parameter
+            file_format=file_format
         )
+        
+        if not bicliques_result or not bicliques_result.get("bicliques"):
+            print(f"No bicliques found in {bicliques_file}")
+            return {
+                "bicliques": [],
+                "components": [],
+                "statistics": {},
+                "graph_info": {
+                    "name": dataset_name,
+                    "total_dmrs": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0),
+                    "total_genes": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1),
+                    "total_edges": len(bipartite_graph.edges()),
+                }
+            }
+
+        # Process components using components.py
+        complex_components, interesting_components, non_simple_components, component_stats, statistics = \
+            process_components(
+                bipartite_graph,
+                bicliques_result,
+                dominating_set=None  # Add dominating set if needed
+            )
+
+        # Add component information to result
+        bicliques_result.update({
+            "complex_components": complex_components,
+            "interesting_components": interesting_components,
+            "non_simple_components": non_simple_components,
+            "component_stats": component_stats,
+            "statistics": statistics
+        })
+
+        print(f"\nProcessed bicliques result:")
+        print(f"Total bicliques: {len(bicliques_result.get('bicliques', []))}")
+        print(f"Complex components: {len(complex_components)}")
+        print(f"Interesting components: {len(interesting_components)}")
+        
+        return bicliques_result
+
     except FileNotFoundError:
         print(f"Warning: Bicliques file not found: {bicliques_file}")
-        # Return empty result structure instead of failing
         return {
             "bicliques": [],
+            "components": [],
             "statistics": {},
             "graph_info": {
                 "name": dataset_name,
                 "total_dmrs": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0),
                 "total_genes": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1),
                 "total_edges": len(bipartite_graph.edges()),
-            },
-            "coverage": {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {"single_coverage": 0, "multiple_coverage": 0, "uncovered": 0}
             }
         }
-
-    return bicliques_result
+    except Exception as e:
+        print(f"Error processing bicliques: {str(e)}")
+        raise
 
 
 def _get_dmr_details(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
