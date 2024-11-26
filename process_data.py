@@ -164,33 +164,155 @@ def process_data():
         # Process overall/DSS1 timepoint first
         print("\nProcessing overall timepoint (DSS1)...")
         df_overall = read_excel_file(current_app.config["DSS1_FILE"])
-        overall_results = process_single_timepoint(
-            df=df_overall,
-            timepoint="overall",
-            gene_id_mapping=None,  # Will create master mapping
+        
+        # Create bipartite graph
+        graph = create_bipartite_graph(df=df_overall, gene_id_mapping=None, timepoint="overall")
+        
+        # Get connected components
+        connected_components = list(nx.connected_components(graph))
+        biconnected_components = list(nx.biconnected_components(graph))
+        
+        # Use the analysis functions from biclique_analysis.statistics
+        from biclique_analysis.statistics import (
+            analyze_components,
+            calculate_biclique_statistics,
+            calculate_coverage_statistics,
+            calculate_component_statistics
         )
+        from biclique_analysis.triconnected import analyze_triconnected_components
+
+        # Calculate component statistics
+        connected_stats = analyze_components(connected_components, graph)
+        biconnected_stats = analyze_components(biconnected_components, graph)
+        triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
+
+        # Process bicliques
+        bicliques_result = process_bicliques(
+            graph,
+            "bipartite_graph_output.txt",
+            "overall",
+            gene_id_mapping=None
+        )
+
+        # Calculate comprehensive statistics
+        component_stats = {
+            "components": {
+                "original": {
+                    "connected": connected_stats,
+                    "biconnected": biconnected_stats,
+                    "triconnected": triconnected_stats
+                }
+            }
+        }
+
+        # Calculate biclique graph statistics
+        if bicliques_result and "bicliques" in bicliques_result:
+            biclique_graph = nx.Graph()
+            for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+                biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+                biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+                biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+
+            # Calculate statistics for biclique graph
+            biclique_connected = list(nx.connected_components(biclique_graph))
+            biclique_biconnected = list(nx.biconnected_components(biclique_graph))
+            biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
+
+            component_stats["components"]["biclique"] = {
+                "connected": analyze_components(biclique_connected, biclique_graph),
+                "biconnected": analyze_components(biclique_biconnected, biclique_graph),
+                "triconnected": biclique_tri_stats
+            }
+
+        # Calculate comprehensive statistics
+        statistics = calculate_biclique_statistics(
+            bicliques_result.get("bicliques", []),
+            graph
+        )
+
+        overall_results = {
+            "bicliques": bicliques_result,
+            "node_count": graph.number_of_nodes(),
+            "edge_count": graph.number_of_edges(),
+            "graph_valid": True,
+            "component_stats": component_stats,
+            "statistics": statistics,
+            "coverage": calculate_coverage_statistics(
+                bicliques_result.get("bicliques", []),
+                graph
+            ),
+            "biclique_types": statistics.get("biclique_types", {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
+            })
+        }
+
         timepoint_data["overall"] = overall_results
 
         # Use the master gene mapping for all other timepoints
-        gene_id_mapping = overall_results["gene_id_mapping"]
+        gene_id_mapping = overall_results.get("gene_id_mapping")
 
-        # Process each pairwise timepoint
+        # Process each pairwise timepoint similarly...
         xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
         for sheet in xl.sheet_names:
             print(f"\nProcessing timepoint: {sheet}")
-            df = read_excel_file(
-                current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet
+            df = read_excel_file(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
+            
+            timepoint_graph = create_bipartite_graph(df, gene_id_mapping, timepoint=sheet)
+            
+            # Calculate component statistics for this timepoint
+            tp_connected = list(nx.connected_components(timepoint_graph))
+            tp_biconnected = list(nx.biconnected_components(timepoint_graph))
+            tp_triconnected, tp_tri_stats = analyze_triconnected_components(timepoint_graph)
+
+            tp_component_stats = {
+                "components": {
+                    "original": {
+                        "connected": analyze_components(tp_connected, timepoint_graph),
+                        "biconnected": analyze_components(tp_biconnected, timepoint_graph),
+                        "triconnected": tp_tri_stats
+                    }
+                }
+            }
+
+            timepoint_bicliques = process_bicliques(
+                timepoint_graph,
+                f"bipartite_graph_output_{sheet}.txt",
+                sheet,
+                gene_id_mapping=gene_id_mapping
             )
-            timepoint_results = process_single_timepoint(
-                df=df, timepoint=sheet, gene_id_mapping=gene_id_mapping
+
+            # Calculate statistics for this timepoint
+            tp_statistics = calculate_biclique_statistics(
+                timepoint_bicliques.get("bicliques", []),
+                timepoint_graph
             )
-            timepoint_data[sheet] = timepoint_results
+
+            timepoint_data[sheet] = {
+                "bicliques": timepoint_bicliques,
+                "node_count": timepoint_graph.number_of_nodes(),
+                "edge_count": timepoint_graph.number_of_edges(),
+                "graph_valid": True,
+                "component_stats": tp_component_stats,
+                "statistics": tp_statistics,
+                "coverage": calculate_coverage_statistics(
+                    timepoint_bicliques.get("bicliques", []),
+                    timepoint_graph
+                ),
+                "biclique_types": tp_statistics.get("biclique_types", {})
+            }
+
+        # Print debug information
+        print("\nComponent statistics:")
+        print(json.dumps(overall_results["component_stats"], indent=2))
 
         return timepoint_data
+
     except Exception as e:
         print(f"Error in process_data: {str(e)}")
         import traceback
-
         traceback.print_exc()
         return {"error": str(e)}
 
