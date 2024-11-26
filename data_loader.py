@@ -6,6 +6,7 @@ import pandas as pd
 from typing import Dict, List, Set, Tuple
 import os
 from biclique_analysis import process_enhancer_info
+from utils import create_dmr_id, read_bipartite_graph, write_bipartite_graph
 
 # Configuration constants
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
