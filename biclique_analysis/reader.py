@@ -15,6 +15,9 @@ def read_bicliques_file(
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
     print(f"\nReading bicliques file: {filename}")
     print(f"Reading bicliques file in {file_format} format")
+    
+    # Derive max_DMR_id from graph
+    max_DMR_id = max(n for n, d in original_graph.nodes(data=True) if d['bipartite'] == 0) + 1
     print(f"Expected DMR range: 0 to {max_DMR_id-1}")
 
     # Validate input parameters
