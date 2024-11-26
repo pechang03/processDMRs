@@ -189,6 +189,7 @@ def index_route():
 def statistics_route():
     """Handle statistics page requests with enhanced error handling and debugging."""
     import sys
+    import networkx as nx
     try:
         print("\n=== Starting Statistics Route ===", flush=True)
         results = process_data()
