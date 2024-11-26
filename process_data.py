@@ -125,7 +125,23 @@ def process_data(timepoint=None):
 
         # Process overall DSS1 data first
         print("\nProcessing DSS1 overall data...")
-        df_overall = read_excel_file(dss1_file, sheet_name="DSS1")
+        # First get available sheets
+        available_sheets = get_excel_sheets(dss1_file)
+        if not available_sheets:
+            raise ValueError(f"No sheets found in {dss1_file}")
+            
+        # Try to find the right sheet
+        sheet_name = None
+        for sheet in available_sheets:
+            if sheet.lower() == "dss1" or "overall" in sheet.lower():
+                sheet_name = sheet
+                break
+        
+        if not sheet_name:
+            sheet_name = available_sheets[0]  # Use first sheet as fallback
+            print(f"Warning: No DSS1 sheet found, using first available sheet: {sheet_name}")
+            
+        df_overall = read_excel_file(dss1_file, sheet_name=sheet_name)
         df_overall["Processed_Enhancer_Info"] = df_overall[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
