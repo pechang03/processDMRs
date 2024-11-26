@@ -89,49 +89,55 @@ def index_route():
                     },
                 },
             ),
-            "components": results.get("component_stats", {}).get(
-                "components",
-                {
-                    "original": {
-                        "connected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "biconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
+            "components": {
+                "original": {
+                    "connected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
                     },
-                    "biclique": {
-                        "connected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "biconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
+                    "biconnected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
                     },
+                    "triconnected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
+                    }
                 },
-            ),
-            "dominating_set": results.get(
-                "dominating_set",
-                {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
-            ),
+                "biclique": {
+                    "connected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
+                    },
+                    "biconnected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
+                    },
+                    "triconnected": {
+                        "total": 0,
+                        "single_node": 0,
+                        "small": 0,
+                        "interesting": 0
+                    }
+                }
+            },
+            "dominating_set": {
+                "size": results.get("dominating_set", {}).get("size", 0),
+                "percentage": results.get("dominating_set", {}).get("percentage", 0),
+                "genes_dominated": results.get("dominating_set", {}).get("genes_dominated", 0),
+                "components_with_ds": results.get("dominating_set", {}).get("components_with_ds", 0),
+                "avg_size_per_component": results.get("dominating_set", {}).get("avg_size_per_component", 0),
+            },
             "size_distribution": results.get("size_distribution", {}),
             "node_participation": results.get("node_participation", {}),
             "edge_coverage": {  # Restructure edge coverage to match template expectations
