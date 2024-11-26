@@ -164,6 +164,7 @@ def main():
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
     pairwise_dfs = {}
     all_genes = set()
+    max_dmr_id = None  # Will be set based on number of rows
 
     # Process pairwise sheets
     for sheet in pairwise_sheets:
@@ -181,9 +182,10 @@ def main():
     df_overall = read_excel_file(args.input)
     if df_overall is not None:
         all_genes.update(get_genes_from_df(df_overall))
+        max_dmr_id = len(df_overall) - 1  # Set max_dmr_id based on number of rows
 
     # Create and write gene mapping
-    gene_id_mapping = create_gene_mapping(all_genes)
+    gene_id_mapping = create_gene_mapping(all_genes, max_dmr_id)
     write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
 
     # Process each timepoint
@@ -229,10 +231,11 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
                 
     return genes
 
-def create_gene_mapping(genes: Set[str]) -> Dict[str, int]:
-    """Create a mapping of gene names to IDs."""
+def create_gene_mapping(genes: Set[str], max_dmr_id: int) -> Dict[str, int]:
+    """Create a mapping of gene names to IDs starting after max_dmr_id."""
     print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
-    return {gene: idx + 1 for idx, gene in enumerate(sorted(genes))}
+    # Start gene IDs after the max DMR ID (which is 0-based)
+    return {gene: idx + max_dmr_id + 1 for idx, gene in enumerate(sorted(genes))}
 
 
 if __name__ == "__main__":
