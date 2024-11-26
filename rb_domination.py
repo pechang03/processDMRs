@@ -1,9 +1,42 @@
 # file rb_domination.py
 
+import os
+import json
+from typing import Set, Dict
 import networkx as nx
 from heapq import heapify, heappush, heappop
-import networkx as nx
 import pandas as pd
+
+class RBDominationCache:
+    def __init__(self, cache_dir: str = "cache/rb_domination"):
+        self.cache_dir = cache_dir
+        os.makedirs(cache_dir, exist_ok=True)
+    
+    def get_cache_path(self, timepoint: str) -> str:
+        """Get cache file path for a timepoint's RB dominating set."""
+        return os.path.join(self.cache_dir, f"rb_dominating_set_{timepoint}.json")
+    
+    def load_dominating_set(self, timepoint: str) -> Set[int]:
+        """Load cached RB dominating set for timepoint."""
+        cache_path = self.get_cache_path(timepoint)
+        try:
+            if os.path.exists(cache_path):
+                print(f"Loading cached RB dominating set for {timepoint}")
+                with open(cache_path, 'r') as f:
+                    return set(json.load(f))
+        except Exception as e:
+            print(f"Error loading RB dominating set cache for {timepoint}: {e}")
+        return None
+    
+    def save_dominating_set(self, timepoint: str, dominating_set: Set[int]):
+        """Save RB dominating set to cache."""
+        cache_path = self.get_cache_path(timepoint)
+        try:
+            print(f"Caching RB dominating set for {timepoint}")
+            with open(cache_path, 'w') as f:
+                json.dump(list(dominating_set), f)
+        except Exception as e:
+            print(f"Error saving RB dominating set cache for {timepoint}: {e}")
 
 
 def greedy_rb_domination(graph, df, area_col=None):
@@ -209,7 +242,7 @@ def print_domination_statistics(
         print(f"DMR_{dmr + 1}: Area={area}, Dominates {num_dominated} genes")
 
 
-from typing import Set
+from typing import Set, Dict
 
 
 def copy_dominating_set(
