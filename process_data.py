@@ -166,6 +166,16 @@ def process_data(timepoint=None):
         }
 
         # Create overall graph
+        print("\nDEBUG: Overall DataFrame info:")
+        print(f"Shape: {df_overall.shape}")
+        print(f"Columns: {df_overall.columns.tolist()}")
+        print("\nFirst few rows of key columns:")
+        print(df_overall[["DMR_No.", "Gene_Symbol_Nearby", "ENCODE_Enhancer_Interaction(BingRen_Lab)"]].head())
+
+        print("\nDEBUG: Gene ID mapping:")
+        print(f"Number of genes: {len(gene_id_mapping)}")
+        print("First few mappings:", dict(list(gene_id_mapping.items())[:5]))
+
         overall_graph = create_bipartite_graph(df_overall, gene_id_mapping)
         graphs["overall"] = overall_graph
 
