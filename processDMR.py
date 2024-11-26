@@ -4,7 +4,7 @@ import argparse
 # mport os
 # mport pandas as pd
 # mport networkx as nx
-import csv
+from utils.graph_io import write_gene_mappings
 
 # mport time
 # mport psutil
@@ -68,29 +68,6 @@ def parse_arguments():
 # These functions are now imported from data_loader
 
 
-def write_gene_mappings(
-    gene_id_mapping: Dict[str, int], output_file: str, dataset_name: str
-):
-    """Write gene ID mappings to CSV file for a specific dataset."""
-    try:
-        print(f"\nWriting gene mappings for {dataset_name}:")
-        print(f"Number of genes to write: {len(gene_id_mapping)}")
-        print(
-            f"ID range: {min(gene_id_mapping.values())} to {max(gene_id_mapping.values())}"
-        )
-        print("\nFirst few mappings:")
-        for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
-            print(f"{gene}: {gene_id}")
-
-        with open(output_file, "w", newline="") as csvfile:
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(["Gene", "ID"])
-            for gene, gene_id in sorted(gene_id_mapping.items()):
-                csvwriter.writerow([gene, gene_id])
-        print(f"Wrote {len(gene_id_mapping)} gene mappings to {output_file}")
-    except Exception as e:
-        print(f"Error writing {output_file}: {e}")
-        raise
 
 
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
