@@ -295,16 +295,22 @@ def statistics_route():
         print(f"Number of timepoints: {len(timepoint_info)}", flush=True)
         print(f"Detailed stats keys: {list(detailed_stats.keys())}", flush=True)
         
-        return render_template(
-            "statistics.html",
-            statistics=detailed_stats,
-            timepoint_info=timepoint_info,
-            data={
+        template_data = {
+            "statistics": detailed_stats,
+            "timepoint_info": timepoint_info,
+            "data": {
                 "stats": {
                     "components": detailed_stats["components"]
                 }
-            }  # Add this line to provide the expected data structure
-        )
+            }
+        }
+
+        # Debug the structure
+        print("\nTemplate data structure:")
+        print("data.stats.components keys:", list(template_data["data"]["stats"]["components"].keys()))
+        print("data.stats.components.original keys:", list(template_data["data"]["stats"]["components"]["original"].keys()))
+        
+        return render_template("statistics.html", **template_data)
 
     except Exception as e:
         import traceback
