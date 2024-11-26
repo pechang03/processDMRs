@@ -18,9 +18,9 @@ from data_loader import (
     #   BIPARTITE_GRAPH_OVERALL,
     read_excel_file,
     create_bipartite_graph,
-    create_dmr_id,
     validate_bipartite_graph,
 )
+from utils import create_dmr_id
 
 from utils import write_bipartite_graph
 from biclique_analysis import (
