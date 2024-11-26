@@ -75,6 +75,7 @@ from biclique_analysis.statistics import (
     calculate_biclique_statistics,
     calculate_coverage_statistics,
     calculate_component_statistics,
+    analyze_biconnected_components,
 )
 from biclique_analysis.triconnected import analyze_triconnected_components
 from rb_domination import (
