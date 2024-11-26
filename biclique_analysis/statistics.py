@@ -325,6 +325,7 @@ def calculate_edge_coverage(
     
     # Count how many bicliques cover each edge
     for dmr_nodes, gene_nodes in bicliques:
+        # Only create edges that exist in original graph
         for dmr in dmr_nodes:
             for gene in gene_nodes:
                 edge = tuple(sorted([dmr, gene]))
@@ -337,6 +338,13 @@ def calculate_edge_coverage(
     single_covered = {e for e in covered_edges if edge_coverage[e] == 1}
     multiple_covered = {e for e in covered_edges if edge_coverage[e] > 1}
     uncovered = original_edges - covered_edges
+
+    # Debug output
+    print(f"\nEdge coverage details:")
+    print(f"Total edges in graph: {total_edges}")
+    print(f"Single covered edges: {len(single_covered)}")
+    print(f"Multiple covered edges: {len(multiple_covered)}")
+    print(f"Uncovered edges: {len(uncovered)}")
 
     return {
         "single": len(single_covered),
