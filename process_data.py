@@ -176,8 +176,12 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
 
     # Add genes from gene column (case-insensitive)
     gene_col = next(
-        (col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] if col in df.columns),
-        None
+        (
+            col
+            for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]
+            if col in df.columns
+        ),
+        None,
     )
     if gene_col:
         gene_names = df[gene_col].dropna().str.strip().str.lower()
@@ -214,13 +218,13 @@ def process_data():
             "overall": {
                 "triconnected": "spring",
                 "bicliques": "circular",
-                "default": "original"
+                "default": "original",
             },
             "pairwise": {
                 "triconnected": "spring",
                 "bicliques": "circular",
-                "default": "original"
-            }
+                "default": "original",
+            },
         }
 
         # Process overall/DSS1 timepoint first
@@ -235,16 +239,13 @@ def process_data():
 
         # Process DSS1 timepoint
         timepoint_data["overall"] = process_timepoint(
-            df_overall, 
-            "DSS1", 
-            gene_id_mapping, 
-            layout_options["overall"]
+            df_overall, "DSS1", gene_id_mapping, layout_options["overall"]
         )
 
         # Process pairwise timepoints
         pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
         xl = pd.ExcelFile(pairwise_file)
-        
+
         for sheet_name in xl.sheet_names:
             print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
             try:
@@ -253,103 +254,106 @@ def process_data():
                 if not df.empty:
                     # Process the timepoint with the DataFrame
                     timepoint_data[sheet_name] = process_timepoint(
-                        df,
-                        sheet_name,
-                        gene_id_mapping,
-                        layout_options["pairwise"]
+                        df, sheet_name, gene_id_mapping, layout_options["pairwise"]
                     )
                 else:
                     print(f"Empty sheet: {sheet_name}", flush=True)
                     timepoint_data[sheet_name] = {
                         "status": "error",
-                        "message": "Empty sheet"
+                        "message": "Empty sheet",
                     }
             except Exception as e:
                 print(f"Error processing sheet {sheet_name}: {str(e)}", flush=True)
-                timepoint_data[sheet_name] = {
-                    "status": "error",
-                    "message": str(e)
-                }
+                timepoint_data[sheet_name] = {"status": "error", "message": str(e)}
 
         return timepoint_data
 
     except Exception as e:
         print(f"Error in process_data: {str(e)}", flush=True)
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
 
-def process_timepoint(
-    df, 
-    timepoint, 
-    gene_id_mapping, 
-    layout_options=None
-):
+def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """Process a single timepoint with configurable layout options."""
     try:
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-        
+
         # ... [rest of the existing code] ...
-        
+
         # Look for biclique file
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-        
+
         if os.path.exists(biclique_file):
             bicliques_result = process_bicliques(
                 graph,
                 biclique_file,
                 timepoint,
                 gene_id_mapping=gene_id_mapping,
-                file_format="gene-name"
+                file_format="gene-name",
             )
-            
+
             if bicliques_result and "bicliques" in bicliques_result:
                 # Calculate coverage statistics
-                coverage_stats = calculate_coverage_statistics(bicliques_result["bicliques"], graph)
-                edge_coverage = calculate_edge_coverage(bicliques_result["bicliques"], graph)
-                
+                coverage_stats = calculate_coverage_statistics(
+                    bicliques_result["bicliques"], graph
+                )
+                edge_coverage = calculate_edge_coverage(
+                    bicliques_result["bicliques"], graph
+                )
+
                 # Calculate biclique statistics
                 biclique_stats = calculate_biclique_statistics(
-                    bicliques_result["bicliques"], 
-                    graph
+                    bicliques_result["bicliques"], graph
                 )
-                
+
                 # Process components
-                complex_components, interesting_components, _, non_simple_components, comp_stats, statistics = \
-                    process_components(
-                        graph,
-                        bicliques_result,
-                        dominating_set=None
-                    )
-                
+                (
+                    complex_components,
+                    interesting_components,
+                    _,
+                    non_simple_components,
+                    comp_stats,
+                    statistics,
+                ) = process_components(graph, bicliques_result, dominating_set=None)
+
                 # Update component stats with biclique information
                 component_stats = {
                     "original": {
-                        "connected": analyze_components(list(nx.connected_components(graph)), graph),
-                        "biconnected": analyze_components(list(nx.biconnected_components(graph)), graph),
-                        "triconnected": analyze_triconnected_components(graph)[1]
+                        "connected": analyze_components(
+                            list(nx.connected_components(graph)), graph
+                        ),
+                        "biconnected": analyze_components(
+                            list(nx.biconnected_components(graph)), graph
+                        ),
+                        "triconnected": analyze_triconnected_components(graph)[1],
                     },
-                    "biclique": comp_stats.get("components", {}).get("biclique", {})
+                    "biclique": comp_stats.get("components", {}).get("biclique", {}),
                 }
-                
+
                 return {
                     "status": "success",
                     "stats": {
                         "components": component_stats,
                         "coverage": coverage_stats,  # Make sure this is included
                         "edge_coverage": edge_coverage,
-                        "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
-                        "size_distribution": biclique_stats.get("size_distribution", {}),
-                        "dominating_set": statistics.get("dominating_set", {})
+                        "biclique_types": classify_biclique_types(
+                            bicliques_result["bicliques"]
+                        ),
+                        "size_distribution": biclique_stats.get(
+                            "size_distribution", {}
+                        ),
+                        "dominating_set": statistics.get("dominating_set", {}),
                     },
                     "complex_components": complex_components,
                     "interesting_components": interesting_components,
                     "non_simple_components": non_simple_components,
-                    "layout_used": layout_options
+                    "layout_used": layout_options,
                 }
-        
+
         # Return basic statistics if no bicliques found
         return {
             "status": "success",
@@ -365,14 +369,14 @@ def process_timepoint(
                         "total": 0,
                         "single_percentage": 0,
                         "multiple_percentage": 0,
-                        "uncovered_percentage": 0
-                    }
+                        "uncovered_percentage": 0,
+                    },
                 },
                 "biclique_types": {
                     "empty": 0,
                     "simple": 0,
                     "interesting": 0,
-                    "complex": 0
+                    "complex": 0,
                 },
                 "size_distribution": {},
                 "dominating_set": {
@@ -380,90 +384,18 @@ def process_timepoint(
                     "percentage": 0,
                     "genes_dominated": 0,
                     "components_with_ds": 0,
-                    "avg_size_per_component": 0
-                }
+                    "avg_size_per_component": 0,
+                },
             },
-            "layout_used": layout_options
+            "layout_used": layout_options,
         }
 
     except Exception as e:
         print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
         import traceback
+
         traceback.print_exc()
-        return {
-            "status": "error", 
-            "message": str(e)
-        }
-            bicliques_result = process_bicliques(
-                graph, 
-                biclique_file,
-                timepoint, 
-                gene_id_mapping=gene_id_mapping,
-                layout=layout_options.get("bicliques", "circular")
-            )
-            
-            # Process biclique graph components if bicliques found
-            if bicliques_result and "bicliques" in bicliques_result:
-                print(f"Creating biclique graph for {timepoint}...", flush=True)
-                biclique_graph = nx.Graph()
-                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-
-                # Calculate statistics for biclique graph
-                biclique_connected = list(nx.connected_components(biclique_graph))
-                biclique_biconnected = list(nx.biconnected_components(biclique_graph))
-                biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(
-                    biclique_graph, 
-                    layout=layout_options.get("triconnected", "spring")
-                )
-
-                component_stats["components"]["biclique"] = {
-                    "connected": analyze_components(
-                        biclique_connected, 
-                        biclique_graph, 
-                        layout=layout_options.get("default", "original")
-                    ),
-                    "biconnected": analyze_components(
-                        biclique_biconnected, 
-                        biclique_graph, 
-                        layout=layout_options.get("default", "original")
-                    ),
-                    "triconnected": biclique_tri_stats,
-                }
-                
-                statistics = calculate_biclique_statistics(bicliques_result["bicliques"], graph)
-            else:
-                print(f"No bicliques found for {timepoint}", flush=True)
-                bicliques_result = {"bicliques": []}
-                statistics = {}
-        else:
-            print(f"Biclique file not found for {timepoint}", flush=True)
-            bicliques_result = {"bicliques": []}
-            statistics = {}
-
-        # Structure the return data to match template expectations
-        return {
-            "status": "success",
-            "stats": component_stats,
-            "coverage": calculate_coverage_statistics(bicliques_result.get("bicliques", []), graph),
-            "biclique_types": statistics.get("biclique_types", {
-                "empty": 0,
-                "simple": 0,
-                "interesting": 0,
-                "complex": 0
-            }),
-            "components": component_stats["components"],
-            "layout_used": layout_options,  # Add layout information
-        }
-
-    except Exception as e:
-        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 
 
 # Add placeholder functions for missing metadata creation
