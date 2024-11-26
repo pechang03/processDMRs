@@ -14,19 +14,13 @@ from utils.graph_io import (
     remove_isolated_nodes,
     preprocess_graph_for_visualization
 )
-from utils.constants import START_GENE_ID
-
-
-# Configuration constants
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "processDMRs", "data")
-DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
-DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
-BIPARTITE_GRAPH_TEMPLATE = os.path.join(
-    DATA_DIR, "bipartite_graph_output_{}_pairwise.txt"
-)
-BIPARTITE_GRAPH_OVERALL = os.path.join(
-    DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
+from utils.constants import (
+    DATA_DIR,
+    DSS1_FILE,
+    DSS_PAIRWISE_FILE,
+    BIPARTITE_GRAPH_TEMPLATE,
+    BIPARTITE_GRAPH_OVERALL,
+    START_GENE_ID
 )
 
 
