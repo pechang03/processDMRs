@@ -32,8 +32,9 @@ class TestGraphStatistics(unittest.TestCase):
             if genes:
                 all_genes.update(g.strip().lower() for g in genes)
 
+        from utils.constants import START_GENE_ID
         self.gene_id_mapping = {
-            gene: idx + len(self.df) for idx, gene in enumerate(sorted(all_genes))
+            gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(all_genes))
         }
 
         # Create the bipartite graph
@@ -45,6 +46,7 @@ class TestGraphStatistics(unittest.TestCase):
         print(f"Number of edges: {len(self.bipartite_graph.edges())}")
         print(f"Gene mapping: {self.gene_id_mapping}")
         print(f"Edges: {list(self.bipartite_graph.edges())}")
+        print(f"First gene ID: {min(self.gene_id_mapping.values())}")
 
     def test_min_degree(self):
         """Test minimum degree in the graph"""
