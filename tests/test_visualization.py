@@ -58,10 +58,12 @@ class TestVisualization(unittest.TestCase):
 
     def test_create_node_traces_with_bicliques(self):
         """Test node coloring with valid biclique assignments"""
+        from utils.constants import START_GENE_ID
         node_biclique_map = {
-            1: [0],  # Node 1 in first biclique
-            3: [0],  # Node 3 in first biclique
-            4: [0, 1],  # Node 4 in first and second bicliques
+            1: [0],  # DMR in first biclique
+            2: [],   # DMR not in any biclique
+            START_GENE_ID: [0],     # Gene in first biclique
+            START_GENE_ID + 1: [0]  # Gene in first biclique
         }
         biclique_colors = ["red", "blue", "green"]
 
@@ -76,10 +78,9 @@ class TestVisualization(unittest.TestCase):
         dmr_trace = traces[0]
         gene_trace = traces[1]
 
-        # Check DMR colors
-        # Convert tuple to list for comparison
+        # Check colors
         dmr_colors = list(dmr_trace.marker.color)
-        self.assertEqual(dmr_colors, ["red", "gray"])  # DMR 1 red, DMR 2 gray
+        self.assertEqual(dmr_colors, ["red", "gray"])  # First DMR red, second gray
 
         gene_colors = list(gene_trace.marker.color)
         self.assertEqual(gene_colors, ["red", "red"])  # Both genes red (first biclique)
