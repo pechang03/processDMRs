@@ -286,6 +286,20 @@ def process_data():
 def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """Process a single timepoint with configurable layout options."""
     try:
+        # Initialize default component stats structure
+        component_stats = {
+            "original": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            },
+            "biclique": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            }
+        }
+
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
 
