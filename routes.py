@@ -75,11 +75,40 @@ def index_route():
         # Get overall data if available
         overall_data = results.get("overall", {})
         
+        # Ensure statistics has the required structure
+        statistics = overall_data.get("stats", {
+            "components": {
+                "original": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                },
+                "biclique": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                }
+            },
+            "coverage": {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0
+                }
+            }
+        })
+        
         return render_template(
             "index.html",
             results=overall_data,
-            statistics=overall_data.get("stats", {}),
-            timepoint_info=timepoint_info,
+            statistics=statistics,
+            timepoint_info=results,
             dmr_metadata=overall_data.get("dmr_metadata", {}),
             gene_metadata=overall_data.get("gene_metadata", {}),
             bicliques_result=overall_data,
