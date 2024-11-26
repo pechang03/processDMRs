@@ -4,7 +4,7 @@ from utils.constants import START_GENE_ID
 
 def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint."""
-    # Use smaller offsets (e.g., 1000) for each timepoint to stay below START_GENE_ID
+    # Use larger offsets (10000) to handle ~2000 DMRs per timepoint
     timepoint_offsets = {
         "P21-P28_TSS": 10000,
         "P21-P40_TSS": 20000,
@@ -13,24 +13,20 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         "TP28-TP180_TSS": 50000,
         "TP40-TP180_TSS": 60000,
         "TP60-TP180_TSS": 70000,
-        "DSS1": 0,  # Base timepoint uses original numbers
+        "DSS1": 0  # Base timepoint uses original numbers
     }
-
+    
     # Get offset for this timepoint
-    offset = timepoint_offsets.get(
-        timepoint, 8000
-    )  # Default offset for unknown timepoints
-
+    offset = timepoint_offsets.get(timepoint, 80000)  # Default offset increased to 80000
+    
     # Calculate DMR ID with offset
     dmr_id = offset + dmr_num
-
+    
     # Ensure DMR ID is below first gene ID
     if first_gene_id > 0 and dmr_id >= first_gene_id:
-        print(
-            f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}, using original numbering"
-        )
+        print(f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}, using original numbering")
         dmr_id = dmr_num  # Fall back to original numbering
-
+            
     return dmr_id
 
 
