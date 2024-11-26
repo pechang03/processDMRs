@@ -10,6 +10,8 @@ import networkx as nx
 
 from utils.node_info import NodeInfo
 from utils.edge_info import EdgeInfo
+from utils.graph_io import preprocess_graph_for_visualization
+
 from .traces import (
     create_node_traces,
     create_edge_traces,
@@ -50,20 +52,13 @@ def create_biclique_visualization(
     print(f"\nCreating visualization for {len(bicliques)} bicliques")  # Debug logging
 
     # Preprocess graphs for visualization
-    from utils.graph_io import preprocess_graph_for_visualization
-    
+
     processed_original = preprocess_graph_for_visualization(
-        original_graph,
-        remove_isolates=True,
-        remove_bridges=False,
-        keep_dmrs=True
+        original_graph, remove_isolates=True, remove_bridges=False, keep_dmrs=True
     )
-    
+
     processed_bipartite = preprocess_graph_for_visualization(
-        bipartite_graph,
-        remove_isolates=True,
-        remove_bridges=False,
-        keep_dmrs=True
+        bipartite_graph, remove_isolates=True, remove_bridges=False, keep_dmrs=True
     )
 
     # Generate colors for bicliques

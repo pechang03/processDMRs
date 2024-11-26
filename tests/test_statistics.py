@@ -10,12 +10,12 @@ from biclique_analysis.statistics import (
     validate_graph,
 )
 from biclique_analysis.classifier import BicliqueSizeCategory
+from utils.constants import START_GENE_ID
 
 
 class TestStatistics(unittest.TestCase):
     def setUp(self):
         """Set up test graph with two overlapping K_{3,3} bicliques"""
-        from utils.constants import START_GENE_ID
         self.graph = nx.Graph()
 
         # First add all nodes to the graph
@@ -39,8 +39,14 @@ class TestStatistics(unittest.TestCase):
 
         # Update bicliques to match the graph structure
         self.bicliques = [
-            ({0, 1, 2}, {START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2}),  # First K_{3,3}
-            ({3, 4, 5}, {START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4}),  # Second K_{3,3}
+            (
+                {0, 1, 2},
+                {START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2},
+            ),  # First K_{3,3}
+            (
+                {3, 4, 5},
+                {START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4},
+            ),  # Second K_{3,3}
         ]
 
     def test_calculate_coverage_statistics(self):
@@ -127,40 +133,44 @@ class TestStatistics(unittest.TestCase):
         with self.assertRaises(InvalidGraphError):
             calculate_coverage_statistics([], gene_graph)
 
-
     def test_calculate_node_participation(self):
         """Test calculation of node participation in bicliques"""
         node_participation = calculate_node_participation(self.bicliques)
-        
+
         # In our setup:
         # - Each DMR appears in exactly one biclique
         # - Node 8 appears in both bicliques, other genes in one each
-        self.assertEqual(node_participation["dmrs"][1], 6)  # All 6 DMRs appear in 1 biclique
-        self.assertEqual(node_participation["genes"][1], 4)  # 4 genes appear in 1 biclique
-        self.assertEqual(node_participation["genes"][2], 1)  # 1 gene (node 8) appears in 2 bicliques
+        self.assertEqual(
+            node_participation["dmrs"][1], 6
+        )  # All 6 DMRs appear in 1 biclique
+        self.assertEqual(
+            node_participation["genes"][1], 4
+        )  # 4 genes appear in 1 biclique
+        self.assertEqual(
+            node_participation["genes"][2], 1
+        )  # 1 gene (node 8) appears in 2 bicliques
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
 class TestStatisticsEdgeCases(unittest.TestCase):
     def setUp(self):
         """Set up test graph with simple structure"""
         self.graph = nx.Graph()
-        
+
         # Add nodes
         for n in [0, 1, 2]:
             self.graph.add_node(n, bipartite=0)  # DMRs
         for n in [3, 4, 5]:
             self.graph.add_node(n, bipartite=1)  # Genes
-            
+
         # Add edges
         self.graph.add_edges_from([(0, 3), (1, 4), (2, 5)])
-        
+
         # Simple bicliques
-        self.bicliques = [
-            ({0}, {3}),
-            ({1}, {4}),
-            ({2}, {5})
-        ]
+        self.bicliques = [({0}, {3}), ({1}, {4}), ({2}, {5})]
 
     def test_calculate_coverage_statistics(self):
         coverage_stats = calculate_coverage_statistics(self.bicliques, self.graph)
