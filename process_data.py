@@ -78,6 +78,7 @@ from biclique_analysis.statistics import (
     analyze_biconnected_components,
 )
 from biclique_analysis.triconnected import analyze_triconnected_components
+from biclique_analysis.triconnected import analyze_triconnected_components
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,
