@@ -9,6 +9,7 @@ import csv
 # mport time
 # mport psutil
 from typing import Dict, Tuple, Set
+import json
 
 from data_loader import (
     get_excel_sheets,
@@ -92,15 +93,12 @@ def write_gene_mappings(
         raise
 
 
-import json
-
-
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
         # Get correct max_dmr_id (number of rows minus 1 for 0-based indexing)
         max_dmr_id = len(df) - 1  # This ensures DMR IDs go from 0 to 2108 for 2109 rows
-        
+
         # Use the correct column name based on timepoint
         if timepoint == "DSS1":
             interaction_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
@@ -108,11 +106,15 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
             interaction_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
 
         if interaction_col not in df.columns:
-            raise ValueError(f"Interaction column '{interaction_col}' not found in dataset")
+            raise ValueError(
+                f"Interaction column '{interaction_col}' not found in dataset"
+            )
 
         # Process enhancer info if not already processed
         if "Processed_Enhancer_Info" not in df.columns:
-            df["Processed_Enhancer_Info"] = df[interaction_col].apply(process_enhancer_info)
+            df["Processed_Enhancer_Info"] = df[interaction_col].apply(
+                process_enhancer_info
+            )
 
         # If no master mapping provided, create one
         if gene_id_mapping is None:
@@ -159,7 +161,7 @@ def main():
     args = parse_arguments()
 
     print("\nCollecting all unique genes across timepoints...")
-    
+
     # Read sheets from pairwise file
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
     pairwise_dfs = {}
@@ -173,7 +175,7 @@ def main():
         if df is None:
             continue
         pairwise_dfs[sheet] = df
-        
+
         # Update all_genes set from this sheet
         all_genes.update(get_genes_from_df(df))
 
@@ -197,63 +199,77 @@ def main():
     # Process overall DSS1 file
     print("\nProcessing DSS1 overall file...")
     process_single_dataset(
-        df_overall, 
-        "bipartite_graph_output.txt", 
-        args, 
-        gene_id_mapping, 
-        "DSS1"
+        df_overall, "bipartite_graph_output.txt", args, gene_id_mapping, "DSS1"
     )
+
 
 def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
     """Extract all genes from a dataframe."""
     genes = set()
-    
+
     # Get gene column
-    gene_column = next((col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] 
-                       if col in df.columns), None)
+    gene_column = next(
+        (
+            col
+            for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]
+            if col in df.columns
+        ),
+        None,
+    )
     if gene_column:
         genes.update(df[gene_column].dropna().str.strip().str.lower())
 
     # Get genes from enhancer/promoter info
     if "Processed_Enhancer_Info" not in df.columns:
-        interaction_col = next((col for col in [
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)",
-            "ENCODE_Promoter_Interaction(BingRen_Lab)"
-        ] if col in df.columns), None)
-        
+        interaction_col = next(
+            (
+                col
+                for col in [
+                    "ENCODE_Enhancer_Interaction(BingRen_Lab)",
+                    "ENCODE_Promoter_Interaction(BingRen_Lab)",
+                ]
+                if col in df.columns
+            ),
+            None,
+        )
+
         if interaction_col:
-            df["Processed_Enhancer_Info"] = df[interaction_col].apply(process_enhancer_info)
-    
+            df["Processed_Enhancer_Info"] = df[interaction_col].apply(
+                process_enhancer_info
+            )
+
     if "Processed_Enhancer_Info" in df.columns:
         for gene_list in df["Processed_Enhancer_Info"]:
             if gene_list:
                 genes.update(g.strip().lower() for g in gene_list)
-                
+
     return genes
+
 
 def create_gene_mapping(genes: Set[str], max_dmr_id: int) -> Dict[str, int]:
     """Create a mapping of gene names to IDs starting after max_dmr_id."""
     print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
-    
+
     # Convert all gene names to lowercase and remove any empty strings
-    cleaned_genes = {gene.strip().lower() for gene in genes if gene and isinstance(gene, str)}
-    
+    cleaned_genes = {
+        gene.strip().lower() for gene in genes if gene and isinstance(gene, str)
+    }
+
     # Remove any empty strings that might have resulted from the cleaning
-    cleaned_genes.discard('')
-    
+    cleaned_genes.discard("")
+
     print(f"After cleaning: {len(cleaned_genes)} unique genes")
-    
+
     # Start gene IDs after the max DMR ID (which is 0-based)
     gene_id_mapping = {
-        gene: idx + max_dmr_id + 1 
-        for idx, gene in enumerate(sorted(cleaned_genes))
+        gene: idx + max_dmr_id + 1 for idx, gene in enumerate(sorted(cleaned_genes))
     }
-    
+
     # Debug output
     print("\nFirst few gene mappings:")
     for gene, gene_id in sorted(list(gene_id_mapping.items())[:5]):
         print(f"{gene}: {gene_id}")
-    
+
     return gene_id_mapping
 
 
