@@ -265,44 +265,44 @@ def create_bipartite_graph(
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
-
+    
     print(f"\nCreating bipartite graph for timepoint: {timepoint}")
+    
+    # Convert gene mapping to lowercase for case-insensitive matching
+    gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items()}
     
     # Add DMR nodes (0-based indexing)
     dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
     for dmr in dmr_nodes:
         B.add_node(dmr, bipartite=0, timepoint=timepoint)
 
-    # Add all gene nodes from mapping
+    # Add gene nodes
     for gene_name, gene_id in gene_id_mapping.items():
         B.add_node(gene_id, bipartite=1)
 
-    # Process each row to add edges
-    edges_added = set()  # Track unique edges
+    # Track edges to avoid duplicates
+    edges_added = set()
+
+    # Process each row
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
-
-        # Process closest gene
-        if isinstance(row.get(closest_gene_col), str):
+        
+        # Add edge for closest gene
+        if pd.notna(row.get(closest_gene_col)):
             gene_name = str(row[closest_gene_col]).strip().lower()
-            if gene_name and gene_name in gene_id_mapping:
+            if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
                 edge = (dmr_id, gene_id)
                 if edge not in edges_added:
                     B.add_edge(*edge)
                     edges_added.add(edge)
 
-        # Process enhancer genes if present
-        enhancer_info = row.get("Processed_Enhancer_Info")
-        if isinstance(enhancer_info, (set, list, str)):
-            genes = enhancer_info
-            if isinstance(genes, str):
-                genes = [g.strip().lower() for g in genes.split(";")]
-            elif isinstance(genes, set):
-                genes = {g.strip().lower() for g in genes}
-            
-            for gene_name in genes:
-                if gene_name and gene_name in gene_id_mapping:
+        # Add edges for enhancer genes
+        if pd.notna(row.get("ENCODE_Enhancer_Interaction(BingRen_Lab)")):
+            enhancer_genes = process_enhancer_info(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"])
+            for gene_name in enhancer_genes:
+                gene_name = gene_name.lower()
+                if gene_name in gene_id_mapping:
                     gene_id = gene_id_mapping[gene_name]
                     edge = (dmr_id, gene_id)
                     if edge not in edges_added:
