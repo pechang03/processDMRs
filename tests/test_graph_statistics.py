@@ -13,16 +13,16 @@ from biclique_analysis.statistics import validate_graph
 
 class TestGraphStatistics(unittest.TestCase):
     def setUp(self):
+        """Set up test graph with proper K_{2,2} structure"""
         # Sample DataFrame setup for testing
         data = {
-            "DMR_No.": [1, 2, 3],
-            "Gene_Symbol_Nearby": ["genea", "geneb", "genec"],  # Make lowercase
+            "DMR_No.": [1, 2],  # Only 2 DMRs
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB"],  # Only 2 genes
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                "genea;geneb;genec",  # Each DMR connects to all genes
-                "genea;geneb;genec",
-                "genea;geneb;genec"
+                "GeneA;GeneB",  # Each DMR connects to both genes
+                "GeneA;GeneB"
             ],
-            "Gene_Description": ["Desc1", "Desc2", "Desc3"],
+            "Gene_Description": ["Desc1", "Desc2"],
         }
         self.df = pd.DataFrame(data)
         self.df["Processed_Enhancer_Info"] = self.df[
