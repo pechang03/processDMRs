@@ -154,25 +154,30 @@ def statistics_route():
                 }),
                 "components": overall_data.get("stats", {}).get("components", {
                     "original": {
-                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                    },
-                    "biclique": {
-                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                        "connected": {
+                            "components": [],
+                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                        },
+                        "biconnected": {
+                            "components": [],
+                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                        },
+                        "triconnected": {
+                            "components": [],
+                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                        }
                     }
                 })
             },
             "statistics": overall_data.get("stats", {}),
             "timepoint_info": {
                 timepoint: {
-                    "status": data.get("status", "error"),
-                    "stats": data.get("stats", {})
+                    "status": "success",
+                    "stats": data.get("stats", {}),
+                    "components": data.get("stats", {}).get("components", {})
                 }
                 for timepoint, data in results.items()
-                if timepoint != "overall"
+                if isinstance(data, dict) and "error" not in data
             }
         }
 
