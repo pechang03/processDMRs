@@ -208,15 +208,24 @@ def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
         print(f"\nReading pairwise file: {pairwise_file}", flush=True)
         
         # Read all sheets at once
-        all_sheets = pd.read_excel(pairwise_file, sheet_name=None)
+        xl = pd.ExcelFile(pairwise_file)
         
         # Process each sheet
-        for sheet_name, df in all_sheets.items():
+        for sheet_name in xl.sheet_names:
             print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
-            if not df.empty:
-                timepoint_data[sheet_name] = process_timepoint(df, sheet_name, gene_id_mapping)
-            else:
-                print(f"Empty sheet: {sheet_name}", flush=True)
+            try:
+                # Read the sheet into a DataFrame
+                df = pd.read_excel(xl, sheet_name=sheet_name)
+                if not df.empty:
+                    timepoint_data[sheet_name] = process_timepoint(df, sheet_name, gene_id_mapping)
+                else:
+                    print(f"Empty sheet: {sheet_name}", flush=True)
+            except Exception as e:
+                print(f"Error processing sheet {sheet_name}: {str(e)}", flush=True)
+                timepoint_data[sheet_name] = {
+                    "status": "error",
+                    "message": str(e)
+                }
                 
     except Exception as e:
         print(f"Error processing pairwise timepoints: {str(e)}", flush=True)
