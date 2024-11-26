@@ -187,40 +187,49 @@ def index_route():
 
 def statistics_route():
     """Handle statistics page requests with enhanced error handling and debugging."""
+    import sys
     try:
+        print("\n=== Starting Statistics Route ===", flush=True)
         results = process_data()
+        
+        print("\nResults from process_data():", flush=True)
+        print(f"Type: {type(results)}", flush=True)
+        print(f"Keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}", flush=True)
+        
         if "error" in results:
+            print(f"Error found in results: {results['error']}", flush=True)
             return render_template("error.html", message=results["error"])
 
-        # Debug output to verify data
-        print("\nDebug: Statistics Route Data")
-        print("Keys in results:", list(results.keys()))
-
-        # Get timepoint data
-        timepoint_stats = results.get("timepoint_stats", {})
-        print("Timepoint stats keys:", list(timepoint_stats.keys()))
-
-        # Create list of timepoints with their status
+        # Get timepoint data with debug output
+        print("\nProcessing timepoints:", flush=True)
         timepoint_info = {}
         for timepoint, data in results.items():
-            if isinstance(data, dict):  # Ensure we're only processing dictionary data
-                print(f"\nProcessing timepoint {timepoint}")
-                print(f"Data keys: {list(data.keys())}")
+            print(f"\nTimepoint: {timepoint}", flush=True)
+            print(f"Data type: {type(data)}", flush=True)
+            if isinstance(data, dict):
+                print(f"Data keys: {list(data.keys())}", flush=True)
                 
                 if "error" in data:
+                    print(f"Error in timepoint {timepoint}: {data['error']}", flush=True)
                     timepoint_info[timepoint] = {
                         "status": "error",
                         "message": data["error"],
                     }
                 else:
+                    print(f"Processing successful timepoint: {timepoint}", flush=True)
                     timepoint_info[timepoint] = {
                         "status": "success",
                         "stats": data.get("statistics", {}),
                         "coverage": data.get("coverage", {}),
                         "components": data.get("component_stats", {}).get("components", {}),
                     }
+                    # Debug output for timepoint data
+                    print(f"Stats: {bool(data.get('statistics'))}", flush=True)
+                    print(f"Coverage: {bool(data.get('coverage'))}", flush=True)
+                    print(f"Components: {bool(data.get('component_stats'))}", flush=True)
 
-        # Create properly structured statistics dictionary
+        # Create statistics dictionary with debug output
+        print("\nCreating detailed statistics:", flush=True)
         detailed_stats = {
             "components": results.get("overall", {}).get("component_stats", {}).get("components", {}),
             "dominating_set": results.get("overall", {}).get("dominating_set", {
@@ -253,18 +262,19 @@ def statistics_route():
             "size_distribution": results.get("overall", {}).get("size_distribution", {}),
         }
 
-        # Debug output for verification
-        print("\nDetailed stats structure:")
-        print("Components:", bool(detailed_stats["components"]))
-        print("Coverage:", bool(detailed_stats["coverage"]))
-        print("Edge coverage:", bool(detailed_stats["edge_coverage"]))
-        print("Biclique types:", detailed_stats["biclique_types"])
+        print("\nDetailed stats structure:", flush=True)
+        print(f"Components: {bool(detailed_stats['components'])}", flush=True)
+        print(f"Coverage: {bool(detailed_stats['coverage'])}", flush=True)
+        print(f"Edge coverage: {bool(detailed_stats['edge_coverage'])}", flush=True)
+        print(f"Biclique types: {detailed_stats['biclique_types']}", flush=True)
 
-        # Convert numpy types and tuple keys before JSON serialization
+        # Convert data types
+        print("\nConverting data types...", flush=True)
         detailed_stats = convert_dict_keys_to_str(detailed_stats)
 
-        # Update edge coverage from biclique statistics if available
+        # Update edge coverage if available
         if "overall" in results and "statistics" in results["overall"]:
+            print("\nUpdating edge coverage from overall statistics...", flush=True)
             detailed_stats["edge_coverage"] = convert_dict_keys_to_str(
                 results["overall"]["statistics"].get("edge_coverage", {})
             )
@@ -272,9 +282,12 @@ def statistics_route():
                 results["overall"]["statistics"].get("edge_coverage", {})
             )
 
-        print("\nFinal detailed stats being sent to template:")
-        print(json.dumps(detailed_stats, indent=2))
-
+        print("\nRendering template with data:", flush=True)
+        print(f"Number of timepoints: {len(timepoint_info)}", flush=True)
+        print(f"Detailed stats keys: {list(detailed_stats.keys())}", flush=True)
+        
+        sys.stdout.flush()
+        
         return render_template(
             "statistics.html",
             statistics=detailed_stats,
@@ -283,7 +296,8 @@ def statistics_route():
         )
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
         return render_template("error.html", message=str(e))
 
 
