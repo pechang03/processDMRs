@@ -147,7 +147,8 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        sparse_mapping = {"GeneA": 3, "GeneB": 4, "GeneC": 5}
+        from utils.constants import START_GENE_ID
+        sparse_mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1, "GeneC": START_GENE_ID + 2}
         sparse_graph = create_bipartite_graph(sparse_df, sparse_mapping)
         self.assertEqual(len(sparse_graph.nodes()), 6)
         self.assertEqual(len(sparse_graph.edges()), 3)
