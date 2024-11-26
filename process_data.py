@@ -150,6 +150,24 @@ def process_single_timepoint(
         graph = filtered_graph  # Use the filtered graph going forward
         graph_valid = True
 
+        # Analyze original graph components first
+        connected_components = list(nx.connected_components(graph))
+        biconnected_components = list(nx.biconnected_components(graph))
+        triconnected_components, tri_stats = analyze_triconnected_components(graph)
+
+        component_stats = {
+            "original": {
+                "connected": analyze_components(connected_components, graph),
+                "biconnected": analyze_components(biconnected_components, graph),
+                "triconnected": tri_stats
+            },
+            "biclique": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            }
+        }
+
         # Process bicliques for this timepoint
         bicliques_result = process_bicliques(
             graph,
