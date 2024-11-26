@@ -283,81 +283,90 @@ def process_data():
         return {"error": str(e)}
 
 
-def process_single_timepoint(
-    df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int] = None
-) -> Dict:
-    """Process a single timepoint and return its complete analysis"""
+def process_timepoint(df, timepoint, gene_id_mapping):
+    print(f"\nProcessing timepoint: {timepoint}", flush=True)
+    
+    try:
+        # Create bipartite graph
+        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        
+        # Get connected components
+        connected_components = list(nx.connected_components(graph))
+        biconnected_components = list(nx.biconnected_components(graph))
+        triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
 
-    # Create bipartite graph
-    if gene_id_mapping is None:
-        # Create master mapping for overall timepoint
-        gene_id_mapping = create_master_gene_mapping(df)
+        # Calculate component statistics
+        component_stats = {
+            "components": {
+                "original": {
+                    "connected": analyze_components(connected_components, graph),
+                    "biconnected": analyze_components(biconnected_components, graph),
+                    "triconnected": triconnected_stats,
+                }
+            }
+        }
 
-    graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        # Try to process bicliques if file exists
+        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
+        if os.path.exists(biclique_file):
+            print(f"Processing bicliques from {biclique_file}", flush=True)
+            bicliques_result = process_bicliques(
+                graph, 
+                biclique_file,
+                timepoint, 
+                gene_id_mapping=gene_id_mapping
+            )
+            
+            # Process biclique graph components if bicliques found
+            if bicliques_result and "bicliques" in bicliques_result:
+                print(f"Creating biclique graph for {timepoint}...", flush=True)
+                biclique_graph = nx.Graph()
+                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
 
-    # Remove degree-0 gene nodes before analysis
-    filtered_graph = remove_isolated_genes(graph)
-    print(f"\nTimepoint {timepoint}:")
-    print(f"Original graph: {len(graph.nodes())} nodes, {len(graph.edges())} edges")
-    print(
-        f"Filtered graph: {len(filtered_graph.nodes())} nodes, {len(filtered_graph.edges())} edges"
-    )
+                # Calculate statistics for biclique graph
+                biclique_connected = list(nx.connected_components(biclique_graph))
+                biclique_biconnected = list(nx.biconnected_components(biclique_graph))
+                biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
 
-    # Process bicliques on filtered graph
-    bicliques_result = process_bicliques(
-        filtered_graph,
-        f"bipartite_graph_output_{timepoint}.txt",
-        timepoint,
-        gene_id_mapping=gene_id_mapping,
-    )
+                component_stats["components"]["biclique"] = {
+                    "connected": analyze_components(biclique_connected, biclique_graph),
+                    "biconnected": analyze_components(biclique_biconnected, biclique_graph),
+                    "triconnected": biclique_tri_stats,
+                }
+                
+                statistics = calculate_biclique_statistics(bicliques_result["bicliques"], graph)
+            else:
+                print(f"No bicliques found for {timepoint}", flush=True)
+                bicliques_result = {"bicliques": []}
+                statistics = {}
+        else:
+            print(f"Biclique file not found for {timepoint} - will be generated in next phase", flush=True)
+            bicliques_result = {"bicliques": []}
+            statistics = {}
 
-    # Process components - unpack the tuple returned by process_components
-    (
-        complex_components,
-        interesting_components,
-        simple_components,
-        non_simple_components,
-        component_stats,
-        statistics,
-    ) = process_components(graph, bicliques_result)
+        # Structure the return data to match template expectations
+        return {
+            "status": "success",
+            "stats": component_stats,  # This matches the template's data.stats.components structure
+            "coverage": calculate_coverage_statistics(bicliques_result.get("bicliques", []), graph),
+            "biclique_types": statistics.get("biclique_types", {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
+            }),
+            "components": component_stats["components"],  # Include direct component access
+        }
 
-    # Generate embeddings for both types of components
-    triconnected_embeddings = generate_triconnected_embeddings(graph)
-    biclique_embeddings = generate_biclique_embeddings(bicliques_result["bicliques"])
-
-    return {
-        "summary": {
-            "coverage": bicliques_result["coverage"],
-            "edge_coverage": calculate_edge_coverage(
-                bicliques_result["bicliques"], graph
-            ),
-            "component_stats": component_stats,  # Use the unpacked value
-            "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
-            "size_distribution": statistics.get(
-                "size_distribution", {}
-            ),  # Get from statistics instead
-        },
-        "graphs": {
-            "original": graph,
-            "biclique": create_biclique_graph(bicliques_result["bicliques"]),
-        },
-        "interesting_components": interesting_components,  # Use the unpacked value
-        "component_tables": {
-            "triconnected": {
-                "embeddings": triconnected_embeddings,
-                "metadata": create_triconnected_metadata(graph),
-            },
-            "biclique": {
-                "embeddings": biclique_embeddings,
-                "metadata": create_biclique_metadata(bicliques_result["bicliques"]),
-            },
-        },
-        "gene_id_mapping": gene_id_mapping,
-        "node_metadata": {
-            "dmr": create_dmr_metadata(df),
-            "gene": create_gene_metadata(df),
-        },
-    }
+    except Exception as e:
+        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 
 # Add placeholder functions for missing metadata creation
