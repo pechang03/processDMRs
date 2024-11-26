@@ -221,8 +221,22 @@ def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
 
 
 def process_data():
-    """Process all timepoints including overall/DSS1"""
+    """Process all timepoints including overall/DSS1 with configurable layouts"""
     try:
+        # Define layout options for different timepoint types
+        layout_options = {
+            "overall": {
+                "triconnected": "spring",
+                "bicliques": "circular",
+                "default": "original"
+            },
+            "pairwise": {
+                "triconnected": "spring",
+                "bicliques": "circular",
+                "default": "original"
+            }
+        }
+
         # Process overall/DSS1 timepoint first
         print("\nProcessing overall timepoint (DSS1)...", flush=True)
         df_overall = read_excel_file(current_app.config["DSS1_FILE"])
@@ -230,10 +244,23 @@ def process_data():
         # Create master gene mapping
         gene_id_mapping = create_master_gene_mapping(df_overall)
 
-        # Process timepoints
+        # Process timepoints with layout options
         timepoint_data = {
-            "overall": process_overall_timepoint(df_overall),
-            **process_pairwise_timepoints(gene_id_mapping)
+            "overall": process_timepoint(
+                df_overall, 
+                "DSS1", 
+                gene_id_mapping, 
+                layout_options["overall"]
+            ),
+            **{
+                tp: process_timepoint(
+                    df, 
+                    tp, 
+                    gene_id_mapping, 
+                    layout_options["pairwise"]
+                ) 
+                for tp, df in process_pairwise_timepoints(gene_id_mapping).items()
+            }
         }
 
         return timepoint_data
