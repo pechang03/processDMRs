@@ -21,6 +21,7 @@ from biclique_analysis.classifier import (
     classify_component,
 )
 from biclique_analysis.classifier import classify_biclique
+from utils.json_utils import convert_dict_keys_to_str
 
 
 @app.template_filter("get_biclique_classification")
@@ -38,7 +39,7 @@ def index_route():
 
         # Get timepoint data
         timepoint_stats = results.get("timepoint_stats", {})
-        
+
         # Create list of timepoints with their status
         timepoint_info = {}
 
@@ -48,14 +49,16 @@ def index_route():
                 if "error" in data:
                     timepoint_info[timepoint] = {
                         "status": "error",
-                        "message": data["error"]
+                        "message": data["error"],
                     }
                 else:
                     timepoint_info[timepoint] = {
                         "status": "success",
                         "stats": data.get("biclique_stats", {}),
                         "coverage": data.get("coverage", {}),
-                        "components": data.get("component_stats", {}).get("components", {})
+                        "components": data.get("component_stats", {}).get(
+                            "components", {}
+                        ),
                     }
 
         # Limit to first two components
@@ -184,21 +187,21 @@ def statistics_route():
 
         # Get timepoint data
         timepoint_stats = results.get("timepoint_stats", {})
-        
+
         # Create list of timepoints with their status
         timepoint_info = {}
         for timepoint, data in timepoint_stats.items() if timepoint_stats else {}:
             if "error" in data:
                 timepoint_info[timepoint] = {
                     "status": "error",
-                    "message": data["error"]
+                    "message": data["error"],
                 }
             else:
                 timepoint_info[timepoint] = {
                     "status": "success",
                     "stats": data.get("biclique_stats", {}),
                     "coverage": data.get("coverage", {}),
-                    "components": data.get("component_stats", {}).get("components", {})
+                    "components": data.get("component_stats", {}).get("components", {}),
                 }
 
         # Create properly structured statistics dictionary
@@ -230,7 +233,6 @@ def statistics_route():
         }
 
         # Convert numpy types and tuple keys before JSON serialization
-        from utils.json_utils import convert_dict_keys_to_str
 
         detailed_stats = convert_dict_keys_to_str(detailed_stats)
 
@@ -250,7 +252,7 @@ def statistics_route():
             "statistics.html",
             statistics=detailed_stats,
             bicliques_result=convert_dict_keys_to_str(results),
-            timepoint_info=timepoint_info
+            timepoint_info=timepoint_info,
         )
     except Exception as e:
         import traceback
