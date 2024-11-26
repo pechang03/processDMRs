@@ -69,6 +69,10 @@ def create_gene_trace(
     textposition: str = "middle right",
 ) -> go.Scatter:
     """Create trace for regular gene nodes."""
+    # Add at start of function:
+    if not gene_nodes or not node_positions:
+        return None
+
     x = []
     y = []
     text = []
@@ -86,13 +90,9 @@ def create_gene_trace(
         y.append(y_pos)
 
         # Set node color based on biclique membership
-        if node_id in node_biclique_map and node_biclique_map[node_id] and biclique_colors:
+        if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            color = (
-                biclique_colors[biclique_idx]
-                if biclique_idx < len(biclique_colors)
-                else "gray"
-            )
+            color = biclique_colors[biclique_idx % len(biclique_colors)] if biclique_colors else "gray"
         else:
             color = "gray"
         colors.append(color)
@@ -208,6 +208,10 @@ def create_dmr_trace(
     dmr_metadata: Dict[str, Dict] = None,
 ) -> go.Scatter:
     """Create trace for DMR nodes."""
+    # Add at start of function:
+    if not dmr_nodes or not node_positions:
+        return None
+
     x = []
     y = []
     text = []
@@ -228,13 +232,9 @@ def create_dmr_trace(
         y.append(y_pos)
 
         # Set node color based on biclique membership
-        if node_id in node_biclique_map and biclique_colors:
+        if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            color = (
-                biclique_colors[biclique_idx]
-                if biclique_idx < len(biclique_colors)
-                else "gray"
-            )
+            color = biclique_colors[biclique_idx % len(biclique_colors)] if biclique_colors else "gray"
         else:
             color = "gray"
         colors.append(color)
