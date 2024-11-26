@@ -4,7 +4,8 @@ from flask import render_template
 from extensions import app
 from routes import index_route, statistics_route, component_detail_route
 from process_data import process_data
-from data_loader import get_excel_sheets, DSS1_FILE, DSS_PAIRWISE_FILE
+from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
+from data_loader import get_excel_sheets
 
 # Version constant
 __version__ = "0.0.1-alpha"
