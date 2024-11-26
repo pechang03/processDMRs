@@ -223,8 +223,11 @@ def process_single_timepoint(
         gene_id_mapping=gene_id_mapping,
     )
 
-    # Calculate component data
-    component_results = process_components(graph, bicliques_result)
+    # Process components - unpack the tuple returned by process_components
+    (complex_components, interesting_components, simple_components, 
+     non_simple_components, component_stats, statistics) = process_components(
+        graph, bicliques_result
+    )
 
     # Generate embeddings for both types of components
     triconnected_embeddings = generate_triconnected_embeddings(graph)
@@ -236,7 +239,7 @@ def process_single_timepoint(
             "edge_coverage": calculate_edge_coverage(
                 bicliques_result["bicliques"], graph
             ),
-            "component_stats": component_results["statistics"],
+            "component_stats": component_stats,  # Use the unpacked value
             "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
             "size_distribution": bicliques_result["size_distribution"],
         },
@@ -244,7 +247,7 @@ def process_single_timepoint(
             "original": graph,
             "biclique": create_biclique_graph(bicliques_result["bicliques"]),
         },
-        "interesting_components": component_results["interesting_components"],
+        "interesting_components": interesting_components,  # Use the unpacked value
         "component_tables": {
             "triconnected": {
                 "embeddings": triconnected_embeddings,
