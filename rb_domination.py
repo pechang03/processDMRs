@@ -158,10 +158,23 @@ def greedy_rb_domination(graph, df, area_col=None):
     return minimal_dominating_set
 
 
-def calculate_dominating_sets(graph, df):
-    """Calculate dominating sets for the graph."""
-    # Process whole graph at once
+def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str = "overall") -> Set[int]:
+    """Calculate or load cached RB dominating set for the graph."""
+    cache = RBDominationCache()
+    
+    # Try to load from cache first
+    cached_set = cache.load_dominating_set(timepoint)
+    if cached_set is not None:
+        print(f"Using cached RB dominating set for {timepoint}")
+        return cached_set
+    
+    # Calculate new dominating set
+    print(f"Calculating new RB dominating set for {timepoint}")
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
+    
+    # Cache the result
+    cache.save_dominating_set(timepoint, dominating_set)
+    
     return dominating_set
 
 
