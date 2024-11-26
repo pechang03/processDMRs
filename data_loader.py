@@ -284,7 +284,7 @@ def create_bipartite_graph(
         dmr_id = row["DMR_No."] - 1  # Zero-based indexing
 
         # Process closest gene
-        if pd.notna(row.get(closest_gene_col)):
+        if isinstance(row.get(closest_gene_col), str):  # Changed this check
             gene_name = str(row[closest_gene_col]).strip().lower()
             if gene_name in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_name]
@@ -294,15 +294,12 @@ def create_bipartite_graph(
                     edges_added.add(edge)
 
         # Process enhancer genes if present
-        if pd.notna(row.get("Processed_Enhancer_Info")):
-            genes = row["Processed_Enhancer_Info"]
+        enhancer_info = row.get("Processed_Enhancer_Info")
+        if isinstance(enhancer_info, (list, str)):  # Changed this check
+            genes = enhancer_info
             if isinstance(genes, str):
                 genes = [g.strip() for g in genes.split(";")]
-            elif isinstance(genes, (list, set)):
-                genes = list(genes)
-            else:
-                continue
-
+            
             for gene_name in genes:
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
@@ -313,15 +310,10 @@ def create_bipartite_graph(
                         edges_added.add(edge)
 
         # Process Associated_Genes if present
-        if pd.notna(row.get("Associated_Genes")):
-            genes = row["Associated_Genes"]
-            if isinstance(genes, str):
-                genes = [g.strip() for g in genes.split(";")]
-            elif isinstance(genes, (list, set)):
-                genes = list(genes)
-            else:
-                continue
-
+        associated_genes = row.get("Associated_Genes")
+        if isinstance(associated_genes, str):  # Changed this check
+            genes = [g.strip() for g in associated_genes.split(";")]
+            
             for gene_name in genes:
                 gene_name = str(gene_name).strip().lower()
                 if gene_name in gene_id_mapping:
