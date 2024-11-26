@@ -23,6 +23,7 @@ from data_loader import (
 )
 import pandas as pd
 from utils import create_dmr_id
+from utils.constants import START_GENE_ID
 
 from utils import write_bipartite_graph
 from utils import process_enhancer_info
@@ -73,8 +74,14 @@ def parse_arguments():
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
-        # Get correct max_dmr_id (number of rows minus 1 for 0-based indexing)
-        max_dmr_id = len(df) - 1  # This ensures DMR IDs go from 0 to 2108 for 2109 rows
+        # Use START_GENE_ID for gene mapping
+=======REPLACE
+```
+
+processDMR.py
+```python
+<<<<<<< SEARCH
+        max_dmr_id = None
 
         # Use the correct column name based on timepoint
         if timepoint == "DSS1":
@@ -112,7 +119,7 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
                     all_genes.update(g.strip().lower() for g in genes)
 
             # Create gene mapping starting after max DMR ID
-            gene_id_mapping = create_gene_mapping(all_genes, max_dmr_id)
+            gene_id_mapping = create_gene_mapping(all_genes)
 
         # Create bipartite graph using master mapping
         bipartite_graph = create_bipartite_graph(
