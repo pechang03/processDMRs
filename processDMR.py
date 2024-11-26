@@ -8,7 +8,7 @@ import csv
 
 # mport time
 # mport psutil
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Set
 
 from data_loader import (
     get_excel_sheets,
@@ -20,6 +20,7 @@ from data_loader import (
     create_bipartite_graph,
     validate_bipartite_graph,
 )
+import pandas as pd
 from utils import create_dmr_id
 
 from utils import write_bipartite_graph
@@ -154,94 +155,38 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
 
 
 def main():
+    """Main entry point for processing DMR data."""
     args = parse_arguments()
 
-    # First collect all unique genes across all timepoints
     print("\nCollecting all unique genes across timepoints...")
+    
+    # Read sheets from pairwise file
+    pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
+    pairwise_dfs = {}
     all_genes = set()
 
-    # Process DSS_PAIRWISE file first to get complete gene set
-    pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
-    pairwise_dfs = {}  # Store dataframes for each sheet
-    
+    # Process pairwise sheets
     for sheet in pairwise_sheets:
         print(f"\nProcessing sheet: {sheet}")
         df = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
-        pairwise_dfs[sheet] = df  # Store the dataframe
-
-        # Debug: Print column names
-        print(f"Available columns in {sheet}:")
-        print(df.columns.tolist())
-
-        # Determine which column contains gene symbols
-        gene_column = None
-        for possible_name in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]:
-            if possible_name in df.columns:
-                gene_column = possible_name
-                print(f"Using column '{gene_column}' for gene symbols")
-                break
-
-        if gene_column is None:
-            print(f"WARNING: No gene symbol column found in sheet {sheet}")
+        if df is None:
             continue
+        pairwise_dfs[sheet] = df
+        
+        # Update all_genes set from this sheet
+        all_genes.update(get_genes_from_df(df))
 
-        # Use exact column name for enhancer interactions
-        enhancer_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-        if enhancer_col not in df.columns:
-            print(f"WARNING: Enhancer column '{enhancer_col}' not found in sheet {sheet}")
-            print(f"Available columns: {df.columns.tolist()}")
-            continue
-
-        df["Processed_Enhancer_Info"] = df[enhancer_col].apply(process_enhancer_info)
-
-        # Add genes from gene column
-        gene_names = df[gene_column].dropna().str.strip().str.lower()
-        all_genes.update(gene_names)
-
-        # Add genes from enhancer info
-        for genes in df["Processed_Enhancer_Info"]:
-            if genes:
-                all_genes.update(g.strip().lower() for g in genes)
-
-    # Process DSS1 file for genes
+    # Process overall DSS1 file
     print("\nProcessing DSS1 file...")
     df_overall = read_excel_file(args.input)
+    if df_overall is not None:
+        all_genes.update(get_genes_from_df(df_overall))
 
-    # Debug: Print column names for overall file
-    print(f"Available columns in DSS1:")
-    print(df_overall.columns.tolist())
-
-    # Determine which column contains gene symbols in overall file
-    gene_column = None
-    for possible_name in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]:
-        if possible_name in df_overall.columns:
-            gene_column = possible_name
-            print(f"Using column '{gene_column}' for gene symbols in overall file")
-            break
-
-    if gene_column is None:
-        raise ValueError("No gene symbol column found in overall file")
-
-    # Use exact column name for promoter interactions in overall file
-    promoter_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
-    if promoter_col not in df_overall.columns:
-        raise ValueError(f"Promoter column '{promoter_col}' not found in overall file")
-
-    df_overall["Processed_Enhancer_Info"] = df_overall[promoter_col].apply(process_enhancer_info)
-    gene_names = df_overall[gene_column].dropna().str.strip().str.lower()
-    all_genes.update(gene_names)
-    for genes in df_overall["Processed_Enhancer_Info"]:
-        if genes:
-            all_genes.update(g.strip().lower() for g in genes)
-
-    # Create consistent gene ID mapping
-    print(f"\nCreated gene ID mapping for {len(all_genes)} unique genes")
-    gene_id_mapping = {gene: idx + 1 for idx, gene in enumerate(sorted(all_genes))}
-
-    # Write the master gene mappings file
+    # Create and write gene mapping
+    gene_id_mapping = create_gene_mapping(all_genes)
     write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
 
-    # Process each timepoint with its own DMR space using stored dataframes
+    # Process each timepoint
     for sheet, df in pairwise_dfs.items():
         print(f"\nProcessing timepoint: {sheet}")
         output_file = f"bipartite_graph_output_{sheet}.txt"
@@ -250,8 +195,44 @@ def main():
     # Process overall DSS1 file
     print("\nProcessing DSS1 overall file...")
     process_single_dataset(
-        df_overall, "bipartite_graph_output.txt", args, gene_id_mapping, "DSS1"
+        df_overall, 
+        "bipartite_graph_output.txt", 
+        args, 
+        gene_id_mapping, 
+        "DSS1"
     )
+
+def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
+    """Extract all genes from a dataframe."""
+    genes = set()
+    
+    # Get gene column
+    gene_column = next((col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] 
+                       if col in df.columns), None)
+    if gene_column:
+        genes.update(df[gene_column].dropna().str.strip().str.lower())
+
+    # Get genes from enhancer/promoter info
+    if "Processed_Enhancer_Info" not in df.columns:
+        interaction_col = next((col for col in [
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)",
+            "ENCODE_Promoter_Interaction(BingRen_Lab)"
+        ] if col in df.columns), None)
+        
+        if interaction_col:
+            df["Processed_Enhancer_Info"] = df[interaction_col].apply(process_enhancer_info)
+    
+    if "Processed_Enhancer_Info" in df.columns:
+        for gene_list in df["Processed_Enhancer_Info"]:
+            if gene_list:
+                genes.update(g.strip().lower() for g in gene_list)
+                
+    return genes
+
+def create_gene_mapping(genes: Set[str]) -> Dict[str, int]:
+    """Create a mapping of gene names to IDs."""
+    print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
+    return {gene: idx + 1 for idx, gene in enumerate(sorted(genes))}
 
 
 if __name__ == "__main__":
