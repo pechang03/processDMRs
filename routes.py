@@ -14,7 +14,8 @@ from utils.node_info import NodeInfo
 from visualization.base_layout import BaseLogicalLayout
 from visualization.biconnected_visualization import BiconnectedVisualization
 from visualization.triconnected_visualization import TriconnectedVisualization
-from biclique_analysis.statistics import calculate_biclique_statistics
+from biclique_analysis.statistics import calculate_biclique_statistics, analyze_components
+from biclique_analysis.triconnected import analyze_triconnected_components
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
     classify_biclique,
