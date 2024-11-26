@@ -120,10 +120,12 @@ def validate_bipartite_graph(B):
     return True
 
 
-def validate_node_ids(dmr, gene_id, max_dmr_id, gene_id_mapping):
+def validate_node_ids(dmr, gene_id, gene_id_mapping):
     """Validate node IDs are properly assigned"""
-    if dmr >= max_dmr_id:
-        print(f"Warning: Invalid DMR ID {dmr}")
+    from utils.constants import START_GENE_ID
+    
+    if dmr >= START_GENE_ID:
+        print(f"Warning: DMR ID {dmr} is >= START_GENE_ID ({START_GENE_ID})")
         return False
     if gene_id not in set(gene_id_mapping.values()):
         print(f"Warning: Invalid gene ID {gene_id}")
