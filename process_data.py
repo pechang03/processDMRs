@@ -256,30 +256,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         if filtered_graph is False:
             return {"error": "Graph validation failed"}
         graph = filtered_graph  # Use the filtered graph going forward
-        graph_valid = True
         print("Graph validation successful")
-
-        # Analyze original graph components first
-        print("\nAnalyzing graph components...")
-        connected_components = list(nx.connected_components(graph))
-        biconnected_components = list(nx.biconnected_components(graph))
-        triconnected_components, tri_stats = analyze_triconnected_components(graph)
-
-        component_stats = {
-            "original": {
-                "connected": analyze_components(connected_components, graph),
-                "biconnected": analyze_components(biconnected_components, graph),
-                "triconnected": tri_stats
-            },
-            "biclique": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-            }
-        }
-
-        print("\nComponent statistics:")
-        print(json.dumps(component_stats["original"], indent=2))
 
         # Look for biclique file
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
@@ -288,6 +265,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
 
         if os.path.exists(biclique_file):
             print(f"Processing bicliques from {biclique_file}")
+            # Use processor.py to process bicliques
             bicliques_result = process_bicliques(
                 graph,
                 biclique_file,
@@ -297,6 +275,16 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             )
 
             if bicliques_result and "bicliques" in bicliques_result:
+                # Process components using components.py
+                complex_components, interesting_components, non_simple_components, component_stats, statistics = \
+                    process_components(
+                        graph,
+                        bicliques_result,
+                        dmr_metadata=create_dmr_metadata(df),
+                        gene_metadata=create_gene_metadata(df),
+                        gene_id_mapping=gene_id_mapping
+                    )
+
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(
                     bicliques_result["bicliques"], graph
@@ -315,14 +303,18 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                             bicliques_result["bicliques"]
                         ),
                     },
+                    "complex_components": complex_components,
+                    "interesting_components": interesting_components,
+                    "non_simple_components": non_simple_components,
                     "layout_used": layout_options,
+                    "bipartite_graph": graph,  # Add the graph for later use
                 }
 
         # Return basic statistics if no bicliques found
         return {
             "status": "success",
             "stats": {
-                "components": component_stats,
+                "components": calculate_component_statistics([], graph),
                 "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
@@ -343,7 +335,11 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     "complex": 0,
                 },
             },
+            "complex_components": [],
+            "interesting_components": [],
+            "non_simple_components": [],
             "layout_used": layout_options,
+            "bipartite_graph": graph,
         }
 
     except Exception as e:
