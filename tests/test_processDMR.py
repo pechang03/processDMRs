@@ -216,33 +216,135 @@ class TestBipartiteGraph(unittest.TestCase):
                 neighbor = list(graph.neighbors(node))[0]
                 self.assertIn(neighbor, dominating_set)
 
-    def test_complete_bipartite_graphs(self):
-        # Test K_{3,3}
-        df_k23 = pd.DataFrame(
-            {
-                "DMR_No.": [1, 2, 3],
-                "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                    "GeneA;GeneB;GeneC",
-                    "GeneA;GeneB;GeneC",
-                    "GeneA;GeneB;GeneC",
-                ],
-            }
+    def test_complete_bipartite_graph_overall(self):
+        """Test creation and validation of complete bipartite graph for overall/DSS1 data"""
+        # Test K_{3,3} bipartite graph for DSS1
+        data = {
+            "DMR_No.": [1, 2, 3],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB", "GeneC"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                "GeneA;GeneB;GeneC",
+                "GeneA;GeneB;GeneC",
+                "GeneA;GeneB;GeneC"
+            ]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
+            process_enhancer_info
         )
-        df_k23["Processed_Enhancer_Info"] = df_k23[
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-        ].apply(process_enhancer_info)
 
-        mapping_k23 = {
+        from utils.constants import START_GENE_ID
+        mapping = {
             "GeneA": START_GENE_ID,
             "GeneB": START_GENE_ID + 1,
-            "GeneC": START_GENE_ID + 2,
+            "GeneC": START_GENE_ID + 2
         }
-        graph_k23 = create_bipartite_graph(df_k23, mapping_k23)
+        
+        # Create graph for DSS1/overall
+        graph = create_bipartite_graph(df, mapping, "DSS1")
+        
+        # Validate graph structure
+        self.assertTrue(nx.is_bipartite(graph))
+        self.assertEqual(len(graph.edges()), 9)  # K_{3,3} should have 9 edges
+        
+        # Verify node attributes
+        dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+        gene_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 1}
+        
+        self.assertEqual(len(dmr_nodes), 3)
+        self.assertEqual(len(gene_nodes), 3)
+        
+        # Verify timepoint attribute on DMR nodes
+        for dmr in dmr_nodes:
+            self.assertEqual(graph.nodes[dmr]["timepoint"], "DSS1")
 
-        self.assertEqual(
-            len(graph_k23.edges()), 9
-        )  # Update expected edges to 9 for K_{3,3}
+        # Verify edges connect DMRs to genes
+        for edge in graph.edges():
+            dmr_end = min(edge)  # DMR nodes have lower IDs
+            gene_end = max(edge)  # Gene nodes have higher IDs
+            self.assertIn(dmr_end, dmr_nodes)
+            self.assertIn(gene_end, gene_nodes)
+
+    def test_complete_bipartite_graphs_timepoints(self):
+        """Test creation of complete bipartite graphs for different timepoints"""
+        # Create a small test graph for each timepoint
+        data = {
+            "DMR_No.": [1, 2],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                "GeneA;GeneB",
+                "GeneA;GeneB"
+            ]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
+            process_enhancer_info
+        )
+
+        from utils.constants import START_GENE_ID
+        mapping = {
+            "GeneA": START_GENE_ID,
+            "GeneB": START_GENE_ID + 1
+        }
+        
+        # Test different timepoints
+        timepoints = ["P21-P28", "P21-P40", "P21-P60"]
+        graphs = {}
+        
+        for timepoint in timepoints:
+            graphs[timepoint] = create_bipartite_graph(df, mapping, timepoint)
+            
+            # Basic validation for each graph
+            graph = graphs[timepoint]
+            self.assertTrue(nx.is_bipartite(graph))
+            self.assertEqual(len(graph.edges()), 4)  # K_{2,2} should have 4 edges
+            
+            # Verify DMR IDs are in correct range for timepoint
+            dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+            for dmr in dmr_nodes:
+                self.assertEqual(graph.nodes[dmr]["timepoint"], timepoint)
+                
+                # Verify DMR ID is in correct range
+                if timepoint == "P21-P28":
+                    self.assertGreaterEqual(dmr, 1000000)
+                    self.assertLess(dmr, 2000000)
+                elif timepoint == "P21-P40":
+                    self.assertGreaterEqual(dmr, 2000000)
+                    self.assertLess(dmr, 3000000)
+                elif timepoint == "P21-P60":
+                    self.assertGreaterEqual(dmr, 3000000)
+                    self.assertLess(dmr, 4000000)
+
+    def test_graph_validation(self):
+        """Test graph validation functionality"""
+        # Create a valid K_{2,2} graph
+        data = {
+            "DMR_No.": [1, 2],
+            "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB", "GeneA;GeneB"]
+        }
+        df = pd.DataFrame(data)
+        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
+            process_enhancer_info
+        )
+
+        from utils.constants import START_GENE_ID
+        mapping = {
+            "GeneA": START_GENE_ID,
+            "GeneB": START_GENE_ID + 1
+        }
+        
+        graph = create_bipartite_graph(df, mapping, "DSS1")
+        
+        # Test validation
+        validated_graph = validate_bipartite_graph(graph)
+        self.assertIsInstance(validated_graph, nx.Graph)
+        
+        # Test validation with isolated nodes
+        isolated_graph = graph.copy()
+        isolated_graph.add_node(START_GENE_ID + 2, bipartite=1)  # Add isolated gene
+        validated_isolated = validate_bipartite_graph(isolated_graph)
+        self.assertEqual(len(validated_isolated.nodes()), len(graph.nodes()))  # Should remove isolated node
 
 
 if __name__ == "__main__":
