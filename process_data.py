@@ -291,8 +291,10 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     max_dmr = df["DMR_No."].max()
 
     # Create gene mapping starting after max DMR number
+    from utils.constants import START_GENE_ID
+
     gene_id_mapping = {
-        gene: idx + max_dmr + 1 for idx, gene in enumerate(sorted_genes)
+        gene: START_GENE_ID + idx for idx, gene in enumerate(sorted_genes)
     }
 
     return gene_id_mapping
