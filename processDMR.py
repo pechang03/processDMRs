@@ -98,10 +98,19 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
     """Process a single dataset and write the bipartite graph to a file."""
     try:
         # Process enhancer info if not already processed
+        # Find enhancer column
+        enhancer_col = None
+        for col in df.columns:
+            if "ENCODE_Enhancer_Interaction" in col:
+                enhancer_col = col
+                break
+
+        if enhancer_col is None:
+            raise ValueError(f"No enhancer column found in dataset")
+
+        # Process enhancer info if not already processed
         if "Processed_Enhancer_Info" not in df.columns:
-            df["Processed_Enhancer_Info"] = df[
-                "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-            ].apply(process_enhancer_info)
+            df["Processed_Enhancer_Info"] = df[enhancer_col].apply(process_enhancer_info)
 
         # If no master mapping provided, create one
         if gene_id_mapping is None:
@@ -175,9 +184,19 @@ def main():
             print(f"WARNING: No gene symbol column found in sheet {sheet}")
             continue
 
-        df["Processed_Enhancer_Info"] = df[
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-        ].apply(process_enhancer_info)
+        # Find enhancer column - look for partial match
+        enhancer_col = None
+        for col in df.columns:
+            if "ENCODE_Enhancer_Interaction" in col:
+                enhancer_col = col
+                print(f"Found enhancer column: {enhancer_col}")
+                break
+
+        if enhancer_col is None:
+            print(f"WARNING: No enhancer column found in sheet {sheet}")
+            continue
+
+        df["Processed_Enhancer_Info"] = df[enhancer_col].apply(process_enhancer_info)
 
         # Add genes from gene column
         gene_names = df[gene_column].dropna().str.strip().str.lower()
@@ -207,9 +226,18 @@ def main():
     if gene_column is None:
         raise ValueError("No gene symbol column found in overall file")
 
-    df_overall["Processed_Enhancer_Info"] = df_overall[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
+    # Find enhancer column in overall file
+    enhancer_col = None
+    for col in df_overall.columns:
+        if "ENCODE_Enhancer_Interaction" in col:
+            enhancer_col = col
+            print(f"Found enhancer column in overall file: {enhancer_col}")
+            break
+
+    if enhancer_col is None:
+        raise ValueError("No enhancer column found in overall file")
+
+    df_overall["Processed_Enhancer_Info"] = df_overall[enhancer_col].apply(process_enhancer_info)
     gene_names = df_overall[gene_column].dropna().str.strip().str.lower()
     all_genes.update(gene_names)
     for genes in df_overall["Processed_Enhancer_Info"]:
