@@ -273,8 +273,8 @@ def create_bipartite_graph(
     print(f"\nCreating bipartite graph for timepoint: {timepoint}")
     
     # Add DMR nodes (0-based indexing)
-    dmr_nodes = set(create_dmr_id(row["DMR_No."] - 1, timepoint, max(gene_id_mapping.values()) + 1) 
-                    for _, row in df.iterrows())
+    # Convert DMR_No. to 0-based index for node IDs
+    dmr_nodes = set(row["DMR_No."] - 1 for _, row in df.iterrows())
     for dmr in dmr_nodes:
         B.add_node(dmr, bipartite=0, timepoint=timepoint)
 
@@ -285,7 +285,7 @@ def create_bipartite_graph(
     # Process each row to add edges
     edges_added = set()  # Track unique edges
     for _, row in df.iterrows():
-        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint, max(gene_id_mapping.values()) + 1)
+        dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
 
         # Process closest gene
         if isinstance(row.get(closest_gene_col), str):
@@ -299,10 +299,12 @@ def create_bipartite_graph(
 
         # Process enhancer genes if present
         enhancer_info = row.get("Processed_Enhancer_Info")
-        if isinstance(enhancer_info, (list, str)):
+        if isinstance(enhancer_info, (set, list, str)):
             genes = enhancer_info
             if isinstance(genes, str):
                 genes = [g.strip() for g in genes.split(";")]
+            elif isinstance(genes, set):
+                genes = list(genes)
             
             for gene_name in genes:
                 gene_name = str(gene_name).strip().lower()
