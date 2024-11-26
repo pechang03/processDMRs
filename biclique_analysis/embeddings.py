@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.manifold import MDS
 import networkx as nx
 from rb_domination import greedy_rb_domination
+from biclique_analysis.triconnected import analyze_triconnected_components
 
 def generate_biclique_embeddings(
     bicliques: List[Tuple[Set[int], Set[int]]],
