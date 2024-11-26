@@ -166,113 +166,75 @@ def process_single_timepoint(
         return {"error": str(e)}
 
 
+def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
+    """Create a master gene mapping from a DataFrame."""
+    all_genes = set()
+
+    # Add genes from gene column (case-insensitive)
+    gene_col = next(
+        (col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] if col in df.columns),
+        None
+    )
+    if gene_col:
+        gene_names = df[gene_col].dropna().str.strip().str.lower()
+        all_genes.update(gene_names)
+
+    # Add genes from enhancer info (case-insensitive)
+    df["Processed_Enhancer_Info"] = df[
+        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+    ].apply(process_enhancer_info)
+
+    for genes in df["Processed_Enhancer_Info"]:
+        if genes:
+            all_genes.update(g.strip().lower() for g in genes)
+
+    # Sort genes alphabetically for deterministic assignment
+    sorted_genes = sorted(all_genes)
+    max_dmr = df["DMR_No."].max()
+
+    # Create gene mapping starting after max DMR number
+    gene_id_mapping = {
+        gene: START_GENE_ID + idx for idx, gene in enumerate(sorted_genes)
+    }
+
+    return gene_id_mapping
+
+
+def process_overall_timepoint(df: pd.DataFrame) -> Dict:
+    """Process the overall DSS1 timepoint."""
+    gene_id_mapping = create_master_gene_mapping(df)
+    return process_timepoint(df, "DSS1", gene_id_mapping)
+
+
+def process_pairwise_timepoints(gene_id_mapping: Dict[str, int]) -> Dict:
+    """Process all pairwise timepoints."""
+    timepoint_data = {}
+    xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
+    
+    for sheet in xl.sheet_names:
+        print(f"\nProcessing pairwise timepoint: {sheet}", flush=True)
+        df = read_excel_file(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
+        if df is not None:
+            timepoint_data[sheet] = process_timepoint(df, sheet, gene_id_mapping)
+    
+    return timepoint_data
+
+
 def process_data():
     """Process all timepoints including overall/DSS1"""
     try:
-        timepoint_data = {}
-
         # Process overall/DSS1 timepoint first
         print("\nProcessing overall timepoint (DSS1)...", flush=True)
         df_overall = read_excel_file(current_app.config["DSS1_FILE"])
 
-        # Create master gene mapping first
-        all_genes = set()
-        gene_col = "Gene_Symbol_Nearby" if "Gene_Symbol_Nearby" in df_overall.columns else "Gene_Symbol"
-        gene_names = df_overall[gene_col].dropna().str.strip().str.lower()
-        all_genes.update(gene_names)
-        
-        df_overall["Processed_Enhancer_Info"] = df_overall["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-        for genes in df_overall["Processed_Enhancer_Info"]:
-            if genes:
-                all_genes.update(g.strip().lower() for g in genes)
+        # Create master gene mapping
+        gene_id_mapping = create_master_gene_mapping(df_overall)
 
-        gene_id_mapping = create_gene_mapping(all_genes)
-
-        # Function to process a single timepoint
-        def process_timepoint(df, timepoint, gene_id_mapping):
-            print(f"\nProcessing timepoint: {timepoint}", flush=True)
-            
-            # Create bipartite graph
-            graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-            
-            # Get connected components
-            connected_components = list(nx.connected_components(graph))
-            biconnected_components = list(nx.biconnected_components(graph))
-            triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
-
-            # Calculate component statistics
-            component_stats = {
-                "components": {
-                    "original": {
-                        "connected": analyze_components(connected_components, graph),
-                        "biconnected": analyze_components(biconnected_components, graph),
-                        "triconnected": triconnected_stats,
-                    }
-                }
-            }
-
-            # Try to process bicliques if file exists
-            biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-            if os.path.exists(biclique_file):
-                print(f"Processing bicliques from {biclique_file}", flush=True)
-                bicliques_result = process_bicliques(
-                    graph, 
-                    biclique_file,
-                    timepoint, 
-                    gene_id_mapping=gene_id_mapping
-                )
-                
-                # Process biclique graph components if bicliques found
-                if bicliques_result and "bicliques" in bicliques_result:
-                    print(f"Creating biclique graph for {timepoint}...", flush=True)
-                    biclique_graph = nx.Graph()
-                    for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                        biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                        biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                        biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-
-                    # Calculate statistics for biclique graph
-                    biclique_connected = list(nx.connected_components(biclique_graph))
-                    biclique_biconnected = list(nx.biconnected_components(biclique_graph))
-                    biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
-
-                    component_stats["components"]["biclique"] = {
-                        "connected": analyze_components(biclique_connected, biclique_graph),
-                        "biconnected": analyze_components(biclique_biconnected, biclique_graph),
-                        "triconnected": biclique_tri_stats,
-                    }
-                    
-                    statistics = calculate_biclique_statistics(bicliques_result["bicliques"], graph)
-                else:
-                    print(f"No bicliques found for {timepoint}", flush=True)
-                    bicliques_result = {"bicliques": []}
-                    statistics = {}
-            else:
-                print(f"Biclique file not found for {timepoint} - will be generated in next phase", flush=True)
-                bicliques_result = {"bicliques": []}
-                statistics = {}
-
-            return {
-                "bicliques": bicliques_result,
-                "node_count": graph.number_of_nodes(),
-                "edge_count": graph.number_of_edges(),
-                "graph_valid": True,
-                "component_stats": component_stats,
-                "statistics": statistics,
-                "coverage": calculate_coverage_statistics(bicliques_result.get("bicliques", []), graph),
-                "biclique_types": statistics.get("biclique_types", {"empty": 0, "simple": 0, "interesting": 0, "complex": 0}),
-            }
-
-        # Process overall timepoint
-        timepoint_data["overall"] = process_timepoint(df_overall, "DSS1", gene_id_mapping)
-
-        # Process each pairwise timepoint
-        xl = pd.ExcelFile(current_app.config["DSS_PAIRWISE_FILE"])
-        for sheet in xl.sheet_names:
-            print(f"\nProcessing pairwise timepoint: {sheet}", flush=True)
-            df = read_excel_file(current_app.config["DSS_PAIRWISE_FILE"], sheet_name=sheet)
-            if df is not None:
-                timepoint_data[sheet] = process_timepoint(df, sheet, gene_id_mapping)
+        # Process timepoints
+        timepoint_data = {
+            "overall": process_overall_timepoint(df_overall),
+            **process_pairwise_timepoints(gene_id_mapping)
+        }
 
         return timepoint_data
 
