@@ -219,28 +219,37 @@ def create_bipartite_graph(
     # Convert gene mapping to lowercase for case-insensitive matching
     gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items() if k}
 
-    # Validate gene mapping
-    max_dmr_id = df["DMR_No."].max() - 1  # Convert to 0-based index
-    if not validate_gene_mapping(gene_id_mapping, max_dmr_id):
-        print("Warning: Gene mapping validation failed")
+    # Get the minimum gene ID to use as threshold for DMR IDs
+    min_gene_id = min(gene_id_mapping.values()) if gene_id_mapping else START_GENE_ID
 
     # Add DMR nodes first with proper timepoint-specific IDs
     dmr_nodes = set()
     for _, row in df.iterrows():
+        if "DMR_No." not in row:
+            print(f"Warning: DMR_No. column missing in row: {row}")
+            continue
+            
         dmr_num = int(row["DMR_No."]) - 1  # Convert to 0-based index
-        dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
+        dmr_id = create_dmr_id(dmr_num, timepoint, min_gene_id)
+        
+        # Debug output for first few DMRs
+        if len(dmr_nodes) < 5:
+            print(f"Adding DMR {dmr_num} with ID {dmr_id}")
+            
         dmr_nodes.add(dmr_id)
         B.add_node(dmr_id, bipartite=0, timepoint=timepoint)
 
-    # Add gene nodes
+    # Add gene nodes and track which ones are added
+    added_genes = set()
     for gene_name, gene_id in gene_id_mapping.items():
         B.add_node(gene_id, bipartite=1)
+        added_genes.add(gene_name.lower())
 
     # Process edges
     edges_added = set()
     for _, row in df.iterrows():
         dmr_num = int(row["DMR_No."]) - 1
-        dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
+        dmr_id = create_dmr_id(dmr_num, timepoint, min_gene_id)
 
         # Add edge for closest gene
         if pd.notna(row.get(closest_gene_col)):
@@ -266,13 +275,19 @@ def create_bipartite_graph(
                         B.add_edge(*edge)
                         edges_added.add(edge)
 
-    # Remove isolated nodes and preprocess graph
-    B = remove_isolated_nodes(B, keep_dmrs=True)
-    B = preprocess_graph_for_visualization(B, remove_isolates=True, keep_dmrs=True)
-
+    # Debug output
     print(f"\nGraph construction summary for {timepoint}:")
     print(f"DMR nodes: {len(dmr_nodes)}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
     print(f"Total edges added: {len(edges_added)}")
+    
+    if len(dmr_nodes) < 5:
+        print("\nDMR nodes (first 5):", sorted(list(dmr_nodes))[:5])
+        print("Gene nodes (first 5):", sorted([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])[:5])
+        print("Edges (first 5):", sorted(list(edges_added))[:5])
+
+    # Remove isolated nodes and preprocess graph
+    B = remove_isolated_nodes(B, keep_dmrs=True)
+    B = preprocess_graph_for_visualization(B, remove_isolates=True, keep_dmrs=True)
 
     return B
