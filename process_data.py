@@ -304,12 +304,33 @@ def process_data():
 def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """Process a single timepoint with configurable layout options."""
     try:
-        # Initialize default component stats structure
+        print(f"\nProcessing timepoint {timepoint}")
+        
+        # Create bipartite graph
+        print("Creating bipartite graph...")
+        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        print(f"Graph created with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
+
+        # Validate graph
+        print(f"\nValidating graph for timepoint {timepoint}")
+        filtered_graph = validate_bipartite_graph(graph)
+        if filtered_graph is False:
+            return {"error": "Graph validation failed"}
+        graph = filtered_graph  # Use the filtered graph going forward
+        graph_valid = True
+        print("Graph validation successful")
+
+        # Analyze original graph components first
+        print("\nAnalyzing graph components...")
+        connected_components = list(nx.connected_components(graph))
+        biconnected_components = list(nx.biconnected_components(graph))
+        triconnected_components, tri_stats = analyze_triconnected_components(graph)
+
         component_stats = {
             "original": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                "connected": analyze_components(connected_components, graph),
+                "biconnected": analyze_components(biconnected_components, graph),
+                "triconnected": tri_stats
             },
             "biclique": {
                 "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
@@ -318,10 +339,79 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             }
         }
 
-        # Create bipartite graph
-        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        print("\nComponent statistics:")
+        print(json.dumps(component_stats["original"], indent=2))
 
-        # ... [rest of the existing code] ...
+        # Look for biclique file
+        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
+        print(f"\nLooking for biclique file: {biclique_file}")
+        print(f"File exists: {os.path.exists(biclique_file)}")
+
+        if os.path.exists(biclique_file):
+            print(f"Processing bicliques from {biclique_file}")
+            bicliques_result = process_bicliques(
+                graph,
+                biclique_file,
+                timepoint,
+                gene_id_mapping=gene_id_mapping,
+                file_format="gene-name",
+            )
+
+            if bicliques_result and "bicliques" in bicliques_result:
+                # Calculate coverage statistics
+                coverage_stats = calculate_coverage_statistics(
+                    bicliques_result["bicliques"], graph
+                )
+                edge_coverage = calculate_edge_coverage(
+                    bicliques_result["bicliques"], graph
+                )
+
+                return {
+                    "status": "success",
+                    "stats": {
+                        "components": component_stats,
+                        "coverage": coverage_stats,
+                        "edge_coverage": edge_coverage,
+                        "biclique_types": classify_biclique_types(
+                            bicliques_result["bicliques"]
+                        ),
+                    },
+                    "layout_used": layout_options,
+                }
+
+        # Return basic statistics if no bicliques found
+        return {
+            "status": "success",
+            "stats": {
+                "components": component_stats,
+                "coverage": {
+                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                    "genes": {"covered": 0, "total": 0, "percentage": 0},
+                    "edges": {
+                        "single_coverage": 0,
+                        "multiple_coverage": 0,
+                        "uncovered": 0,
+                        "total": 0,
+                        "single_percentage": 0,
+                        "multiple_percentage": 0,
+                        "uncovered_percentage": 0,
+                    },
+                },
+                "biclique_types": {
+                    "empty": 0,
+                    "simple": 0,
+                    "interesting": 0,
+                    "complex": 0,
+                },
+            },
+            "layout_used": layout_options,
+        }
+
+    except Exception as e:
+        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
 
         # Look for biclique file
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
