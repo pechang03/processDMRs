@@ -320,6 +320,13 @@ def process_timepoint(
                 
                 # Calculate component statistics using the processed results
                 if bicliques_result and "bicliques" in bicliques_result:
+                    # Initialize component_stats if not already defined
+                    if 'component_stats' not in locals():
+                        component_stats = {
+                            "original": {},
+                            "biclique": {}
+                        }
+                    
                     component_stats["biclique"] = bicliques_result.get("component_stats", {})
                     biclique_types = classify_biclique_types(bicliques_result["bicliques"])
                     
