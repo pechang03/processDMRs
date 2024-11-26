@@ -22,11 +22,10 @@ from data_loader import (
     validate_bipartite_graph,
 )
 import pandas as pd
-from utils import create_dmr_id
+from utils import create_dmr_id, process_enhancer_info
 from utils.constants import START_GENE_ID
-
-from utils import write_bipartite_graph
-from utils import process_enhancer_info
+from utils.graph_io import write_bipartite_graph, write_gene_mappings
+from utils.id_mapping import create_gene_mapping
 from rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,  # Changed name
