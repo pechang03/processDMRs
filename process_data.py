@@ -388,13 +388,12 @@ def process_timepoint(
 
     except Exception as e:
         print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
         return {
-            "status": "error",
+            "status": "error", 
             "message": str(e)
         }
-        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-        if os.path.exists(biclique_file):
-            print(f"Processing bicliques from {biclique_file}", flush=True)
             bicliques_result = process_bicliques(
                 graph, 
                 biclique_file,
