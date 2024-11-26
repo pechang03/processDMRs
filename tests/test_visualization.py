@@ -7,20 +7,31 @@ from utils.node_info import NodeInfo
 class TestVisualization(unittest.TestCase):
     def setUp(self):
         # Create a basic NodeInfo object for testing
+        from utils.constants import START_GENE_ID
         self.node_info = NodeInfo(
-            all_nodes={1, 2, 3, 4},  # Nodes 1,2 are DMRs, 3,4 are genes
+            all_nodes={1, 2, START_GENE_ID, START_GENE_ID + 1},  # Nodes 1,2 are DMRs, others are genes
             dmr_nodes={1, 2},
-            regular_genes={3},
-            split_genes={4},
-            node_degrees={1: 1, 2: 0, 3: 1, 4: 2},
-            min_gene_id=3,
+            regular_genes={START_GENE_ID},
+            split_genes={START_GENE_ID + 1},
+            node_degrees={1: 1, 2: 0, START_GENE_ID: 1, START_GENE_ID + 1: 2},
+            min_gene_id=START_GENE_ID,
         )
 
         # Basic node positions
-        self.node_positions = {1: (0, 0.2), 2: (0, 0.4), 3: (1, 0.2), 4: (1, 0.4)}
+        self.node_positions = {
+            1: (0, 0.2), 
+            2: (0, 0.4), 
+            START_GENE_ID: (1, 0.2), 
+            START_GENE_ID + 1: (1, 0.4)
+        }
 
         # Basic node labels
-        self.node_labels = {1: "DMR_1", 2: "DMR_2", 3: "Gene_3", 4: "Gene_4"}
+        self.node_labels = {
+            1: "DMR_1", 
+            2: "DMR_2", 
+            START_GENE_ID: "Gene_1", 
+            START_GENE_ID + 1: "Gene_2"
+        }
 
     def test_create_node_traces_empty_bicliques(self):
         """Test node coloring when no bicliques are present"""

@@ -6,16 +6,18 @@ from visualization.graph_layout_logical import calculate_node_positions
 class TestGeneSplitBicliques(unittest.TestCase):
     def test_split_gene_positions(self):
         """Test positioning of split genes (genes appearing in multiple bicliques)"""
+        from utils.constants import START_GENE_ID
         bicliques = [
-            ({1, 2}, {5, 6}),  # First biclique
-            ({3, 4}, {6, 7, 8})  # Second biclique, gene 6 appears in both
+            ({1, 2}, {START_GENE_ID, START_GENE_ID + 1}),  # First biclique
+            ({3, 4}, {START_GENE_ID + 1, START_GENE_ID + 2, START_GENE_ID + 3})  # Second biclique, gene START_GENE_ID + 1 appears in both
         ]
         node_biclique_map = {
             1: [0], 2: [0],  # DMRs in first biclique
             3: [1], 4: [1],  # DMRs in second biclique
-            5: [0],          # Gene only in first biclique
-            6: [0, 1],       # Split gene (in both bicliques)
-            7: [1], 8: [1]   # Genes only in second biclique
+            START_GENE_ID: [0],          # Gene only in first biclique
+            START_GENE_ID + 1: [0, 1],   # Split gene (in both bicliques)
+            START_GENE_ID + 2: [1], 
+            START_GENE_ID + 3: [1]       # Genes only in second biclique
         }
 
         positions = calculate_node_positions(bicliques, node_biclique_map)

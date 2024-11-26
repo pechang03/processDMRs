@@ -11,11 +11,12 @@ class TestEmptyBicliquesLayout(unittest.TestCase):
     def setUp(self):
         # Setup some test data
         self.empty_bicliques = []
+        from utils.constants import START_GENE_ID
         self.node_biclique_map = {
             0: [],  # DMR node
             1: [],  # DMR node
-            3: [],  # Gene node (assuming genes start at 3)
-            4: [],  # Gene node
+            START_GENE_ID: [],     # Gene node
+            START_GENE_ID + 1: [], # Gene node
         }
 
     def test_empty_bicliques(self):
