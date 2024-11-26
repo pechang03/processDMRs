@@ -31,6 +31,10 @@ logger = logging.getLogger(__name__)
 
 from utils.constants import START_GENE_ID
 from utils.id_mapping import create_gene_mapping
+from utils import process_enhancer_info
+
+# from utils.node_info import NodeInfo
+from utils.json_utils import convert_dict_keys_to_str
 
 # from processDMR import read_excel_file,
 from biclique_analysis import (
@@ -39,7 +43,6 @@ from biclique_analysis import (
     process_components,
     reporting,
 )
-from utils import process_enhancer_info
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
@@ -47,12 +50,25 @@ from biclique_analysis.classifier import (
     classify_component,
     classify_biclique_types,
 )
-from visualization import create_node_biclique_map, CircularBicliqueLayout, NodeInfo
-from utils.node_info import NodeInfo
-from utils.json_utils import convert_dict_keys_to_str
 
-from data_loader import read_excel_file, create_bipartite_graph
-from data_loader import validate_bipartite_graph
+from biclique_analysis.embeddings import (
+    generate_triconnected_embeddings,
+    generate_biclique_embeddings,
+)
+from biclique_analysis.processor import (
+    create_biclique_metadata,
+)
+
+# Add missing imports and placeholder functions
+from biclique_analysis.statistics import calculate_edge_coverage
+
+from visualization import create_node_biclique_map, CircularBicliqueLayout
+
+from data_loader import (
+    read_excel_file,
+    create_bipartite_graph,
+    validate_bipartite_graph,
+)
 from biclique_analysis.statistics import (
     analyze_components,
     calculate_biclique_statistics,
@@ -67,10 +83,6 @@ from rb_domination import (
     copy_dominating_set,
 )
 
-# Add missing imports and placeholder functions
-from biclique_analysis.statistics import calculate_edge_coverage
-
-app = Flask(__name__)
 
 from data_loader import (
     DSS1_FILE,
@@ -80,13 +92,8 @@ from data_loader import (
     get_excel_sheets,
 )
 
-from biclique_analysis.embeddings import (
-    generate_triconnected_embeddings,
-    generate_biclique_embeddings,
-)
-from biclique_analysis.processor import (
-    create_biclique_metadata,
-)
+
+app = Flask(__name__)
 
 _cached_data = None
 
@@ -132,7 +139,6 @@ def convert_dict_keys_to_str(d):
     elif isinstance(d, np.bool_):
         return bool(d)
     return d
-
 
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
@@ -236,6 +242,7 @@ def process_data():
     except Exception as e:
         print(f"Error in process_data: {str(e)}", flush=True)
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
@@ -244,11 +251,13 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """Process a single timepoint with configurable layout options."""
     try:
         print(f"\nProcessing timepoint {timepoint}")
-        
+
         # Create bipartite graph
         print("Creating bipartite graph...")
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-        print(f"Graph created with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
+        print(
+            f"Graph created with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges"
+        )
 
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint}")
@@ -276,14 +285,19 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
 
             if bicliques_result and "bicliques" in bicliques_result:
                 # Process components using components.py
-                complex_components, interesting_components, non_simple_components, component_stats, statistics = \
-                    process_components(
-                        graph,
-                        bicliques_result,
-                        dmr_metadata=create_dmr_metadata(df),
-                        gene_metadata=create_gene_metadata(df),
-                        gene_id_mapping=gene_id_mapping
-                    )
+                (
+                    complex_components,
+                    interesting_components,
+                    non_simple_components,
+                    component_stats,
+                    statistics,
+                ) = process_components(
+                    graph,
+                    bicliques_result,
+                    dmr_metadata=create_dmr_metadata(df),
+                    gene_metadata=create_gene_metadata(df),
+                    gene_id_mapping=gene_id_mapping,
+                )
 
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(
@@ -340,139 +354,6 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             "non_simple_components": [],
             "layout_used": layout_options,
             "bipartite_graph": graph,
-        }
-
-    except Exception as e:
-        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e)}
-
-        # Look for biclique file
-        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-
-        if os.path.exists(biclique_file):
-            bicliques_result = process_bicliques(
-                graph,
-                biclique_file,
-                timepoint,
-                gene_id_mapping=gene_id_mapping,
-                file_format="gene-name",
-            )
-
-            if bicliques_result and "bicliques" in bicliques_result:
-                # Calculate coverage statistics
-                coverage_stats = calculate_coverage_statistics(
-                    bicliques_result["bicliques"], graph
-                )
-                edge_coverage = calculate_edge_coverage(
-                    bicliques_result["bicliques"], graph
-                )
-
-                # Calculate biclique statistics
-                biclique_stats = calculate_biclique_statistics(
-                    bicliques_result["bicliques"], graph
-                )
-
-                # Process components
-                (
-                    complex_components,
-                    interesting_components,
-                    _,
-                    non_simple_components,
-                    comp_stats,
-                    statistics,
-                ) = process_components(graph, bicliques_result, dominating_set=None)
-
-                # Create biclique graph
-                biclique_graph = nx.Graph()
-                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                    biclique_graph.add_edges_from(
-                        (d, g) for d in dmr_nodes for g in gene_nodes
-                    )
-
-                # Update component stats with both original and biclique graph analysis
-                component_stats = {
-                    "original": {
-                        "connected": analyze_components(
-                            list(nx.connected_components(graph)), graph
-                        ),
-                        "biconnected": analyze_components(
-                            list(nx.biconnected_components(graph)), graph
-                        ),
-                        "triconnected": analyze_triconnected_components(graph)[1],
-                    },
-                    "biclique": {
-                        "connected": analyze_components(
-                            list(nx.connected_components(biclique_graph)),
-                            biclique_graph,
-                        ),
-                        "biconnected": analyze_components(
-                            list(nx.biconnected_components(biclique_graph)),
-                            biclique_graph,
-                        ),
-                        "triconnected": analyze_triconnected_components(biclique_graph)[
-                            1
-                        ],
-                    },
-                }
-
-                return {
-                    "status": "success",
-                    "stats": {
-                        "components": component_stats,
-                        "coverage": coverage_stats,  # Make sure this is included
-                        "edge_coverage": edge_coverage,
-                        "biclique_types": classify_biclique_types(
-                            bicliques_result["bicliques"]
-                        ),
-                        "size_distribution": biclique_stats.get(
-                            "size_distribution", {}
-                        ),
-                        "dominating_set": statistics.get("dominating_set", {}),
-                    },
-                    "complex_components": complex_components,
-                    "interesting_components": interesting_components,
-                    "non_simple_components": non_simple_components,
-                    "layout_used": layout_options,
-                }
-
-        # Return basic statistics if no bicliques found
-        return {
-            "status": "success",
-            "stats": {
-                "components": component_stats,  # Now has correct structure
-                "coverage": {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
-                },
-                "biclique_types": {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0,
-                },
-                "size_distribution": {},
-                "dominating_set": {
-                    "size": 0,
-                    "percentage": 0,
-                    "genes_dominated": 0,
-                    "components_with_ds": 0,
-                    "avg_size_per_component": 0,
-                },
-            },
-            "layout_used": layout_options,
         }
 
     except Exception as e:
