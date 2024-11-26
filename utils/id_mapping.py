@@ -14,10 +14,21 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         "TP60-TP180": 7000000,
         "DSS1": 0  # Base timepoint uses original numbers
     }
+    
+    # Get offset for this timepoint
     offset = timepoint_offsets.get(timepoint, 8000000)  # Default offset for unknown timepoints
     
-    # Ensure DMR IDs are below the first gene ID
-    return min(first_gene_id - 1, offset + dmr_num)
+    # Calculate DMR ID with offset
+    dmr_id = offset + dmr_num
+    
+    # Ensure DMR ID is below first gene ID if provided
+    if first_gene_id > 0:
+        if dmr_id >= first_gene_id:
+            print(f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}")
+            # Use alternative ID space below first_gene_id
+            dmr_id = dmr_num  # Fall back to original numbering
+            
+    return dmr_id
 
 def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, int]:
     """Create a mapping of gene names to IDs starting at START_GENE_ID."""
