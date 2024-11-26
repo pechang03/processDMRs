@@ -210,3 +210,88 @@ def create_node_metadata(
         }
 
     return dmr_metadata, gene_metadata
+
+
+def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Dict]:
+    """
+    Create detailed metadata for each biclique.
+    
+    Args:
+        bicliques: List of (dmr_nodes, gene_nodes) tuples
+        
+    Returns:
+        List of dictionaries containing metadata for each biclique
+    """
+    from .classifier import classify_biclique
+    from collections import defaultdict
+    
+    metadata = []
+    
+    # Track nodes across all bicliques for overlap calculations
+    all_dmrs = set()
+    all_genes = set()
+    node_to_bicliques = defaultdict(set)
+    
+    # First pass - collect basic info and track nodes
+    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        all_dmrs.update(dmr_nodes)
+        all_genes.update(gene_nodes)
+        
+        # Track which bicliques each node belongs to
+        for node in dmr_nodes | gene_nodes:
+            node_to_bicliques[node].add(idx)
+    
+    # Second pass - create detailed metadata
+    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        # Calculate basic metrics
+        size = len(dmr_nodes) + len(gene_nodes)
+        density = len(dmr_nodes) * len(gene_nodes) / (size * size) if size > 0 else 0
+        
+        # Calculate overlap with other bicliques
+        overlapping_bicliques = set()
+        for node in dmr_nodes | gene_nodes:
+            overlapping_bicliques.update(node_to_bicliques[node])
+        overlapping_bicliques.discard(idx)  # Remove self
+        
+        # Calculate shared nodes with overlapping bicliques
+        shared_nodes = {
+            other_idx: len((dmr_nodes | gene_nodes) &
+                          (bicliques[other_idx][0] | bicliques[other_idx][1]))
+            for other_idx in overlapping_bicliques
+        }
+        
+        # Get biclique classification
+        category = classify_biclique(dmr_nodes, gene_nodes)
+        
+        # Create metadata dictionary
+        biclique_metadata = {
+            "id": idx,
+            "size": {
+                "total": size,
+                "dmrs": len(dmr_nodes),
+                "genes": len(gene_nodes)
+            },
+            "nodes": {
+                "dmrs": sorted(dmr_nodes),
+                "genes": sorted(gene_nodes)
+            },
+            "metrics": {
+                "density": density,
+                "dmr_ratio": len(dmr_nodes) / len(all_dmrs) if all_dmrs else 0,
+                "gene_ratio": len(gene_nodes) / len(all_genes) if all_genes else 0,
+                "edge_count": len(dmr_nodes) * len(gene_nodes)
+            },
+            "classification": {
+                "category": category.name.lower(),
+                "is_interesting": len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
+            },
+            "relationships": {
+                "overlapping_bicliques": len(overlapping_bicliques),
+                "shared_nodes": shared_nodes,
+                "max_overlap": max(shared_nodes.values()) if shared_nodes else 0
+            }
+        }
+        
+        metadata.append(biclique_metadata)
+    
+    return metadata
