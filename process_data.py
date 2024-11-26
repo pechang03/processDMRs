@@ -319,12 +319,12 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 print(json.dumps(original_stats, indent=2))
                 
                 # Analyze biconnected components
-                biconn_stats = analyze_biconnected_components(graph)[1]
+                biconn_comps, biconn_stats = analyze_biconnected_components(graph)
                 print("\nBiconnected component statistics:")
                 print(json.dumps(biconn_stats, indent=2))
                 
                 # Analyze triconnected components
-                triconn_stats = analyze_triconnected_components(graph)[1]
+                triconn_comps, triconn_stats = analyze_triconnected_components(graph)
                 print("\nTriconnected component statistics:")
                 print(json.dumps(triconn_stats, indent=2))
                 
@@ -335,9 +335,18 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     component_stats["components"]["original"] = {}
                     
                 component_stats["components"]["original"] = {
-                    "connected": original_stats,
-                    "biconnected": biconn_stats,
-                    "triconnected": triconn_stats
+                    "connected": {
+                        "components": connected_comps,
+                        "stats": original_stats
+                    },
+                    "biconnected": {
+                        "components": biconn_comps,
+                        "stats": biconn_stats
+                    },
+                    "triconnected": {
+                        "components": triconn_comps,
+                        "stats": triconn_stats
+                    }
                 }
                 
                 print("\nFinal component statistics for original graph:")
