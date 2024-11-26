@@ -320,7 +320,14 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     statistics,
                 ) = process_components(graph, bicliques_result, dominating_set=None)
 
-                # Update component stats with biclique information
+                # Create biclique graph
+                biclique_graph = nx.Graph()
+                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+
+                # Update component stats with both original and biclique graph analysis
                 component_stats = {
                     "original": {
                         "connected": analyze_components(
@@ -332,25 +339,16 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                         "triconnected": analyze_triconnected_components(graph)[1],
                     },
                     "biclique": {
-                        "connected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "biconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                        "triconnected": {
-                            "total": 0,
-                            "single_node": 0,
-                            "small": 0,
-                            "interesting": 0,
-                        },
-                    },
+                        "connected": analyze_components(
+                            list(nx.connected_components(biclique_graph)), 
+                            biclique_graph
+                        ),
+                        "biconnected": analyze_components(
+                            list(nx.biconnected_components(biclique_graph)), 
+                            biclique_graph
+                        ),
+                        "triconnected": analyze_triconnected_components(biclique_graph)[1]
+                    }
                 }
 
                 return {
