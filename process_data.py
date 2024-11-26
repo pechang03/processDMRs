@@ -305,7 +305,7 @@ def process_timepoint(df, timepoint, gene_id_mapping):
                 bicliques_result = {"bicliques": []}
                 statistics = {}
         else:
-            print(f"Biclique file not found for {timepoint} - will be generated in next phase", flush=True)
+            print(f"Biclique file not found for {timepoint}", flush=True)
             bicliques_result = {"bicliques": []}
             statistics = {}
 
