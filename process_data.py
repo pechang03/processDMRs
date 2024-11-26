@@ -724,6 +724,33 @@ def process_data(timepoint=None):
                 json.dumps(convert_dict_keys_to_str(biclique_stats), indent=2),
             )
 
+        # Calculate overall statistics
+        overall_stats = {
+            "coverage": bicliques_result.get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0}
+            }),
+            "edge_coverage": edge_coverage,
+            "dominating_set": dominating_set_stats,
+            "components": component_stats.get("components", {
+                "original": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                },
+                "biclique": {
+                    "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                    "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                }
+            }),
+            "biclique_types": biclique_stats.get("biclique_types", {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
+            }),
+            "size_distribution": bicliques_result.get("size_distribution", {})
+        }
+
         # Now create _cached_data with overall graph statistics
         _cached_data = {
             "stats": overall_stats,
