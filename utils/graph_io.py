@@ -85,14 +85,11 @@ def write_bipartite_graph(
         sorted_edges = sorted(unique_edges)
 
         with open(output_file, "w") as file:
-            # Write header with correct counts
+            # Write header with correct counts and first gene ID
             n_dmrs = len(dmr_nodes)
             n_genes = len(gene_nodes)
-            file.write(f"{n_dmrs} {n_genes}\n")
-            
-            # Write first gene ID (minimum gene ID) on second line
             min_gene_id = min(gene_nodes)
-            file.write(f"{min_gene_id}\n")
+            file.write(f"{n_dmrs} {n_genes} {min_gene_id}\n")
 
             # Write edges with sequential DMR IDs
             for dmr_id, gene_id in sorted_edges:
