@@ -189,7 +189,6 @@ def index_route():
 def statistics_route():
     """Handle statistics page requests with enhanced error handling and debugging."""
     import sys
-    import networkx as nx
     try:
         print("\n=== Starting Statistics Route ===", flush=True)
         results = process_data()
@@ -207,31 +206,22 @@ def statistics_route():
         if "bipartite_graph" in overall_data:
             graph = overall_data["bipartite_graph"]
             
-            # Calculate connected components
-            connected_components = list(nx.connected_components(graph))
-            connected_stats = analyze_components(connected_components, graph)
-            
-            # Calculate biconnected components
-            biconnected_components = list(nx.biconnected_components(graph))
-            biconnected_stats = analyze_components(biconnected_components, graph)
-            
-            # Calculate triconnected components
-            triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
+            # Use functions from biclique_analysis
+            from biclique_analysis.statistics import (
+                analyze_components,
+                calculate_component_statistics
+            )
+            from biclique_analysis.triconnected import analyze_triconnected_components
+
+            # Calculate component statistics using the proper function
+            component_stats = calculate_component_statistics(
+                overall_data.get("bicliques", []),  # Pass bicliques if available
+                graph
+            )
             
             # Create detailed statistics with actual component data
             detailed_stats = {
-                "components": {
-                    "original": {
-                        "connected": connected_stats,
-                        "biconnected": biconnected_stats,
-                        "triconnected": triconnected_stats
-                    },
-                    "biclique": {
-                        "connected": {},
-                        "biconnected": {},
-                        "triconnected": {}
-                    }
-                },
+                "components": component_stats,
                 "dominating_set": {
                     "size": 0,
                     "percentage": 0,
