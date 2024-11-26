@@ -9,6 +9,7 @@ import os
 # from biclique_analysis import process_enhancer_info
 from utils import create_dmr_id, read_bipartite_graph, write_bipartite_graph
 from utils.data_processing import process_enhancer_info
+from utils.constants import START_GENE_ID
 
 
 # Configuration constants
@@ -49,13 +50,13 @@ def validate_bipartite_graph(B):
     """Validate the bipartite graph properties and print detailed statistics"""
     # Create a copy of the graph to work with
     G = B.copy()
-    
+
     # Find and remove isolated nodes
     isolated_nodes = list(nx.isolates(G))
     if isolated_nodes:
         print(f"\nRemoving {len(isolated_nodes)} isolated nodes")
         # Only remove isolated gene nodes (bipartite=1)
-        isolated_genes = [n for n in isolated_nodes if G.nodes[n].get('bipartite') == 1]
+        isolated_genes = [n for n in isolated_nodes if G.nodes[n].get("bipartite") == 1]
         G.remove_nodes_from(isolated_genes)
         print(f"Removed {len(isolated_genes)} isolated gene nodes")
 
@@ -82,7 +83,9 @@ def validate_bipartite_graph(B):
 
     # Get node sets by bipartite attribute
     top_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 0}  # DMRs
-    bottom_nodes = {n for n, d in G.nodes(data=True) if d.get("bipartite") == 1}  # Genes
+    bottom_nodes = {
+        n for n, d in G.nodes(data=True) if d.get("bipartite") == 1
+    }  # Genes
 
     print(f"\nNode distribution:")
     print(f"  - DMR nodes (bipartite=0): {len(top_nodes)}")
@@ -116,8 +119,7 @@ def validate_bipartite_graph(B):
 
 def validate_node_ids(dmr, gene_id, gene_id_mapping):
     """Validate node IDs are properly assigned"""
-    from utils.constants import START_GENE_ID
-    
+
     if dmr >= START_GENE_ID:
         print(f"Warning: DMR ID {dmr} is >= START_GENE_ID ({START_GENE_ID})")
         return False
@@ -134,17 +136,17 @@ def read_excel_file(filepath, sheet_name=None):
             raise FileNotFoundError(f"Excel file not found: {filepath}")
 
         print(f"Reading Excel file from: {filepath}")
-        
+
         # First get available sheets
         xl = pd.ExcelFile(filepath)
         available_sheets = xl.sheet_names
         print(f"Available sheets: {available_sheets}")
-        
+
         # If no sheet specified and only one sheet exists, use that
         if sheet_name is None and len(available_sheets) == 1:
             sheet_name = available_sheets[0]
             print(f"Using only available sheet: {sheet_name}")
-        
+
         # If sheet specified but not found, try to find a case-insensitive match
         if sheet_name and sheet_name not in available_sheets:
             sheet_map = {s.lower(): s for s in available_sheets}
@@ -153,7 +155,9 @@ def read_excel_file(filepath, sheet_name=None):
                 print(f"Using sheet '{actual_sheet}' for requested '{sheet_name}'")
                 sheet_name = actual_sheet
             else:
-                raise ValueError(f"Sheet '{sheet_name}' not found. Available sheets: {available_sheets}")
+                raise ValueError(
+                    f"Sheet '{sheet_name}' not found. Available sheets: {available_sheets}"
+                )
 
         if sheet_name:
             print(f"Reading sheet: {sheet_name}")
@@ -265,12 +269,12 @@ def create_bipartite_graph(
 ) -> nx.Graph:
     """Create a bipartite graph from DataFrame."""
     B = nx.Graph()
-    
+
     print(f"\nCreating bipartite graph for timepoint: {timepoint}")
-    
+
     # Convert gene mapping to lowercase for case-insensitive matching
     gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items() if k}
-    
+
     # Add DMR nodes first with proper timepoint-specific IDs
     dmr_nodes = set()
     for _, row in df.iterrows():
@@ -292,7 +296,7 @@ def create_bipartite_graph(
     for _, row in df.iterrows():
         dmr_num = row["DMR_No."] - 1
         dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
-        
+
         # Add edge for closest gene
         if pd.notna(row.get(closest_gene_col)):
             gene_name = str(row[closest_gene_col]).strip().lower()
@@ -305,7 +309,9 @@ def create_bipartite_graph(
 
         # Add edges for enhancer genes
         if pd.notna(row.get("ENCODE_Enhancer_Interaction(BingRen_Lab)")):
-            enhancer_genes = process_enhancer_info(row["ENCODE_Enhancer_Interaction(BingRen_Lab)"])
+            enhancer_genes = process_enhancer_info(
+                row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
+            )
             for gene_name in enhancer_genes:
                 gene_name = gene_name.lower()
                 if gene_name in gene_id_mapping:
@@ -317,8 +323,8 @@ def create_bipartite_graph(
 
     # Verify all nodes have bipartite attribute
     for node in B.nodes():
-        if 'bipartite' not in B.nodes[node]:
-            B.nodes[node]['bipartite'] = 1 if node in gene_id_mapping.values() else 0
+        if "bipartite" not in B.nodes[node]:
+            B.nodes[node]["bipartite"] = 1 if node in gene_id_mapping.values() else 0
 
     print(f"\nGraph construction summary for {timepoint}:")
     print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
