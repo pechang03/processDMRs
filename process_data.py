@@ -267,8 +267,13 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         graph = filtered_graph  # Use the filtered graph going forward
         print("Graph validation successful")
 
-        # Look for biclique file
-        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
+        # Look for biclique file in data directory with .biclusters extension
+        if timepoint == "DSS1" or timepoint == "overall":
+            biclique_file = "./data/bipartite_graph_output.txt.biclusters"
+        else:
+            # For pairwise timepoints, use the timepoint-specific naming but in data dir
+            biclique_file = f"./data/bipartite_graph_output_{timepoint}.txt.biclusters"
+
         print(f"\nLooking for biclique file: {biclique_file}")
         print(f"File exists: {os.path.exists(biclique_file)}")
 
