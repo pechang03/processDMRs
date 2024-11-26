@@ -139,3 +139,97 @@ def write_gene_mappings(
     except Exception as e:
         print(f"Error writing {output_file}: {e}")
         raise
+
+def remove_isolated_nodes(graph: nx.Graph, keep_dmrs: bool = True) -> nx.Graph:
+    """
+    Remove isolated nodes from the graph.
+    
+    Args:
+        graph: Input graph
+        keep_dmrs: If True, keeps isolated DMR nodes (bipartite=0)
+        
+    Returns:
+        Graph with isolated nodes removed
+    """
+    G = graph.copy()
+    isolated_nodes = list(nx.isolates(G))
+    
+    if keep_dmrs:
+        # Only remove isolated gene nodes (bipartite=1)
+        isolated_genes = [n for n in isolated_nodes if G.nodes[n].get('bipartite') == 1]
+        G.remove_nodes_from(isolated_genes)
+        print(f"Removed {len(isolated_genes)} isolated gene nodes")
+    else:
+        # Remove all isolated nodes
+        G.remove_nodes_from(isolated_nodes)
+        print(f"Removed {len(isolated_nodes)} isolated nodes")
+        
+    return G
+
+def remove_bridge_edges(graph: nx.Graph, min_component_size: int = 3) -> nx.Graph:
+    """
+    Remove bridge edges that connect small components.
+    
+    Args:
+        graph: Input graph
+        min_component_size: Minimum size for components to keep
+        
+    Returns:
+        Graph with bridge edges removed
+    """
+    G = graph.copy()
+    bridges = list(nx.bridges(G))
+    
+    removed_edges = []
+    for edge in bridges:
+        # Temporarily remove the edge
+        G.remove_edge(*edge)
+        
+        # Check resulting components
+        components = list(nx.connected_components(G))
+        small_components = [c for c in components if len(c) < min_component_size]
+        
+        if small_components:
+            # Keep the edge removed if it creates small components
+            removed_edges.append(edge)
+        else:
+            # Put the edge back if components are large enough
+            G.add_edge(*edge)
+            
+    print(f"Removed {len(removed_edges)} bridge edges")
+    return G
+
+def preprocess_graph_for_visualization(
+    graph: nx.Graph,
+    remove_isolates: bool = True,
+    remove_bridges: bool = False,
+    keep_dmrs: bool = True,
+    min_component_size: int = 3
+) -> nx.Graph:
+    """
+    Preprocess graph for visualization by optionally removing isolates and bridges.
+    
+    Args:
+        graph: Input graph
+        remove_isolates: Whether to remove isolated nodes
+        remove_bridges: Whether to remove bridge edges
+        keep_dmrs: Whether to keep isolated DMR nodes when removing isolates
+        min_component_size: Minimum component size when removing bridges
+        
+    Returns:
+        Preprocessed graph
+    """
+    G = graph.copy()
+    
+    if remove_isolates:
+        G = remove_isolated_nodes(G, keep_dmrs=keep_dmrs)
+        
+    if remove_bridges:
+        G = remove_bridge_edges(G, min_component_size=min_component_size)
+        
+    # Print statistics about the preprocessed graph
+    print("\nPreprocessed graph statistics:")
+    print(f"Nodes: {G.number_of_nodes()} (original: {graph.number_of_nodes()})")
+    print(f"Edges: {G.number_of_edges()} (original: {graph.number_of_edges()})")
+    
+    return G
