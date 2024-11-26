@@ -186,78 +186,93 @@ def index_route():
 
 
 def statistics_route():
+    """Handle statistics page requests with enhanced error handling and debugging."""
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Debug output to verify data
+        print("\nDebug: Statistics Route Data")
+        print("Keys in results:", list(results.keys()))
+
         # Get timepoint data
         timepoint_stats = results.get("timepoint_stats", {})
+        print("Timepoint stats keys:", list(timepoint_stats.keys()))
 
         # Create list of timepoints with their status
         timepoint_info = {}
-        for timepoint, data in timepoint_stats.items() if timepoint_stats else {}:
-            if "error" in data:
-                timepoint_info[timepoint] = {
-                    "status": "error",
-                    "message": data["error"],
-                }
-            else:
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "stats": data.get("biclique_stats", {}),
-                    "coverage": data.get("coverage", {}),
-                    "components": data.get("component_stats", {}).get("components", {}),
-                }
+        for timepoint, data in results.items():
+            if isinstance(data, dict):  # Ensure we're only processing dictionary data
+                print(f"\nProcessing timepoint {timepoint}")
+                print(f"Data keys: {list(data.keys())}")
+                
+                if "error" in data:
+                    timepoint_info[timepoint] = {
+                        "status": "error",
+                        "message": data["error"],
+                    }
+                else:
+                    timepoint_info[timepoint] = {
+                        "status": "success",
+                        "stats": data.get("statistics", {}),
+                        "coverage": data.get("coverage", {}),
+                        "components": data.get("component_stats", {}).get("components", {}),
+                    }
 
         # Create properly structured statistics dictionary
         detailed_stats = {
-            "components": results.get("component_stats", {}).get("components", {}),
-            "dominating_set": {
-                "size": results.get("dominating_set", {}).get("size", 0),
-                "percentage": results.get("dominating_set", {}).get("percentage", 0.0),
-                "genes_dominated": results.get("dominating_set", {}).get("genes_dominated", 0),
-                "components_with_ds": results.get("dominating_set", {}).get("components_with_ds", 0),
-                "avg_size_per_component": results.get("dominating_set", {}).get("avg_size_per_component", 0.0),
-            },
-            "coverage": results.get(
-                "coverage",
-                {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
+            "components": results.get("overall", {}).get("component_stats", {}).get("components", {}),
+            "dominating_set": results.get("overall", {}).get("dominating_set", {
+                "size": 0,
+                "percentage": 0.0,
+                "genes_dominated": 0,
+                "components_with_ds": 0,
+                "avg_size_per_component": 0.0,
+            }),
+            "coverage": results.get("overall", {}).get("coverage", {
+                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                "genes": {"covered": 0, "total": 0, "percentage": 0},
+                "edges": {
+                    "single_coverage": 0,
+                    "multiple_coverage": 0,
+                    "uncovered": 0,
+                    "total": 0,
+                    "single_percentage": 0,
+                    "multiple_percentage": 0,
+                    "uncovered_percentage": 0,
                 },
-            ),
-            "edge_coverage": results.get("edge_coverage", {}),
-            "biclique_types": results.get(
-                "biclique_types",
-                {"empty": 0, "simple": 0, "interesting": 0, "complex": 0},
-            ),
-            "size_distribution": results.get("size_distribution", {}),
+            }),
+            "edge_coverage": results.get("overall", {}).get("edge_coverage", {}),
+            "biclique_types": results.get("overall", {}).get("biclique_types", {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0,
+            }),
+            "size_distribution": results.get("overall", {}).get("size_distribution", {}),
         }
 
-        # Convert numpy types and tuple keys before JSON serialization
+        # Debug output for verification
+        print("\nDetailed stats structure:")
+        print("Components:", bool(detailed_stats["components"]))
+        print("Coverage:", bool(detailed_stats["coverage"]))
+        print("Edge coverage:", bool(detailed_stats["edge_coverage"]))
+        print("Biclique types:", detailed_stats["biclique_types"])
 
+        # Convert numpy types and tuple keys before JSON serialization
         detailed_stats = convert_dict_keys_to_str(detailed_stats)
 
         # Update edge coverage from biclique statistics if available
-        if "biclique_stats" in results:
+        if "overall" in results and "statistics" in results["overall"]:
             detailed_stats["edge_coverage"] = convert_dict_keys_to_str(
-                results["biclique_stats"].get("edge_coverage", {})
+                results["overall"]["statistics"].get("edge_coverage", {})
             )
             detailed_stats["coverage"]["edges"] = convert_dict_keys_to_str(
-                results["biclique_stats"].get("edge_coverage", {})
+                results["overall"]["statistics"].get("edge_coverage", {})
             )
 
-        print("\nDetailed stats being sent to template:")
+        print("\nFinal detailed stats being sent to template:")
         print(json.dumps(detailed_stats, indent=2))
 
         return render_template(
@@ -268,7 +283,6 @@ def statistics_route():
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
