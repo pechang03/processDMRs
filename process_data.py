@@ -302,6 +302,20 @@ def process_timepoint(
         # Call without layout parameter
         triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
 
+        # Look for biclique file
+        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
+        print(f"Looking for biclique file: {biclique_file}")
+        
+        bicliques_result = None
+        if os.path.exists(biclique_file):
+            print(f"Processing bicliques from {biclique_file}")
+            bicliques_result = process_bicliques(
+                graph,
+                biclique_file,
+                timepoint,
+                gene_id_mapping=gene_id_mapping
+            )
+
         # Calculate component statistics
         component_stats = {
             "original": {
@@ -316,8 +330,43 @@ def process_timepoint(
             }
         }
 
+        # If we have bicliques, calculate biclique graph statistics
+        if bicliques_result and "bicliques" in bicliques_result:
+            print(f"Creating biclique graph for {timepoint}")
+            biclique_graph = nx.Graph()
+            for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+                biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+                biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+                biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+
+            # Calculate biclique graph component statistics
+            biclique_connected = list(nx.connected_components(biclique_graph))
+            biclique_biconnected = list(nx.biconnected_components(biclique_graph))
+            biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
+
+            component_stats["biclique"] = {
+                "connected": analyze_components(biclique_connected, biclique_graph),
+                "biconnected": analyze_components(biclique_biconnected, biclique_graph),
+                "triconnected": biclique_tri_stats
+            }
+
+            # Calculate biclique types
+            biclique_types = classify_biclique_types(bicliques_result["bicliques"])
+            print(f"Biclique types: {biclique_types}")
+        else:
+            biclique_types = {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
+            }
+            print(f"No biclique file found for {timepoint}")
+
         # Calculate coverage statistics
-        coverage_stats = calculate_coverage_statistics([], graph)  # Empty bicliques for now
+        coverage_stats = calculate_coverage_statistics(
+            bicliques_result["bicliques"] if bicliques_result else [], 
+            graph
+        )
 
         # Structure the return data to match template expectations
         return {
@@ -325,14 +374,12 @@ def process_timepoint(
             "stats": {
                 "components": component_stats,
                 "coverage": coverage_stats,
-                "edge_coverage": calculate_edge_coverage([], graph),
-                "biclique_types": {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0
-                },
-                "size_distribution": {},
+                "edge_coverage": calculate_edge_coverage(
+                    bicliques_result["bicliques"] if bicliques_result else [], 
+                    graph
+                ),
+                "biclique_types": biclique_types,
+                "size_distribution": bicliques_result.get("size_distribution", {}) if bicliques_result else {},
                 "dominating_set": {
                     "size": 0,
                     "percentage": 0,
@@ -342,7 +389,7 @@ def process_timepoint(
                 }
             },
             "coverage": coverage_stats,
-            "components": component_stats,  # Direct access path
+            "components": component_stats,
             "layout_used": layout_options
         }
 
