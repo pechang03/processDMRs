@@ -50,12 +50,19 @@ def process_bicliques(
             }
 
         # Process components using components.py
-        complex_components, interesting_components, non_simple_components, component_stats, statistics = \
-            process_components(
-                bipartite_graph,
-                bicliques_result,
-                dominating_set=None  # Add dominating set if needed
-            )
+        # Update this line to match the 6 return values from process_components
+        (
+            complex_components,
+            interesting_components,
+            simple_components,  # Add this variable
+            non_simple_components,
+            component_stats,
+            statistics
+        ) = process_components(
+            bipartite_graph,
+            bicliques_result,
+            dominating_set=None  # Add dominating set if needed
+        )
 
         # Add component information to result
         bicliques_result.update({
