@@ -12,7 +12,7 @@ from utils.data_processing import process_enhancer_info
 
 
 # Configuration constants
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
 DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
