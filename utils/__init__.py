@@ -10,6 +10,8 @@ from .json_utils import (
     convert_dict_keys_to_str,
 )
 from .graph_utils import create_node_biclique_map, get_node_position
+from .graph_io import read_bipartite_graph, write_bipartite_graph
+from .id_mapping import create_dmr_id
 
 __all__ = [
     "EdgeInfo",
@@ -21,5 +23,8 @@ __all__ = [
     "convert_dict_keys_to_str",
     "create_node_biclique_map",
     "get_node_position",
+    "read_bipartite_graph",
+    "write_bipartite_graph",
+    "create_dmr_id",
 ]
 """Utilities package"""

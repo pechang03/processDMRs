@@ -22,7 +22,7 @@ from data_loader import (
     validate_bipartite_graph,
 )
 
-from process_data import write_bipartite_graph
+from utils import write_bipartite_graph
 from biclique_analysis import (
     process_bicliques,
     process_enhancer_info,
