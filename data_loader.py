@@ -137,11 +137,17 @@ def read_excel_file(filepath, sheet_name=None):
 
         print(f"Reading Excel file from: {filepath}")
 
-        # Read the Excel file
+        # Read the Excel file with explicit dtypes
+        dtype_map = {
+            "DMR_No.": int,
+            "Gene_Symbol_Nearby": str,
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": str
+        }
+        
         if sheet_name:
-            df = pd.read_excel(filepath, sheet_name=sheet_name)
+            df = pd.read_excel(filepath, sheet_name=sheet_name, dtype=dtype_map)
         else:
-            df = pd.read_excel(filepath)
+            df = pd.read_excel(filepath, dtype=dtype_map)
 
         # Add Processed_Enhancer_Info column if not already present
         if "Processed_Enhancer_Info" not in df.columns:
@@ -149,6 +155,7 @@ def read_excel_file(filepath, sheet_name=None):
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
 
+        print(f"Read {len(df)} rows with DMR range: {df['DMR_No.'].min()}-{df['DMR_No.'].max()}")
         return df  # Return the DataFrame directly
 
     except Exception as e:
