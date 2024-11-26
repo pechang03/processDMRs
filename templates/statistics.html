@@ -273,7 +273,8 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for component in statistics.components.original.triconnected.components %}
+                    {% set triconn = statistics.components.original.get('triconnected', {}) %}
+                    {% for component in triconn.get('components', []) %}
                     <tr>
                       <td>{{ component.id }}</td>
                       <td>{{ component.dmrs|length }}</td>
@@ -289,6 +290,13 @@
                       </td>
                     </tr>
                     {% endfor %}
+                    {% if not triconn.get('components', []) %}
+                    <tr>
+                      <td colspan="5" class="text-center">
+                        <em>No triconnected components found</em>
+                      </td>
+                    </tr>
+                    {% endif %}
                   </tbody>
                 </table>
               </div>
