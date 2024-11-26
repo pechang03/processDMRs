@@ -6,9 +6,14 @@ import pandas as pd
 from typing import Dict, List, Set, Tuple
 import os
 
-# from biclique_analysis import process_enhancer_info
-from utils import create_dmr_id, read_bipartite_graph, write_bipartite_graph
+from utils.id_mapping import create_dmr_id, create_gene_mapping, validate_gene_mapping
 from utils.data_processing import process_enhancer_info
+from utils.graph_io import (
+    read_bipartite_graph, 
+    write_bipartite_graph,
+    remove_isolated_nodes,
+    preprocess_graph_for_visualization
+)
 from utils.constants import START_GENE_ID
 
 
@@ -23,27 +28,6 @@ BIPARTITE_GRAPH_TEMPLATE = os.path.join(
 BIPARTITE_GRAPH_OVERALL = os.path.join(
     DATA_DIR, "bipartite_graph_output_DSS_overall.txt"
 )
-
-
-def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
-    """Create a unique DMR ID for a specific timepoint."""
-    # Use a large offset (e.g., 1000000) for each timepoint to ensure no overlap
-    timepoint_offsets = {
-        "P21-P28": 1000000,
-        "P21-P40": 2000000,
-        "P21-P60": 3000000,
-        "P21-P180": 4000000,
-        "TP28-TP180": 5000000,
-        "TP40-TP180": 6000000,
-        "TP60-TP180": 7000000,
-        "DSS1": 0,  # Base timepoint uses original numbers
-    }
-    offset = timepoint_offsets.get(
-        timepoint, 8000000
-    )  # Default offset for unknown timepoints
-
-    # Ensure DMR IDs are below the first gene ID
-    return min(first_gene_id - 1, offset + dmr_num)
 
 
 def validate_bipartite_graph(B):
