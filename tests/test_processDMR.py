@@ -13,6 +13,8 @@ from processDMR import create_bipartite_graph, process_enhancer_info
 from rb_domination import greedy_rb_domination
 from visualization.core import create_biclique_visualization
 from utils.constants import START_GENE_ID
+from data_loader import get_excel_sheets, read_excel_file
+from utils.id_mapping import create_gene_mapping
 
 
 class TestBipartiteGraph(unittest.TestCase):
