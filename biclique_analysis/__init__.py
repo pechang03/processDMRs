@@ -15,8 +15,7 @@ from .processor import (
     create_node_metadata,
 )
 from .edge_classification import classify_edges
-from utils import process_enhancer_info
-
+# Remove process_enhancer_info from imports and __all__
 # Use a set to ensure uniqueness and then convert back to a list
 __all__ = list(
     set(
@@ -25,7 +24,6 @@ __all__ = list(
             "read_bicliques_file",
             # Processor exports
             "process_bicliques",
-            "process_enhancer_info",
             "process_dataset",
             "create_node_metadata",
             # Component exports

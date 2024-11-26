@@ -28,11 +28,11 @@ import pandas as pd
 # from processDMR import read_excel_file,
 from biclique_analysis import (
     process_bicliques,
-    process_enhancer_info,
     create_node_metadata,
     process_components,
     reporting,  # Add this import
 )
+from utils import process_enhancer_info
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
     BicliqueSizeCategory,
