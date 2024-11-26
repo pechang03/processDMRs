@@ -21,6 +21,11 @@ from .writer import (
     write_component_details                                                                                              
 )                                                                                                                        
                                                                                                                         
+from .embeddings import (
+    generate_biclique_embeddings,
+    generate_component_embeddings
+)
+
 # Use a set to ensure uniqueness and then convert back to a list                                                         
 __all__ = list(                                                                                                          
     set(                                                                                                                 
@@ -49,5 +54,8 @@ __all__ = list(
             "write_bicliques",                                                                                           
             "write_analysis_results",                                                                                    
             "write_component_details",                                                                                   
+            # Embedding exports
+            "generate_biclique_embeddings",
+            "generate_component_embeddings",
         ]                                                                                                                
     ) 
