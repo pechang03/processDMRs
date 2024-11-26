@@ -49,6 +49,23 @@ def create_biclique_visualization(
     """Create interactive Plotly visualization with colored bicliques."""
     print(f"\nCreating visualization for {len(bicliques)} bicliques")  # Debug logging
 
+    # Preprocess graphs for visualization
+    from utils.graph_io import preprocess_graph_for_visualization
+    
+    processed_original = preprocess_graph_for_visualization(
+        original_graph,
+        remove_isolates=True,
+        remove_bridges=False,
+        keep_dmrs=True
+    )
+    
+    processed_bipartite = preprocess_graph_for_visualization(
+        bipartite_graph,
+        remove_isolates=True,
+        remove_bridges=False,
+        keep_dmrs=True
+    )
+
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
 
