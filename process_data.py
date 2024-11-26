@@ -326,6 +326,12 @@ def process_timepoint(
             "components": component_stats["components"],  # Direct access path
             "layout_used": layout_options,
         }
+    except Exception as e:
+        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
         # Try to process bicliques if file exists
         biclique_file = f"bipartite_graph_output_{timepoint}.txt"
