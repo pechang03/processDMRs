@@ -179,7 +179,7 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
         gene_names = df[gene_col].dropna().str.strip().str.lower()
         all_genes.update(gene_names)
 
-    # Add genes from enhancer info (case-insensitive)
+    # Add genes from enhancer info
     df["Processed_Enhancer_Info"] = df[
         "ENCODE_Enhancer_Interaction(BingRen_Lab)"
     ].apply(process_enhancer_info)
@@ -188,16 +188,9 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
         if genes:
             all_genes.update(g.strip().lower() for g in genes)
 
-    # Sort genes alphabetically for deterministic assignment
-    sorted_genes = sorted(all_genes)
-    max_dmr = df["DMR_No."].max()
-
-    # Create gene mapping starting after max DMR number
-    gene_id_mapping = {
-        gene: START_GENE_ID + idx for idx, gene in enumerate(sorted_genes)
-    }
-
-    return gene_id_mapping
+    # Use utility function to create mapping
+    max_dmr_id = df["DMR_No."].max() - 1  # Convert to 0-based index
+    return create_gene_mapping(all_genes, max_dmr_id)
 
 
 def process_overall_timepoint(df: pd.DataFrame) -> Dict:

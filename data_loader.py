@@ -228,26 +228,27 @@ def create_bipartite_graph(
     # Convert gene mapping to lowercase for case-insensitive matching
     gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items() if k}
 
+    # Validate gene mapping
+    max_dmr_id = df["DMR_No."].max() - 1  # Convert to 0-based index
+    if not validate_gene_mapping(gene_id_mapping, max_dmr_id):
+        print("Warning: Gene mapping validation failed")
+
     # Add DMR nodes first with proper timepoint-specific IDs
     dmr_nodes = set()
     for _, row in df.iterrows():
-        dmr_num = row["DMR_No."] - 1  # Convert to 0-based index
+        dmr_num = int(row["DMR_No."]) - 1  # Convert to 0-based index
         dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
         dmr_nodes.add(dmr_id)
-        # Explicitly set bipartite attribute when adding node
         B.add_node(dmr_id, bipartite=0, timepoint=timepoint)
 
-    # Add gene nodes with bipartite attribute
+    # Add gene nodes
     for gene_name, gene_id in gene_id_mapping.items():
-        # Explicitly set bipartite attribute when adding node
         B.add_node(gene_id, bipartite=1)
 
-    # Track edges to avoid duplicates
+    # Process edges
     edges_added = set()
-
-    # Process each row
     for _, row in df.iterrows():
-        dmr_num = row["DMR_No."] - 1
+        dmr_num = int(row["DMR_No."]) - 1
         dmr_id = create_dmr_id(dmr_num, timepoint, min(gene_id_mapping.values()))
 
         # Add edge for closest gene
@@ -274,13 +275,12 @@ def create_bipartite_graph(
                         B.add_edge(*edge)
                         edges_added.add(edge)
 
-    # Verify all nodes have bipartite attribute
-    for node in B.nodes():
-        if "bipartite" not in B.nodes[node]:
-            B.nodes[node]["bipartite"] = 1 if node in gene_id_mapping.values() else 0
+    # Remove isolated nodes and preprocess graph
+    B = remove_isolated_nodes(B, keep_dmrs=True)
+    B = preprocess_graph_for_visualization(B, remove_isolates=True, keep_dmrs=True)
 
     print(f"\nGraph construction summary for {timepoint}:")
-    print(f"DMR nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 0])}")
+    print(f"DMR nodes: {len(dmr_nodes)}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
     print(f"Total edges added: {len(edges_added)}")
 
