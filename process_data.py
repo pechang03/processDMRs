@@ -353,27 +353,44 @@ def process_timepoint(
 
         # If we have bicliques, calculate biclique graph statistics
         if bicliques_result and "bicliques" in bicliques_result:
-            print(f"Creating biclique graph for {timepoint}")
-            biclique_graph = nx.Graph()
-            for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+            print(f"\nProcessing components for {timepoint}")
+            try:
+                # Use process_components from components.py
+                complex_components, interesting_components, non_simple_components, component_stats, statistics = \
+                    process_components(
+                        graph,  # Original bipartite graph
+                        bicliques_result,  # Results from read_bicliques_file
+                        dominating_set=None  # Add if you have dominating set
+                    )
 
-            # Calculate biclique graph component statistics
-            biclique_connected = list(nx.connected_components(biclique_graph))
-            biclique_biconnected = list(nx.biconnected_components(biclique_graph))
-            biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
+                # Update the bicliques result with component information
+                bicliques_result.update({
+                    "complex_components": complex_components,
+                    "interesting_components": interesting_components,
+                    "non_simple_components": non_simple_components,
+                    "component_stats": component_stats,
+                    "statistics": statistics
+                })
 
-            component_stats["biclique"] = {
-                "connected": analyze_components(biclique_connected, biclique_graph),
-                "biconnected": analyze_components(biclique_biconnected, biclique_graph),
-                "triconnected": biclique_tri_stats
-            }
+                print(f"\nComponent processing results:")
+                print(f"Complex components: {len(complex_components)}")
+                print(f"Interesting components: {len(interesting_components)}")
+                print(f"Non-simple components: {len(non_simple_components)}")
 
-            # Calculate biclique types
-            biclique_types = classify_biclique_types(bicliques_result["bicliques"])
-            print(f"Biclique types: {biclique_types}")
+                # Calculate biclique types
+                biclique_types = classify_biclique_types(bicliques_result["bicliques"])
+                print(f"Biclique types: {biclique_types}")
+
+            except Exception as e:
+                print(f"Error processing components for {timepoint}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                biclique_types = {
+                    "empty": 0,
+                    "simple": 0,
+                    "interesting": 0,
+                    "complex": 0
+                }
         else:
             biclique_types = {
                 "empty": 0,
