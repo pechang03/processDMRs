@@ -220,7 +220,7 @@ def process_data():
 
         # Process bicliques
         bicliques_result = process_bicliques(
-            graph, "bipartite_graph_output.txt", "overall", gene_id_mapping=None
+            graph, "bipartite_graph_output.txt", "overall", gene_id_mapping=gene_id_mapping  # Pass the mapping
         )
 
         # Calculate comprehensive statistics
@@ -276,6 +276,7 @@ def process_data():
                 "biclique_types",
                 {"empty": 0, "simple": 0, "interesting": 0, "complex": 0},
             ),
+            "gene_id_mapping": gene_id_mapping,  # Add this line to return the mapping
         }
 
         timepoint_data["overall"] = overall_results
@@ -318,7 +319,7 @@ def process_data():
                 timepoint_graph,
                 f"bipartite_graph_output_{sheet}.txt",
                 sheet,
-                gene_id_mapping=gene_id_mapping,
+                gene_id_mapping=gene_id_mapping,  # Pass the mapping
             )
 
             # Calculate statistics for this timepoint
