@@ -17,10 +17,9 @@ from .reader import read_bicliques_file
 def process_bicliques(
     bipartite_graph: nx.Graph,
     bicliques_file: str,
-    max_dmr_id: int,
     dataset_name: str,
-    gene_id_mapping: Dict[str, int] = None,  # Add parameter
-    file_format: str = "gene_name",  # Change default to "gene_name"
+    gene_id_mapping: Dict[str, int] = None,
+    file_format: str = "gene_name",
 ) -> Dict:
     """Process bicliques and add detailed information."""
     print(f"Processing bicliques using format: {file_format}")

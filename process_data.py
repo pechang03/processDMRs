@@ -201,7 +201,6 @@ def process_single_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: 
     bicliques_result = process_bicliques(
         filtered_graph,
         f"bipartite_graph_output_{timepoint}.txt",
-        max(df["DMR_No."]),
         timepoint,
         gene_id_mapping=gene_id_mapping
     )
