@@ -1,0 +1,31 @@
+<div class="col-md-4">
+  <h4>Edge Coverage</h4>
+  <table class="table table-sm">
+    <tbody>
+      <tr>
+        <td>Single Coverage:</td>
+        <td>
+          {{ statistics.get('edge_coverage', {}).get('single', 0) }} ({{
+          "%.1f"|format(statistics.get('edge_coverage', {}).get('single_percentage', 0) * 100)
+          }}%)
+        </td>
+      </tr>
+      <tr>
+        <td>Multiple Coverage:</td>
+        <td>
+          {{ statistics.get('edge_coverage', {}).get('multiple', 0) }} ({{
+          "%.1f"|format(statistics.get('edge_coverage', {}).get('multiple_percentage', 0) * 100)
+          }}%)
+        </td>
+      </tr>
+      <tr>
+        <td>Uncovered:</td>
+        <td>
+          {{ statistics.get('edge_coverage', {}).get('uncovered', 0) }} ({{
+          "%.1f"|format(statistics.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100)
+          }}%)
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
