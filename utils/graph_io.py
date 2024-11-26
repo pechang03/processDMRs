@@ -49,10 +49,23 @@ def write_bipartite_graph(
         # Get unique edges (DMR first, gene second) and collect DMR nodes
         unique_edges = set()
         dmr_nodes = set()
+        
+        # Debug counters
+        total_edges = 0
+        duplicate_edges = 0
+        
         for edge in graph.edges():
+            total_edges += 1
             dmr_node = edge[0] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[1]
             gene_node = edge[1] if graph.nodes[edge[0]]["bipartite"] == 0 else edge[0]
-            unique_edges.add((dmr_node, gene_node))
+            
+            # Always order edges as (DMR, gene)
+            ordered_edge = (dmr_node, gene_node)
+            if ordered_edge in unique_edges:
+                duplicate_edges += 1
+                continue
+                
+            unique_edges.add(ordered_edge)
             dmr_nodes.add(dmr_node)
 
         # Create sequential mapping for DMR IDs
@@ -67,6 +80,10 @@ def write_bipartite_graph(
             n_dmrs = len(dmr_nodes)
             n_genes = len(gene_id_mapping)
             file.write(f"{n_dmrs} {n_genes}\n")
+            
+            # Write first gene ID on second line
+            first_gene_id = min(gene_id_mapping.values())
+            file.write(f"{first_gene_id}\n")
 
             # Write edges with sequential DMR IDs
             for dmr_id, gene_id in sorted_edges:
@@ -75,10 +92,12 @@ def write_bipartite_graph(
 
         # Validation output
         print(f"\nWrote graph to {output_file}:")
+        print(f"Total edges found: {total_edges}")
+        print(f"Duplicate edges removed: {duplicate_edges}")
+        print(f"Final unique edges: {len(sorted_edges)}")
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
-        print(f"Edges: {len(sorted_edges)}")
-
+        
         # Debug first few edges
         print("\nFirst 5 edges written:")
         for dmr_id, gene_id in sorted_edges[:5]:
