@@ -272,24 +272,48 @@ def process_data():
         return {"error": str(e)}
 
 
-def process_timepoint(df, timepoint, gene_id_mapping):
+def process_timepoint(
+    df, 
+    timepoint, 
+    gene_id_mapping, 
+    layout_options=None
+):
+    """Process a single timepoint with configurable layout options."""
+    if layout_options is None:
+        layout_options = {
+            "triconnected": "spring",
+            "bicliques": "circular",
+            "default": "original"
+        }
+    
     print(f"\nProcessing timepoint: {timepoint}", flush=True)
     
     try:
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         
-        # Get connected components
+        # Get connected components with layout options
         connected_components = list(nx.connected_components(graph))
         biconnected_components = list(nx.biconnected_components(graph))
-        triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
+        triconnected_components, triconnected_stats = analyze_triconnected_components(
+            graph, 
+            layout=layout_options.get("triconnected", "spring")
+        )
 
         # Calculate component statistics
         component_stats = {
             "components": {
                 "original": {
-                    "connected": analyze_components(connected_components, graph),
-                    "biconnected": analyze_components(biconnected_components, graph),
+                    "connected": analyze_components(
+                        connected_components, 
+                        graph, 
+                        layout=layout_options.get("default", "original")
+                    ),
+                    "biconnected": analyze_components(
+                        biconnected_components, 
+                        graph, 
+                        layout=layout_options.get("default", "original")
+                    ),
                     "triconnected": triconnected_stats,
                 }
             }
@@ -303,7 +327,8 @@ def process_timepoint(df, timepoint, gene_id_mapping):
                 graph, 
                 biclique_file,
                 timepoint, 
-                gene_id_mapping=gene_id_mapping
+                gene_id_mapping=gene_id_mapping,
+                layout=layout_options.get("bicliques", "circular")
             )
             
             # Process biclique graph components if bicliques found
@@ -318,11 +343,22 @@ def process_timepoint(df, timepoint, gene_id_mapping):
                 # Calculate statistics for biclique graph
                 biclique_connected = list(nx.connected_components(biclique_graph))
                 biclique_biconnected = list(nx.biconnected_components(biclique_graph))
-                biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(biclique_graph)
+                biclique_triconnected, biclique_tri_stats = analyze_triconnected_components(
+                    biclique_graph, 
+                    layout=layout_options.get("triconnected", "spring")
+                )
 
                 component_stats["components"]["biclique"] = {
-                    "connected": analyze_components(biclique_connected, biclique_graph),
-                    "biconnected": analyze_components(biclique_biconnected, biclique_graph),
+                    "connected": analyze_components(
+                        biclique_connected, 
+                        biclique_graph, 
+                        layout=layout_options.get("default", "original")
+                    ),
+                    "biconnected": analyze_components(
+                        biclique_biconnected, 
+                        biclique_graph, 
+                        layout=layout_options.get("default", "original")
+                    ),
                     "triconnected": biclique_tri_stats,
                 }
                 
@@ -339,7 +375,7 @@ def process_timepoint(df, timepoint, gene_id_mapping):
         # Structure the return data to match template expectations
         return {
             "status": "success",
-            "stats": component_stats,  # This matches the template's data.stats.components structure
+            "stats": component_stats,
             "coverage": calculate_coverage_statistics(bicliques_result.get("bicliques", []), graph),
             "biclique_types": statistics.get("biclique_types", {
                 "empty": 0,
@@ -347,7 +383,8 @@ def process_timepoint(df, timepoint, gene_id_mapping):
                 "interesting": 0,
                 "complex": 0
             }),
-            "components": component_stats["components"],  # Include direct component access
+            "components": component_stats["components"],
+            "layout_used": layout_options,  # Add layout information
         }
 
     except Exception as e:
