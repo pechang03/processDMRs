@@ -170,75 +170,7 @@ def read_excel_file(filepath, sheet_name=None):
         raise
 
 
-def create_bipartite_graph(
-    df: pd.DataFrame,
-    gene_id_mapping: Dict[str, int],
-    timepoint: str = "DSS1",
-    first_gene_id: int = None  # Add this parameter
-) -> nx.Graph:
-    """Create a bipartite graph from DataFrame with timepoint-specific DMR IDs."""
-    B = nx.Graph()
-    
-    if first_gene_id is None:
-        first_gene_id = min(gene_id_mapping.values())
-
-    # Add DMR nodes with timepoint-specific IDs
-    # Now using first_gene_id to ensure DMR IDs don't overlap with gene IDs
-    dmr_nodes = set(create_dmr_id(dmr-1, timepoint, first_gene_id) for dmr in df["DMR_No."])
-    for dmr in dmr_nodes:
-        B.add_node(dmr, bipartite=0, timepoint=timepoint)
-
-    # Add ALL gene nodes from mapping (even if not used in this timepoint)
-    for gene_name, gene_id in gene_id_mapping.items():
-        B.add_node(gene_id, bipartite=1)
-
-    # Process each row to add edges
-    edges_added = set()
-    for _, row in df.iterrows():
-        dmr_id = create_dmr_id(row["DMR_No."] - 1, timepoint, first_gene_id)
-
-        # Process closest gene
-        if pd.notna(row.get("Gene_Symbol_Nearby")):
-            gene_name = str(row["Gene_Symbol_Nearby"]).strip().lower()
-            if gene_name in gene_id_mapping:
-                gene_id = gene_id_mapping[gene_name]
-                edge = (dmr_id, gene_id)
-                if edge not in edges_added:
-                    B.add_edge(*edge)
-                    edges_added.add(edge)
-
-        # Process enhancer genes
-        if pd.notna(row.get("Processed_Enhancer_Info")):
-            genes = row["Processed_Enhancer_Info"]
-            if isinstance(genes, str):
-                genes = [g.strip() for g in genes.split(";")]
-            elif isinstance(genes, (list, set)):
-                genes = list(genes)
-            else:
-                continue
-
-            for gene_name in genes:
-                gene_name = str(gene_name).strip().lower()
-                if gene_name in gene_id_mapping:
-                    gene_id = gene_id_mapping[gene_name]
-                    edge = (dmr_id, gene_id)
-                    if edge not in edges_added:
-                        B.add_edge(*edge)
-                        edges_added.add(edge)
-
-    # Print detailed statistics
-    print(f"\nGraph construction summary for timepoint {timepoint}:")
-    print(f"Total DMR nodes: {len(dmr_nodes)}")
-    print(f"Total Gene nodes: {len(gene_id_mapping)}")
-    print(f"Active edges: {len(edges_added)}")
-    
-    # Print degree statistics
-    zero_degree_dmrs = sum(1 for n in dmr_nodes if B.degree(n) == 0)
-    zero_degree_genes = sum(1 for n in gene_id_mapping.values() if B.degree(n) == 0)
-    print(f"DMR nodes with degree 0: {zero_degree_dmrs}")
-    print(f"Gene nodes with degree 0: {zero_degree_genes}")
-
-    return B
+from graph_utils import create_bipartite_graph
 
 
 def get_excel_sheets(filepath: str) -> List[str]:
