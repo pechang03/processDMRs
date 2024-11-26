@@ -12,7 +12,7 @@ from utils.data_processing import process_enhancer_info
 
 
 # Configuration constants
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DSS1_FILE = os.path.join(DATA_DIR, "DSS1.xlsx")
 DSS_PAIRWISE_FILE = os.path.join(DATA_DIR, "DSS_PAIRWISE.xlsx")
@@ -138,6 +138,27 @@ def read_excel_file(filepath, sheet_name=None):
             raise FileNotFoundError(f"Excel file not found: {filepath}")
 
         print(f"Reading Excel file from: {filepath}")
+        
+        # First get available sheets
+        xl = pd.ExcelFile(filepath)
+        available_sheets = xl.sheet_names
+        print(f"Available sheets: {available_sheets}")
+        
+        # If no sheet specified and only one sheet exists, use that
+        if sheet_name is None and len(available_sheets) == 1:
+            sheet_name = available_sheets[0]
+            print(f"Using only available sheet: {sheet_name}")
+        
+        # If sheet specified but not found, try to find a case-insensitive match
+        if sheet_name and sheet_name not in available_sheets:
+            sheet_map = {s.lower(): s for s in available_sheets}
+            if sheet_name.lower() in sheet_map:
+                actual_sheet = sheet_map[sheet_name.lower()]
+                print(f"Using sheet '{actual_sheet}' for requested '{sheet_name}'")
+                sheet_name = actual_sheet
+            else:
+                raise ValueError(f"Sheet '{sheet_name}' not found. Available sheets: {available_sheets}")
+
         if sheet_name:
             print(f"Reading sheet: {sheet_name}")
             df = pd.read_excel(filepath, sheet_name=sheet_name, header=0)
