@@ -20,6 +20,7 @@
 import os
 import json
 import logging
+import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import Flask, render_template, current_app
@@ -304,6 +305,43 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     gene_metadata=create_gene_metadata(df),
                     gene_id_mapping=gene_id_mapping,
                 )
+
+                # For overall/DSS1 timepoint, add original graph component analysis
+                if timepoint == "DSS1" or timepoint == "overall":
+                    print(f"\nAnalyzing original graph components for {timepoint}")
+                    
+                    # Analyze connected components of original graph
+                    connected_comps = list(nx.connected_components(graph))
+                    print(f"Found {len(connected_comps)} connected components")
+                    
+                    original_stats = analyze_components(connected_comps, graph)
+                    print("Connected component statistics:")
+                    print(json.dumps(original_stats, indent=2))
+                    
+                    # Analyze biconnected components
+                    biconn_stats = analyze_biconnected_components(graph)[1]
+                    print("\nBiconnected component statistics:")
+                    print(json.dumps(biconn_stats, indent=2))
+                    
+                    # Analyze triconnected components
+                    triconn_stats = analyze_triconnected_components(graph)[1]
+                    print("\nTriconnected component statistics:")
+                    print(json.dumps(triconn_stats, indent=2))
+                    
+                    # Add to component_stats
+                    if "components" not in component_stats:
+                        component_stats["components"] = {}
+                    if "original" not in component_stats["components"]:
+                        component_stats["components"]["original"] = {}
+                        
+                    component_stats["components"]["original"] = {
+                        "connected": original_stats,
+                        "biconnected": biconn_stats,
+                        "triconnected": triconn_stats
+                    }
+                    
+                    print("\nFinal component statistics for original graph:")
+                    print(json.dumps(component_stats["components"]["original"], indent=2))
 
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(
