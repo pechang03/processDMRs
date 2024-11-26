@@ -1,5 +1,6 @@
 from typing import List, Dict, Tuple, Set
 import networkx as nx
+import networkx as nx
 import json
 
 from utils.node_info import NodeInfo
