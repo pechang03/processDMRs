@@ -86,7 +86,7 @@ def create_gene_trace(
         y.append(y_pos)
 
         # Set node color based on biclique membership
-        if node_id in node_biclique_map and biclique_colors:
+        if node_id in node_biclique_map and node_biclique_map[node_id] and biclique_colors:
             biclique_idx = node_biclique_map[node_id][0]
             color = (
                 biclique_colors[biclique_idx]
