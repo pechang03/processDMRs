@@ -288,138 +288,115 @@ def process_timepoint(
 ):
     """Process a single timepoint with configurable layout options."""
     try:
-        # Verify we have a DataFrame
-        if not isinstance(df, pd.DataFrame):
-            raise ValueError(f"Expected DataFrame for {timepoint}, got {type(df)}")
-            
         # Create bipartite graph
         graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         
-        # Get connected components
+        # Get connected components and calculate statistics
         connected_components = list(nx.connected_components(graph))
         biconnected_components = list(nx.biconnected_components(graph))
+        triconnected_components, tri_stats = analyze_triconnected_components(graph)
         
-        # Call without layout parameter
-        triconnected_components, triconnected_stats = analyze_triconnected_components(graph)
-
-        # Look for biclique file
-        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
-        print(f"\nLooking for biclique file: {biclique_file}")
-
-        bicliques_result = None
-        if os.path.exists(biclique_file):
-            print(f"Processing bicliques from {biclique_file}")
-            try:
-                bicliques_result = process_bicliques(
-                    graph,
-                    biclique_file,
-                    timepoint,
-                    gene_id_mapping=gene_id_mapping,
-                    file_format="gene-name"  # Make sure to use correct format
-                )
-                
-                # Calculate component statistics using the processed results
-                if bicliques_result and "bicliques" in bicliques_result:
-                    # Initialize component_stats if not already defined
-                    if 'component_stats' not in locals():
-                        component_stats = {
-                            "original": {},
-                            "biclique": {}
-                        }
-                    
-                    component_stats["biclique"] = bicliques_result.get("component_stats", {})
-                    biclique_types = classify_biclique_types(bicliques_result["bicliques"])
-                    
-                    print(f"\nBiclique processing results:")
-                    print(f"Total bicliques: {len(bicliques_result['bicliques'])}")
-                    print(f"Component types: {biclique_types}")
-            except Exception as e:
-                print(f"Error processing bicliques for {timepoint}: {str(e)}")
-                bicliques_result = None
-
-        # Calculate component statistics
+        # Calculate component statistics using analyze_components
         component_stats = {
-            "original": {
+            "original": {  # Make sure this matches template structure
                 "connected": analyze_components(connected_components, graph),
                 "biconnected": analyze_components(biconnected_components, graph),
-                "triconnected": triconnected_stats
+                "triconnected": tri_stats
             },
-            "biclique": {
-                "connected": {},
-                "biconnected": {},
-                "triconnected": {}
+            "biclique": {  # Add biclique structure even if empty
+                "connected": {
+                    "total": 0,
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": 0
+                },
+                "biconnected": {
+                    "total": 0,
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": 0
+                },
+                "triconnected": {
+                    "total": 0,
+                    "single_node": 0,
+                    "small": 0,
+                    "interesting": 0
+                }
             }
         }
 
-        # If we have bicliques, calculate biclique graph statistics
-        if bicliques_result and "bicliques" in bicliques_result:
-            print(f"\nProcessing components for {timepoint}")
-            try:
-                # Use process_components from components.py
-                complex_components, interesting_components, simple_connections, non_simple_components, component_stats, statistics = \
+        # Look for biclique file
+        biclique_file = f"bipartite_graph_output_{timepoint}.txt"
+        
+        if os.path.exists(biclique_file):
+            bicliques_result = process_bicliques(
+                graph,
+                biclique_file,
+                timepoint,
+                gene_id_mapping=gene_id_mapping,
+                file_format="gene-name"
+            )
+            
+            if bicliques_result and "bicliques" in bicliques_result:
+                # Calculate biclique statistics
+                biclique_stats = calculate_biclique_statistics(
+                    bicliques_result["bicliques"], 
+                    graph
+                )
+                
+                # Process components
+                complex_components, interesting_components, _, non_simple_components, comp_stats, statistics = \
                     process_components(
-                        graph,  # Original bipartite graph
-                        bicliques_result,  # Results from read_bicliques_file
-                        dominating_set=None  # Add if you have dominating set
+                        graph,
+                        bicliques_result,
+                        dominating_set=None
                     )
-
-                # Update the bicliques result with component information
-                bicliques_result.update({
+                
+                # Update component stats with biclique information
+                if "components" in comp_stats and "biclique" in comp_stats["components"]:
+                    component_stats["biclique"] = comp_stats["components"]["biclique"]
+                
+                return {
+                    "status": "success",
+                    "stats": {
+                        "components": component_stats,  # Now has correct structure
+                        "coverage": calculate_coverage_statistics(bicliques_result["bicliques"], graph),
+                        "edge_coverage": calculate_edge_coverage(bicliques_result["bicliques"], graph),
+                        "biclique_types": classify_biclique_types(bicliques_result["bicliques"]),
+                        "size_distribution": biclique_stats.get("size_distribution", {}),
+                        "dominating_set": statistics.get("dominating_set", {})
+                    },
                     "complex_components": complex_components,
                     "interesting_components": interesting_components,
-                    "simple_connections": simple_connections,
                     "non_simple_components": non_simple_components,
-                    "component_stats": component_stats,
-                    "statistics": statistics
-                })
-
-                print(f"\nComponent processing results:")
-                print(f"Complex components: {len(complex_components)}")
-                print(f"Interesting components: {len(interesting_components)}")
-                print(f"Simple connections: {len(simple_connections)}")
-                print(f"Non-simple components: {len(non_simple_components)}")
-
-                # Calculate biclique types
-                biclique_types = classify_biclique_types(bicliques_result["bicliques"])
-                print(f"Biclique types: {biclique_types}")
-
-            except Exception as e:
-                print(f"Error processing components for {timepoint}: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                biclique_types = {
+                    "layout_used": layout_options
+                }
+        
+        # Return basic statistics if no bicliques found
+        return {
+            "status": "success",
+            "stats": {
+                "components": component_stats,  # Now has correct structure
+                "coverage": {
+                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
+                    "genes": {"covered": 0, "total": 0, "percentage": 0},
+                    "edges": {
+                        "single_coverage": 0,
+                        "multiple_coverage": 0,
+                        "uncovered": 0,
+                        "total": 0,
+                        "single_percentage": 0,
+                        "multiple_percentage": 0,
+                        "uncovered_percentage": 0
+                    }
+                },
+                "biclique_types": {
                     "empty": 0,
                     "simple": 0,
                     "interesting": 0,
                     "complex": 0
-                }
-        else:
-            biclique_types = {
-                "empty": 0,
-                "simple": 0,
-                "interesting": 0,
-                "complex": 0
-            }
-            print(f"No biclique file found for {timepoint}")
-
-        # Calculate coverage statistics
-        coverage_stats = calculate_coverage_statistics(
-            bicliques_result["bicliques"] if bicliques_result else [], 
-            graph
-        )
-
-        # Structure the return data to match template expectations
-        return {
-            "status": "success",
-            "stats": {
-                "components": component_stats,
-                "coverage": coverage_stats,
-                "edge_coverage": calculate_edge_coverage(
-                    bicliques_result["bicliques"] if bicliques_result else [], 
-                    graph
-                ),
-                "biclique_types": biclique_types,
-                "size_distribution": bicliques_result.get("size_distribution", {}) if bicliques_result else {},
+                },
+                "size_distribution": {},
                 "dominating_set": {
                     "size": 0,
                     "percentage": 0,
@@ -428,8 +405,6 @@ def process_timepoint(
                     "avg_size_per_component": 0
                 }
             },
-            "coverage": coverage_stats,
-            "components": component_stats,
             "layout_used": layout_options
         }
 
