@@ -7,7 +7,10 @@ from typing import Dict, List, Set, Tuple
 from utils import process_enhancer_info
 import re
 import pandas as pd
-from data_loader import read_excel_file, create_bipartite_graph
+# Removed data_loader import
+from typing import Dict
+import networkx as nx
+import pandas as pd
 from .reader import read_bicliques_file
 
 
@@ -105,34 +108,22 @@ def _add_biclique_details(
     return detailed_info
 
 
-def process_dataset(excel_file: str):
-    """Process an Excel dataset and create bipartite graph.
+def process_dataset(df: pd.DataFrame, bipartite_graph: nx.Graph, gene_id_mapping: Dict[str, int]):
+    """Process a dataset with pre-loaded graph and dataframe.
 
     Args:
-        excel_file: Path to Excel file
+        df: Loaded dataframe
+        bipartite_graph: Pre-created bipartite graph
+        gene_id_mapping: Gene name to ID mapping
 
     Returns:
         Tuple of (bipartite_graph, dataframe, gene_id_mapping)
     """
-
-    # Read the Excel file
-    df = read_excel_file(excel_file)
-
-    # Process enhancer information
-    df["Processed_Enhancer_Info"] = df[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
-
-    # Create gene ID mapping
-    all_genes = set()
-    all_genes.update(df["Gene_Symbol_Nearby"].dropna())
-    all_genes.update([g for genes in df["Processed_Enhancer_Info"] for g in genes])
-    gene_id_mapping = {
-        gene: idx + len(df) for idx, gene in enumerate(sorted(all_genes))
-    }
-
-    # Create bipartite graph
-    bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+    # Process enhancer information if not already processed
+    if "Processed_Enhancer_Info" not in df.columns:
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
     return bipartite_graph, df, gene_id_mapping
 
