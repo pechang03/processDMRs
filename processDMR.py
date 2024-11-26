@@ -97,20 +97,18 @@ import json
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):
     """Process a single dataset and write the bipartite graph to a file."""
     try:
-        # Process enhancer info if not already processed
-        # Find enhancer column
-        enhancer_col = None
-        for col in df.columns:
-            if "ENCODE_Enhancer_Interaction" in col:
-                enhancer_col = col
-                break
+        # Use the correct column name based on timepoint
+        if timepoint == "DSS1":
+            interaction_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
+        else:
+            interaction_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
 
-        if enhancer_col is None:
-            raise ValueError(f"No enhancer column found in dataset")
+        if interaction_col not in df.columns:
+            raise ValueError(f"Interaction column '{interaction_col}' not found in dataset")
 
         # Process enhancer info if not already processed
         if "Processed_Enhancer_Info" not in df.columns:
-            df["Processed_Enhancer_Info"] = df[enhancer_col].apply(process_enhancer_info)
+            df["Processed_Enhancer_Info"] = df[interaction_col].apply(process_enhancer_info)
 
         # If no master mapping provided, create one
         if gene_id_mapping is None:
@@ -164,9 +162,12 @@ def main():
 
     # Process DSS_PAIRWISE file first to get complete gene set
     pairwise_sheets = get_excel_sheets("./data/DSS_PAIRWISE.xlsx")
+    pairwise_dfs = {}  # Store dataframes for each sheet
+    
     for sheet in pairwise_sheets:
         print(f"\nProcessing sheet: {sheet}")
         df = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
+        pairwise_dfs[sheet] = df  # Store the dataframe
 
         # Debug: Print column names
         print(f"Available columns in {sheet}:")
@@ -184,16 +185,11 @@ def main():
             print(f"WARNING: No gene symbol column found in sheet {sheet}")
             continue
 
-        # Find enhancer column - look for partial match
-        enhancer_col = None
-        for col in df.columns:
-            if "ENCODE_Enhancer_Interaction" in col:
-                enhancer_col = col
-                print(f"Found enhancer column: {enhancer_col}")
-                break
-
-        if enhancer_col is None:
-            print(f"WARNING: No enhancer column found in sheet {sheet}")
+        # Use exact column name for enhancer interactions
+        enhancer_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        if enhancer_col not in df.columns:
+            print(f"WARNING: Enhancer column '{enhancer_col}' not found in sheet {sheet}")
+            print(f"Available columns: {df.columns.tolist()}")
             continue
 
         df["Processed_Enhancer_Info"] = df[enhancer_col].apply(process_enhancer_info)
@@ -207,7 +203,7 @@ def main():
             if genes:
                 all_genes.update(g.strip().lower() for g in genes)
 
-    # Also process DSS1 file for genes
+    # Process DSS1 file for genes
     print("\nProcessing DSS1 file...")
     df_overall = read_excel_file(args.input)
 
@@ -226,18 +222,12 @@ def main():
     if gene_column is None:
         raise ValueError("No gene symbol column found in overall file")
 
-    # Find enhancer column in overall file
-    enhancer_col = None
-    for col in df_overall.columns:
-        if "ENCODE_Enhancer_Interaction" in col:
-            enhancer_col = col
-            print(f"Found enhancer column in overall file: {enhancer_col}")
-            break
+    # Use exact column name for promoter interactions in overall file
+    promoter_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
+    if promoter_col not in df_overall.columns:
+        raise ValueError(f"Promoter column '{promoter_col}' not found in overall file")
 
-    if enhancer_col is None:
-        raise ValueError("No enhancer column found in overall file")
-
-    df_overall["Processed_Enhancer_Info"] = df_overall[enhancer_col].apply(process_enhancer_info)
+    df_overall["Processed_Enhancer_Info"] = df_overall[promoter_col].apply(process_enhancer_info)
     gene_names = df_overall[gene_column].dropna().str.strip().str.lower()
     all_genes.update(gene_names)
     for genes in df_overall["Processed_Enhancer_Info"]:
@@ -251,14 +241,9 @@ def main():
     # Write the master gene mappings file
     write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
 
-    # Process each timepoint with its own DMR space
-    for sheet in pairwise_sheets:
+    # Process each timepoint with its own DMR space using stored dataframes
+    for sheet, df in pairwise_dfs.items():
         print(f"\nProcessing timepoint: {sheet}")
-        df = read_excel_file("./data/DSS_PAIRWISE.xlsx", sheet_name=sheet)
-        df["Processed_Enhancer_Info"] = df[
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-        ].apply(process_enhancer_info)
-
         output_file = f"bipartite_graph_output_{sheet}.txt"
         process_single_dataset(df, output_file, args, gene_id_mapping, sheet)
 
