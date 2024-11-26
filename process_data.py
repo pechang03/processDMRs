@@ -236,7 +236,6 @@ def process_data():
     except Exception as e:
         print(f"Error in process_data: {str(e)}", flush=True)
         import traceback
-
         traceback.print_exc()
         return {"error": str(e)}
 
