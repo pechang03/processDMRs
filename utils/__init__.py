@@ -2,6 +2,7 @@
 
 import re
 import pandas as pd
+from flask import Blueprint
 
 from .edge_info import EdgeInfo
 from .node_info import NodeInfo
@@ -15,6 +16,18 @@ from .json_utils import (
 from .graph_utils import create_node_biclique_map, get_node_position
 from .graph_io import read_bipartite_graph, write_bipartite_graph
 from .id_mapping import create_dmr_id
+
+main_bp = Blueprint('main', __name__)
+components_bp = Blueprint('components', __name__)
+
+def register_blueprints(app):
+    """Register Flask blueprints."""
+    app.register_blueprint(main_bp)  # Register at root URL
+    app.register_blueprint(components_bp, url_prefix='/components')
+
+# Import routes after blueprint creation to avoid circular imports
+from . import main_routes
+from . import component_routes
 
 def process_enhancer_info(enhancer_str):
     """
