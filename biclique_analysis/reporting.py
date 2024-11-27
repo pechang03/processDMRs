@@ -267,7 +267,7 @@ def create_statistics_summary(
     
     Args:
         bicliques_result: Dictionary containing bicliques analysis results
-        edge_classification: Optional edge classification results
+        edge_classification: Optional edge classification results from classify_edges()
         
     Returns:
         Dictionary containing formatted statistics
@@ -276,38 +276,22 @@ def create_statistics_summary(
     dmr_cov = coverage.get("dmrs", {})
     gene_cov = coverage.get("genes", {})
     
-    # Initialize edge coverage stats with N/A values if no classification
-    if edge_classification is None:
-        edge_cov = {
-            "single_coverage": 0,
-            "multiple_coverage": 0,
-            "uncovered": 0,
-            "total": 0,
-            "single_percentage": 0,
-            "multiple_percentage": 0,
-            "uncovered_percentage": 0,
-            "classification": {
-                "permanent": 0,
-                "false_positive": 0,
-                "false_negative": 0,
-                "bridge_false_positive": 0,
-                "potential_true_bridge": 0
-            }
-        }
-    else:
-        # Calculate edge classification statistics
-        edge_cov = coverage.get("edges", {})
-        edge_cov["classification"] = {
-            label: len(edges) 
-            for label, edges in edge_classification.items()
-            if isinstance(edges, list)  # Skip bridge_edges dict
-        }
+    # Initialize edge classification counts
+    edge_counts = {label: 0 for label in EdgeInfo.VALID_LABELS}
+    
+    # Count edges by classification if available
+    if edge_classification:
+        # Count regular classifications
+        for label in EdgeInfo.VALID_LABELS:
+            if label in edge_classification:
+                edge_counts[label] = len(edge_classification[label])
+        
+        # Add bridge edge counts if present
         if "bridge_edges" in edge_classification:
-            edge_cov["classification"].update({
-                "bridge_false_positive": len(edge_classification["bridge_edges"]["false_positives"]),
-                "potential_true_bridge": len(edge_classification["bridge_edges"]["potential_true_bridges"])
-            })
-
+            edge_counts["bridge_false_positive"] = len(edge_classification["bridge_edges"]["false_positives"])
+            edge_counts["potential_true_bridge"] = len(edge_classification["bridge_edges"]["potential_true_bridges"])
+    
+    # Create summary structure
     summary = {
         "coverage": {
             "dmrs": {
@@ -322,92 +306,20 @@ def create_statistics_summary(
                 "percentage": gene_cov.get("percentage", 0),
                 "participation": gene_cov.get("participation", {})
             },
-            "edges": edge_cov
+            "edges": {
+                "classification": edge_counts,
+                "total": sum(edge_counts.values()),
+                "percentages": {
+                    label: count / sum(edge_counts.values()) if sum(edge_counts.values()) > 0 else 0
+                    for label, count in edge_counts.items()
+                }
+            }
         },
-        "size_distribution": {},
-        "classifications": {
-            "total": len(bicliques_result.get("bicliques", [])),
-            "trivial": 0,
-            "small": 0,
-            "interesting": 0
-        }
+        "size_distribution": calculate_size_distribution(bicliques_result.get("bicliques", [])),
+        "classifications": classify_biclique_types(bicliques_result.get("bicliques", []))
     }
     
-    # Calculate size distribution
-    for dmr_nodes, gene_nodes in bicliques_result.get("bicliques", []):
-        size_key = (len(dmr_nodes), len(gene_nodes))
-        if size_key not in summary["size_distribution"]:
-            summary["size_distribution"][size_key] = 0
-        summary["size_distribution"][size_key] += 1
-        
-        # Update classifications
-        if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
-            summary["classifications"]["trivial"] += 1
-        elif classify_biclique(dmr_nodes, gene_nodes) == BicliqueSizeCategory.INTERESTING:
-            summary["classifications"]["interesting"] += 1
-        else:
-            summary["classifications"]["small"] += 1
-    
     return summary
-    """Print detailed summary of bicliques analysis."""
-    graph_name = bicliques_result["graph_info"]["name"]
-    print(f"\n=== Bicliques Analysis for {graph_name} ===")
-
-    # Basic statistics
-    print(f"\nGraph Statistics:")
-    print(f"DMRs: {bicliques_result['graph_info']['total_dmrs']}")
-    print(f"Genes: {bicliques_result['graph_info']['total_genes']}")
-    print(f"Total edges: {bicliques_result['graph_info']['total_edges']}")
-    print(f"Total bicliques found: {len(bicliques_result['bicliques'])}")
-
-    # Coverage statistics
-    print(f"\nNode Coverage:")
-    dmr_cov = bicliques_result["coverage"]["dmrs"]
-    gene_cov = bicliques_result["coverage"]["genes"]
-    print(
-        f"DMRs: {dmr_cov['covered']}/{dmr_cov['total']} ({dmr_cov['percentage']:.1%})"
-    )
-    print(
-        f"Genes: {gene_cov['covered']}/{gene_cov['total']} ({gene_cov['percentage']:.1%})"
-    )
-
-    # Edge coverage
-    edge_cov = bicliques_result["coverage"]["edges"]
-    print(f"\nEdge Coverage:")
-    print(f"Single coverage: {edge_cov['single_coverage']} edges ({edge_cov['single_percentage']:.1%})")
-    print(f"Multiple coverage: {edge_cov['multiple_coverage']} edges ({edge_cov['multiple_percentage']:.1%})")
-    print(f"Uncovered: {edge_cov['uncovered']} edges ({edge_cov['uncovered_percentage']:.1%})")
-
-    if edge_cov["uncovered"] > 0:
-        print("\nSample of uncovered edges:")
-        for edge in bicliques_result["debug"]["uncovered_edges"]:
-            print(f"  {edge}")
-        print(
-            f"Total nodes involved in uncovered edges: {bicliques_result['debug']['uncovered_nodes']}"
-        )
-
-    # Validate header statistics
-    header_stats = bicliques_result["debug"]["header_stats"]
-    print("\nValidation of Header Statistics:")
-    print(f"Nb operations: {header_stats['Nb operations']}")
-    print(f"Nb splits: {header_stats['Nb splits']}")
-    print(f"Nb deletions: {header_stats['Nb deletions']}")
-    print(f"Nb additions: {header_stats['Nb additions']}")
-    total_false_negatives = 0
-    for biclique in bicliques_result["bicliques"]:
-        dmr_nodes, gene_nodes = biclique
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                if not original_graph.has_edge(dmr, gene):
-                    total_false_negatives += 1
-    print(f"Total false negative edges across all bicliques: {total_false_negatives}")
-    print(f"Total false positive edges (deletions): {header_stats['Nb deletions']}")
-
-    # Validate statistics from header if present
-    if "statistics" in bicliques_result and bicliques_result["statistics"]:
-        print("\nValidation of Header Statistics:")
-        for key, value in bicliques_result["statistics"].items():
-            print(f"  {key}: {value}")
 
 
 def print_bicliques_detail(
