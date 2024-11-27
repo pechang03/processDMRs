@@ -1,7 +1,7 @@
 import argparse
 import os
 from extensions import app
-from routes import register_blueprints
+from utils import register_blueprints  # Import from utils/__init__.py instead of routes
 from process_data import process_data
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
 from data_loader import get_excel_sheets
