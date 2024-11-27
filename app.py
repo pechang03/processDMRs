@@ -1,8 +1,7 @@
 import argparse
 import os
-from flask import render_template
 from extensions import app
-from routes import register_blueprints  # Updated import
+from routes import register_blueprints
 from process_data import process_data
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
 from data_loader import get_excel_sheets
@@ -29,7 +28,6 @@ def parse_arguments():
         default="gene-name",
         help="Format for biclique file parsing (gene-name or number)",
     )
-    # Add data directory argument
     parser.add_argument(
         "--data-dir",
         default="./data",
@@ -54,12 +52,10 @@ def validate_data_files(data_dir: str) -> bool:
 
 def configure_data_paths(data_dir: str):
     """Configure data file paths in the application."""
-    # Update the constants in data_loader
     global DSS1_FILE, DSS_PAIRWISE_FILE
     DSS1_FILE = os.path.join(data_dir, "DSS1.xlsx")
     DSS_PAIRWISE_FILE = os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
     
-    # Store paths in app config for access in routes
     app.config["DSS1_FILE"] = DSS1_FILE
     app.config["DSS_PAIRWISE_FILE"] = DSS_PAIRWISE_FILE
     app.config["DATA_DIR"] = data_dir
@@ -79,25 +75,15 @@ def main():
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
     
-    # Register blueprints using the new structure
+    # Register blueprints
     register_blueprints(app)
     
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
     return 0
 
-def register_blueprints(app):
-    """Register Flask blueprints."""
-    from routes import main_bp, components_bp
-    app.register_blueprint(main_bp)  # Register at root URL
-    app.register_blueprint(components_bp, url_prefix='/components')
-
-def main():
-    """Main entry point for the application."""
-    args = parse_arguments()
-    
-    # Validate and configure data paths
-    if not validate_data_files(args.data_dir):
+if __name__ == "__main__":
+    exit(main())
         print("Error: Required data files not found. Please check your data directory.")
         return 1
         
