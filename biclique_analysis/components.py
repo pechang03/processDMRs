@@ -517,6 +517,41 @@ def process_components(
         )
         interesting_components[0].update(component_data)
 
+    # Get triconnected components
+    triconn_comps, triconn_stats = analyze_triconnected_components(bipartite_graph)
+    
+    # Debug prints
+    print("\nComponent Analysis Debug:")
+    print(f"Found {len(triconn_comps)} triconnected components")
+    print(f"Found {len(interesting_components)} interesting components")
+    print(f"Found {len(complex_components)} complex components")
+
+    # Convert triconnected components to proper format
+    formatted_triconn = []
+    for idx, comp_nodes in enumerate(triconn_comps):
+        dmrs = {n for n in comp_nodes if bipartite_graph.nodes[n]['bipartite'] == 0}
+        genes = {n for n in comp_nodes if bipartite_graph.nodes[n]['bipartite'] == 1}
+        
+        formatted_triconn.append({
+            'id': idx + 1,
+            'component': comp_nodes,
+            'dmrs': len(dmrs),
+            'genes': len(genes),
+            'size': len(comp_nodes),
+            'category': 'interesting' if len(dmrs) >= 3 and len(genes) >= 3 else 'small'
+        })
+
+    # Update component_stats with formatted triconnected components
+    if 'components' not in component_stats:
+        component_stats['components'] = {}
+    if 'original' not in component_stats['components']:
+        component_stats['components']['original'] = {}
+        
+    component_stats['components']['original']['triconnected'] = {
+        'components': formatted_triconn,
+        'stats': triconn_stats
+    }
+
     return (
         complex_components,
         interesting_components,
