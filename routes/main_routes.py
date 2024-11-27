@@ -203,24 +203,87 @@ def component_detail_route(component_id, type="biclique"):
 
         # Determine which components to search based on type
         if type == "triconnected":
+            # Use triconnected components from original graph
             components = results.get("overall", {}).get("stats", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", [])
-        else:  # Default to biclique
-            components = results.get("interesting_components", [])
+            
+            # Find the requested component
+            component = next((c for c in components if c["id"] == component_id), None)
+            
+            if component:
+                # Create triconnected visualization using spring layout
+                from visualization.triconnected_visualization import TriconnectedVisualization
+                from visualization.graph_layout_original import OriginalGraphLayout
+                
+                # Create visualizer with spring layout
+                visualizer = TriconnectedVisualization()
+                layout = OriginalGraphLayout()
+                
+                # Get subgraph for this component
+                subgraph = results["bipartite_graph"].subgraph(component["component"])
+                
+                # Calculate positions using spring layout
+                node_positions = layout.calculate_positions(
+                    subgraph,
+                    node_info=None,  # Will be created inside visualizer
+                    layout_type="spring"
+                )
+                
+                # Create visualization
+                component["visualization"] = visualizer.create_visualization(
+                    subgraph,
+                    results["node_labels"],
+                    node_positions,
+                    results.get("dmr_metadata", {}),
+                    results.get("edge_classifications", {}),
+                )
 
-        # Find the requested component
-        component = next(
-            (c for c in components if c["id"] == component_id),
-            None
-        )
+        else:  # Biclique component
+            # Use interesting components from biclique analysis
+            components = results.get("interesting_components", [])
+            component = next((c for c in components if c["id"] == component_id), None)
+            
+            if component and "raw_bicliques" in component:
+                from visualization.core import create_biclique_visualization
+                from visualization.graph_layout_biclique import CircularBicliqueLayout
+                from visualization import create_node_biclique_map
+                
+                # Create node biclique map
+                node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
+                
+                # Use circular layout for bicliques
+                layout = CircularBicliqueLayout()
+                
+                # Get subgraph for this component
+                all_nodes = set()
+                for dmrs, genes in component["raw_bicliques"]:
+                    all_nodes.update(dmrs)
+                    all_nodes.update(genes)
+                subgraph = results["bipartite_graph"].subgraph(all_nodes)
+                
+                # Calculate positions
+                node_positions = layout.calculate_positions(
+                    subgraph,
+                    node_info=None,  # Will be created inside visualizer
+                )
+                
+                # Create visualization
+                component["visualization"] = create_biclique_visualization(
+                    component["raw_bicliques"],
+                    results["node_labels"],
+                    node_positions,
+                    node_biclique_map,
+                    results.get("edge_classifications", {}),
+                    results["bipartite_graph"],
+                    subgraph,
+                    dmr_metadata=results.get("dmr_metadata", {}),
+                    gene_metadata=results.get("gene_metadata", {})
+                )
 
         if not component:
             return render_template(
                 "error.html", 
                 message=f"Component {component_id} not found"
             )
-
-        # Determine layout based on type
-        layout = "spring" if type == "triconnected" else "circular"
 
         return render_template(
             "components.html",
