@@ -271,6 +271,7 @@ def create_biclique_metadata(
     """
     from .classifier import classify_biclique
     from collections import defaultdict
+    from utils.json_utils import convert_for_json
 
     metadata = []
 
@@ -302,7 +303,7 @@ def create_biclique_metadata(
 
         # Calculate shared nodes with overlapping bicliques
         shared_nodes = {
-            other_idx: len(
+            str(other_idx): len(
                 (dmr_nodes | gene_nodes)
                 & (bicliques[other_idx][0] | bicliques[other_idx][1])
             )
@@ -316,7 +317,10 @@ def create_biclique_metadata(
         biclique_metadata = {
             "id": idx,
             "size": {"total": size, "dmrs": len(dmr_nodes), "genes": len(gene_nodes)},
-            "nodes": {"dmrs": sorted(dmr_nodes), "genes": sorted(gene_nodes)},
+            "nodes": {
+                "dmrs": sorted(str(n) for n in dmr_nodes), 
+                "genes": sorted(str(n) for n in gene_nodes)
+            },
             "metrics": {
                 "density": density,
                 "dmr_ratio": len(dmr_nodes) / len(all_dmrs) if all_dmrs else 0,
@@ -359,4 +363,5 @@ def create_biclique_metadata(
 
         metadata.append(biclique_metadata)
 
-    return metadata
+    # Convert to JSON-safe format
+    return convert_for_json(metadata)
