@@ -96,7 +96,6 @@ from data_loader import (
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app = Flask(__name__)
 
 # _cached_data = None
 
