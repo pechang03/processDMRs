@@ -27,10 +27,14 @@ from flask import Flask, render_template, current_app
 import pandas as pd
 # import numpy as np
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-from utils.constants import START_GENE_ID
+from utils.constants import (
+    DSS1_FILE,
+    DSS_PAIRWISE_FILE,
+    BIPARTITE_GRAPH_TEMPLATE,
+    BIPARTITE_GRAPH_OVERALL,
+    START_GENE_ID,
+)
 from utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
@@ -52,53 +56,49 @@ from biclique_analysis.classifier import (
     classify_biclique_types,
 )
 
-from biclique_analysis.embeddings import (
-    generate_triconnected_embeddings,
-    generate_biclique_embeddings,
-)
+# from biclique_analysis.embeddings import (
+#    generate_triconnected_embeddings,
+#    generate_biclique_embeddings,
+# )
+
 from biclique_analysis.processor import (
     create_biclique_metadata,
 )
 
 # Add missing imports and placeholder functions
-from biclique_analysis.statistics import calculate_edge_coverage
 
-from visualization import create_node_biclique_map, CircularBicliqueLayout
-
-from data_loader import (
-    read_excel_file,
-    create_bipartite_graph,
-    validate_bipartite_graph,
-)
 from biclique_analysis.statistics import (
     analyze_components,
-    calculate_biclique_statistics,
+    calculate_edge_coverage,
+    # calculate_biclique_statistics,
     calculate_coverage_statistics,
     calculate_component_statistics,
     analyze_biconnected_components,
 )
+
 from biclique_analysis.triconnected import analyze_triconnected_components
-from biclique_analysis.triconnected import analyze_triconnected_components
-from rb_domination import (
-    greedy_rb_domination,
-    calculate_dominating_sets,
-    print_domination_statistics,
-    copy_dominating_set,
+# from rb_domination import (
+#    greedy_rb_domination,
+#    calculate_dominating_sets,
+#    print_domination_statistics,
+#    copy_dominating_set,
+# )
+
+
+# from visualization import create_node_biclique_map, CircularBicliqueLayout
+
+from data_loader import (
+    # get_excel_sheets,
+    read_excel_file,
+    create_bipartite_graph,
+    validate_bipartite_graph,
 )
 
-
-from utils.constants import (
-    DSS1_FILE,
-    DSS_PAIRWISE_FILE,
-    BIPARTITE_GRAPH_TEMPLATE,
-    BIPARTITE_GRAPH_OVERALL,
-)
-from data_loader import get_excel_sheets
-
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
-_cached_data = None
+# _cached_data = None
 
 
 def convert_dict_keys_to_str(d):
@@ -310,47 +310,49 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
 
                 # For all timepoints, analyze original graph components
                 print(f"\nAnalyzing graph components for {timepoint}")
-                
+
                 # Analyze connected components
                 connected_comps = list(nx.connected_components(graph))
                 print(f"Found {len(connected_comps)} connected components")
                 original_stats = analyze_components(connected_comps, graph)
                 print("Connected component statistics:")
                 print(json.dumps(original_stats, indent=2))
-                
+
                 # Analyze biconnected components
                 biconn_comps, biconn_stats = analyze_biconnected_components(graph)
                 print("\nBiconnected component statistics:")
                 print(json.dumps(biconn_stats, indent=2))
-                
+
                 # Analyze triconnected components
                 triconn_comps, triconn_stats = analyze_triconnected_components(graph)
                 print("\nTriconnected component statistics:")
                 print(json.dumps(triconn_stats, indent=2))
-                
+
                 # Add to component_stats
                 if "components" not in component_stats:
                     component_stats["components"] = {}
                 if "original" not in component_stats["components"]:
                     component_stats["components"]["original"] = {}
-                    
+
                 component_stats["components"]["original"] = {
                     "connected": {
                         "components": connected_comps,
-                        "stats": original_stats
+                        "stats": original_stats,
                     },
-                    "biconnected": {
-                        "components": biconn_comps,
-                        "stats": biconn_stats
-                    },
+                    "biconnected": {"components": biconn_comps, "stats": biconn_stats},
                     "triconnected": {
                         "components": triconn_comps,
-                        "stats": triconn_stats
-                    }
+                        "stats": triconn_stats,
+                    },
                 }
-                
+
                 print("\nFinal component statistics for original graph:")
-                print(json.dumps(convert_for_json(component_stats["components"]["original"]), indent=2))
+                print(
+                    json.dumps(
+                        convert_for_json(component_stats["components"]["original"]),
+                        indent=2,
+                    )
+                )
 
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(
