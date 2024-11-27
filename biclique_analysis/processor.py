@@ -177,6 +177,7 @@ def create_node_metadata(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
     node_biclique_map: Dict[int, List[int]],
+    graph: nx.Graph = None,
 ) -> Tuple[Dict[str, Dict], Dict[str, Dict]]:
     """
     Create metadata dictionaries for DMRs and genes.
@@ -185,10 +186,23 @@ def create_node_metadata(
         df: DataFrame containing DMR and gene information
         gene_id_mapping: Mapping of gene names to IDs
         node_biclique_map: Mapping of nodes to their bicliques
+        graph: Optional NetworkX graph for additional node information
 
     Returns:
         Tuple of (dmr_metadata, gene_metadata)
     """
+    # Create node info if graph is provided
+    node_info = None
+    if graph:
+        node_info = NodeInfo(
+            all_nodes=set(graph.nodes()),
+            dmr_nodes={n for n, d in graph.nodes(data=True) if d['bipartite'] == 0},
+            regular_genes={n for n, d in graph.nodes(data=True) if d['bipartite'] == 1},
+            split_genes=set(),
+            node_degrees={n: graph.degree(n) for n in graph.nodes()},
+            min_gene_id=min(gene_id_mapping.values(), default=0)
+        )
+
     # Create DMR metadata
     dmr_metadata = {}
     for _, row in df.iterrows():
@@ -200,6 +214,8 @@ def create_node_metadata(
             else "N/A",
             "name": f"DMR_{row['DMR_No.']}",
             "bicliques": node_biclique_map.get(dmr_id, []),
+            "node_type": node_info.get_node_type(dmr_id) if node_info else "DMR",
+            "degree": node_info.get_node_degree(dmr_id) if node_info else 0,
         }
 
     # Create gene metadata
@@ -215,17 +231,23 @@ def create_node_metadata(
             "id": gene_id,
             "bicliques": node_biclique_map.get(gene_id, []),
             "name": gene_name,
+            "node_type": node_info.get_node_type(gene_id) if node_info else "gene",
+            "degree": node_info.get_node_degree(gene_id) if node_info else 0,
         }
 
     return dmr_metadata, gene_metadata
 
 
-def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Dict]:
+def create_biclique_metadata(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    node_info: NodeInfo = None
+) -> List[Dict]:
     """
     Create detailed metadata for each biclique.
     
     Args:
         bicliques: List of (dmr_nodes, gene_nodes) tuples
+        node_info: Optional NodeInfo object for additional node details
         
     Returns:
         List of dictionaries containing metadata for each biclique
@@ -297,6 +319,16 @@ def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List
                 "overlapping_bicliques": len(overlapping_bicliques),
                 "shared_nodes": shared_nodes,
                 "max_overlap": max(shared_nodes.values()) if shared_nodes else 0
+            },
+            "node_details": {
+                "dmrs": {
+                    "types": [node_info.get_node_type(n) if node_info else "DMR" for n in dmr_nodes],
+                    "degrees": [node_info.get_node_degree(n) if node_info else 0 for n in dmr_nodes]
+                },
+                "genes": {
+                    "types": [node_info.get_node_type(n) if node_info else "gene" for n in gene_nodes],
+                    "degrees": [node_info.get_node_degree(n) if node_info else 0 for n in gene_nodes]
+                }
             }
         }
         
