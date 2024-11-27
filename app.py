@@ -84,10 +84,6 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-        print("Error: Required data files not found. Please check your data directory.")
-        return 1
-        
-    # Configure data paths
     configure_data_paths(args.data_dir)
     
     # Store format in app config
