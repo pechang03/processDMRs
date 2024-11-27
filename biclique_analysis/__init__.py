@@ -3,7 +3,7 @@
 
 from .reader import read_bicliques_file
 from .components import process_components
-from .classifier import classify_biclique, classify_biclique_types
+from .classifier import classify_biclique, classify_biclique_types, BicliqueSizeCategory
 from .statistics import (
     calculate_biclique_statistics,
     calculate_coverage_statistics,
