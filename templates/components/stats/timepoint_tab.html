@@ -25,24 +25,24 @@
               <tbody>
                 <tr>
                   <td>Connected</td>
-                  <td>{{ data.stats.components.original.connected.total|default(0) }}</td>
-                  <td>{{ data.stats.components.original.connected.single_node|default(0) }}</td>
-                  <td>{{ data.stats.components.original.connected.small|default(0) }}</td>
-                  <td>{{ data.stats.components.original.connected.interesting|default(0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Biconnected</td>
-                  <td>{{ data.stats.components.original.biconnected.total|default(0) }}</td>
-                  <td>{{ data.stats.components.original.biconnected.single_node|default(0) }}</td>
-                  <td>{{ data.stats.components.original.biconnected.small|default(0) }}</td>
-                  <td>{{ data.stats.components.original.biconnected.interesting|default(0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('total', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('small', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Triconnected</td>
-                  <td>{{ data.stats.components.original.triconnected.total|default(0) }}</td>
-                  <td>{{ data.stats.components.original.triconnected.single_node|default(0) }}</td>
-                  <td>{{ data.stats.components.original.triconnected.small|default(0) }}</td>
-                  <td>{{ data.stats.components.original.triconnected.interesting|default(0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
                 </tr>
               </tbody>
             </table>

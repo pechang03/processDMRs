@@ -142,9 +142,52 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        overall_data = results.get("overall", {})
-        statistics = convert_for_json(overall_data.get("stats", {}))
-        timepoint_info = convert_for_json(results)
+        # Calculate overall statistics
+        total_dmrs = 0
+        total_genes = 0
+        total_edges = 0
+        timepoint_info = {}
+
+        for timepoint, data in results.items():
+            if isinstance(data, dict) and "error" not in data:
+                # Ensure proper data structure
+                stats = data.get("stats", {})
+                if not isinstance(stats, dict):
+                    stats = {}
+                
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": {
+                        "components": {
+                            "original": {
+                                "connected": stats.get("components", {}).get("original", {}).get("connected", {}),
+                                "biconnected": stats.get("components", {}).get("original", {}).get("biconnected", {}),
+                                "triconnected": stats.get("components", {}).get("original", {}).get("triconnected", {})
+                            },
+                            "biclique": {
+                                "connected": stats.get("components", {}).get("biclique", {}).get("connected", {}),
+                                "biconnected": stats.get("components", {}).get("biclique", {}).get("biconnected", {}),
+                                "triconnected": stats.get("components", {}).get("biclique", {}).get("triconnected", {})
+                            }
+                        },
+                        "coverage": stats.get("coverage", {}),
+                        "edge_coverage": stats.get("edge_coverage", {})
+                    }
+                }
+
+                # Update totals
+                graph_info = data.get("graph_info", {})
+                total_dmrs += graph_info.get("total_dmrs", 0)
+                total_genes += len(set(graph_info.get("gene_nodes", [])))
+                total_edges += graph_info.get("total_edges", 0)
+
+        # Structure the template data
+        statistics = {
+            "total_dmrs": total_dmrs,
+            "total_genes": total_genes,
+            "total_edges": total_edges,
+            "timepoint_count": len([k for k in results.keys() if k != "overall"])
+        }
 
         return render_template(
             "statistics.html",
