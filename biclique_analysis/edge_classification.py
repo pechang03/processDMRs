@@ -187,3 +187,53 @@ def validate_edge_classification(
         return False
 
     return True
+
+def create_biclique_edge_classifications(
+    bicliques: List[Tuple[Set[int], Set[int]]],
+    edge_classification: Dict[str, List[EdgeInfo]]
+) -> List[Dict]:
+    """
+    Create structured edge classification data for each biclique.
+    
+    Returns:
+        List of dictionaries, one per biclique, containing:
+        - biclique_id
+        - edge_counts: counts by classification
+        - edges: list of {source, target, label, sources} 
+    """
+    result = []
+    
+    for b_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
+        biclique_data = {
+            "biclique_id": b_idx,
+            "edge_counts": {label: 0 for label in EdgeInfo.VALID_LABELS},
+            "edges": []
+        }
+        
+        # For each potential edge in biclique
+        for i, dmr in enumerate(sorted(dmr_nodes)):
+            for j, gene in enumerate(sorted(gene_nodes)):
+                edge = (min(dmr, gene), max(dmr, gene))
+                
+                # Find classification for this edge
+                edge_info = None
+                for label in EdgeInfo.VALID_LABELS:
+                    matching = [e for e in edge_classification[label] if e.edge == edge]
+                    if matching:
+                        edge_info = matching[0]
+                        biclique_data["edge_counts"][label] += 1
+                        break
+                
+                if edge_info:
+                    biclique_data["edges"].append({
+                        "source": dmr,
+                        "target": gene,
+                        "label": edge_info.label,
+                        "sources": list(edge_info.sources),
+                        "dmr_index": i,
+                        "gene_index": j
+                    })
+        
+        result.append(biclique_data)
+    
+    return result
