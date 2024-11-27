@@ -1,6 +1,5 @@
 """Utilities package"""
 
-import re
 import pandas as pd
 
 from .edge_info import EdgeInfo
