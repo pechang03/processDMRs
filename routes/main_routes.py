@@ -152,10 +152,13 @@ def statistics_route():
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
                 # Get graph info for totals
-                graph_info = data.get("graph_info", {})
-                total_dmrs += graph_info.get("total_dmrs", 0)
-                total_genes += graph_info.get("total_genes", 0)
-                total_edges += graph_info.get("total_edges", 0)
+                if "bipartite_graph" in data:
+                    graph = data["bipartite_graph"]
+                    dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+                    gene_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 1}
+                    total_dmrs += len(dmr_nodes)
+                    total_genes += len(gene_nodes)
+                    total_edges += graph.number_of_edges()
 
                 # Ensure proper data structure for timepoint
                 timepoint_info[timepoint] = {
@@ -167,25 +170,30 @@ def statistics_route():
                     "components": data.get("stats", {}).get("components", {})
                 }
 
+        # Get overall data
+        overall_data = results.get("overall", {})
+
         # Structure the template data
         statistics = {
             "total_dmrs": total_dmrs,
             "total_genes": total_genes,
             "total_edges": total_edges,
             "timepoint_count": len([k for k in results.keys() if k != "overall"]),
-            "components": results.get("overall", {}).get("stats", {}).get("components", {}),
-            "interesting_components": results.get("overall", {}).get("interesting_components", []),
-            "complex_components": results.get("overall", {}).get("complex_components", []),
-            "stats": results.get("overall", {}).get("stats", {}),
-            "node_positions": results.get("overall", {}).get("node_positions", {})
+            "components": overall_data.get("stats", {}).get("components", {}),
+            "interesting_components": overall_data.get("interesting_components", []),
+            "complex_components": overall_data.get("complex_components", []),
+            "stats": overall_data.get("stats", {}),
+            "edge_coverage": overall_data.get("stats", {}).get("edge_coverage", {}),
+            "coverage": overall_data.get("stats", {}).get("coverage", {})
         }
 
         return render_template(
             "statistics.html",
             statistics=statistics,
             timepoint_info=timepoint_info,
-            overall_data=results.get("overall", {})
+            overall_data=overall_data
         )
+
     except Exception as e:
         import traceback
         traceback.print_exc()
