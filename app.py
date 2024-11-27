@@ -89,8 +89,30 @@ def main():
 def register_blueprints(app):
     """Register Flask blueprints."""
     from routes import main_bp, components_bp
-    app.register_blueprint(main_bp, url_prefix='/')
+    app.register_blueprint(main_bp)  # Register at root URL
     app.register_blueprint(components_bp, url_prefix='/components')
+
+def main():
+    """Main entry point for the application."""
+    args = parse_arguments()
+    
+    # Validate and configure data paths
+    if not validate_data_files(args.data_dir):
+        print("Error: Required data files not found. Please check your data directory.")
+        return 1
+        
+    # Configure data paths
+    configure_data_paths(args.data_dir)
+    
+    # Store format in app config
+    app.config["BICLIQUE_FORMAT"] = args.format
+    
+    # Register blueprints
+    register_blueprints(app)
+    
+    # Run the Flask app
+    app.run(debug=args.debug, port=args.port)
+    return 0
 
 if __name__ == "__main__":
     exit(main())
