@@ -2,7 +2,7 @@ import argparse
 import os
 from flask import render_template
 from extensions import app
-from routes import index_route, statistics_route, component_detail_route
+from routes import register_blueprints
 from process_data import process_data
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
 from data_loader import get_excel_sheets
@@ -79,15 +79,8 @@ def main():
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
     
-    # Register routes
-    app.add_url_rule("/", "index_route", index_route)
-    app.add_url_rule("/statistics", "statistics_route", statistics_route)
-    app.add_url_rule(
-        "/component/<int:component_id>", "component_detail", component_detail_route
-    )
-    app.add_url_rule(
-        "/component/<int:component_id>/<type>", "component_detail", component_detail_route
-    )
+    # Register blueprints
+    register_blueprints(app)
     
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
