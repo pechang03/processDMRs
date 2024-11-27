@@ -7,26 +7,42 @@ from visualization.graph_layout import calculate_node_positions
 from visualization.vis_components import create_component_visualization, create_component_details
 
 @components_bp.route('/<int:component_id>')
-def component_detail_route(component_id):
-    """Handle component detail page."""
+@components_bp.route('/<int:component_id>/<type>')
+def component_detail_route(component_id, type="biclique"):
+    """Handle component detail page with optional type."""
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
         results = convert_for_json(results)
+
+        # Determine which components to search based on type
+        if type == "triconnected":
+            components = results.get("overall", {}).get("stats", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", [])
+        else:  # Default to biclique
+            components = results.get("interesting_components", [])
+
+        # Find the requested component
         component = next(
-            (c for c in results["interesting_components"] if c["id"] == component_id),
+            (c for c in components if c["id"] == component_id),
             None
         )
 
         if not component:
             return render_template("error.html", message=f"Component {component_id} not found")
 
+        # Determine layout based on type
+        layout = "spring" if type == "triconnected" else "circular"
+
         # Create visualization
         if "raw_bicliques" in component:
             node_biclique_map = create_node_biclique_map(component["raw_bicliques"])
-            node_positions = calculate_node_positions(component["raw_bicliques"], node_biclique_map)
+            node_positions = calculate_node_positions(
+                component["raw_bicliques"], 
+                node_biclique_map, 
+                layout_type=layout
+            )
             
             component["visualization"] = create_component_visualization(
                 component,
@@ -49,9 +65,10 @@ def component_detail_route(component_id):
             "components.html",
             component=component,
             details=component_details,
+            component_type=type,
+            layout=layout,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            component_type="biconnected"
         )
 
     except Exception as e:

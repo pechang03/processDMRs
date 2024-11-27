@@ -193,17 +193,23 @@ def statistics_route():
         return render_template("error.html", message=str(e))
 
 @main_bp.route("/component/<int:component_id>")
-def component_detail_route(component_id):
-    """Handle component detail page."""
+@main_bp.route("/component/<int:component_id>/<type>")
+def component_detail_route(component_id, type="biclique"):
+    """Handle component detail page with optional type."""
     try:
         results = process_data()
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Determine which components to search based on type
+        if type == "triconnected":
+            components = results.get("overall", {}).get("stats", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", [])
+        else:  # Default to biclique
+            components = results.get("interesting_components", [])
+
         # Find the requested component
         component = next(
-            (c for c in results.get("interesting_components", []) 
-             if c["id"] == component_id),
+            (c for c in components if c["id"] == component_id),
             None
         )
 
@@ -213,9 +219,14 @@ def component_detail_route(component_id):
                 message=f"Component {component_id} not found"
             )
 
+        # Determine layout based on type
+        layout = "spring" if type == "triconnected" else "circular"
+
         return render_template(
             "components.html",
             component=component,
+            component_type=type,
+            layout=layout,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
         )
