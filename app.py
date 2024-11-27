@@ -84,17 +84,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-    configure_data_paths(args.data_dir)
-    
-    # Store format in app config
-    app.config["BICLIQUE_FORMAT"] = args.format
-    
-    # Register blueprints
-    register_blueprints(app)
-    
-    # Run the Flask app
-    app.run(debug=args.debug, port=args.port)
-    return 0
-
-if __name__ == "__main__":
-    exit(main())
