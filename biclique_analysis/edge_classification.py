@@ -62,55 +62,40 @@ def classify_edges(
 ) -> Dict[str, List[EdgeInfo]]:
     """
     Classify edges by comparing original and biclique graphs.
-
-    Classifications:
-    - permanent: edges present in both graphs
-    - false_positive: edges in original but not in biclique graph
-    - false_negative: edges in biclique but not in original graph
-    - bridge_false_positive: bridge edges likely to be noise
-    - potential_true_bridge: bridge edges that may be legitimate
-
-    Args:
-        original_graph: The original input graph
-        biclique_graph: The graph constructed from bicliques
-        edge_sources: Dictionary mapping edges to their data sources
-        bicliques: Optional list of bicliques for bridge analysis
+    
+    Process each connected component from the original graph, since these
+    must also be connected in the biclique graph (but not vice versa).
     """
-    # Get basic classification first
+    # Initialize classification containers
     permanent_edges: List[EdgeInfo] = []
     false_positive_edges: List[EdgeInfo] = []
     false_negative_edges: List[EdgeInfo] = []
 
-    # The connected components in the origianal graph are connected_components in the biclique, but not vice versa.
-
-    # Process each connected component separately for efficiency
+    # Process each connected component from original graph
     for component in nx.connected_components(original_graph):
         orig_subgraph = original_graph.subgraph(component)
         bic_subgraph = biclique_graph.subgraph(component)
 
-        nodes = sorted(component)  # Sort for consistent ordering
-        for i, u in enumerate(nodes):
-            for v in nodes[i + 1 :]:
-                edge = (u, v)
-                in_original = orig_subgraph.has_edge(u, v)
-                in_biclique = bic_subgraph.has_edge(u, v)
+        # Process edges within this component
+        for u, v in orig_subgraph.edges():
+            edge = (min(u, v), max(u, v))
+            sources = edge_sources.get(edge, set())
+            
+            if bic_subgraph.has_edge(u, v):
+                # Edge exists in both graphs
+                edge_info = EdgeInfo(edge, label="permanent", sources=sources)
+                permanent_edges.append(edge_info)
+            else:
+                # Edge only in original graph
+                edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
+                false_positive_edges.append(edge_info)
 
-                sources = edge_sources.get(edge, set())
-
-                if in_original and in_biclique:
-                    edge_info = EdgeInfo(edge, label="permanent", sources=sources)
-                    permanent_edges.append(edge_info)
-                elif in_original and not in_biclique:
-                    edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
-                    false_positive_edges.append(edge_info)
-                elif not in_original and in_biclique:
-                    edge_info = EdgeInfo(edge, label="false_negative", sources=sources)
-                    false_negative_edges.append(edge_info)
-
-    # Get bridge analysis if bicliques provided
-    bridge_analysis = None
-    if bicliques is not None:
-        bridge_analysis = analyze_bridge_edges(original_graph, bicliques)
+        # Check for edges in biclique graph not in original
+        for u, v in bic_subgraph.edges():
+            if not orig_subgraph.has_edge(u, v):
+                edge = (min(u, v), max(u, v))
+                edge_info = EdgeInfo(edge, label="false_negative", sources=set())
+                false_negative_edges.append(edge_info)
 
     result = {
         "permanent": permanent_edges,
@@ -118,7 +103,9 @@ def classify_edges(
         "false_negative": false_negative_edges,
     }
 
-    if bridge_analysis is not None:
+    # Add bridge analysis if bicliques provided
+    if bicliques is not None:
+        bridge_analysis = analyze_bridge_edges(original_graph, bicliques)
         result["bridge_edges"] = {
             "false_positives": [
                 EdgeInfo(edge, label="bridge_false_positive")

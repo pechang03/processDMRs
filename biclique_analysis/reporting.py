@@ -262,12 +262,16 @@ def create_node_labels_and_metadata(df: pd.DataFrame,
     return node_labels, dmr_metadata, gene_metadata
 
 
-def create_statistics_summary(bicliques_result: Dict) -> Dict:
+def create_statistics_summary(
+    bicliques_result: Dict,
+    edge_classification: Dict[str, List[EdgeInfo]] = None
+) -> Dict:
     """
     Create a summary of statistics in a structured format.
     
     Args:
         bicliques_result: Dictionary containing bicliques analysis results
+        edge_classification: Optional edge classification results
         
     Returns:
         Dictionary containing formatted statistics
@@ -275,8 +279,39 @@ def create_statistics_summary(bicliques_result: Dict) -> Dict:
     coverage = bicliques_result.get("coverage", {})
     dmr_cov = coverage.get("dmrs", {})
     gene_cov = coverage.get("genes", {})
-    edge_cov = coverage.get("edges", {})
     
+    # Initialize edge coverage stats with N/A values if no classification
+    if edge_classification is None:
+        edge_cov = {
+            "single_coverage": 0,
+            "multiple_coverage": 0,
+            "uncovered": 0,
+            "total": 0,
+            "single_percentage": 0,
+            "multiple_percentage": 0,
+            "uncovered_percentage": 0,
+            "classification": {
+                "permanent": 0,
+                "false_positive": 0,
+                "false_negative": 0,
+                "bridge_false_positive": 0,
+                "potential_true_bridge": 0
+            }
+        }
+    else:
+        # Calculate edge classification statistics
+        edge_cov = coverage.get("edges", {})
+        edge_cov["classification"] = {
+            label: len(edges) 
+            for label, edges in edge_classification.items()
+            if isinstance(edges, list)  # Skip bridge_edges dict
+        }
+        if "bridge_edges" in edge_classification:
+            edge_cov["classification"].update({
+                "bridge_false_positive": len(edge_classification["bridge_edges"]["false_positives"]),
+                "potential_true_bridge": len(edge_classification["bridge_edges"]["potential_true_bridges"])
+            })
+
     summary = {
         "coverage": {
             "dmrs": {
@@ -291,15 +326,7 @@ def create_statistics_summary(bicliques_result: Dict) -> Dict:
                 "percentage": gene_cov.get("percentage", 0),
                 "participation": gene_cov.get("participation", {})
             },
-            "edges": {
-                "single_coverage": edge_cov.get("single_coverage", 0),
-                "multiple_coverage": edge_cov.get("multiple_coverage", 0),
-                "uncovered": edge_cov.get("uncovered", 0),
-                "total": edge_cov.get("total", 0),
-                "single_percentage": edge_cov.get("single_percentage", 0),
-                "multiple_percentage": edge_cov.get("multiple_percentage", 0),
-                "uncovered_percentage": edge_cov.get("uncovered_percentage", 0)
-            }
+            "edges": edge_cov
         },
         "size_distribution": {},
         "classifications": {
