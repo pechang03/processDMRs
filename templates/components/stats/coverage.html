@@ -5,18 +5,18 @@
       <tr>
         <td>DMR Coverage:</td>
         <td>
-          {{ statistics.coverage.dmrs.covered|default(0) }}/{{
-          statistics.coverage.dmrs.total|default(0) }} ({{
-          "%.1f"|format(statistics.coverage.dmrs.percentage|default(0) * 100)
+          {{ statistics.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{
+          statistics.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('total', 0) }} ({{
+          "%.1f"|format(statistics.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100)
           }}%)
         </td>
       </tr>
       <tr>
         <td>Gene Coverage:</td>
         <td>
-          {{ statistics.coverage.genes.covered|default(0) }}/{{
-          statistics.coverage.genes.total|default(0) }} ({{
-          "%.1f"|format(statistics.coverage.genes.percentage|default(0) * 100)
+          {{ statistics.get('stats', {}).get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{
+          statistics.get('stats', {}).get('coverage', {}).get('genes', {}).get('total', 0) }} ({{
+          "%.1f"|format(statistics.get('stats', {}).get('coverage', {}).get('genes', {}).get('percentage', 0) * 100)
           }}%)
         </td>
       </tr>
