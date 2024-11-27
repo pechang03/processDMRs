@@ -180,18 +180,27 @@ def statistics_route():
             "total_edges": total_edges,
             "timepoint_count": len([k for k in results.keys() if k != "overall"]),
             "components": overall_data.get("stats", {}).get("components", {}),
-            "interesting_components": overall_data.get("interesting_components", []),
+            "interesting_components": overall_data.get("interesting_components", []),  # Make sure this is included
             "complex_components": overall_data.get("complex_components", []),
             "stats": overall_data.get("stats", {}),
             "edge_coverage": overall_data.get("stats", {}).get("edge_coverage", {}),
-            "coverage": overall_data.get("stats", {}).get("coverage", {})
+            "coverage": overall_data.get("stats", {}).get("coverage", {}),
+            # Add these additional fields that might be needed by the template
+            "edge_classifications": overall_data.get("edge_classifications", {}),
+            "node_labels": overall_data.get("node_labels", {}),
+            "dmr_metadata": overall_data.get("dmr_metadata", {}),
+            "gene_metadata": overall_data.get("gene_metadata", {})
         }
+
+        # Debug print to check the data
+        print("Interesting components:", len(statistics["interesting_components"]))
 
         return render_template(
             "statistics.html",
             statistics=statistics,
             timepoint_info=timepoint_info,
-            overall_data=overall_data
+            overall_data=overall_data,
+            edge_classifications=statistics["edge_classifications"]  # Make sure this is passed
         )
 
     except Exception as e:
