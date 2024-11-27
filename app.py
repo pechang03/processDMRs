@@ -86,5 +86,11 @@ def main():
     app.run(debug=args.debug, port=args.port)
     return 0
 
+def register_blueprints(app):
+    """Register Flask blueprints."""
+    from routes import main_bp, components_bp
+    app.register_blueprint(main_bp, url_prefix='/')
+    app.register_blueprint(components_bp, url_prefix='/components')
+
 if __name__ == "__main__":
     exit(main())
