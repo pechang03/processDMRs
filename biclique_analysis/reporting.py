@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 import pandas as pd
 import networkx as nx
-from .classifier import classify_biclique
+from .classifier import classify_biclique, BicliqueSizeCategory
 
 
 
@@ -129,7 +129,7 @@ def print_bicliques_detail(
         dmr_nodes, gene_nodes = bicliques_result["bicliques"][i]
 
         # Only print details if it's truly interesting (≥3 DMRs and ≥3 genes)
-        if len(dmr_nodes) >= 3 and len(gene_nodes) >= 3:
+        if classify_biclique(dmr_nodes, gene_nodes) == BicliqueSizeCategory.INTERESTING:
             print(f"\nBiclique {i+1} ({len(dmr_nodes)} DMRs, {len(gene_nodes)} genes):")
 
             print("  DMRs:")
@@ -320,7 +320,7 @@ def create_statistics_summary(bicliques_result: Dict) -> Dict:
         # Update classifications
         if len(dmr_nodes) == 1 and len(gene_nodes) == 1:
             summary["classifications"]["trivial"] += 1
-        elif len(dmr_nodes) >= 3 and len(gene_nodes) >= 3:
+        elif classify_biclique(dmr_nodes, gene_nodes) == BicliqueSizeCategory.INTERESTING:
             summary["classifications"]["interesting"] += 1
         else:
             summary["classifications"]["small"] += 1
