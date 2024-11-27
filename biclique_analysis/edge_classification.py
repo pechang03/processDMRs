@@ -58,18 +58,30 @@ def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
+    triconnected_info: Dict = None,  # Add this parameter
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> Dict[str, List[EdgeInfo]]:
     """
-    Classify edges by comparing original and biclique graphs.
+    Classify edges using both graph comparison and triconnected analysis.
     
-    Process each connected component from the original graph, since these
-    must also be connected in the biclique graph (but not vice versa).
+    Args:
+        original_graph: Original input graph
+        biclique_graph: Graph constructed from bicliques
+        edge_sources: Sources for each edge
+        triconnected_info: Results from triconnected component analysis
+        bicliques: Optional list of bicliques for additional context
     """
     # Initialize classification containers
     permanent_edges: List[EdgeInfo] = []
     false_positive_edges: List[EdgeInfo] = []
     false_negative_edges: List[EdgeInfo] = []
+    bridge_false_positives: List[EdgeInfo] = []
+    potential_true_bridges: List[EdgeInfo] = []
+
+    # Get bridge edges from triconnected analysis if available
+    bridge_edges = set()
+    if triconnected_info and 'bridge_edges' in triconnected_info:
+        bridge_edges = set(triconnected_info['bridge_edges'])
 
     # Process each connected component from original graph
     for component in nx.connected_components(original_graph):
@@ -81,14 +93,22 @@ def classify_edges(
             edge = (min(u, v), max(u, v))
             sources = edge_sources.get(edge, set())
             
-            if bic_subgraph.has_edge(u, v):
-                # Edge exists in both graphs
-                edge_info = EdgeInfo(edge, label="permanent", sources=sources)
-                permanent_edges.append(edge_info)
+            if edge in bridge_edges:
+                # This is a bridge edge - classify based on biclique presence
+                if bic_subgraph.has_edge(u, v):
+                    edge_info = EdgeInfo(edge, label="potential_true_bridge", sources=sources)
+                    potential_true_bridges.append(edge_info)
+                else:
+                    edge_info = EdgeInfo(edge, label="bridge_false_positive", sources=sources)
+                    bridge_false_positives.append(edge_info)
             else:
-                # Edge only in original graph
-                edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
-                false_positive_edges.append(edge_info)
+                # Regular edge classification
+                if bic_subgraph.has_edge(u, v):
+                    edge_info = EdgeInfo(edge, label="permanent", sources=sources)
+                    permanent_edges.append(edge_info)
+                else:
+                    edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
+                    false_positive_edges.append(edge_info)
 
         # Check for edges in biclique graph not in original
         for u, v in bic_subgraph.edges():
@@ -97,27 +117,15 @@ def classify_edges(
                 edge_info = EdgeInfo(edge, label="false_negative", sources=set())
                 false_negative_edges.append(edge_info)
 
-    result = {
+    return {
         "permanent": permanent_edges,
         "false_positive": false_positive_edges,
         "false_negative": false_negative_edges,
-    }
-
-    # Add bridge analysis if bicliques provided
-    if bicliques is not None:
-        bridge_analysis = analyze_bridge_edges(original_graph, bicliques)
-        result["bridge_edges"] = {
-            "false_positives": [
-                EdgeInfo(edge, label="bridge_false_positive")
-                for edge in bridge_analysis["false_positives"]
-            ],
-            "potential_true_bridges": [
-                EdgeInfo(edge, label="potential_true_bridge")
-                for edge in bridge_analysis["potential_true_bridges"]
-            ],
+        "bridge_edges": {
+            "false_positives": bridge_false_positives,
+            "potential_true_bridges": potential_true_bridges
         }
-
-    return result
+    }
 
 
 def validate_edge_classification(
