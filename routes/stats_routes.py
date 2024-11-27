@@ -12,8 +12,37 @@ def statistics_route():
             return render_template("error.html", message=results["error"])
 
         overall_data = results.get("overall", {})
+        
+        # Create complete statistics dictionary
         template_data = {
-            "statistics": convert_for_json(overall_data.get("stats", {})),
+            "statistics": {
+                # Basic stats
+                "total_dmrs": overall_data.get("stats", {}).get("total_dmrs", 0),
+                "total_genes": overall_data.get("stats", {}).get("total_genes", 0),
+                "total_edges": overall_data.get("stats", {}).get("total_edges", 0),
+                
+                # Component stats
+                "stats": {
+                    "components": {
+                        "original": {
+                            "triconnected": overall_data.get("stats", {})
+                                .get("components", {})
+                                .get("original", {})
+                                .get("triconnected", {})
+                        }
+                    }
+                },
+                
+                # Interesting and complex components
+                "interesting_components": overall_data.get("interesting_components", []),
+                "complex_components": overall_data.get("complex_components", []),
+                
+                # Coverage and other stats
+                "coverage": overall_data.get("stats", {}).get("coverage", {}),
+                "edge_coverage": overall_data.get("stats", {}).get("edge_coverage", {})
+            },
+            
+            # Timepoint specific data
             "timepoint_info": {
                 timepoint: {
                     "status": "success",
@@ -25,6 +54,15 @@ def statistics_route():
                 if isinstance(data, dict) and "error" not in data
             }
         }
+
+        # Debug print to verify data
+        print("\nDebug: Statistics Data Structure")
+        print("Triconnected components:", 
+              len(template_data["statistics"]["stats"]["components"]["original"]["triconnected"].get("components", [])))
+        print("Interesting components:", 
+              len(template_data["statistics"]["interesting_components"]))
+        print("Complex components:", 
+              len(template_data["statistics"]["complex_components"]))
         
         return render_template("statistics.html", **template_data)
 
