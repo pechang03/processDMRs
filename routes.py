@@ -132,48 +132,30 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Get overall data from results
-        overall_data = results.get("overall", {})
-        
+        # Calculate overall statistics
+        total_dmrs = 0
+        total_genes = 0
+        total_edges = 0
+        for timepoint, data in results.items():
+            if isinstance(data, dict) and "error" not in data:
+                graph_info = data.get("graph_info", {})
+                total_dmrs += graph_info.get("total_dmrs", 0)
+                total_genes += len(set(graph_info.get("gene_nodes", [])))  # Use set to avoid duplicates
+                total_edges += graph_info.get("total_edges", 0)
+
         # Structure the template data correctly
         template_data = {
-            "data": {  # Add this wrapper level
-                "stats": overall_data.get("stats", {}),
-                "coverage": overall_data.get("stats", {}).get("coverage", {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0
-                    }
-                }),
-                "components": overall_data.get("stats", {}).get("components", {
-                    "original": {
-                        "connected": {
-                            "components": [],
-                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                        },
-                        "biconnected": {
-                            "components": [],
-                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                        },
-                        "triconnected": {
-                            "components": [],
-                            "stats": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
-                        }
-                    }
-                })
+            "statistics": {
+                "total_dmrs": total_dmrs,
+                "total_genes": total_genes,
+                "total_edges": total_edges,
+                "timepoint_count": len([k for k in results.keys() if k != "overall"])
             },
-            "statistics": overall_data.get("stats", {}),
             "timepoint_info": {
                 timepoint: {
                     "status": "success",
                     "stats": data.get("stats", {}),
+                    "coverage": data.get("coverage", {}),
                     "components": data.get("stats", {}).get("components", {})
                 }
                 for timepoint, data in results.items()
