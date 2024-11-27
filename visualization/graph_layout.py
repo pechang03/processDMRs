@@ -10,16 +10,38 @@ from utils.node_info import NodeInfo
 
 
 def calculate_node_positions(
-    bicliques: List[Tuple[Set[int], Set[int]]], node_biclique_map: Dict[int, List[int]]
+    bicliques: List[Tuple[Set[int], Set[int]]], 
+    node_biclique_map: Dict[int, List[int]],
+    layout_type: str = "circular"
 ) -> Dict[int, Tuple[float, float]]:
     """Calculate visualization-ready positions for nodes."""
     # Get node information
     node_info = collect_node_information(bicliques, node_biclique_map)
 
-    # Use position_nodes_by_biclique for core positioning logic
-    # base_positions = position_nodes_by_biclique(bicliques, node_info)
-    # Use core positioning logic
-    base_positions = core_calculate_positions(bicliques, node_biclique_map)
+    # Choose positioning method based on layout type
+    if layout_type == "spring":
+        # Use NetworkX spring layout for more dynamic positioning
+        import networkx as nx
+        import numpy as np
+        
+        # Create a graph from the bicliques
+        G = nx.Graph()
+        for dmr_nodes, gene_nodes in bicliques:
+            G.add_nodes_from(dmr_nodes)
+            G.add_nodes_from(gene_nodes)
+            G.add_edges_from((dmr, gene) for dmr in dmr_nodes for gene in gene_nodes)
+        
+        # Use spring layout with seed for reproducibility
+        base_positions = nx.spring_layout(
+            G, 
+            dim=2, 
+            k=1/np.sqrt(len(G.nodes())),  # Adjust spacing
+            iterations=50,
+            seed=42  # For reproducibility
+        )
+    else:
+        # Default to core positioning logic
+        base_positions = core_calculate_positions(bicliques, node_biclique_map)
 
     # Apply any visualization-specific adjustments
     return adjust_positions_for_display(base_positions)
