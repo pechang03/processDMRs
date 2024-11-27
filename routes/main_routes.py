@@ -130,7 +130,60 @@ def index_route():
         )
     except Exception as e:
         import traceback
+        traceback.print_exc()
+        return render_template("error.html", message=str(e))
 
+@main_bp.route("/statistics")
+def statistics_route():
+    """Handle statistics page."""
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        overall_data = results.get("overall", {})
+        statistics = convert_for_json(overall_data.get("stats", {}))
+        timepoint_info = convert_for_json(results)
+
+        return render_template(
+            "statistics.html",
+            statistics=statistics,
+            timepoint_info=timepoint_info
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template("error.html", message=str(e))
+
+@main_bp.route("/component/<int:component_id>")
+def component_detail_route(component_id):
+    """Handle component detail page."""
+    try:
+        results = process_data()
+        if "error" in results:
+            return render_template("error.html", message=results["error"])
+
+        # Find the requested component
+        component = next(
+            (c for c in results.get("interesting_components", []) 
+             if c["id"] == component_id),
+            None
+        )
+
+        if not component:
+            return render_template(
+                "error.html", 
+                message=f"Component {component_id} not found"
+            )
+
+        return render_template(
+            "components.html",
+            component=component,
+            dmr_metadata=results.get("dmr_metadata", {}),
+            gene_metadata=results.get("gene_metadata", {}),
+        )
+    except Exception as e:
+        import traceback
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 

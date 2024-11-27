@@ -9,9 +9,14 @@
   </head>
   <body>
     <div class="container-fluid mt-4">
-      {% block navigation %}
-        {% include 'components/navigation.html' %}
-      {% endblock %}
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index_route') }}">Home</a>
+          </li>
+          {% block breadcrumb %}{% endblock %}
+        </ol>
+      </nav>
 
       {% block content %}{% endblock %}
     </div>
