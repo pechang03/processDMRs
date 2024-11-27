@@ -15,11 +15,23 @@ def index_route():
         overall_data = results.get("overall", {})
         statistics = convert_for_json(overall_data.get("stats", {}))
         
+        # Process timepoint data
+        timepoint_info = {}
+        for timepoint, data in results.items():
+            if isinstance(data, dict) and timepoint != "overall":
+                timepoint_info[timepoint] = {
+                    "status": "success" if "error" not in data else "error",
+                    "message": data.get("error", ""),
+                    "stats": data.get("stats", {}),
+                    "coverage": data.get("coverage", {}),
+                    "components": data.get("components", {})
+                }
+        
         return render_template(
             "index.html",
             results=overall_data,
             statistics=statistics,
-            timepoint_info=results,
+            timepoint_info=timepoint_info,
             dmr_metadata=overall_data.get("dmr_metadata", {}),
             gene_metadata=overall_data.get("gene_metadata", {}),
             bicliques_result=overall_data,
