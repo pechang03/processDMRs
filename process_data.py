@@ -202,7 +202,7 @@ def process_data():
 
         # Process overall/DSS1 timepoint first
         print("\nProcessing overall timepoint (DSS1)...", flush=True)
-        df_overall = read_excel_file(current_app.config["DSS1_FILE"])
+        df_overall = read_excel_file(app.config["DSS1_FILE"])
 
         # Create master gene mapping
         gene_id_mapping = create_master_gene_mapping(df_overall)
@@ -216,7 +216,7 @@ def process_data():
         )
 
         # Process pairwise timepoints
-        pairwise_file = current_app.config["DSS_PAIRWISE_FILE"]
+        pairwise_file = app.config["DSS_PAIRWISE_FILE"]
         xl = pd.ExcelFile(pairwise_file)
 
         for sheet_name in xl.sheet_names:
