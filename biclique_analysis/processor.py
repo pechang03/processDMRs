@@ -1,16 +1,14 @@
 # File: Processor.py
 # Author: Peter Shaw
 #
-import networkx as nx
-import pandas as pd
 from typing import Dict, List, Set, Tuple
-from utils import process_enhancer_info
-import re
-import pandas as pd
-# Removed data_loader import
-from typing import Dict
 import networkx as nx
 import pandas as pd
+from collections import defaultdict
+
+# Removed data_loader import
+from utils.node_info import NodeInfo
+from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
 
@@ -25,16 +23,16 @@ def process_bicliques(
     """Process bicliques and add detailed information."""
     print(f"\nProcessing bicliques for {dataset_name}")
     print(f"Using format: {file_format}")
-    
+
     try:
         # Read bicliques using reader.py
         bicliques_result = read_bicliques_file(
             bicliques_file,
             bipartite_graph,
             gene_id_mapping=gene_id_mapping,
-            file_format=file_format
+            file_format=file_format,
         )
-        
+
         if not bicliques_result or not bicliques_result.get("bicliques"):
             print(f"No bicliques found in {bicliques_file}")
             return {
@@ -43,10 +41,18 @@ def process_bicliques(
                 "statistics": {},
                 "graph_info": {
                     "name": dataset_name,
-                    "total_dmrs": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0),
-                    "total_genes": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1),
+                    "total_dmrs": sum(
+                        1
+                        for n, d in bipartite_graph.nodes(data=True)
+                        if d["bipartite"] == 0
+                    ),
+                    "total_genes": sum(
+                        1
+                        for n, d in bipartite_graph.nodes(data=True)
+                        if d["bipartite"] == 1
+                    ),
                     "total_edges": len(bipartite_graph.edges()),
-                }
+                },
             }
 
         # Process components using components.py
@@ -57,27 +63,29 @@ def process_bicliques(
             simple_components,  # Add this variable
             non_simple_components,
             component_stats,
-            statistics
+            statistics,
         ) = process_components(
             bipartite_graph,
             bicliques_result,
-            dominating_set=None  # Add dominating set if needed
+            dominating_set=None,  # Add dominating set if needed
         )
 
         # Add component information to result
-        bicliques_result.update({
-            "complex_components": complex_components,
-            "interesting_components": interesting_components,
-            "non_simple_components": non_simple_components,
-            "component_stats": component_stats,
-            "statistics": statistics
-        })
+        bicliques_result.update(
+            {
+                "complex_components": complex_components,
+                "interesting_components": interesting_components,
+                "non_simple_components": non_simple_components,
+                "component_stats": component_stats,
+                "statistics": statistics,
+            }
+        )
 
         print(f"\nProcessed bicliques result:")
         print(f"Total bicliques: {len(bicliques_result.get('bicliques', []))}")
         print(f"Complex components: {len(complex_components)}")
         print(f"Interesting components: {len(interesting_components)}")
-        
+
         return bicliques_result
 
     except FileNotFoundError:
@@ -88,10 +96,18 @@ def process_bicliques(
             "statistics": {},
             "graph_info": {
                 "name": dataset_name,
-                "total_dmrs": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 0),
-                "total_genes": sum(1 for n, d in bipartite_graph.nodes(data=True) if d["bipartite"] == 1),
+                "total_dmrs": sum(
+                    1
+                    for n, d in bipartite_graph.nodes(data=True)
+                    if d["bipartite"] == 0
+                ),
+                "total_genes": sum(
+                    1
+                    for n, d in bipartite_graph.nodes(data=True)
+                    if d["bipartite"] == 1
+                ),
                 "total_edges": len(bipartite_graph.edges()),
-            }
+            },
         }
     except Exception as e:
         print(f"Error processing bicliques: {str(e)}")
@@ -152,7 +168,9 @@ def _add_biclique_details(
     return detailed_info
 
 
-def process_dataset(df: pd.DataFrame, bipartite_graph: nx.Graph, gene_id_mapping: Dict[str, int]):
+def process_dataset(
+    df: pd.DataFrame, bipartite_graph: nx.Graph, gene_id_mapping: Dict[str, int]
+):
     """Process a dataset with pre-loaded graph and dataframe.
 
     Args:
@@ -196,11 +214,11 @@ def create_node_metadata(
     if graph:
         node_info = NodeInfo(
             all_nodes=set(graph.nodes()),
-            dmr_nodes={n for n, d in graph.nodes(data=True) if d['bipartite'] == 0},
-            regular_genes={n for n, d in graph.nodes(data=True) if d['bipartite'] == 1},
+            dmr_nodes={n for n, d in graph.nodes(data=True) if d["bipartite"] == 0},
+            regular_genes={n for n, d in graph.nodes(data=True) if d["bipartite"] == 1},
             split_genes=set(),
             node_degrees={n: graph.degree(n) for n in graph.nodes()},
-            min_gene_id=min(gene_id_mapping.values(), default=0)
+            min_gene_id=min(gene_id_mapping.values(), default=0),
         )
 
     # Create DMR metadata
@@ -239,99 +257,106 @@ def create_node_metadata(
 
 
 def create_biclique_metadata(
-    bicliques: List[Tuple[Set[int], Set[int]]],
-    node_info: NodeInfo = None
+    bicliques: List[Tuple[Set[int], Set[int]]], node_info: NodeInfo = None
 ) -> List[Dict]:
     """
     Create detailed metadata for each biclique.
-    
+
     Args:
         bicliques: List of (dmr_nodes, gene_nodes) tuples
         node_info: Optional NodeInfo object for additional node details
-        
+
     Returns:
         List of dictionaries containing metadata for each biclique
     """
     from .classifier import classify_biclique
     from collections import defaultdict
-    
+
     metadata = []
-    
+
     # Track nodes across all bicliques for overlap calculations
     all_dmrs = set()
     all_genes = set()
     node_to_bicliques = defaultdict(set)
-    
+
     # First pass - collect basic info and track nodes
     for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         all_dmrs.update(dmr_nodes)
         all_genes.update(gene_nodes)
-        
+
         # Track which bicliques each node belongs to
         for node in dmr_nodes | gene_nodes:
             node_to_bicliques[node].add(idx)
-    
+
     # Second pass - create detailed metadata
     for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         # Calculate basic metrics
         size = len(dmr_nodes) + len(gene_nodes)
         density = len(dmr_nodes) * len(gene_nodes) / (size * size) if size > 0 else 0
-        
+
         # Calculate overlap with other bicliques
         overlapping_bicliques = set()
         for node in dmr_nodes | gene_nodes:
             overlapping_bicliques.update(node_to_bicliques[node])
         overlapping_bicliques.discard(idx)  # Remove self
-        
+
         # Calculate shared nodes with overlapping bicliques
         shared_nodes = {
-            other_idx: len((dmr_nodes | gene_nodes) &
-                          (bicliques[other_idx][0] | bicliques[other_idx][1]))
+            other_idx: len(
+                (dmr_nodes | gene_nodes)
+                & (bicliques[other_idx][0] | bicliques[other_idx][1])
+            )
             for other_idx in overlapping_bicliques
         }
-        
+
         # Get biclique classification
         category = classify_biclique(dmr_nodes, gene_nodes)
-        
+
         # Create metadata dictionary
         biclique_metadata = {
             "id": idx,
-            "size": {
-                "total": size,
-                "dmrs": len(dmr_nodes),
-                "genes": len(gene_nodes)
-            },
-            "nodes": {
-                "dmrs": sorted(dmr_nodes),
-                "genes": sorted(gene_nodes)
-            },
+            "size": {"total": size, "dmrs": len(dmr_nodes), "genes": len(gene_nodes)},
+            "nodes": {"dmrs": sorted(dmr_nodes), "genes": sorted(gene_nodes)},
             "metrics": {
                 "density": density,
                 "dmr_ratio": len(dmr_nodes) / len(all_dmrs) if all_dmrs else 0,
                 "gene_ratio": len(gene_nodes) / len(all_genes) if all_genes else 0,
-                "edge_count": len(dmr_nodes) * len(gene_nodes)
+                "edge_count": len(dmr_nodes) * len(gene_nodes),
             },
             "classification": {
                 "category": category.name.lower(),
-                "is_interesting": classify_biclique(dmr_nodes, gene_nodes) == BicliqueSizeCategory.INTERESTING
+                "is_interesting": classify_biclique(dmr_nodes, gene_nodes)
+                == BicliqueSizeCategory.INTERESTING,
             },
             "relationships": {
                 "overlapping_bicliques": len(overlapping_bicliques),
                 "shared_nodes": shared_nodes,
-                "max_overlap": max(shared_nodes.values()) if shared_nodes else 0
+                "max_overlap": max(shared_nodes.values()) if shared_nodes else 0,
             },
             "node_details": {
                 "dmrs": {
-                    "types": [node_info.get_node_type(n) if node_info else "DMR" for n in dmr_nodes],
-                    "degrees": [node_info.get_node_degree(n) if node_info else 0 for n in dmr_nodes]
+                    "types": [
+                        node_info.get_node_type(n) if node_info else "DMR"
+                        for n in dmr_nodes
+                    ],
+                    "degrees": [
+                        node_info.get_node_degree(n) if node_info else 0
+                        for n in dmr_nodes
+                    ],
                 },
                 "genes": {
-                    "types": [node_info.get_node_type(n) if node_info else "gene" for n in gene_nodes],
-                    "degrees": [node_info.get_node_degree(n) if node_info else 0 for n in gene_nodes]
-                }
-            }
+                    "types": [
+                        node_info.get_node_type(n) if node_info else "gene"
+                        for n in gene_nodes
+                    ],
+                    "degrees": [
+                        node_info.get_node_degree(n) if node_info else 0
+                        for n in gene_nodes
+                    ],
+                },
+            },
         }
-        
+
         metadata.append(biclique_metadata)
-    
+
     return metadata
