@@ -291,7 +291,7 @@ def create_biclique_metadata(bicliques: List[Tuple[Set[int], Set[int]]]) -> List
             },
             "classification": {
                 "category": category.name.lower(),
-                "is_interesting": len(dmr_nodes) >= 3 and len(gene_nodes) >= 3
+                "is_interesting": classify_biclique(dmr_nodes, gene_nodes) == BicliqueSizeCategory.INTERESTING
             },
             "relationships": {
                 "overlapping_bicliques": len(overlapping_bicliques),
