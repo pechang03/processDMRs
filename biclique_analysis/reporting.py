@@ -51,14 +51,8 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
     print(f"Nb deletions: {header_stats['Nb deletions']}")
     print(f"Nb additions: {header_stats['Nb additions']}")
     total_false_negatives = 0
-    for biclique in bicliques_result["bicliques"]:
-        dmr_nodes, gene_nodes = biclique
-        for dmr in dmr_nodes:
-            for gene in gene_nodes:
-                if not original_graph.has_edge(dmr, gene):
-                    total_false_negatives += 1
-    print(f"Total false negative edges across all bicliques: {total_false_negatives}")
-    print(f"Total false positive edges (deletions): {header_stats['Nb deletions']}")
+    # Removed problematic code block
+    pass
 
     # Validate statistics from header if present
     if "statistics" in bicliques_result and bicliques_result["statistics"]:
@@ -261,6 +255,8 @@ def create_node_labels_and_metadata(df: pd.DataFrame,
         
     return node_labels, dmr_metadata, gene_metadata
 
+
+from utils.edge_info import EdgeInfo
 
 def create_statistics_summary(
     bicliques_result: Dict,
