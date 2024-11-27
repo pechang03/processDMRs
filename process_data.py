@@ -23,6 +23,7 @@ import logging
 import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
+from flask import current_app
 from extensions import app
 import pandas as pd
 # import numpy as np
