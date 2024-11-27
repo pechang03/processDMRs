@@ -11,7 +11,8 @@ from .traces import (
 )
 from .layout import create_plot_layout
 from .core import generate_biclique_colors
-from .node_info import NodeInfo
+from utils.node_info import NodeInfo
+from biclique_analysis.classifier import classify_biclique
 from biclique_analysis.classifier import classify_biclique
 
 def create_component_visualization(
