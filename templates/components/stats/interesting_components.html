@@ -19,14 +19,18 @@
         <tbody>
           {% for component in statistics.get('interesting_components', []) %}
           <tr>
-            <td>{{ component.id }}</td>
-            <td>{{ component.dmrs }}</td>
-            <td>{{ component.genes }}</td>
-            <td>{{ component.total_edges }}</td>
-            <td>{{ component.category }}</td>
+            <td>{{ component.get('id', 'N/A') }}</td>
+            <td>{{ component.get('dmrs', 0) }}</td>
+            <td>{{ component.get('genes', 0) }}</td>
+            <td>{{ component.get('total_edges', 0) }}</td>
+            <td>{{ component.get('category', 'Unclassified') }}</td>
             <td>
-              <a href="{{ url_for('main.component_detail_route', component_id=component.id) }}" 
+              {% if component.get('id') %}
+              <a href="{{ url_for('main.component_detail_route', component_id=component.get('id')) }}" 
                  class="btn btn-sm btn-primary">View</a>
+              {% else %}
+              <span class="text-muted">No details</span>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
