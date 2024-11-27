@@ -275,6 +275,7 @@ def create_statistics_summary(
     coverage = bicliques_result.get("coverage", {})
     dmr_cov = coverage.get("dmrs", {})
     gene_cov = coverage.get("genes", {})
+    header_stats = bicliques_result.get("debug", {}).get("header_stats", {})
     
     # Initialize edge classification counts
     edge_counts = {label: 0 for label in EdgeInfo.VALID_LABELS}
@@ -285,11 +286,15 @@ def create_statistics_summary(
         for label in EdgeInfo.VALID_LABELS:
             if label in edge_classification:
                 edge_counts[label] = len(edge_classification[label])
-        
-        # Add bridge edge counts if present
+    
+        # Add bridge edge counts separately
+        bridge_counts = {
+            "bridge_false_positive": 0,
+            "potential_true_bridge": 0
+        }
         if "bridge_edges" in edge_classification:
-            edge_counts["bridge_false_positive"] = len(edge_classification["bridge_edges"]["false_positives"])
-            edge_counts["potential_true_bridge"] = len(edge_classification["bridge_edges"]["potential_true_bridges"])
+            bridge_counts["bridge_false_positive"] = len(edge_classification["bridge_edges"]["false_positives"])
+            bridge_counts["potential_true_bridge"] = len(edge_classification["bridge_edges"]["potential_true_bridges"])
     
     # Create summary structure
     summary = {
@@ -308,12 +313,23 @@ def create_statistics_summary(
             },
             "edges": {
                 "classification": edge_counts,
+                "bridge_analysis": bridge_counts if edge_classification else {},
                 "total": sum(edge_counts.values()),
                 "percentages": {
                     label: count / sum(edge_counts.values()) if sum(edge_counts.values()) > 0 else 0
                     for label, count in edge_counts.items()
                 }
             }
+        },
+        "header_statistics": {
+            "operations": header_stats.get("Nb operations", 0),
+            "splits": header_stats.get("Nb splits", 0),
+            "deletions": header_stats.get("Nb deletions", 0),
+            "additions": header_stats.get("Nb additions", 0)
+        },
+        "validation": {
+            "false_positives_match": edge_counts["false_positive"] == header_stats.get("Nb deletions", 0),
+            "false_negatives_match": edge_counts["false_negative"] == header_stats.get("Nb additions", 0)
         },
         "size_distribution": calculate_size_distribution(bicliques_result.get("bicliques", [])),
         "classifications": classify_biclique_types(bicliques_result.get("bicliques", []))
