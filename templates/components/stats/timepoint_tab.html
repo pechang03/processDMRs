@@ -25,24 +25,24 @@
               <tbody>
                 <tr>
                   <td>Connected</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Biconnected</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('total', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('single_node', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('small', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('interesting', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('total', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('small', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('biconnected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Triconnected</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
-                  <td>{{ data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
+                  <td>{{ data.data.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -62,26 +62,26 @@
                 <tr>
                   <td>DMR Coverage:</td>
                   <td>
-                    {{ data.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ data.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
-                    ({{ "%.1f"|format(data.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
+                    {{ data.data.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ data.data.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
+                    ({{ "%.1f"|format(data.data.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
                   </td>
                 </tr>
                 <tr>
                   <td>Gene Coverage:</td>
                   <td>
-                    {{ data.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ data.get('coverage', {}).get('genes', {}).get('total', 0) }}
-                    ({{ "%.1f"|format(data.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
+                    {{ data.data.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ data.data.get('coverage', {}).get('genes', {}).get('total', 0) }}
+                    ({{ "%.1f"|format(data.data.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
                   </td>
                 </tr>
                 <tr>
                   <td>Edge Coverage:</td>
                   <td>
-                    Single: {{ data.get('coverage', {}).get('edges', {}).get('single_coverage', 0) }}
-                    ({{ "%.1f"|format(data.get('coverage', {}).get('edges', {}).get('single_percentage', 0) * 100) }}%)<br>
-                    Multiple: {{ data.get('coverage', {}).get('edges', {}).get('multiple_coverage', 0) }}
-                    ({{ "%.1f"|format(data.get('coverage', {}).get('edges', {}).get('multiple_percentage', 0) * 100) }}%)<br>
-                    Uncovered: {{ data.get('coverage', {}).get('edges', {}).get('uncovered', 0) }}
-                    ({{ "%.1f"|format(data.get('coverage', {}).get('edges', {}).get('uncovered_percentage', 0) * 100) }}%)
+                    Single: {{ data.data.get('coverage', {}).get('edges', {}).get('single_coverage', 0) }}
+                    ({{ "%.1f"|format(data.data.get('coverage', {}).get('edges', {}).get('single_percentage', 0) * 100) }}%)<br>
+                    Multiple: {{ data.data.get('coverage', {}).get('edges', {}).get('multiple_coverage', 0) }}
+                    ({{ "%.1f"|format(data.data.get('coverage', {}).get('edges', {}).get('multiple_percentage', 0) * 100) }}%)<br>
+                    Uncovered: {{ data.data.get('coverage', {}).get('edges', {}).get('uncovered', 0) }}
+                    ({{ "%.1f"|format(data.data.get('coverage', {}).get('edges', {}).get('uncovered_percentage', 0) * 100) }}%)
                   </td>
                 </tr>
               </tbody>
