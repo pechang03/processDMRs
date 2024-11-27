@@ -2,7 +2,7 @@ import argparse
 import os
 from flask import render_template
 from extensions import app
-from routes import register_blueprints
+from routes import register_blueprints  # Updated import
 from process_data import process_data
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
 from data_loader import get_excel_sheets
@@ -79,7 +79,7 @@ def main():
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
     
-    # Register blueprints
+    # Register blueprints using the new structure
     register_blueprints(app)
     
     # Run the Flask app
