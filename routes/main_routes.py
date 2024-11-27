@@ -133,6 +133,7 @@ def index_route():
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
+@main_bp.route("/statistics/")
 @main_bp.route("/statistics")
 def statistics_route():
     """Handle statistics page."""
