@@ -164,12 +164,7 @@ def statistics_route():
                     "complex_components": data.get("complex_components", []),
                     "interesting_components": data.get("interesting_components", []),
                     "non_simple_components": data.get("non_simple_components", []),
-                    "biclique_types": data.get("stats", {}).get("biclique_types", {
-                        "empty": 0,
-                        "simple": 0,
-                        "interesting": 0,
-                        "complex": 0
-                    })
+                    "components": data.get("stats", {}).get("components", {})
                 }
 
         # Structure the template data
@@ -178,7 +173,11 @@ def statistics_route():
             "total_genes": total_genes,
             "total_edges": total_edges,
             "timepoint_count": len([k for k in results.keys() if k != "overall"]),
-            "components": results.get("overall", {}).get("stats", {}).get("components", {})
+            "components": results.get("overall", {}).get("stats", {}).get("components", {}),
+            "interesting_components": results.get("overall", {}).get("interesting_components", []),
+            "complex_components": results.get("overall", {}).get("complex_components", []),
+            "stats": results.get("overall", {}).get("stats", {}),
+            "node_positions": results.get("overall", {}).get("node_positions", {})
         }
 
         return render_template(
