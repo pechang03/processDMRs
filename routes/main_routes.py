@@ -148,51 +148,44 @@ def statistics_route():
         total_edges = 0
         timepoint_info = {}
 
+        # Process each timepoint's data
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                # Ensure proper data structure
-                stats = data.get("stats", {})
-                if not isinstance(stats, dict):
-                    stats = {}
-                
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "stats": {
-                        "components": {
-                            "original": {
-                                "connected": stats.get("components", {}).get("original", {}).get("connected", {}),
-                                "biconnected": stats.get("components", {}).get("original", {}).get("biconnected", {}),
-                                "triconnected": stats.get("components", {}).get("original", {}).get("triconnected", {})
-                            },
-                            "biclique": {
-                                "connected": stats.get("components", {}).get("biclique", {}).get("connected", {}),
-                                "biconnected": stats.get("components", {}).get("biclique", {}).get("biconnected", {}),
-                                "triconnected": stats.get("components", {}).get("biclique", {}).get("triconnected", {})
-                            }
-                        },
-                        "coverage": stats.get("coverage", {}),
-                        "edge_coverage": stats.get("edge_coverage", {})
-                    }
-                }
-
-                # Update totals
+                # Get graph info for totals
                 graph_info = data.get("graph_info", {})
                 total_dmrs += graph_info.get("total_dmrs", 0)
-                total_genes += len(set(graph_info.get("gene_nodes", [])))
+                total_genes += graph_info.get("total_genes", 0)
                 total_edges += graph_info.get("total_edges", 0)
+
+                # Ensure proper data structure for timepoint
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": data.get("stats", {}),
+                    "complex_components": data.get("complex_components", []),
+                    "interesting_components": data.get("interesting_components", []),
+                    "non_simple_components": data.get("non_simple_components", []),
+                    "biclique_types": data.get("stats", {}).get("biclique_types", {
+                        "empty": 0,
+                        "simple": 0,
+                        "interesting": 0,
+                        "complex": 0
+                    })
+                }
 
         # Structure the template data
         statistics = {
             "total_dmrs": total_dmrs,
             "total_genes": total_genes,
             "total_edges": total_edges,
-            "timepoint_count": len([k for k in results.keys() if k != "overall"])
+            "timepoint_count": len([k for k in results.keys() if k != "overall"]),
+            "components": results.get("overall", {}).get("stats", {}).get("components", {})
         }
 
         return render_template(
             "statistics.html",
             statistics=statistics,
-            timepoint_info=timepoint_info
+            timepoint_info=timepoint_info,
+            overall_data=results.get("overall", {})
         )
     except Exception as e:
         import traceback

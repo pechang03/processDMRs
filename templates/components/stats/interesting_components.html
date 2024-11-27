@@ -1,0 +1,38 @@
+{% if statistics.get('interesting_components') %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h3>Interesting Components</h3>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Component ID</th>
+            <th>DMRs</th>
+            <th>Genes</th>
+            <th>Total Edges</th>
+            <th>Category</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for component in statistics.get('interesting_components', []) %}
+          <tr>
+            <td>{{ component.id }}</td>
+            <td>{{ component.dmrs }}</td>
+            <td>{{ component.genes }}</td>
+            <td>{{ component.total_edges }}</td>
+            <td>{{ component.category }}</td>
+            <td>
+              <a href="{{ url_for('main.component_detail_route', component_id=component.id) }}" 
+                 class="btn btn-sm btn-primary">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}

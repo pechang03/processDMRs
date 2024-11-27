@@ -56,4 +56,47 @@
       </div>
     </div>
   </div>
+
+  <div class="row">
+    <!-- Include interesting components table -->
+    {% include 'components/stats/interesting_components.html' %}
+    
+    <!-- Include triconnected components if they exist -->
+    {% if statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) > 0 %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Triconnected Components</h3>
+        </div>
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Total</th>
+                <th>Single Node</th>
+                <th>Small</th>
+                <th>Interesting</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Original Graph</td>
+                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
+              </tr>
+              <tr>
+                <td>Biclique Graph</td>
+                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('total', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('single_node', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('small', 0) }}</td>
+                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('interesting', 0) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 {% endblock %}
