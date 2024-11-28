@@ -189,7 +189,7 @@ def process_data():
     try:
         # Define layout options for different timepoint types
         layout_options = {
-            "overall": {
+            "DSStimeseries": {
                 "triconnected": "spring",
                 "bicliques": "circular",
                 "default": "original",
@@ -212,8 +212,8 @@ def process_data():
         timepoint_data = {}
 
         # Process DSS1 timepoint
-        timepoint_data["overall"] = process_timepoint(
-            df_DSStimeseries, "DSS1", gene_id_mapping, layout_options["overall"]
+        timepoint_data["DSStimeseries"] = process_timepoint(
+            df_DSStimeseries, "DSS1", gene_id_mapping, layout_options["DSStimeseries"]
         )
 
         # Process pairwise timepoints
