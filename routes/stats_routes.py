@@ -11,21 +11,21 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        overall_data = results.get("overall", {})
+        DSStimeseries_data = results.get("DSStimeseries", {})
         
         # Create complete statistics dictionary
         template_data = {
             "statistics": {
                 # Basic stats
-                "total_dmrs": overall_data.get("stats", {}).get("total_dmrs", 0),
-                "total_genes": overall_data.get("stats", {}).get("total_genes", 0),
-                "total_edges": overall_data.get("stats", {}).get("total_edges", 0),
+                "total_dmrs": DSStimeseries_data.get("stats", {}).get("total_dmrs", 0),
+                "total_genes": DSStimeseries_data.get("stats", {}).get("total_genes", 0),
+                "total_edges": DSStimeseries_data.get("stats", {}).get("total_edges", 0),
                 
                 # Component stats
                 "stats": {
                     "components": {
                         "original": {
-                            "triconnected": overall_data.get("stats", {})
+                            "triconnected": DSStimeseries_data.get("stats", {})
                                 .get("components", {})
                                 .get("original", {})
                                 .get("triconnected", {})
@@ -34,12 +34,12 @@ def statistics_route():
                 },
                 
                 # Interesting and complex components
-                "interesting_components": overall_data.get("interesting_components", []),
-                "complex_components": overall_data.get("complex_components", []),
+                "interesting_components": DSStimeseries_data.get("interesting_components", []),
+                "complex_components": DSStimeseries_data.get("complex_components", []),
                 
                 # Coverage and other stats
-                "coverage": overall_data.get("stats", {}).get("coverage", {}),
-                "edge_coverage": overall_data.get("stats", {}).get("edge_coverage", {})
+                "coverage": DSStimeseries_data.get("stats", {}).get("coverage", {}),
+                "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {})
             },
             
             # Timepoint specific data
@@ -75,22 +75,22 @@ def statistics_route():
 def coverage_stats_route():
     """Handle coverage statistics page."""
     results = process_data()
-    overall_data = results.get("overall", {})
-    coverage_stats = convert_for_json(overall_data.get("stats", {}).get("coverage", {}))
+    DSStimeseries_data = results.get("DSStimeseries", {})
+    coverage_stats = convert_for_json(DSStimeseries_data.get("stats", {}).get("coverage", {}))
     return render_template("components/stats/coverage.html", statistics={"coverage": coverage_stats})
 
 @stats_bp.route('/edge-coverage')
 def edge_coverage_stats_route():
     """Handle edge coverage statistics page."""
     results = process_data()
-    overall_data = results.get("overall", {})
-    edge_stats = convert_for_json(overall_data.get("stats", {}).get("edge_coverage", {}))
+    DSStimeseries_data = results.get("DSStimeseries", {})
+    edge_stats = convert_for_json(DSStimeseries_data.get("stats", {}).get("edge_coverage", {}))
     return render_template("components/stats/edge_coverage.html", statistics={"edge_coverage": edge_stats})
 
 @stats_bp.route('/dominating-set')
 def dominating_set_stats_route():
     """Handle dominating set statistics page."""
     results = process_data()
-    overall_data = results.get("overall", {})
-    dominating_stats = convert_for_json(overall_data.get("stats", {}).get("dominating_set", {}))
+    DSStimeseries_data = results.get("DSStimeseries", {})
+    dominating_stats = convert_for_json(DSStimeseries_data.get("stats", {}).get("dominating_set", {}))
     return render_template("components/stats/dominating_set.html", statistics={"dominating_set": dominating_stats})
