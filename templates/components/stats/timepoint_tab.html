@@ -1,83 +1,105 @@
-<div class="tab-pane fade" id="{{ timepoint }}" role="tabpanel" data-timepoint="{{ timepoint }}">
-  <div class="loading-indicator" style="display: block;">
-    Loading data...
-  </div>
-  
+<div
+  class="tab-pane fade"
+  id="{{ timepoint }}"
+  role="tabpanel"
+  data-timepoint="{{ timepoint }}"
+>
+  <div class="loading-indicator" style="display: block">Loading data...</div>
+
   {% if status == "error" %}
-    <div class="alert alert-danger">
-      Error processing timepoint: {{ message }}
-    </div>
+  <div class="alert alert-danger">
+    Error processing timepoint: {{ message }}
+  </div>
   {% else %}
-    <div class="stats-container" style="display: none;">
-      <div class="row">
-        <!-- Original Graph Components -->
-        <div class="col-md-6">
-          <div class="card" id="original-components">
-            <div class="card-header">
-              <h3>{{ timepoint }} Original Graph Components</h3>
-            </div>
-            <div class="card-body">
-              <table class="table" id="original-components-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Total</th>
-                    <th>Single Node</th>
-                    <th>Small</th>
-                    <th>Interesting</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
-                  <tr class="{{ comp_type }}-row">
-                    <td>{{ comp_type|capitalize }}</td>
-                    <td class="total-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('total', 0) }}</td>
-                    <td class="single-node-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('single_node', 0) }}</td>
-                    <td class="small-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('small', 0) }}</td>
-                    <td class="interesting-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('interesting', 0) }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+  <div class="stats-container" style="display: none">
+    <div class="row">
+      <!-- Original Graph Components -->
+      <div class="col-md-6">
+        <div class="card" id="original-components">
+          <div class="card-header">
+            <h3>{{ timepoint }} Original Graph Components</h3>
+          </div>
+          <div class="card-body">
+            <table class="table" id="original-components-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Total</th>
+                  <th>Single Node</th>
+                  <th>Small</th>
+                  <th>Interesting</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for comp_type in ['connected', 'biconnected', 'triconnected']
+                %}
+                <tr class="{{ comp_type }}-row">
+                  <td>{{ comp_type|capitalize }}</td>
+                  <td class="total-cell">
+                    {{ stats.get('components', {}).get('original',
+                    {}).get(comp_type, {}).get('total', 0) }}
+                  </td>
+                  <td class="single-node-cell">
+                    {{ stats.get('components', {}).get('original',
+                    {}).get(comp_type, {}).get('single_node', 0) }}
+                  </td>
+                  <td class="small-cell">
+                    {{ stats.get('components', {}).get('original',
+                    {}).get(comp_type, {}).get('small', 0) }}
+                  </td>
+                  <td class="interesting-cell">
+                    {{ stats.get('components', {}).get('original',
+                    {}).get(comp_type, {}).get('interesting', 0) }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <!-- Biclique Graph Components -->
-        <div class="col-md-6">
-          <div class="card" id="biclique-components">
-            <div class="card-header">
-              <h3>{{ timepoint }} Biclique Components</h3>
-            </div>
-            <div class="card-body">
-              <table class="table" id="biclique-components-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for category in ['Empty', 'Simple', 'Interesting', 'Complex'] %}
-                  <tr>
-                    <td>{{ category }} Components</td>
-                    <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get(category.lower().replace(' ', '_'), 0) }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Component Visualizations -->
-        <div class="col-12 mt-4 components-visualization">
-          <!-- Plotly graph containers will be dynamically added here -->
-        </div>
-
-        <!-- Include interesting components template -->
-        {% include 'components/stats/interesting_components.html' %}
       </div>
+
+      <!-- Biclique Graph Components -->
+      <div class="col-md-6">
+        <div class="card" id="biclique-components">
+          <div class="card-header">
+            <h3>{{ timepoint }} Biclique Components</h3>
+          </div>
+          <div class="card-body">
+            <table class="table" id="biclique-components-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for category in ['Empty', 'Simple', 'Interesting', 'Complex']
+                %}
+                <tr>
+                  <td>{{ category }} Components</td>
+                  <td>
+                    {{ stats.get('components', {}).get('biclique',
+                    {}).get('connected', {}).get(category.lower().replace(' ',
+                    '_'), 0) }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Component Visualizations -->
+      <div class="col-12 mt-4 components-visualization">
+        <!-- Plotly graph containers will be dynamically added here -->
+      </div>
+
+      <!-- DEBUG: About to include interesting components -->
+      <!-- Include interesting components template -->
+      {% include 'components/stats/interesting_components.html' %}
     </div>
+  </div>
   {% endif %}
 </div>
