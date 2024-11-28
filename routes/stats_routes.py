@@ -5,7 +5,6 @@ from utils.json_utils import convert_for_json
 
 @stats_bp.route('/')
 def statistics_route():
-    """Handle main statistics page."""
     try:
         results = process_data()
         if "error" in results:
@@ -13,63 +12,43 @@ def statistics_route():
 
         DSStimeseries_data = results.get("DSStimeseries", {})
         
-        # Add debug print for bicliques summary
-        print("\nDebug: Bicliques Summary Data")
-        print(DSStimeseries_data.get("stats", {}).get("bicliques_summary", {}))
-        
-        # Create complete statistics dictionary
-        template_data = {
+        # Create timepoint info with proper structure
+        timepoint_info = {}
+        for timepoint, data in results.items():
+            if isinstance(data, dict) and "error" not in data:
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "data": {  # Wrap data in a data key
+                        "stats": data.get("stats", {
+                            "coverage": {
+                                "dmrs": {"covered": 0, "total": 0},
+                                "genes": {"covered": 0, "total": 0}
+                            }
+                        }),
+                        "coverage": data.get("coverage", {}),
+                        "components": data.get("components", {})
+                    }
+                }
+
+        # Convert all data structures
+        template_data = convert_for_json({
             "statistics": {
-                # Basic stats
                 "total_dmrs": DSStimeseries_data.get("stats", {}).get("total_dmrs", 0),
                 "total_genes": DSStimeseries_data.get("stats", {}).get("total_genes", 0),
                 "total_edges": DSStimeseries_data.get("stats", {}).get("total_edges", 0),
-                
-                # Component stats
                 "components": DSStimeseries_data.get("stats", {}).get("components", {}),
-                
-                # Interesting and complex components
-                "interesting_components": DSStimeseries_data.get("interesting_components", []),
-                "complex_components": DSStimeseries_data.get("complex_components", []),
-                
-                # Coverage and other stats
                 "coverage": DSStimeseries_data.get("stats", {}).get("coverage", {}),
-                "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {})
+                "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {}),
+                "bicliques_summary": DSStimeseries_data.get("stats", {}).get("bicliques_summary", {})
             },
-            
-            # Timepoint specific data
-            "timepoint_info": {
-                timepoint: {
-                    "status": "success",
-                    "stats": data.get("stats", {}),
-                    "coverage": data.get("coverage", {}),
-                    "components": data.get("components", {}),
-                    "interesting_components": data.get("interesting_components", []),
-                    "complex_components": data.get("complex_components", [])
-                }
-                for timepoint, data in results.items()
-                if isinstance(data, dict) and "error" not in data
-            }
-        }
+            "timepoint_info": timepoint_info
+        })
 
-        # Convert the entire data structure using convert_for_json
-        template_data = convert_for_json(template_data)
-        DSStimeseries_data = convert_for_json(DSStimeseries_data)
-
-        # Debug print
-        print("\nDebug: Biclique Components Structure")
-        print("DSStimeseries components:", 
-              len(DSStimeseries_data.get("stats", {})
-                  .get("components", {})
-                  .get("biclique", {})
-                  .get("connected", {})
-                  .get("components", [])))
-        
         return render_template(
             "statistics.html",
             statistics=template_data["statistics"],
             timepoint_info=template_data["timepoint_info"],
-            DSStimeseries_data=DSStimeseries_data
+            DSStimeseries_data=convert_for_json(DSStimeseries_data)
         )
 
     except Exception as e:
