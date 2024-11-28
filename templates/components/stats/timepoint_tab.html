@@ -4,6 +4,7 @@
       Error processing timepoint: {{ message }}
     </div>
   {% else %}
+    {% set stats = timepoint_info.get(timepoint, {}).get('stats', {}) %}
     <div class="row">
       <!-- Timepoint Original Graph Stats -->
       <div class="col-md-6">

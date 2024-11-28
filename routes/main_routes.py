@@ -41,7 +41,17 @@ def index_route():
                     total_stats["total_edges"] += graph.number_of_edges()
 
                 # Structure timepoint data
-                timepoint_info[timepoint] = data
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": data.get("stats", {}),
+                    "message": ""
+                }
+            else:
+                timepoint_info[timepoint] = {
+                    "status": "error",
+                    "stats": {},
+                    "message": str(data.get("message", "Unknown error"))
+                }
 
         # Convert all data to JSON-safe format
         template_data = convert_for_json({
