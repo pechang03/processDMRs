@@ -1,13 +1,17 @@
 """Utility functions for JSON serialization."""
 
 import numpy as np
+import networkx as nx
 from typing import Any, Dict, List, Set, Tuple
+
 
 def convert_for_json(data: Any) -> Any:
     """Comprehensive conversion of data types for JSON serialization."""
     if isinstance(data, dict):
         return {
-            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_for_json(v)
+            "_".join(map(str, k)) if isinstance(k, tuple) else str(k): convert_for_json(
+                v
+            )
             for k, v in data.items()
         }
     elif isinstance(data, (list, tuple)):
@@ -28,9 +32,10 @@ def convert_for_json(data: Any) -> Any:
             "nodes": list(data.nodes()),
             "edges": list(data.edges()),
             "node_attributes": {str(n): d for n, d in data.nodes(data=True)},
-            "edge_attributes": {str(e): d for e, d in data.edges(data=True)}
+            "edge_attributes": {str(e): d for e, d in data.edges(data=True)},
         }
     return data
+
 
 def convert_sets_to_lists(data: Any) -> Any:
     """Convert sets to sorted lists recursively."""
@@ -43,6 +48,7 @@ def convert_sets_to_lists(data: Any) -> Any:
     elif isinstance(data, tuple):
         return list(data)
     return data
+
 
 # Alias for backward compatibility
 convert_all_for_json = convert_for_json
