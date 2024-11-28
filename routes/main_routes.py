@@ -146,9 +146,7 @@ def timepoint_data_route(timepoint):
         })
 
 
-@main_bp.route("/statistics/")
-@main_bp.route("/statistics")
-def statistics_route():
+# Remove this entire method, as it's now handled by stats_routes
     """Handle statistics page."""
     print("DEBUG: Hit statistics route")  # Debug print
     try:
