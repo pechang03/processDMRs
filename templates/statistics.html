@@ -39,15 +39,17 @@
                   <tr>
                     <td>DMR Coverage:</td>
                     <td>
-                      {{ data.stats.coverage.dmrs.covered }}/{{ data.stats.coverage.dmrs.total }}
-                      ({{ "%.1f"|format(data.stats.coverage.dmrs.percentage * 100) }}%)
+                      {{ data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/
+                      {{ data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('total', 0) }}
+                      ({{ "%.1f"|format(data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Gene Coverage:</td>
                     <td>
-                      {{ data.stats.coverage.genes.covered }}/{{ data.stats.coverage.genes.total }}
-                      ({{ "%.1f"|format(data.stats.coverage.genes.percentage * 100) }}%)
+                      {{ data.get('stats', {}).get('coverage', {}).get('genes', {}).get('covered', 0) }}/
+                      {{ data.get('stats', {}).get('coverage', {}).get('genes', {}).get('total', 0) }}
+                      ({{ "%.1f"|format(data.get('stats', {}).get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
                     </td>
                   </tr>
                 </tbody>
@@ -61,22 +63,22 @@
                   <tr>
                     <td>Single Coverage:</td>
                     <td>
-                      {{ data.stats.edge_coverage.single_coverage }}
-                      ({{ "%.1f"|format(data.stats.edge_coverage.single_percentage * 100) }}%)
+                      {{ data.get('stats', {}).get('edge_coverage', {}).get('single_coverage', 0) }}
+                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Multiple Coverage:</td>
                     <td>
-                      {{ data.stats.edge_coverage.multiple_coverage }}
-                      ({{ "%.1f"|format(data.stats.edge_coverage.multiple_percentage * 100) }}%)
+                      {{ data.get('stats', {}).get('edge_coverage', {}).get('multiple_coverage', 0) }}
+                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)
                     </td>
                   </tr>
                   <tr>
                     <td>Uncovered:</td>
                     <td>
-                      {{ data.stats.edge_coverage.uncovered }}
-                      ({{ "%.1f"|format(data.stats.edge_coverage.uncovered_percentage * 100) }}%)
+                      {{ data.get('stats', {}).get('edge_coverage', {}).get('uncovered', 0) }}
+                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
                     </td>
                   </tr>
                 </tbody>
@@ -100,12 +102,13 @@
                 </thead>
                 <tbody>
                   {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
+                  {% set comp_stats = data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}) %}
                   <tr>
                     <td>{{ comp_type|capitalize }}</td>
-                    <td>{{ data.stats.components.original[comp_type].total }}</td>
-                    <td>{{ data.stats.components.original[comp_type].single_node }}</td>
-                    <td>{{ data.stats.components.original[comp_type].small }}</td>
-                    <td>{{ data.stats.components.original[comp_type].interesting }}</td>
+                    <td>{{ comp_stats.get('total', 0) }}</td>
+                    <td>{{ comp_stats.get('single_node', 0) }}</td>
+                    <td>{{ comp_stats.get('small', 0) }}</td>
+                    <td>{{ comp_stats.get('interesting', 0) }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -122,17 +125,18 @@
                   </tr>
                 </thead>
                 <tbody>
+                  {% set biclique_stats = data.get('stats', {}).get('components', {}).get('biclique', {}).get('connected', {}) %}
                   <tr>
                     <td>Empty</td>
-                    <td>{{ data.stats.components.biclique.connected.single_node }}</td>
+                    <td>{{ biclique_stats.get('single_node', 0) }}</td>
                   </tr>
                   <tr>
                     <td>Simple</td>
-                    <td>{{ data.stats.components.biclique.connected.small }}</td>
+                    <td>{{ biclique_stats.get('small', 0) }}</td>
                   </tr>
                   <tr>
                     <td>Interesting</td>
-                    <td>{{ data.stats.components.biclique.connected.interesting }}</td>
+                    <td>{{ biclique_stats.get('interesting', 0) }}</td>
                   </tr>
                 </tbody>
               </table>
