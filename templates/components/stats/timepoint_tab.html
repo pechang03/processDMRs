@@ -6,9 +6,9 @@
 >
   <div class="loading-indicator" style="display: block">Loading data...</div>
 
-  {% if status == "error" %}
+  {% if data and data.get('status') == "error" %}
   <div class="alert alert-danger">
-    Error processing timepoint: {{ message }}
+    Error processing timepoint: {{ data.get('message', 'Unknown error') }}
   </div>
   {% else %}
   <div class="stats-container" style="display: none">
@@ -35,16 +35,16 @@
                 <tr class="{{ comp_type }}-row">
                   <td>{{ comp_type|capitalize }}</td>
                   <td class="total-cell">
-                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('total', 0) }}
+                    {{ data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}).get('total', 0) }}
                   </td>
                   <td class="single-node-cell">
-                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('single_node', 0) }}
+                    {{ data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}).get('single_node', 0) }}
                   </td>
                   <td class="small-cell">
-                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('small', 0) }}
+                    {{ data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}).get('small', 0) }}
                   </td>
                   <td class="interesting-cell">
-                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('interesting', 0) }}
+                    {{ data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}).get('interesting', 0) }}
                   </td>
                 </tr>
                 {% endfor %}
