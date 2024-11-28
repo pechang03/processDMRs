@@ -22,6 +22,14 @@ def convert_for_json(data: Any) -> Any:
         return data.tolist()
     elif isinstance(data, np.bool_):
         return bool(data)
+    elif isinstance(data, nx.Graph):
+        # Convert NetworkX graph to serializable format
+        return {
+            "nodes": list(data.nodes()),
+            "edges": list(data.edges()),
+            "node_attributes": {str(n): d for n, d in data.nodes(data=True)},
+            "edge_attributes": {str(e): d for e, d in data.edges(data=True)}
+        }
     return data
 
 def convert_sets_to_lists(data: Any) -> Any:
