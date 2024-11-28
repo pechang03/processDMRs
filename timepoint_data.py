@@ -82,8 +82,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 (complex_components, interesting_components, 
                  simple_components, non_simple_components,
                  component_stats, statistics) = process_components(
-                    original_graph=original_graph,
-                    biclique_graph=biclique_graph,
+                    bipartite_graph=original_graph,
                     bicliques_result=bicliques_result
                 )
 
