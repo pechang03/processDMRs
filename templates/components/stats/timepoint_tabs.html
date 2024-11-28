@@ -1,12 +1,7 @@
 <ul class="nav nav-tabs card-header-tabs" role="tablist">
-  <li class="nav-item">
-    <a class="nav-link active" id="overall-tab" data-bs-toggle="tab" href="#overall" role="tab">
-      Overall Statistics
-    </a>
-  </li>
   {% for timepoint in timepoint_info.keys() %}
   <li class="nav-item">
-    <a class="nav-link" id="{{ timepoint }}-tab" data-bs-toggle="tab" href="#{{ timepoint }}" role="tab">
+    <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ timepoint }}-tab" data-bs-toggle="tab" href="#{{ timepoint }}" role="tab">
       {{ timepoint }}
     </a>
   </li>
