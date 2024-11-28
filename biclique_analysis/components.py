@@ -303,6 +303,35 @@ def process_components(
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
     component_stats = analyzer.analyze_components(dominating_set)
     
+    def enrich_component_metadata(component_info: Dict) -> Dict:
+        """Add rich metadata to a component."""
+        # Get bicliques for this component
+        component_bicliques = component_info.get('raw_bicliques', [])
+        
+        # Calculate biclique-related statistics
+        component_info.update({
+            "biclique_stats": {
+                "total": len(component_bicliques),
+                "size_distribution": calculate_size_distribution(component_bicliques),
+                "coverage": calculate_coverage_statistics(component_bicliques, bipartite_graph),
+                "edge_coverage": calculate_edge_coverage(component_bicliques, bipartite_graph),
+                "node_participation": calculate_node_participation(component_bicliques),
+                "types": classify_biclique_types(component_bicliques)
+            },
+            "split_genes": [
+                gene for gene in component_info.get('component', set()) 
+                if bipartite_graph.nodes[gene].get('bipartite') == 1 
+                and len([b for b in component_bicliques if gene in b[1]]) > 1
+            ],
+            "edge_classifications": classify_edges(
+                bipartite_graph.subgraph(component_info['component']),
+                biclique_graph.subgraph(component_info['component']),
+                {}  # Add edge sources if available
+            )
+        })
+        
+        return component_info
+
     # Process individual components
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
         if isinstance(component_data, dict):
@@ -335,8 +364,10 @@ def process_components(
             if category == BicliqueSizeCategory.SIMPLE:
                 simple_components.append(component_info)
             elif category == BicliqueSizeCategory.INTERESTING:
+                component_info = enrich_component_metadata(component_info)
                 interesting_components.append(component_info)
             elif category == BicliqueSizeCategory.COMPLEX:
+                component_info = enrich_component_metadata(component_info)
                 complex_components.append(component_info)
             
             if category not in [BicliqueSizeCategory.EMPTY, BicliqueSizeCategory.SIMPLE]:
