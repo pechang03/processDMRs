@@ -120,6 +120,11 @@ def index_route():
         statistics = convert_for_json(DSStimeseries_data.get("stats", default_stats))
         timepoint_info = convert_for_json(timepoint_info)
         DSStimeseries_data = convert_for_json(DSStimeseries_data)
+        
+        # Ensure nested conversions are complete
+        statistics = convert_for_json(statistics)
+        timepoint_info = convert_for_json(timepoint_info)
+        DSStimeseries_data = convert_for_json(DSStimeseries_data)
 
         return render_template(
             "index.html",

@@ -32,7 +32,7 @@ def statistics_route():
 
         # Convert all data structures
         template_data = convert_for_json({
-            "statistics": {
+            "statistics": convert_for_json({
                 "total_dmrs": DSStimeseries_data.get("stats", {}).get("total_dmrs", 0),
                 "total_genes": DSStimeseries_data.get("stats", {}).get("total_genes", 0),
                 "total_edges": DSStimeseries_data.get("stats", {}).get("total_edges", 0),
@@ -40,8 +40,8 @@ def statistics_route():
                 "coverage": DSStimeseries_data.get("stats", {}).get("coverage", {}),
                 "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {}),
                 "bicliques_summary": DSStimeseries_data.get("stats", {}).get("bicliques_summary", {})
-            },
-            "timepoint_info": timepoint_info
+            }),
+            "timepoint_info": convert_for_json(timepoint_info)
         })
 
         return render_template(
