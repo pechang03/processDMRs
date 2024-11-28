@@ -4,7 +4,6 @@
       Error processing timepoint: {{ message }}
     </div>
   {% else %}
-    {% set stats = timepoint_info.get(timepoint, {}).get('stats', {}) %}
     <div class="row">
       <!-- Timepoint Original Graph Stats -->
       <div class="col-md-6">
@@ -63,26 +62,26 @@
                 <tr>
                   <td>DMR Coverage:</td>
                   <td>
-                    {{ stats.coverage.dmrs.covered }}/{{ stats.coverage.dmrs.total }}
-                    ({{ "%.1f"|format(stats.coverage.dmrs.percentage * 100) }}%)
+                    {{ stats.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
+                    ({{ "%.1f"|format(stats.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
                   </td>
                 </tr>
                 <tr>
                   <td>Gene Coverage:</td>
                   <td>
-                    {{ stats.coverage.genes.covered }}/{{ stats.coverage.genes.total }}
-                    ({{ "%.1f"|format(stats.coverage.genes.percentage * 100) }}%)
+                    {{ stats.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('genes', {}).get('total', 0) }}
+                    ({{ "%.1f"|format(stats.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
                   </td>
                 </tr>
                 <tr>
                   <td>Edge Coverage:</td>
                   <td>
-                    Single: {{ stats.coverage.edges.single_coverage }}
-                    ({{ "%.1f"|format(stats.coverage.edges.single_percentage * 100) }}%)<br>
-                    Multiple: {{ stats.coverage.edges.multiple_coverage }}
-                    ({{ "%.1f"|format(stats.coverage.edges.multiple_percentage * 100) }}%)<br>
-                    Uncovered: {{ stats.coverage.edges.uncovered }}
-                    ({{ "%.1f"|format(stats.coverage.edges.uncovered_percentage * 100) }}%)
+                    Single: {{ stats.get('edge_coverage', {}).get('single', 0) }}
+                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)<br>
+                    Multiple: {{ stats.get('edge_coverage', {}).get('multiple', 0) }}
+                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)<br>
+                    Uncovered: {{ stats.get('edge_coverage', {}).get('uncovered', 0) }}
+                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
                   </td>
                 </tr>
               </tbody>

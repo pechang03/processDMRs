@@ -87,25 +87,38 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
+        # Initialize aggregated statistics
+        total_stats = {
+            "total_dmrs": 0,
+            "total_genes": 0,
+            "total_edges": 0,
+            "timepoint_count": len(results)
+        }
+
         # Process each timepoint's data
         timepoint_info = {}
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "stats": data.get("stats", {}),  # Ensure stats exists
-                    "message": ""
-                }
+                # Update totals from graph info
+                if "bipartite_graph" in data:
+                    graph = data["bipartite_graph"]
+                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
+                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
+                    total_stats["total_edges"] += graph.number_of_edges()
+
+                # Store all timepoint data directly
+                timepoint_info[timepoint] = data
+
             else:
                 timepoint_info[timepoint] = {
                     "status": "error",
-                    "stats": {},
                     "message": data.get("message", "Unknown error")
                 }
 
+        # Convert data for template
         template_data = convert_for_json({
-            "statistics": results.get("statistics", {}),
-            "timepoint_info": timepoint_info
+            "statistics": total_stats,  # Just the overall totals
+            "timepoint_info": timepoint_info  # All timepoint data
         })
 
         return render_template(
