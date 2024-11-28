@@ -22,7 +22,9 @@
                id="{{ timepoint }}" 
                role="tabpanel"
                data-loaded="false">
-            {% include 'components/stats/timepoint_tab.html' %}
+            {% with data=data %}
+              {% include 'components/stats/timepoint_tab.html' %}
+            {% endwith %}
           </div>
         {% endfor %}
       </div>

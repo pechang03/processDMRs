@@ -23,41 +23,26 @@ def index_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Aggregate statistics across all timepoints
-        total_stats = {
-            "total_dmrs": 0,
-            "total_genes": 0,
-            "total_edges": 0,
-            "timepoint_count": len(results)
-        }
-
-        # Process each timepoint's data
+        # Process timepoint data
         timepoint_info = {}
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                # Get graph info for totals
-                if "bipartite_graph" in data:
-                    graph = data["bipartite_graph"]
-                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
-                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
-                    total_stats["total_edges"] += graph.number_of_edges()
-
-                # Structure timepoint data
                 timepoint_info[timepoint] = {
                     "status": "success",
                     "stats": data.get("stats", {}),
-                    "message": ""
+                    "data": data  # Include full data
                 }
             else:
                 timepoint_info[timepoint] = {
                     "status": "error",
+                    "message": str(data) if data else "Unknown error",
                     "stats": {},
-                    "message": str(data.get("message", "Unknown error"))
+                    "data": {}
                 }
 
-        # Convert all data to JSON-safe format
+        # Convert to JSON-safe format
         template_data = convert_for_json({
-            "statistics": total_stats,
+            "statistics": results,
             "timepoint_info": timepoint_info
         })
 
@@ -75,7 +60,6 @@ def index_route():
         )
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
