@@ -63,9 +63,9 @@
     
     <!-- Include triconnected components if they exist -->
     {% if (statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) > 0) or 
-           (statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) > 0) or
-           (statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) > 0) or
-           (statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) > 0) or
+           (statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) > 0) or 
+           (statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) > 0) or 
+           (statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) > 0) or 
            (statistics.get('DSStimeseries', {}).get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) > 0) %}
       <div class="card mb-4">
         <div class="card-header">
