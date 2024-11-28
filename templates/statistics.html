@@ -3,139 +3,160 @@
 {% block title %}DMR Analysis Statistics{% endblock %}
 
 {% block content %}
-  <!-- Add the overall summary at the top -->
-  {% include 'components/stats/overall_summary.html' %}
+  {% include 'components/overall_stats.html' %}
 
-  <div class="card">
+  <div class="card mb-4">
     <div class="card-header">
       {% include 'components/stats/timepoint_tabs.html' %}
     </div>
     <div class="card-body">
       <div class="tab-content">
-        {% for timepoint, data in timepoint_info.items() %}
-        <div 
-          class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-          id="{{ timepoint }}"
-          role="tabpanel">
-          
-          <h3>{{ timepoint }} Statistics</h3>
-          
-          <!-- Coverage Statistics -->
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <h4>Coverage</h4>
-              <table class="table table-sm">
-                <tbody>
-                  <tr>
-                    <td>DMR Coverage:</td>
-                    <td>
-                      {{ data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/
-                      {{ data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('total', 0) }}
-                      ({{ "%.1f"|format(data.get('stats', {}).get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Gene Coverage:</td>
-                    <td>
-                      {{ data.get('stats', {}).get('coverage', {}).get('genes', {}).get('covered', 0) }}/
-                      {{ data.get('stats', {}).get('coverage', {}).get('genes', {}).get('total', 0) }}
-                      ({{ "%.1f"|format(data.get('stats', {}).get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="col-md-6">
-              <h4>Edge Coverage</h4>
-              <table class="table table-sm">
-                <tbody>
-                  <tr>
-                    <td>Single Coverage:</td>
-                    <td>
-                      {{ data.get('stats', {}).get('edge_coverage', {}).get('single_coverage', 0) }}
-                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Multiple Coverage:</td>
-                    <td>
-                      {{ data.get('stats', {}).get('edge_coverage', {}).get('multiple_coverage', 0) }}
-                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Uncovered:</td>
-                    <td>
-                      {{ data.get('stats', {}).get('edge_coverage', {}).get('uncovered', 0) }}
-                      ({{ "%.1f"|format(data.get('stats', {}).get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Component Statistics -->
-          <div class="row">
-            <div class="col-md-6">
-              <h4>Original Graph Components</h4>
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Total</th>
-                    <th>Single Node</th>
-                    <th>Small</th>
-                    <th>Interesting</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
-                  {% set comp_stats = data.get('stats', {}).get('components', {}).get('original', {}).get(comp_type, {}) %}
-                  <tr>
-                    <td>{{ comp_type|capitalize }}</td>
-                    <td>{{ comp_stats.get('total', 0) }}</td>
-                    <td>{{ comp_stats.get('single_node', 0) }}</td>
-                    <td>{{ comp_stats.get('small', 0) }}</td>
-                    <td>{{ comp_stats.get('interesting', 0) }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="col-md-6">
-              <h4>Biclique Components</h4>
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% set biclique_stats = data.get('stats', {}).get('components', {}).get('biclique', {}).get('connected', {}) %}
-                  <tr>
-                    <td>Empty</td>
-                    <td>{{ biclique_stats.get('single_node', 0) }}</td>
-                  </tr>
-                  <tr>
-                    <td>Simple</td>
-                    <td>{{ biclique_stats.get('small', 0) }}</td>
-                  </tr>
-                  <tr>
-                    <td>Interesting</td>
-                    <td>{{ biclique_stats.get('interesting', 0) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+        <!-- Overall Statistics Tab -->
+        <div class="tab-pane fade" id="overall" role="tabpanel">
+          {% include 'components/graph_components.html' %}
         </div>
+
+        <!-- Timepoint-specific tabs -->
+        {% for timepoint, data in timepoint_info.items() %}
+          <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+               id="{{ timepoint }}" 
+               role="tabpanel"
+               data-loaded="false">
+            {% include 'components/stats/timepoint_tab.html' %}
+          </div>
         {% endfor %}
       </div>
     </div>
   </div>
+
+  <!-- Add this script block for tab management -->
+  {% block extra_scripts %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize first tab's data
+      const firstTab = document.querySelector('.tab-pane.active');
+      if (firstTab && firstTab.getAttribute('data-loaded') === 'false') {
+        loadTimepointData(firstTab.id);
+      }
+
+      // Add click handlers to tabs
+      document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+          const timepoint = event.target.getAttribute('href').substring(1);
+          const tabPane = document.getElementById(timepoint);
+          
+          if (tabPane && tabPane.getAttribute('data-loaded') === 'false') {
+            loadTimepointData(timepoint);
+          }
+        });
+      });
+
+      function loadTimepointData(timepoint) {
+        const tabPane = document.getElementById(timepoint);
+        const loadingIndicator = tabPane.querySelector('.loading-indicator');
+        const statsContainer = tabPane.querySelector('.stats-container');
+
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+        if (statsContainer) statsContainer.style.display = 'none';
+
+        fetch(`/stats/timepoint/${timepoint}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              updateTimepointContent(timepoint, data.data);
+              tabPane.setAttribute('data-loaded', 'true');
+              
+              if (loadingIndicator) loadingIndicator.style.display = 'none';
+              if (statsContainer) statsContainer.style.display = 'block';
+            } else {
+              console.error('Error loading timepoint data:', data.message);
+              if (loadingIndicator) {
+                loadingIndicator.textContent = 'Error loading data: ' + data.message;
+                loadingIndicator.classList.add('text-danger');
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            if (loadingIndicator) {
+              loadingIndicator.textContent = 'Network error: ' + error.message;
+              loadingIndicator.classList.add('text-danger');
+            }
+          });
+      }
+
+      function updateTimepointContent(timepoint, data) {
+        const tabPane = document.getElementById(timepoint);
+        
+        // Update component statistics tables
+        updateComponentStats(tabPane, data.stats);
+        
+        // Update visualizations if present
+        if (data.component_graphs) {
+          const visContainer = tabPane.querySelector('.components-visualization');
+          if (visContainer) {
+            visContainer.innerHTML = '';
+            Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
+              const container = document.createElement('div');
+              container.id = `component-${compId}`;
+              container.classList.add('plotly-graph', 'mb-4');
+              visContainer.appendChild(container);
+              
+              Plotly.newPlot(container, graphData.data, graphData.layout, {
+                responsive: true,
+                displayModeBar: true,
+                scrollZoom: true,
+                displaylogo: false
+              });
+            });
+          }
+        }
+      }
+
+      function updateComponentStats(tabPane, stats) {
+        // Update original graph components table
+        const originalCompTable = tabPane.querySelector('#original-components-table');
+        if (originalCompTable) {
+          const originalStats = stats.components.original;
+          updateComponentStatsTable(originalCompTable, originalStats, 'original');
+        }
+
+        // Update biclique graph components table
+        const bicliqueCompTable = tabPane.querySelector('#biclique-components-table');
+        if (bicliqueCompTable) {
+          const bicliquesStats = stats.components.biclique;
+          updateComponentStatsTable(bicliqueCompTable, bicliquesStats, 'biclique');
+        }
+      }
+
+      function updateComponentStatsTable(tableElement, stats, type) {
+        // Update rows dynamically based on the type of graph
+        const componentTypes = type === 'original'
+          ? ['connected', 'biconnected', 'triconnected']
+          : ['empty', 'simple', 'interesting', 'complex'];
+
+        componentTypes.forEach(compType => {
+          const row = tableElement.querySelector(`.${compType}-row`);
+          if (row) {
+            const totalCell = row.querySelector('.total-cell');
+            const singleNodeCell = row.querySelector('.single-node-cell');
+            const smallCell = row.querySelector('.small-cell');
+            const interestingCell = row.querySelector('.interesting-cell');
+
+            if (type === 'original') {
+              totalCell.textContent = stats[compType].total || 0;
+              singleNodeCell.textContent = stats[compType].single_node || 0;
+              smallCell.textContent = stats[compType].small || 0;
+              interestingCell.textContent = stats[compType].interesting || 0;
+            } else {
+              // For biclique, just update the count
+              row.querySelector('td:last-child').textContent = stats.connected[compType.replace(' ', '_')] || 0;
+            }
+          }
+        });
+      }
+    });
+  </script>
+  {% endblock %}
 {% endblock %}
