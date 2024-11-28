@@ -71,19 +71,19 @@
               <tbody>
                 <tr class="empty-row">
                   <td>Empty Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
                 </tr>
                 <tr class="simple-row">
                   <td>Simple Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('small', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('biclique', {}).get('connected', {}).get('small', 0) }}</td>
                 </tr>
                 <tr class="interesting-row">
                   <td>Interesting Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('interesting', 0) }}</td>
+                  <td>{{ data.get('stats', {}).get('components', {}).get('biclique', {}).get('connected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr class="complex-row">
                   <td>Complex Components</td>
-                  <td>{{ (stats.get('complex_components', [])|length) }}</td>
+                  <td>{{ (data.get('stats', {}).get('complex_components', [])|length) }}</td>
                 </tr>
               </tbody>
             </table>
