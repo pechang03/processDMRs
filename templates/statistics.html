@@ -3,6 +3,9 @@
 {% block title %}DMR Analysis Statistics{% endblock %}
 
 {% block content %}
+  <!-- Add the overall summary at the top -->
+  {% include 'components/stats/overall_summary.html' %}
+
   <div class="card">
     <div class="card-header">
       {% include 'components/stats/timepoint_tabs.html' %}
