@@ -101,47 +101,7 @@ logger = logging.getLogger(__name__)
 # _cached_data = None
 
 
-def convert_dict_keys_to_str(d):
-    """Convert dictionary tuple keys to strings recursively and handle numpy types."""
-    import numpy as np
-
-    if isinstance(d, dict):
-        return {
-            "_".join(map(str, k))
-            if isinstance(k, tuple)
-            else str(k): convert_dict_keys_to_str(v)
-            for k, v in d.items()
-        }
-    elif isinstance(d, list):
-        return [convert_dict_keys_to_str(i) for i in d]
-    elif isinstance(d, set):
-        return sorted(list(d))
-    elif isinstance(d, tuple):
-        return list(d)
-    elif isinstance(
-        d,
-        (
-            np.int_,
-            np.intc,
-            np.intp,
-            np.int8,
-            np.int16,
-            np.int32,
-            np.int64,
-            np.uint8,
-            np.uint16,
-            np.uint32,
-            np.uint64,
-        ),
-    ):
-        return int(d)
-    elif isinstance(d, (np.float_, np.float16, np.float32, np.float64)):
-        return float(d)
-    elif isinstance(d, np.ndarray):
-        return d.tolist()
-    elif isinstance(d, np.bool_):
-        return bool(d)
-    return d
+# Removed: convert_dict_keys_to_str function (now imported from utils.json_utils)
 
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
