@@ -39,13 +39,16 @@ def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, in
     """Create a mapping of gene names to IDs starting at START_GENE_ID."""
     print(f"\nCreating gene ID mapping for {len(genes)} unique genes")
 
-    # Convert all gene names to lowercase and remove any empty strings
+    # Convert all gene names to lowercase and remove any empty strings or invalid values
     cleaned_genes = {
-        gene.strip().lower() for gene in genes if gene and isinstance(gene, str)
+        gene.strip().lower() 
+        for gene in genes 
+        if gene and isinstance(gene, str) and gene.strip() not in {".", "n/a", ""}
     }
-    cleaned_genes.discard("")
+    cleaned_genes.discard("")  # Extra check to remove any remaining empty strings
 
     print(f"After cleaning: {len(cleaned_genes)} unique genes")
+    print("First 5 cleaned genes:", sorted(list(cleaned_genes))[:5])
 
     # Create mapping starting at START_GENE_ID
     gene_id_mapping = {
