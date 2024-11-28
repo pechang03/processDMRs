@@ -29,9 +29,7 @@
           <a
             class="nav-link"
             id="statistics-tab"
-            data-bs-toggle="tab"
-            href="#statistics"
-            role="tab"
+            href="{{ url_for('main.statistics_route') }}"
             >Statistics</a
           >
         </li>
@@ -112,16 +110,5 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        var statisticsTab = document.getElementById("statistics-tab");
-        if (statisticsTab) {
-          statisticsTab.addEventListener("click", function(e) {
-            e.preventDefault();
-            window.location.href = "{{ url_for('main.statistics_route') }}";
-          });
-        }
-      });
-    </script>
   </body>
 </html>
