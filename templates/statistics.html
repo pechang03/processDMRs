@@ -3,110 +3,31 @@
 {% block title %}DMR Analysis Statistics{% endblock %}
 
 {% block content %}
-  <div class="card mb-4">
-    <div class="card-header">
-      <h3>Overall Statistics</h3>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-4">
-          <h4>Total Metrics</h4>
-          <table class="table table-sm">
-            <tbody>
-              <tr>
-                <td>Total DMRs:</td>
-                <td>{{ statistics.total_dmrs }}</td>
-              </tr>
-              <tr>
-                <td>Total Genes:</td>
-                <td>{{ statistics.total_genes }}</td>
-              </tr>
-              <tr>
-                <td>Total Edges:</td>
-                <td>{{ statistics.total_edges }}</td>
-              </tr>
-              <tr>
-                <td>Timepoints:</td>
-                <td>{{ statistics.timepoint_count }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        {% include 'components/stats/coverage.html' %}
-        {% include 'components/stats/edge_coverage.html' %}
-      </div>
-    </div>
-  </div>
+  <!-- Overall Statistics Card -->
+  {% include 'components/stats/overall_stats.html' %}
 
+  <!-- Timepoints Card -->
   <div class="card mb-4">
     <div class="card-header">
       {% include 'components/stats/timepoint_tabs.html' %}
     </div>
     <div class="card-body">
       <div class="tab-content">
-        <!-- Overall Statistics Tab -->
-        <div class="tab-pane fade show active" id="DSStimeseries" role="tabpanel">
-          {% include 'components/graph_components.html' %}
-        </div>
-
-        <!-- Timepoint-specific tabs -->
         {% for timepoint, data in timepoint_info.items() %}
-          {% with status=data.get('status'), message=data.get('message'), stats=data.get('stats', {}) %}
-            {% include 'components/stats/timepoint_tab.html' %}
-          {% endwith %}
+          <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+               id="{{ timepoint }}" 
+               role="tabpanel">
+            {% with status=data.get('status'), message=data.get('message'), stats=data.get('stats', {}) %}
+              {% include 'components/stats/timepoint_tab.html' %}
+            {% endwith %}
+          </div>
         {% endfor %}
       </div>
     </div>
   </div>
 
+  <!-- Components Analysis -->
   <div class="row">
-    <!-- Include interesting components table -->
     {% include 'components/stats/interesting_components.html' %}
-    
-    <!-- Include triconnected components if they exist -->
-    {% set triconn_stats = (
-        statistics.get('components', {}).get('original', {}).get('triconnected', {}) or
-        statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}) or
-        {}
-    ) %}
-    {% if triconn_stats and (
-        triconn_stats.get('interesting', 0) > 0 or 
-        triconn_stats.get('total', 0) > 0 or
-        triconn_stats.get('components', []) %}
-      <div class="card mb-4">
-        <div class="card-header">
-          <h3>Triconnected Components</h3>
-        </div>
-        <div class="card-body">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Total</th>
-                <th>Single Node</th>
-                <th>Small</th>
-                <th>Interesting</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Original Graph</td>
-                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
-              </tr>
-              <tr>
-                <td>Biclique Graph</td>
-                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('total', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('single_node', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('small', 0) }}</td>
-                <td>{{ statistics.get('components', {}).get('biclique', {}).get('triconnected', {}).get('interesting', 0) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    {% endif %}
   </div>
 {% endblock %}
