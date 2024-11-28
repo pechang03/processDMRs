@@ -222,168 +222,16 @@ def process_data():
 def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """Process a single timepoint with configurable layout options."""
     try:
-        print(f"\nProcessing timepoint {timepoint}")
+        # Create original bipartite graph
+        print("Creating original bipartite graph...")
+        original_graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
+        print(f"Original graph created with {original_graph.number_of_nodes()} nodes and {original_graph.number_of_edges()} edges")
 
-        # Create bipartite graph
-        print("Creating bipartite graph...")
-        graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-        print(
-            f"Graph created with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges"
-        )
-
-        # Validate graph
-        print(f"\nValidating graph for timepoint {timepoint}")
-        filtered_graph = validate_bipartite_graph(graph)
-
-        # Debug logging for JSON conversion
-        def debug_json_conversion(data, name):
-            print(f"\nDebug: Converting {name} to JSON-safe format")
-            print(f"Before conversion - Type: {type(data)}")
-            try:
-                converted = convert_for_json(data)
-                print(f"After conversion - Type: {type(converted)}")
-                print(f"Conversion of {name} successful")
-                return converted
-            except Exception as e:
-                print(f"Error converting {name}: {str(e)}")
-                return data
-        if filtered_graph is False:
-            return {"error": "Graph validation failed"}
-        graph = filtered_graph  # Use the filtered graph going forward
-        print("Graph validation successful")
-
-        # Look for biclique file using constants
-        if timepoint == "DSStimeseries":
-            biclique_file = BIPARTITE_GRAPH_OVERALL
-        else:
-            biclique_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
-
-        print(f"\nLooking for biclique file: {biclique_file}")
-        print(f"File exists: {os.path.exists(biclique_file)}")
-
-        if os.path.exists(biclique_file):
-            print(f"Processing bicliques from {biclique_file}")
-            # Use processor.py to process bicliques
-            bicliques_result = process_bicliques(
-                graph,
-                biclique_file,
-                timepoint,
-                gene_id_mapping=gene_id_mapping,
-                file_format="gene-name",
-            )
-
-            if bicliques_result and "bicliques" in bicliques_result:
-                # Process components using components.py
-                (
-                    complex_components,
-                    interesting_components,
-                    simple_components,  # Add this variable
-                    non_simple_components,
-                    component_stats,
-                    statistics,
-                ) = process_components(
-                    graph,
-                    bicliques_result,
-                    dmr_metadata=create_dmr_metadata(df),
-                    gene_metadata=create_gene_metadata(df),
-                    gene_id_mapping=gene_id_mapping,
-                )
-
-                # For all timepoints, analyze original graph components
-                print(f"\nAnalyzing graph components for {timepoint}")
-
-                # Analyze connected components
-                connected_comps = list(nx.connected_components(graph))
-                print(f"Found {len(connected_comps)} connected components")
-                original_stats = analyze_components(connected_comps, graph)
-                print("Connected component statistics:")
-                print(json.dumps(original_stats, indent=2))
-
-                # Analyze biconnected components
-                biconn_comps, biconn_stats = analyze_biconnected_components(graph)
-                print("\nBiconnected component statistics:")
-                print(json.dumps(biconn_stats, indent=2))
-
-                # Analyze triconnected components
-                triconn_comps, triconn_stats = analyze_triconnected_components(graph)
-                print("\nTriconnected component statistics:")
-                print(json.dumps(triconn_stats, indent=2))
-
-                # Add to component_stats
-                if "components" not in component_stats:
-                    component_stats["components"] = {}
-                if "original" not in component_stats["components"]:
-                    component_stats["components"]["original"] = {}
-
-                component_stats["components"]["original"] = {
-                    "connected": {
-                        "components": connected_comps,
-                        "stats": original_stats,
-                    },
-                    "biconnected": {"components": biconn_comps, "stats": biconn_stats},
-                    "triconnected": {
-                        "components": triconn_comps,
-                        "stats": triconn_stats,
-                    },
-                }
-
-                print("\nFinal component statistics for original graph:")
-                try:
-                    print(
-                        json.dumps(
-                            convert_dict_keys_to_str(component_stats["components"]["original"]),
-                            indent=2,
-                        )
-                    )
-                except Exception as e:
-                    print(f"Error converting stats to JSON: {e}")
-
-                # Calculate coverage statistics
-                coverage_stats = calculate_coverage_statistics(
-                    bicliques_result["bicliques"], graph
-                )
-                edge_coverage = calculate_edge_coverage(
-                    bicliques_result["bicliques"], graph
-                )
-
-                # Get bicliques summary
-                from biclique_analysis.reporting import get_bicliques_summary
-                from utils.json_utils import convert_for_json
-        
-                bicliques_summary = get_bicliques_summary(bicliques_result, graph)
-                # Convert to JSON-safe format before using
-                bicliques_summary = convert_for_json(bicliques_summary)
-        
-                # Now safe to print
-                print("\nDebug: Generated Bicliques Summary:")
-                print(json.dumps(bicliques_summary, indent=2))
-
-                # Use debug conversion function
-                return {
-                    "status": "success",
-                    "stats": {
-                        "components": debug_json_conversion(component_stats, "component_stats"),
-                        "coverage": debug_json_conversion(coverage_stats, "coverage_stats"),
-                        "edge_coverage": debug_json_conversion(edge_coverage, "edge_coverage"),
-                        "biclique_types": debug_json_conversion(
-                            classify_biclique_types(bicliques_result["bicliques"]), 
-                            "biclique_types"
-                        ),
-                        "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary"),
-                        # Move these inside stats
-                        "interesting_components": debug_json_conversion(interesting_components, "interesting_components"),
-                        "complex_components": debug_json_conversion(complex_components, "complex_components"),
-                        "non_simple_components": debug_json_conversion(non_simple_components, "non_simple_components")
-                    },
-                    "layout_used": debug_json_conversion(layout_options, "layout_options"),
-                    "bipartite_graph": graph
-                }
-
-        # Return basic statistics if no bicliques found
-        return {
+        # Initialize base result with original graph data
+        result = {
             "status": "success",
             "stats": {
-                "components": calculate_component_statistics([], graph),
+                "components": calculate_component_statistics([], original_graph),
                 "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
@@ -408,8 +256,77 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             "interesting_components": [],
             "non_simple_components": [],
             "layout_used": layout_options,
-            "bipartite_graph": graph,
+            "graphs": {
+                "original": convert_for_json(original_graph),
+                "biclique": None  # Will be populated if bicliques exist
+            }
         }
+
+        # Process bicliques if file exists
+        biclique_file = BIPARTITE_GRAPH_OVERALL if timepoint == "DSStimeseries" else BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
+        if os.path.exists(biclique_file):
+            print(f"Processing bicliques from {biclique_file}")
+            bicliques_result = process_bicliques(original_graph, biclique_file, timepoint, 
+                                               gene_id_mapping=gene_id_mapping,
+                                               file_format="gene-name")
+
+            if bicliques_result and "bicliques" in bicliques_result:
+                # Create biclique graph
+                biclique_graph = nx.Graph()
+                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+
+                # Add biclique graph to result
+                result["graphs"]["biclique"] = convert_for_json(biclique_graph)
+
+                # Process components using both graphs
+                (complex_components, interesting_components, 
+                 simple_components, non_simple_components,
+                 component_stats, statistics) = process_components(
+                    original_graph=original_graph,
+                    biclique_graph=biclique_graph,
+                    bicliques_result=bicliques_result,
+                    dmr_metadata=create_dmr_metadata(df),
+                    gene_metadata=create_gene_metadata(df),
+                    gene_id_mapping=gene_id_mapping
+                )
+
+                # Calculate coverage statistics
+                coverage_stats = calculate_coverage_statistics(
+                    bicliques_result["bicliques"], original_graph
+                )
+                edge_coverage = calculate_edge_coverage(
+                    bicliques_result["bicliques"], original_graph
+                )
+
+                # Get bicliques summary
+                from biclique_analysis.reporting import get_bicliques_summary
+                bicliques_summary = get_bicliques_summary(bicliques_result, original_graph)
+
+                # Update result with biclique-specific data
+                result["stats"].update({
+                    "components": debug_json_conversion(component_stats, "component_stats"),
+                    "coverage": debug_json_conversion(coverage_stats, "coverage_stats"),
+                    "edge_coverage": debug_json_conversion(edge_coverage, "edge_coverage"),
+                    "biclique_types": debug_json_conversion(
+                        classify_biclique_types(bicliques_result["bicliques"]),
+                        "biclique_types"
+                    ),
+                    "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary")
+                })
+                result["complex_components"] = debug_json_conversion(complex_components, "complex_components")
+                result["interesting_components"] = debug_json_conversion(interesting_components, "interesting_components")
+                result["non_simple_components"] = debug_json_conversion(non_simple_components, "non_simple_components")
+
+        return result
+
+    except Exception as e:
+        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
 
     except Exception as e:
         print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
