@@ -1,15 +1,4 @@
 <div class="tab-pane fade" id="{{ timepoint }}" role="tabpanel">
-  <!-- Debug info -->
-  <div class="alert alert-info">
-    <pre>
-Timepoint: {{ timepoint }}
-Status: {{ status }}
-Message: {{ message }}
-Stats keys: {{ stats.keys()|list }}
-Components: {{ stats.get('components', {})|tojson }}
-    </pre>
-  </div>
-
   {% if status == "error" %}
     <div class="alert alert-danger">
       Error processing timepoint: {{ message }}
