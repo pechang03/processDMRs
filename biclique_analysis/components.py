@@ -17,9 +17,10 @@ from utils.json_utils import (
 )
 from biclique_analysis.edge_classification import classify_edges
 from biclique_analysis.classifier import (
-    classify_biclique_types,
-    classify_component,
     BicliqueSizeCategory,
+    classify_biclique,
+    classify_component,
+    classify_biclique_types,
 )
 from visualization import (
     create_node_biclique_map,
@@ -310,13 +311,20 @@ def process_components(
             )
 
     # Process components first to get the required data
-    complex_components, interesting_components, simple_components, non_simple_components, component_stats, statistics = process_components(
+    (
+        complex_components,
+        interesting_components,
+        simple_components,
+        non_simple_components,
+        component_stats,
+        statistics,
+    ) = process_components(
         bipartite_graph,
         bicliques_result,
         dmr_metadata,
         gene_metadata,
         gene_id_mapping,
-        dominating_set
+        dominating_set,
     )
 
     # Analyze components for both graphs
@@ -331,11 +339,17 @@ def process_components(
 
     # Biclique graph components
     biclique_connected_comps = list(nx.connected_components(biclique_graph))
-    print(f"Found {len(biclique_connected_comps)} connected components in biclique graph")
+    print(
+        f"Found {len(biclique_connected_comps)} connected components in biclique graph"
+    )
     biclique_stats = analyze_components(biclique_connected_comps, biclique_graph)
 
-    biclique_biconn_comps, biclique_biconn_stats = analyze_biconnected_components(biclique_graph)
-    biclique_triconn_comps, biclique_triconn_stats = analyze_triconnected_components(biclique_graph)
+    biclique_biconn_comps, biclique_biconn_stats = analyze_biconnected_components(
+        biclique_graph
+    )
+    biclique_triconn_comps, biclique_triconn_stats = analyze_triconnected_components(
+        biclique_graph
+    )
 
     # Get component statistics for both graphs
     component_stats = {
@@ -343,39 +357,43 @@ def process_components(
             "original": {
                 "connected": {
                     "components": connected_components,
-                    "stats": original_stats
+                    "stats": original_stats,
                 },
-                "biconnected": {
-                    "components": biconn_comps,
-                    "stats": biconn_stats
-                },
-                "triconnected": {
-                    "components": triconn_comps,
-                    "stats": triconn_stats
-                }
+                "biconnected": {"components": biconn_comps, "stats": biconn_stats},
+                "triconnected": {"components": triconn_comps, "stats": triconn_stats},
             },
             "biclique": {
                 "connected": {
-                    "single_node": len([c for c in biclique_connected_comps if len(c) == 1]),
-                    "small": len([c for c in biclique_connected_comps if 1 < len(c) <= 2]),
-                    "interesting": len([c for c in interesting_components if c.get('category') == 'interesting']),
-                    "complex": len([c for c in complex_components])
+                    "single_node": len(
+                        [c for c in biclique_connected_comps if len(c) == 1]
+                    ),
+                    "small": len(
+                        [c for c in biclique_connected_comps if 1 < len(c) <= 2]
+                    ),
+                    "interesting": len(
+                        [
+                            c
+                            for c in interesting_components
+                            if c.get("category") == "interesting"
+                        ]
+                    ),
+                    "complex": len([c for c in complex_components]),
                 },
                 "components": {
                     "connected": {
                         "components": biclique_connected_comps,
-                        "stats": biclique_stats
+                        "stats": biclique_stats,
                     },
                     "biconnected": {
                         "components": biclique_biconn_comps,
-                        "stats": biclique_biconn_stats
+                        "stats": biclique_biconn_stats,
                     },
                     "triconnected": {
                         "components": biclique_triconn_comps,
-                        "stats": biclique_triconn_stats
-                    }
-                }
-            }
+                        "stats": biclique_triconn_stats,
+                    },
+                },
+            },
         }
     }
 
@@ -441,7 +459,7 @@ def process_components(
 
     # Get triconnected components
     triconn_comps, triconn_stats = analyze_triconnected_components(bipartite_graph)
-    
+
     # Debug prints
     print("\nComponent Analysis Debug:")
     print(f"Found {len(triconn_comps)} triconnected components")
@@ -451,27 +469,31 @@ def process_components(
     # Convert triconnected components to proper format
     formatted_triconn = []
     for idx, comp_nodes in enumerate(triconn_comps):
-        dmrs = {n for n in comp_nodes if bipartite_graph.nodes[n]['bipartite'] == 0}
-        genes = {n for n in comp_nodes if bipartite_graph.nodes[n]['bipartite'] == 1}
-        
-        formatted_triconn.append({
-            'id': idx + 1,
-            'component': comp_nodes,
-            'dmrs': len(dmrs),
-            'genes': len(genes),
-            'size': len(comp_nodes),
-            'category': 'interesting' if len(dmrs) >= 3 and len(genes) >= 3 else 'small'
-        })
+        dmrs = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 0}
+        genes = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 1}
+
+        formatted_triconn.append(
+            {
+                "id": idx + 1,
+                "component": comp_nodes,
+                "dmrs": len(dmrs),
+                "genes": len(genes),
+                "size": len(comp_nodes),
+                "category": "interesting"
+                if len(dmrs) >= 3 and len(genes) >= 3
+                else "small",
+            }
+        )
 
     # Update component_stats with formatted triconnected components
-    if 'components' not in component_stats:
-        component_stats['components'] = {}
-    if 'original' not in component_stats['components']:
-        component_stats['components']['original'] = {}
-        
-    component_stats['components']['original']['triconnected'] = {
-        'components': formatted_triconn,
-        'stats': triconn_stats
+    if "components" not in component_stats:
+        component_stats["components"] = {}
+    if "original" not in component_stats["components"]:
+        component_stats["components"]["original"] = {}
+
+    component_stats["components"]["original"]["triconnected"] = {
+        "components": formatted_triconn,
+        "stats": triconn_stats,
     }
 
     return (
