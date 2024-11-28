@@ -346,16 +346,24 @@ def process_components(
             },
             "biclique": {
                 "connected": {
-                    "components": biclique_connected_comps,
-                    "stats": biclique_stats
+                    "single_node": len([c for c in biclique_connected_comps if len(c) == 1]),
+                    "small": len([c for c in biclique_connected_comps if 1 < len(c) <= 2]),
+                    "interesting": len([c for c in interesting_components if c.get('category') == 'interesting']),
+                    "complex": len([c for c in complex_components])
                 },
-                "biconnected": {
-                    "components": biclique_biconn_comps,
-                    "stats": biclique_biconn_stats
-                },
-                "triconnected": {
-                    "components": biclique_triconn_comps,
-                    "stats": biclique_triconn_stats
+                "components": {
+                    "connected": {
+                        "components": biclique_connected_comps,
+                        "stats": biclique_stats
+                    },
+                    "biconnected": {
+                        "components": biclique_biconn_comps,
+                        "stats": biclique_biconn_stats
+                    },
+                    "triconnected": {
+                        "components": biclique_triconn_comps,
+                        "stats": biclique_triconn_stats
+                    }
                 }
             }
         }
