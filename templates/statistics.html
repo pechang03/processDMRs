@@ -3,7 +3,6 @@
 {% block title %}DMR Analysis Statistics{% endblock %}
 
 {% block content %}
-  <!-- Test version with simplified tabs -->
   <div class="card">
     <div class="card-header">
       <ul class="nav nav-tabs card-header-tabs" role="tablist">
@@ -28,8 +27,118 @@
           class="tab-pane fade {% if loop.first %}show active{% endif %}" 
           id="tab-{{ timepoint }}"
           role="tabpanel">
-          <h3>{{ timepoint }}</h3>
-          <pre>{{ data|tojson(indent=2) }}</pre>
+          
+          <h3>{{ timepoint }} Statistics</h3>
+          
+          <!-- Coverage Statistics -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4>Coverage</h4>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td>DMR Coverage:</td>
+                    <td>
+                      {{ data.stats.coverage.dmrs.covered }}/{{ data.stats.coverage.dmrs.total }}
+                      ({{ "%.1f"|format(data.stats.coverage.dmrs.percentage * 100) }}%)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Gene Coverage:</td>
+                    <td>
+                      {{ data.stats.coverage.genes.covered }}/{{ data.stats.coverage.genes.total }}
+                      ({{ "%.1f"|format(data.stats.coverage.genes.percentage * 100) }}%)
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="col-md-6">
+              <h4>Edge Coverage</h4>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td>Single Coverage:</td>
+                    <td>
+                      {{ data.stats.edge_coverage.single_coverage }}
+                      ({{ "%.1f"|format(data.stats.edge_coverage.single_percentage * 100) }}%)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Multiple Coverage:</td>
+                    <td>
+                      {{ data.stats.edge_coverage.multiple_coverage }}
+                      ({{ "%.1f"|format(data.stats.edge_coverage.multiple_percentage * 100) }}%)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Uncovered:</td>
+                    <td>
+                      {{ data.stats.edge_coverage.uncovered }}
+                      ({{ "%.1f"|format(data.stats.edge_coverage.uncovered_percentage * 100) }}%)
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Component Statistics -->
+          <div class="row">
+            <div class="col-md-6">
+              <h4>Original Graph Components</h4>
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Total</th>
+                    <th>Single Node</th>
+                    <th>Small</th>
+                    <th>Interesting</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
+                  <tr>
+                    <td>{{ comp_type|capitalize }}</td>
+                    <td>{{ data.stats.components.original[comp_type].total }}</td>
+                    <td>{{ data.stats.components.original[comp_type].single_node }}</td>
+                    <td>{{ data.stats.components.original[comp_type].small }}</td>
+                    <td>{{ data.stats.components.original[comp_type].interesting }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="col-md-6">
+              <h4>Biclique Components</h4>
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Empty</td>
+                    <td>{{ data.stats.components.biclique.connected.single_node }}</td>
+                  </tr>
+                  <tr>
+                    <td>Simple</td>
+                    <td>{{ data.stats.components.biclique.connected.small }}</td>
+                  </tr>
+                  <tr>
+                    <td>Interesting</td>
+                    <td>{{ data.stats.components.biclique.connected.interesting }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
         {% endfor %}
       </div>
