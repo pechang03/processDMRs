@@ -5,11 +5,11 @@
     </div>
   {% else %}
     <div class="row">
-      <!-- Timepoint Original Graph Stats -->
+      <!-- Original Graph Components -->
       <div class="col-md-6">
         <div class="card">
           <div class="card-header">
-            <h3>{{ timepoint }} Components</h3>
+            <h3>{{ timepoint }} Original Graph Components</h3>
           </div>
           <div class="card-body">
             <table class="table">
@@ -50,42 +50,104 @@
         </div>
       </div>
 
-      <!-- Timepoint Coverage Stats -->
+      <!-- Biclique Graph Components -->
       <div class="col-md-6">
         <div class="card">
           <div class="card-header">
-            <h3>{{ timepoint }} Coverage</h3>
+            <h3>{{ timepoint }} Biclique Components</h3>
           </div>
           <div class="card-body">
             <table class="table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
               <tbody>
                 <tr>
-                  <td>DMR Coverage:</td>
-                  <td>
-                    {{ stats.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
-                    ({{ "%.1f"|format(stats.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
-                  </td>
+                  <td>Empty Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
                 </tr>
                 <tr>
-                  <td>Gene Coverage:</td>
-                  <td>
-                    {{ stats.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('genes', {}).get('total', 0) }}
-                    ({{ "%.1f"|format(stats.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
-                  </td>
+                  <td>Simple Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('small', 0) }}</td>
                 </tr>
                 <tr>
-                  <td>Edge Coverage:</td>
-                  <td>
-                    Single: {{ stats.get('edge_coverage', {}).get('single', 0) }}
-                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)<br>
-                    Multiple: {{ stats.get('edge_coverage', {}).get('multiple', 0) }}
-                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)<br>
-                    Uncovered: {{ stats.get('edge_coverage', {}).get('uncovered', 0) }}
-                    ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
-                  </td>
+                  <td>Interesting Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('interesting', 0) }}</td>
+                </tr>
+                <tr>
+                  <td>Complex Components</td>
+                  <td>{{ (stats.get('complex_components', [])|length) }}</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coverage Statistics -->
+      <div class="col-md-12 mt-4">
+        <div class="card">
+          <div class="card-header">
+            <h3>{{ timepoint }} Coverage Statistics</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <!-- Coverage -->
+              <div class="col-md-4">
+                <h4>Coverage</h4>
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td>DMR Coverage:</td>
+                      <td>
+                        {{ stats.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
+                        ({{ "%.1f"|format(stats.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Gene Coverage:</td>
+                      <td>
+                        {{ stats.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('genes', {}).get('total', 0) }}
+                        ({{ "%.1f"|format(stats.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Edge Coverage -->
+              <div class="col-md-4">
+                <h4>Edge Coverage</h4>
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td>Single Coverage:</td>
+                      <td>
+                        {{ stats.get('edge_coverage', {}).get('single', 0) }}
+                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Multiple Coverage:</td>
+                      <td>
+                        {{ stats.get('edge_coverage', {}).get('multiple', 0) }}
+                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Uncovered:</td>
+                      <td>
+                        {{ stats.get('edge_coverage', {}).get('uncovered', 0) }}
+                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
