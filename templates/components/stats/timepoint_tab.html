@@ -1,5 +1,5 @@
 <div class="tab-pane fade" id="{{ timepoint }}" role="tabpanel" data-timepoint="{{ timepoint }}">
-  <div class="loading-indicator" style="display: none;">
+  <div class="loading-indicator" style="display: block;">
     Loading data...
   </div>
   
@@ -28,14 +28,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr class="connected-row">
-                    <td>Connected</td>
-                    <td class="total-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
-                    <td class="single-node-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
-                    <td class="small-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
-                    <td class="interesting-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
+                  {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
+                  <tr class="{{ comp_type }}-row">
+                    <td>{{ comp_type|capitalize }}</td>
+                    <td class="total-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('total', 0) }}</td>
+                    <td class="single-node-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('single_node', 0) }}</td>
+                    <td class="small-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('small', 0) }}</td>
+                    <td class="interesting-cell">{{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('interesting', 0) }}</td>
                   </tr>
-                  <!-- Similar rows for biconnected and triconnected -->
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
@@ -57,11 +58,12 @@
                   </tr>
                 </thead>
                 <tbody>
+                  {% for category in ['Empty', 'Simple', 'Interesting', 'Complex'] %}
                   <tr>
-                    <td>Empty Components</td>
-                    <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
+                    <td>{{ category }} Components</td>
+                    <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get(category.lower().replace(' ', '_'), 0) }}</td>
                   </tr>
-                  <!-- Similar rows for other component types -->
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
