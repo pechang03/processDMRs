@@ -2,7 +2,7 @@
 # Author : Peter Shaw
 # Created on : 27 Nov 2024
 
-from flask import render_template
+from flask import render_template, jsonify, request
 from . import main_bp
 from process_data import process_data
 from utils.json_utils import convert_for_json, convert_dict_keys_to_str
@@ -11,6 +11,7 @@ from visualization.graph_layout_original import OriginalGraphLayout
 from visualization.core import create_biclique_visualization
 from visualization.graph_layout_biclique import CircularBicliqueLayout
 from visualization import create_node_biclique_map
+import networkx as nx
 
 
 @main_bp.route("/")
@@ -76,6 +77,72 @@ def index_route():
 
         traceback.print_exc()
         return render_template("error.html", message=str(e))
+
+@main_bp.route("/statistics/timepoint/<timepoint>")
+def timepoint_data_route(timepoint):
+    """Handle dynamic loading of timepoint data."""
+    try:
+        results = process_data()
+        if "error" in results or timepoint not in results:
+            return jsonify({"status": "error", "message": "Timepoint not found"})
+
+        data = results[timepoint]
+        if isinstance(data, dict) and "error" not in data:
+            # Create a copy and remove the full graph
+            timepoint_data = data.copy()
+            graph = timepoint_data.pop('bipartite_graph', None)
+
+            # If there are specific components selected, process only those
+            selected_components = request.args.get('components', '').split(',')
+            if selected_components and selected_components[0]:
+                # Extract only the requested component subgraphs
+                component_graphs = {}
+                for comp_id in selected_components:
+                    # Find the component in interesting or complex components
+                    comp = next((c for c in timepoint_data.get('interesting_components', []) + 
+                                 timepoint_data.get('complex_components', []) 
+                                 if c.get('id') == int(comp_id)), None)
+                    
+                    if comp and graph:
+                        # Get nodes for this component
+                        all_nodes = set()
+                        for dmrs, genes in comp.get('raw_bicliques', []):
+                            all_nodes.update(dmrs)
+                            all_nodes.update(genes)
+                        
+                        # Create subgraph
+                        subgraph = graph.subgraph(all_nodes)
+                        
+                        # Create visualization
+                        component_graphs[comp_id] = create_biclique_visualization(
+                            comp['raw_bicliques'],
+                            timepoint_data.get('node_labels', {}),
+                            None,  # Let visualization handle positions
+                            None,  # Node biclique map
+                            timepoint_data.get('edge_classifications', {}),
+                            graph,
+                            subgraph,
+                            dmr_metadata=timepoint_data.get('dmr_metadata', {}),
+                            gene_metadata=timepoint_data.get('gene_metadata', {})
+                        )
+
+                timepoint_data['component_graphs'] = component_graphs
+
+            return jsonify({
+                "status": "success",
+                "data": convert_for_json(timepoint_data)
+            })
+
+        return jsonify({
+            "status": "error",
+            "message": data.get("message", "Unknown error")
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
 
 
 @main_bp.route("/statistics/")

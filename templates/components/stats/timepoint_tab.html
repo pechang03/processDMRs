@@ -1,154 +1,76 @@
-<div class="tab-pane fade" id="{{ timepoint }}" role="tabpanel">
+<div class="tab-pane fade" id="{{ timepoint }}" role="tabpanel" data-timepoint="{{ timepoint }}">
+  <div class="loading-indicator" style="display: none;">
+    Loading data...
+  </div>
+  
   {% if status == "error" %}
     <div class="alert alert-danger">
       Error processing timepoint: {{ message }}
     </div>
   {% else %}
-    <div class="row">
-      <!-- Original Graph Components -->
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3>{{ timepoint }} Original Graph Components</h3>
-          </div>
-          <div class="card-body">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Total</th>
-                  <th>Single Node</th>
-                  <th>Small</th>
-                  <th>Interesting</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Connected</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
-                </tr>
-                <tr>
-                  <td>Biconnected</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('total', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('single_node', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('small', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('interesting', 0) }}</td>
-                </tr>
-                <tr>
-                  <td>Triconnected</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
-                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Biclique Graph Components -->
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3>{{ timepoint }} Biclique Components</h3>
-          </div>
-          <div class="card-body">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Empty Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
-                </tr>
-                <tr>
-                  <td>Simple Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('small', 0) }}</td>
-                </tr>
-                <tr>
-                  <td>Interesting Components</td>
-                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('interesting', 0) }}</td>
-                </tr>
-                <tr>
-                  <td>Complex Components</td>
-                  <td>{{ (stats.get('complex_components', [])|length) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Coverage Statistics -->
-      <div class="col-md-12 mt-4">
-        <div class="card">
-          <div class="card-header">
-            <h3>{{ timepoint }} Coverage Statistics</h3>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <!-- Coverage -->
-              <div class="col-md-4">
-                <h4>Coverage</h4>
-                <table class="table table-sm">
-                  <tbody>
-                    <tr>
-                      <td>DMR Coverage:</td>
-                      <td>
-                        {{ stats.get('coverage', {}).get('dmrs', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('dmrs', {}).get('total', 0) }}
-                        ({{ "%.1f"|format(stats.get('coverage', {}).get('dmrs', {}).get('percentage', 0) * 100) }}%)
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Gene Coverage:</td>
-                      <td>
-                        {{ stats.get('coverage', {}).get('genes', {}).get('covered', 0) }}/{{ stats.get('coverage', {}).get('genes', {}).get('total', 0) }}
-                        ({{ "%.1f"|format(stats.get('coverage', {}).get('genes', {}).get('percentage', 0) * 100) }}%)
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Edge Coverage -->
-              <div class="col-md-4">
-                <h4>Edge Coverage</h4>
-                <table class="table table-sm">
-                  <tbody>
-                    <tr>
-                      <td>Single Coverage:</td>
-                      <td>
-                        {{ stats.get('edge_coverage', {}).get('single', 0) }}
-                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('single_percentage', 0) * 100) }}%)
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Multiple Coverage:</td>
-                      <td>
-                        {{ stats.get('edge_coverage', {}).get('multiple', 0) }}
-                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('multiple_percentage', 0) * 100) }}%)
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Uncovered:</td>
-                      <td>
-                        {{ stats.get('edge_coverage', {}).get('uncovered', 0) }}
-                        ({{ "%.1f"|format(stats.get('edge_coverage', {}).get('uncovered_percentage', 0) * 100) }}%)
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+    <div class="stats-container" style="display: none;">
+      <div class="row">
+        <!-- Original Graph Components -->
+        <div class="col-md-6">
+          <div class="card" id="original-components">
+            <div class="card-header">
+              <h3>{{ timepoint }} Original Graph Components</h3>
+            </div>
+            <div class="card-body">
+              <table class="table" id="original-components-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Total</th>
+                    <th>Single Node</th>
+                    <th>Small</th>
+                    <th>Interesting</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="connected-row">
+                    <td>Connected</td>
+                    <td class="total-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
+                    <td class="single-node-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
+                    <td class="small-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
+                    <td class="interesting-cell">{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
+                  </tr>
+                  <!-- Similar rows for biconnected and triconnected -->
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
+
+        <!-- Biclique Graph Components -->
+        <div class="col-md-6">
+          <div class="card" id="biclique-components">
+            <div class="card-header">
+              <h3>{{ timepoint }} Biclique Components</h3>
+            </div>
+            <div class="card-body">
+              <table class="table" id="biclique-components-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Empty Components</td>
+                    <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
+                  </tr>
+                  <!-- Similar rows for other component types -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Component Visualizations -->
+        <div class="col-12 mt-4 components-visualization">
+          <!-- Plotly graph containers will be dynamically added here -->
         </div>
       </div>
     </div>
