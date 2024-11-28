@@ -27,12 +27,12 @@ def convert_for_json(data: Any) -> Any:
     elif isinstance(data, np.bool_):
         return bool(data)
     elif isinstance(data, nx.Graph):
-        # Convert NetworkX graph to serializable format
+        # Fix the edge attributes handling
         return {
             "nodes": list(data.nodes()),
             "edges": list(data.edges()),
             "node_attributes": {str(n): d for n, d in data.nodes(data=True)},
-            "edge_attributes": {str(e): d for e, d in data.edges(data=True)},
+            "edge_attributes": {f"{u}_{v}": d for (u, v, d) in data.edges(data=True)}
         }
     return data
 
