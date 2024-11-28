@@ -149,6 +149,7 @@ def timepoint_data_route(timepoint):
 @main_bp.route("/statistics")
 def statistics_route():
     """Handle statistics page."""
+    print("DEBUG: Hit statistics route")  # Debug print
     try:
         results = process_data()
         if "error" in results:
