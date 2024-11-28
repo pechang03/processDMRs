@@ -348,21 +348,23 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 print("\nDebug: Generated Bicliques Summary:")
                 print(json.dumps(bicliques_summary, indent=2))
 
+                # Use debug conversion function
                 return {
                     "status": "success",
                     "stats": {
-                        "components": convert_for_json(component_stats),
-                        "coverage": convert_for_json(coverage_stats),
-                        "edge_coverage": convert_for_json(edge_coverage),
-                        "biclique_types": convert_for_json(classify_biclique_types(
-                            bicliques_result["bicliques"]
-                        )),
-                        "bicliques_summary": convert_for_json(bicliques_summary)
+                        "components": debug_json_conversion(component_stats, "component_stats"),
+                        "coverage": debug_json_conversion(coverage_stats, "coverage_stats"),
+                        "edge_coverage": debug_json_conversion(edge_coverage, "edge_coverage"),
+                        "biclique_types": debug_json_conversion(
+                            classify_biclique_types(bicliques_result["bicliques"]), 
+                            "biclique_types"
+                        ),
+                        "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary")
                     },
-                    "complex_components": convert_for_json(complex_components),
-                    "interesting_components": convert_for_json(interesting_components),
-                    "non_simple_components": convert_for_json(non_simple_components),
-                    "layout_used": convert_for_json(layout_options),
+                    "complex_components": debug_json_conversion(complex_components, "complex_components"),
+                    "interesting_components": debug_json_conversion(interesting_components, "interesting_components"),
+                    "non_simple_components": debug_json_conversion(non_simple_components, "non_simple_components"),
+                    "layout_used": debug_json_conversion(layout_options, "layout_options"),
                     "bipartite_graph": graph,  # Add the graph for later use
                 }
 
