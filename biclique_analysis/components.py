@@ -309,6 +309,16 @@ def process_components(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
 
+    # Process components first to get the required data
+    complex_components, interesting_components, simple_components, non_simple_components, component_stats, statistics = process_components(
+        bipartite_graph,
+        bicliques_result,
+        dmr_metadata,
+        gene_metadata,
+        gene_id_mapping,
+        dominating_set
+    )
+
     # Analyze components for both graphs
     print("\nAnalyzing graph components")
 
@@ -371,10 +381,7 @@ def process_components(
 
     # Rest of the function remains the same...
 
-    # Initialize lists before using them
-    complex_components = []
-    interesting_components = []
-    non_simple_components = []
+    # No need to initialize lists, as they're already populated by process_components
 
     # Process individual components
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
