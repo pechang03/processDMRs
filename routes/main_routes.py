@@ -21,122 +21,56 @@ def index_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Get overall data
-        DSStimeseries_data = results.get("DSStimeseries", {})
-
-        # Ensure complete statistics structure with defaults
-        default_stats = {
-            "components": {
-                "original": {
-                    "connected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "biconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "triconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                },
-                "biclique": {
-                    "connected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "biconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                    "triconnected": {
-                        "total": 0,
-                        "single_node": 0,
-                        "small": 0,
-                        "interesting": 0,
-                    },
-                },
-            },
-            "coverage": {
-                "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                "genes": {"covered": 0, "total": 0, "percentage": 0},
-                "edges": {
-                    "single_coverage": 0,
-                    "multiple_coverage": 0,
-                    "uncovered": 0,
-                    "total": 0,
-                    "single_percentage": 0,
-                    "multiple_percentage": 0,
-                    "uncovered_percentage": 0,
-                },
-            },
+        # Aggregate statistics across all timepoints
+        total_stats = {
+            "total_dmrs": 0,
+            "total_genes": 0,
+            "total_edges": 0,
+            "timepoint_count": len(results)
         }
 
-        # Process timepoint data including overall
+        # Process each timepoint's data
         timepoint_info = {}
         for timepoint, data in results.items():
-            if isinstance(data, dict):
-                # Get existing stats
-                stats = data.get("stats", {})
+            if isinstance(data, dict) and "error" not in data:
+                # Get graph info for totals
+                if "bipartite_graph" in data:
+                    graph = data["bipartite_graph"]
+                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
+                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
+                    total_stats["total_edges"] += graph.number_of_edges()
 
-                # Ensure triconnected data exists in components
-                if "components" in stats:
-                    for graph_type in ["original", "biclique"]:
-                        if graph_type in stats["components"]:
-                            if "triconnected" not in stats["components"][graph_type]:
-                                stats["components"][graph_type]["triconnected"] = {
-                                    "total": 0,
-                                    "single_node": 0,
-                                    "small": 0,
-                                    "interesting": 0,
-                                }
-
-                # Merge with default structure
-                merged_stats = default_stats.copy()
-                if stats:
-                    merged_stats["components"].update(stats.get("components", {}))
-                    merged_stats["coverage"].update(stats.get("coverage", {}))
-
+                # Structure timepoint data
                 timepoint_info[timepoint] = {
-                    "status": "success" if "error" not in data else "error",
-                    "message": data.get("error", ""),
-                    "stats": merged_stats,
+                    "status": "success",
+                    "stats": data.get("stats", {}),
                     "coverage": data.get("coverage", {}),
                     "components": data.get("components", {}),
+                    "interesting_components": data.get("interesting_components", []),
+                    "complex_components": data.get("complex_components", []),
+                    "edge_classifications": data.get("edge_classifications", {}),
+                    "node_labels": data.get("node_labels", {}),
+                    "dmr_metadata": data.get("dmr_metadata", {}),
+                    "gene_metadata": data.get("gene_metadata", {})
                 }
 
-        # Convert all data structures using JSON utils
-        statistics = convert_for_json(DSStimeseries_data.get("stats", default_stats))
-        timepoint_info = convert_for_json(timepoint_info)
-        DSStimeseries_data = convert_for_json(DSStimeseries_data)
-        
-        # Ensure nested conversions are complete
-        statistics = convert_for_json(statistics)
-        timepoint_info = convert_for_json(timepoint_info)
-        DSStimeseries_data = convert_for_json(DSStimeseries_data)
+        # Convert all data to JSON-safe format
+        template_data = convert_for_json({
+            "statistics": total_stats,
+            "timepoint_info": timepoint_info
+        })
 
         return render_template(
             "index.html",
-            results=DSStimeseries_data,
-            statistics=statistics,
-            timepoint_info=timepoint_info,
-            dmr_metadata=DSStimeseries_data.get("dmr_metadata", {}),
-            gene_metadata=DSStimeseries_data.get("gene_metadata", {}),
-            bicliques_result=DSStimeseries_data,
-            coverage=DSStimeseries_data.get("coverage", {}),
-            node_labels=DSStimeseries_data.get("node_labels", {}),
-            dominating_set=DSStimeseries_data.get("dominating_set", {}),
+            results=template_data,
+            statistics=template_data["statistics"],
+            timepoint_info=template_data["timepoint_info"],
+            dmr_metadata=timepoint_info.get(next(iter(timepoint_info), {}), {}).get("dmr_metadata", {}),
+            gene_metadata=timepoint_info.get(next(iter(timepoint_info), {}), {}).get("gene_metadata", {}),
+            bicliques_result=timepoint_info.get(next(iter(timepoint_info), {}), {}),
+            coverage=template_data["statistics"].get("coverage", {}),
+            node_labels=timepoint_info.get(next(iter(timepoint_info), {}), {}).get("node_labels", {}),
+            dominating_set=timepoint_info.get(next(iter(timepoint_info), {}), {}).get("dominating_set", {})
         )
     except Exception as e:
         import traceback
@@ -155,72 +89,48 @@ def statistics_route():
             return render_template("error.html", message=results["error"])
 
         # Calculate overall statistics
-        total_dmrs = 0
-        total_genes = 0
-        total_edges = 0
-        timepoint_info = {}
+        total_stats = {
+            "total_dmrs": 0,
+            "total_genes": 0,
+            "total_edges": 0,
+            "timepoint_count": len(results)
+        }
 
         # Process each timepoint's data
+        timepoint_info = {}
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
                 # Get graph info for totals
                 if "bipartite_graph" in data:
                     graph = data["bipartite_graph"]
-                    dmr_nodes = {
-                        n for n, d in graph.nodes(data=True) if d["bipartite"] == 0
-                    }
-                    gene_nodes = {
-                        n for n, d in graph.nodes(data=True) if d["bipartite"] == 1
-                    }
-                    total_dmrs += len(dmr_nodes)
-                    total_genes += len(gene_nodes)
-                    total_edges += graph.number_of_edges()
+                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
+                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
+                    total_stats["total_edges"] += graph.number_of_edges()
 
-                # Ensure proper data structure for timepoint
+                # Structure timepoint data
                 timepoint_info[timepoint] = {
                     "status": "success",
-                    "stats": data.get("stats", {}),
-                    "complex_components": data.get("complex_components", []),
-                    "interesting_components": data.get("interesting_components", []),
-                    "non_simple_components": data.get("non_simple_components", []),
-                    "components": data.get("stats", {}).get("components", {}),
+                    "data": {
+                        "stats": data.get("stats", {}),
+                        "complex_components": data.get("complex_components", []),
+                        "interesting_components": data.get("interesting_components", []),
+                        "non_simple_components": data.get("non_simple_components", [])
+                    }
                 }
 
-        # Get overall data
-        DSStimeseries_data = results.get("DSStimeseries", {})
-
-        # Structure the template data
-        statistics = {
-            "total_dmrs": total_dmrs,
-            "total_genes": total_genes,
-            "total_edges": total_edges,
-            "timepoint_count": len([k for k in results.keys() if k != "DSStimeseries"]),
-            "components": DSStimeseries_data.get("stats", {}).get("components", {}),
-            "interesting_components": DSStimeseries_data.get(
-                "interesting_components", []
-            ),  # Make sure this is included
-            "complex_components": DSStimeseries_data.get("complex_components", []),
-            "stats": DSStimeseries_data.get("stats", {}),
-            "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {}),
-            "coverage": DSStimeseries_data.get("stats", {}).get("coverage", {}),
-            # Add these additional fields that might be needed by the template
-            "edge_classifications": DSStimeseries_data.get("edge_classifications", {}),
-            "node_labels": DSStimeseries_data.get("node_labels", {}),
-            "dmr_metadata": DSStimeseries_data.get("dmr_metadata", {}),
-            "gene_metadata": DSStimeseries_data.get("gene_metadata", {}),
-        }
-
-        # Debug print to check the data
-        print("Interesting components:", len(statistics["interesting_components"]))
+        # Convert all data to JSON-safe format
+        template_data = convert_for_json({
+            "statistics": total_stats,
+            "timepoint_info": timepoint_info,
+            "edge_classifications": results.get(next(iter(results), {}), {}).get("edge_classifications", {}),
+            "components": results.get(next(iter(results), {}), {}).get("stats", {}).get("components", {})
+        })
 
         return render_template(
             "statistics.html",
-            statistics=statistics,
-            timepoint_info=timepoint_info,
-            DSStimeseries_data=DSStimeseries_data,
-            edge_classifications=statistics[
-                "edge_classifications"
-            ],  # Make sure this is passed
+            statistics=template_data["statistics"],
+            timepoint_info=template_data["timepoint_info"],
+            edge_classifications=template_data["edge_classifications"]
         )
 
     except Exception as e:
