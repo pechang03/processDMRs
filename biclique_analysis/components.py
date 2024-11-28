@@ -282,8 +282,19 @@ def process_components(
     gene_id_mapping: Dict[str, int] = None,
     dominating_set: Set[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
+    # Create biclique graph from bicliques
+    biclique_graph = nx.Graph()
+    if bicliques_result and "bicliques" in bicliques_result:
+        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+            biclique_graph.add_edges_from(
+                (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
+            )
+
     """Process connected components of the graph."""
     # Create analyzer
+
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
 
     # Calculate initial statistics
@@ -300,16 +311,6 @@ def process_components(
         bipartite_graph
     )
 
-    # Create biclique graph from bicliques
-    biclique_graph = nx.Graph()
-    if bicliques_result and "bicliques" in bicliques_result:
-        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-            biclique_graph.add_edges_from(
-                (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
-            )
-
     # Initialize component lists
     complex_components = []
     interesting_components = []
@@ -317,7 +318,6 @@ def process_components(
     non_simple_components = []
     component_stats = {}
     statistics = {}
-
     # Analyze components for both graphs
     print("\nAnalyzing graph components")
 
@@ -387,10 +387,6 @@ def process_components(
             },
         }
     }
-
-    # Rest of the function remains the same...
-
-    # No need to initialize lists, as they're already populated by process_components
 
     # Process individual components
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
