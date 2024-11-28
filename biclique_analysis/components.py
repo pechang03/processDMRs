@@ -310,22 +310,13 @@ def process_components(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
 
-    # Process components first to get the required data
-    (
-        complex_components,
-        interesting_components,
-        simple_components,
-        non_simple_components,
-        component_stats,
-        statistics,
-    ) = process_components(
-        bipartite_graph,
-        bicliques_result,
-        dmr_metadata,
-        gene_metadata,
-        gene_id_mapping,
-        dominating_set,
-    )
+    # Initialize component lists
+    complex_components = []
+    interesting_components = []
+    simple_components = []
+    non_simple_components = []
+    component_stats = {}
+    statistics = {}
 
     # Analyze components for both graphs
     print("\nAnalyzing graph components")
