@@ -185,7 +185,7 @@ def process_DSStimeseries_timepoint(df: pd.DataFrame) -> Dict:
 
 
 def process_data():
-    """Process all timepoints including DSStimeseries/DSS1 with configurable layouts"""
+    """Process all timepoints including DSStimeseries with configurable layouts"""
     try:
         # Define layout options for different timepoint types
         layout_options = {
@@ -201,19 +201,22 @@ def process_data():
             },
         }
 
-        # Process DSStimeseries/DSS1 timepoint first
-        print("\nProcessing DSStimeseries timepoint (DSS1)...", flush=True)
+        # Initialize timepoint data dictionary
+        timepoint_data = {}
+
+        # Process DSStimeseries timepoint first
+        print("\nProcessing DSStimeseries timepoint...", flush=True)
         df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
 
         # Create master gene mapping
         gene_id_mapping = create_master_gene_mapping(df_DSStimeseries)
 
-        # Initialize timepoint data dictionary
-        timepoint_data = {}
-
-        # Process DSS1 timepoint
+        # Process DSStimeseries timepoint (no longer using "overall")
         timepoint_data["DSStimeseries"] = process_timepoint(
-            df_DSStimeseries, "DSS1", gene_id_mapping, layout_options["DSStimeseries"]
+            df_DSStimeseries, 
+            "DSStimeseries",  # Use consistent timepoint name
+            gene_id_mapping, 
+            layout_options["DSStimeseries"]
         )
 
         # Process pairwise timepoints
@@ -272,10 +275,9 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         print("Graph validation successful")
 
         # Look for biclique file using constants
-        if timepoint == "DSS1" or timepoint == "overall":
+        if timepoint == "DSStimeseries":
             biclique_file = BIPARTITE_GRAPH_OVERALL
         else:
-            # For pairwise timepoints, use the template
             biclique_file = BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
 
         print(f"\nLooking for biclique file: {biclique_file}")
