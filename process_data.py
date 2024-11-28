@@ -240,7 +240,8 @@ def process_data():
                 print(f"Error processing sheet {sheet_name}: {str(e)}", flush=True)
                 timepoint_data[sheet_name] = {"status": "error", "message": str(e)}
 
-        return timepoint_data
+        # Convert entire timepoint_data to JSON-safe format
+        return convert_for_json(timepoint_data)
 
     except Exception as e:
         print(f"Error in process_data: {str(e)}", flush=True)
