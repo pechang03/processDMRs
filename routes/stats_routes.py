@@ -22,16 +22,7 @@ def statistics_route():
                 "total_edges": DSStimeseries_data.get("stats", {}).get("total_edges", 0),
                 
                 # Component stats
-                "stats": {
-                    "components": {
-                        "original": {
-                            "triconnected": DSStimeseries_data.get("stats", {})
-                                .get("components", {})
-                                .get("original", {})
-                                .get("triconnected", {})
-                        }
-                    }
-                },
+                "components": DSStimeseries_data.get("stats", {}).get("components", {}),
                 
                 # Interesting and complex components
                 "interesting_components": DSStimeseries_data.get("interesting_components", []),
@@ -46,25 +37,36 @@ def statistics_route():
             "timepoint_info": {
                 timepoint: {
                     "status": "success",
-                    "stats": convert_for_json(data.get("stats", {})),
-                    "coverage": data.get("stats", {}).get("coverage", {}),
-                    "components": data.get("stats", {}).get("components", {})
+                    "stats": data.get("stats", {}),
+                    "coverage": data.get("coverage", {}),
+                    "components": data.get("components", {}),
+                    "interesting_components": data.get("interesting_components", []),
+                    "complex_components": data.get("complex_components", [])
                 }
                 for timepoint, data in results.items()
                 if isinstance(data, dict) and "error" not in data
             }
         }
 
-        # Debug print to verify data
-        print("\nDebug: Statistics Data Structure")
-        print("Triconnected components:", 
-              len(template_data["statistics"]["stats"]["components"]["original"]["triconnected"].get("components", [])))
-        print("Interesting components:", 
-              len(template_data["statistics"]["interesting_components"]))
-        print("Complex components:", 
-              len(template_data["statistics"]["complex_components"]))
+        # Convert the entire data structure using convert_for_json
+        template_data = convert_for_json(template_data)
+        DSStimeseries_data = convert_for_json(DSStimeseries_data)
+
+        # Debug print
+        print("\nDebug: Biclique Components Structure")
+        print("DSStimeseries components:", 
+              len(DSStimeseries_data.get("stats", {})
+                  .get("components", {})
+                  .get("biclique", {})
+                  .get("connected", {})
+                  .get("components", [])))
         
-        return render_template("statistics.html", **template_data)
+        return render_template(
+            "statistics.html",
+            statistics=template_data["statistics"],
+            timepoint_info=template_data["timepoint_info"],
+            DSStimeseries_data=DSStimeseries_data
+        )
 
     except Exception as e:
         import traceback
