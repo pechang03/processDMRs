@@ -51,7 +51,9 @@
 
         <!-- Timepoint-specific tabs -->
         {% for timepoint, data in timepoint_info.items() %}
-          {% include 'components/stats/timepoint_tab.html' %}
+          {% with status=data.get('status'), message=data.get('message'), stats=data.get('stats', {}) %}
+            {% include 'components/stats/timepoint_tab.html' %}
+          {% endwith %}
         {% endfor %}
       </div>
     </div>
