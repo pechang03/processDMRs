@@ -365,7 +365,11 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 # Get bicliques summary
                 from biclique_analysis.reporting import get_bicliques_summary
                 bicliques_summary = get_bicliques_summary(bicliques_result, graph)
-                
+        
+                # Add debug print for bicliques summary
+                print("\nDebug: Generated Bicliques Summary:")
+                print(json.dumps(bicliques_summary, indent=2))
+
                 return {
                     "status": "success",
                     "stats": {
@@ -375,7 +379,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                         "biclique_types": classify_biclique_types(
                             bicliques_result["bicliques"]
                         ),
-                        "bicliques_summary": bicliques_summary  # Add the summary
+                        "bicliques_summary": bicliques_summary  # Verify this is being added
                     },
                     "complex_components": complex_components,
                     "interesting_components": interesting_components,
