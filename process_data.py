@@ -20,14 +20,11 @@
 import os
 import json
 import logging
-import json
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import current_app
 from extensions import app
 import pandas as pd
-# import numpy as np
-
 
 from utils.constants import (
     DSS1_FILE,
@@ -39,10 +36,12 @@ from utils.constants import (
 from utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
-# from utils.node_info import NodeInfo
-from utils.json_utils import convert_dict_keys_to_str, convert_for_json, convert_sets_to_lists
+from utils.json_utils import (
+    convert_dict_keys_to_str, 
+    convert_for_json, 
+    convert_sets_to_lists
+)
 
-# from processDMR import read_excel_file,
 from biclique_analysis import (
     process_bicliques,
     create_node_metadata,
