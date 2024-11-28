@@ -7,6 +7,11 @@ import os
 from flask import send_from_directory
 from extensions import app
 from routes import register_blueprints  # Import from routes instead of utils
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files."""
+    return send_from_directory(app.static_folder, filename)
 from process_data import process_data
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
 from data_loader import get_excel_sheets
