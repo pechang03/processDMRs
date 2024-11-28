@@ -4,6 +4,7 @@
 
 import argparse
 import os
+from flask import send_from_directory
 from extensions import app
 from routes import register_blueprints  # Import from routes instead of utils
 from process_data import process_data
@@ -82,6 +83,9 @@ def main():
 
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
+
+    # Add this line to configure static files path
+    app.static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 
     # Register blueprints
     register_blueprints(app)
