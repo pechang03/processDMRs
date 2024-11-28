@@ -6,22 +6,44 @@ from .statistics import calculate_size_distribution, classify_biclique_types
 
 
 
+def get_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) -> Dict:
+    """Get detailed summary of bicliques analysis."""
+    graph_name = bicliques_result["graph_info"]["name"]
+    
+    summary = {
+        "graph_info": {
+            "name": graph_name,
+            "total_dmrs": bicliques_result['graph_info']['total_dmrs'],
+            "total_genes": bicliques_result['graph_info']['total_genes'],
+            "total_edges": bicliques_result['graph_info']['total_edges'],
+            "total_bicliques": len(bicliques_result['bicliques'])
+        },
+        "coverage": bicliques_result.get('coverage', {}),
+        "edge_coverage": bicliques_result.get('debug', {}).get('edge_distribution', {}),
+        "header_stats": bicliques_result.get('debug', {}).get('header_stats', {}),
+        "uncovered_edges_sample": bicliques_result.get('debug', {}).get('uncovered_edges', []),
+        "uncovered_nodes": bicliques_result.get('debug', {}).get('uncovered_nodes', 0)
+    }
+    
+    return summary
+
 def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) -> None:
     """Print detailed summary of bicliques analysis."""
-    graph_name = bicliques_result["graph_info"]["name"]
-    print(f"\n=== Bicliques Analysis for {graph_name} ===")
+    summary = get_bicliques_summary(bicliques_result, original_graph)
+    
+    print(f"\n=== Bicliques Analysis for {summary['graph_info']['name']} ===")
 
     # Basic statistics
     print(f"\nGraph Statistics:")
-    print(f"DMRs: {bicliques_result['graph_info']['total_dmrs']}")
-    print(f"Genes: {bicliques_result['graph_info']['total_genes']}")
-    print(f"Total edges: {bicliques_result['graph_info']['total_edges']}")
-    print(f"Total bicliques found: {len(bicliques_result['bicliques'])}")
+    print(f"DMRs: {summary['graph_info']['total_dmrs']}")
+    print(f"Genes: {summary['graph_info']['total_genes']}")
+    print(f"Total edges: {summary['graph_info']['total_edges']}")
+    print(f"Total bicliques found: {summary['graph_info']['total_bicliques']}")
 
     # Coverage statistics
     print(f"\nNode Coverage:")
-    dmr_cov = bicliques_result["coverage"]["dmrs"]
-    gene_cov = bicliques_result["coverage"]["genes"]
+    dmr_cov = summary["coverage"]["dmrs"]
+    gene_cov = summary["coverage"]["genes"]
     print(
         f"DMRs: {dmr_cov['covered']}/{dmr_cov['total']} ({dmr_cov['percentage']:.1%})"
     )
@@ -30,7 +52,7 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
     )
 
     # Edge coverage
-    edge_cov = bicliques_result["coverage"]["edges"]
+    edge_cov = summary["coverage"]["edges"]
     print(f"\nEdge Coverage:")
     print(f"Single coverage: {edge_cov['single_coverage']} edges ({edge_cov['single_percentage']:.1%})")
     print(f"Multiple coverage: {edge_cov['multiple_coverage']} edges ({edge_cov['multiple_percentage']:.1%})")
@@ -38,28 +60,19 @@ def print_bicliques_summary(bicliques_result: Dict, original_graph: nx.Graph) ->
 
     if edge_cov["uncovered"] > 0:
         print("\nSample of uncovered edges:")
-        for edge in bicliques_result["debug"]["uncovered_edges"]:
+        for edge in summary["uncovered_edges_sample"]:
             print(f"  {edge}")
         print(
-            f"Total nodes involved in uncovered edges: {bicliques_result['debug']['uncovered_nodes']}"
+            f"Total nodes involved in uncovered edges: {summary['uncovered_nodes']}"
         )
 
     # Validate header statistics
-    header_stats = bicliques_result["debug"]["header_stats"]
+    header_stats = summary["header_stats"]
     print("\nValidation of Header Statistics:")
-    print(f"Nb operations: {header_stats['Nb operations']}")
-    print(f"Nb splits: {header_stats['Nb splits']}")
-    print(f"Nb deletions: {header_stats['Nb deletions']}")
-    print(f"Nb additions: {header_stats['Nb additions']}")
-    total_false_negatives = 0
-    # Removed problematic code block
-    pass
-
-    # Validate statistics from header if present
-    if "statistics" in bicliques_result and bicliques_result["statistics"]:
-        print("\nValidation of Header Statistics:")
-        for key, value in bicliques_result["statistics"].items():
-            print(f"  {key}: {value}")
+    print(f"Nb operations: {header_stats.get('Nb operations', 0)}")
+    print(f"Nb splits: {header_stats.get('Nb splits', 0)}")
+    print(f"Nb deletions: {header_stats.get('Nb deletions', 0)}")
+    print(f"Nb additions: {header_stats.get('Nb additions', 0)}")
 
 
 def print_bicliques_detail(
