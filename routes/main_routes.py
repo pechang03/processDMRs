@@ -154,41 +154,53 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Initialize aggregated statistics
-        total_stats = {
-            "total_dmrs": 0,
-            "total_genes": 0,
-            "total_edges": 0,
-            "timepoint_count": len(results)
+        # Aggregate components and interesting components across all timepoints
+        aggregated_components = {
+            "original": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            },
+            "biclique": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            }
         }
-
-        # Process each timepoint's data
+        
+        interesting_components = []
         timepoint_info = {}
+
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                # Update totals from graph info
-                if "bipartite_graph" in data:
-                    graph = data["bipartite_graph"]
-                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
-                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
-                    total_stats["total_edges"] += graph.number_of_edges()
+                # Aggregate component statistics
+                components = data.get("stats", {}).get("components", {})
+                original_comps = components.get("original", {})
+                biclique_comps = components.get("biclique", {})
 
-                # Create a copy of the data and remove the graph object
-                timepoint_data = data.copy()
-                timepoint_data.pop('bipartite_graph', None)
-                
-                # Convert the timepoint data
-                converted_data = convert_for_json(timepoint_data)
-                
+                # Aggregate original graph components
+                for comp_type in ["connected", "biconnected", "triconnected"]:
+                    if comp_type in original_comps:
+                        for metric in ["total", "single_node", "small", "interesting"]:
+                            aggregated_components["original"][comp_type][metric] += \
+                                original_comps[comp_type].get(metric, 0)
+
+                # Aggregate biclique graph components
+                for comp_type in ["connected", "biconnected"]:
+                    if comp_type in biclique_comps:
+                        for metric in ["total", "single_node", "small", "interesting"]:
+                            aggregated_components["biclique"][comp_type][metric] += \
+                                biclique_comps[comp_type].get(metric, 0)
+
+                # Collect interesting components
+                interesting_components.extend(
+                    data.get("interesting_components", []) + 
+                    data.get("complex_components", [])
+                )
+
+                # Prepare timepoint info
                 timepoint_info[timepoint] = {
                     "status": "success",
-                    "stats": {
-                        "components": converted_data.get("stats", {}).get("components", {}),
-                        "coverage": converted_data.get("stats", {}).get("coverage", {}),
-                        "edge_coverage": converted_data.get("stats", {}).get("edge_coverage", {}),
-                        "complex_components": converted_data.get("complex_components", []),
-                        "interesting_components": converted_data.get("interesting_components", [])
-                    },
+                    "stats": data.get("stats", {}),
                     "message": ""
                 }
             else:
@@ -198,16 +210,19 @@ def statistics_route():
                     "stats": {}
                 }
 
-        # Convert the final structure
-        template_data = {
-            "statistics": convert_for_json(total_stats),
-            "timepoint_info": timepoint_info  # Already converted above
+        # Prepare final statistics
+        statistics = {
+            "components": aggregated_components,
+            "interesting_components": interesting_components,
+            "total_dmrs": sum(1 for n, d in results.get("DSStimeseries", {}).get("bipartite_graph", nx.Graph()).nodes(data=True) if d.get("bipartite", -1) == 0),
+            "total_genes": sum(1 for n, d in results.get("DSStimeseries", {}).get("bipartite_graph", nx.Graph()).nodes(data=True) if d.get("bipartite", -1) == 1),
+            "total_edges": results.get("DSStimeseries", {}).get("bipartite_graph", nx.Graph()).number_of_edges()
         }
 
         return render_template(
             "statistics.html",
-            statistics=template_data["statistics"],
-            timepoint_info=template_data["timepoint_info"]
+            statistics=convert_for_json(statistics),
+            timepoint_info=convert_for_json(timepoint_info)
         )
 
     except Exception as e:
