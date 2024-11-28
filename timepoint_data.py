@@ -83,7 +83,10 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                  simple_components, non_simple_components,
                  component_stats, statistics) = process_components(
                     bipartite_graph=original_graph,
-                    bicliques_result=bicliques_result
+                    bicliques_result=bicliques_result,
+                    dmr_metadata=result.get('dmr_metadata', {}),
+                    gene_metadata=result.get('gene_metadata', {}),
+                    gene_id_mapping=gene_id_mapping
                 )
 
                 # Calculate additional statistics
