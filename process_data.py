@@ -319,12 +319,15 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 }
 
                 print("\nFinal component statistics for original graph:")
-                print(
-                    json.dumps(
-                        convert_for_json(component_stats["components"]["original"]),
-                        indent=2,
+                try:
+                    print(
+                        json.dumps(
+                            convert_dict_keys_to_str(component_stats["components"]["original"]),
+                            indent=2,
+                        )
                     )
-                )
+                except Exception as e:
+                    print(f"Error converting stats to JSON: {e}")
 
                 # Calculate coverage statistics
                 coverage_stats = calculate_coverage_statistics(

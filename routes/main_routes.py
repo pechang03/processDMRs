@@ -77,46 +77,35 @@ def statistics_route():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Calculate overall statistics
-        total_stats = {
-            "total_dmrs": 0,
-            "total_genes": 0,
-            "total_edges": 0,
-            "timepoint_count": len(results)
-        }
-
         # Process each timepoint's data
         timepoint_info = {}
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                # Get graph info for totals
-                if "bipartite_graph" in data:
-                    graph = data["bipartite_graph"]
-                    total_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
-                    total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
-                    total_stats["total_edges"] += graph.number_of_edges()
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": data.get("stats", {}),  # Ensure stats exists
+                    "message": ""
+                }
+            else:
+                timepoint_info[timepoint] = {
+                    "status": "error",
+                    "stats": {},
+                    "message": data.get("message", "Unknown error")
+                }
 
-                # Structure timepoint data
-                timepoint_info[timepoint] = data
-
-        # Convert all data to JSON-safe format
         template_data = convert_for_json({
-            "statistics": total_stats,
-            "timepoint_info": timepoint_info,
-            "edge_classifications": results.get(next(iter(results), {}), {}).get("edge_classifications", {}),
-            "components": results.get(next(iter(results), {}), {}).get("stats", {}).get("components", {})
+            "statistics": results.get("statistics", {}),
+            "timepoint_info": timepoint_info
         })
 
         return render_template(
             "statistics.html",
             statistics=template_data["statistics"],
-            timepoint_info=template_data["timepoint_info"],
-            edge_classifications=template_data["edge_classifications"]
+            timepoint_info=template_data["timepoint_info"]
         )
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 

@@ -25,24 +25,24 @@
               <tbody>
                 <tr>
                   <td>Connected</td>
-                  <td>{{ stats.components.original.connected.total }}</td>
-                  <td>{{ stats.components.original.connected.single_node }}</td>
-                  <td>{{ stats.components.original.connected.small }}</td>
-                  <td>{{ stats.components.original.connected.interesting }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('total', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('single_node', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('small', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('connected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Biconnected</td>
-                  <td>{{ stats.components.original.biconnected.total }}</td>
-                  <td>{{ stats.components.original.biconnected.single_node }}</td>
-                  <td>{{ stats.components.original.biconnected.small }}</td>
-                  <td>{{ stats.components.original.biconnected.interesting }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('total', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('small', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('biconnected', {}).get('interesting', 0) }}</td>
                 </tr>
                 <tr>
                   <td>Triconnected</td>
-                  <td>{{ stats.components.original.triconnected.total }}</td>
-                  <td>{{ stats.components.original.triconnected.single_node }}</td>
-                  <td>{{ stats.components.original.triconnected.small }}</td>
-                  <td>{{ stats.components.original.triconnected.interesting }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('total', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('single_node', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('small', 0) }}</td>
+                  <td>{{ stats.get('components', {}).get('original', {}).get('triconnected', {}).get('interesting', 0) }}</td>
                 </tr>
               </tbody>
             </table>
