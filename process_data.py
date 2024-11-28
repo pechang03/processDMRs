@@ -40,7 +40,7 @@ from utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
 # from utils.node_info import NodeInfo
-from utils.json_utils import convert_dict_keys_to_str, convert_for_json
+from utils.json_utils import convert_dict_keys_to_str, convert_for_json, convert_sets_to_lists
 
 # from processDMR import read_excel_file,
 from biclique_analysis import (
@@ -349,18 +349,18 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 return {
                     "status": "success",
                     "stats": {
-                        "components": component_stats,
-                        "coverage": coverage_stats,
-                        "edge_coverage": edge_coverage,
-                        "biclique_types": classify_biclique_types(
+                        "components": convert_for_json(component_stats),
+                        "coverage": convert_for_json(coverage_stats),
+                        "edge_coverage": convert_for_json(edge_coverage),
+                        "biclique_types": convert_for_json(classify_biclique_types(
                             bicliques_result["bicliques"]
-                        ),
-                        "bicliques_summary": bicliques_summary
+                        )),
+                        "bicliques_summary": convert_for_json(bicliques_summary)
                     },
-                    "complex_components": complex_components,
-                    "interesting_components": interesting_components,
-                    "non_simple_components": non_simple_components,
-                    "layout_used": layout_options,
+                    "complex_components": convert_for_json(complex_components),
+                    "interesting_components": convert_for_json(interesting_components),
+                    "non_simple_components": convert_for_json(non_simple_components),
+                    "layout_used": convert_for_json(layout_options),
                     "bipartite_graph": graph,  # Add the graph for later use
                 }
 
