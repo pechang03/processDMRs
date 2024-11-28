@@ -237,6 +237,19 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         # Validate graph
         print(f"\nValidating graph for timepoint {timepoint}")
         filtered_graph = validate_bipartite_graph(graph)
+
+        # Debug logging for JSON conversion
+        def debug_json_conversion(data, name):
+            print(f"\nDebug: Converting {name} to JSON-safe format")
+            print(f"Before conversion - Type: {type(data)}")
+            try:
+                converted = convert_for_json(data)
+                print(f"After conversion - Type: {type(converted)}")
+                print(f"Conversion of {name} successful")
+                return converted
+            except Exception as e:
+                print(f"Error converting {name}: {str(e)}")
+                return data
         if filtered_graph is False:
             return {"error": "Graph validation failed"}
         graph = filtered_graph  # Use the filtered graph going forward
