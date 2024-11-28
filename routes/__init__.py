@@ -4,7 +4,7 @@ from flask import Blueprint
 
 # Create blueprints
 main_bp = Blueprint("main", __name__)
-stats_bp = Blueprint("stats", __name__, url_prefix="/statistics")
+stats_bp = Blueprint("stats", __name__, url_prefix="/stats")
 components_bp = Blueprint("components", __name__, url_prefix="/components")
 
 

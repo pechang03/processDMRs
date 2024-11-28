@@ -88,6 +88,12 @@ def main():
 
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
+
+    # Debug: Print registered routes
+    print("\nRegistered Routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.endpoint}: {rule.rule}")
+
     return 0
 
 
