@@ -13,20 +13,25 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         "TP28-TP180_TSS": 50000,
         "TP40-TP180_TSS": 60000,
         "TP60-TP180_TSS": 70000,
-        "DSS1": 0  # Base timepoint uses original numbers
+        "DSS1": 0,  # Base timepoint uses original numbers
+        "DSStimeseries": 0,
     }
-    
+
     # Get offset for this timepoint
-    offset = timepoint_offsets.get(timepoint, 80000)  # Default offset increased to 80000
-    
+    offset = timepoint_offsets.get(
+        timepoint, 80000
+    )  # Default offset increased to 80000
+
     # Calculate DMR ID with offset
     dmr_id = offset + dmr_num
-    
+
     # Ensure DMR ID is below first gene ID
     if first_gene_id > 0 and dmr_id >= first_gene_id:
-        print(f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}, using original numbering")
+        print(
+            f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}, using original numbering"
+        )
         dmr_id = dmr_num  # Fall back to original numbering
-            
+
     return dmr_id
 
 
