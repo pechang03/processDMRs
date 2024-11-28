@@ -106,25 +106,36 @@ def statistics_route():
                     total_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
                     total_stats["total_edges"] += graph.number_of_edges()
 
-                # Store all timepoint data directly
-                timepoint_info[timepoint] = data
-
+                # Create a copy of the data and remove the graph object
+                timepoint_data = data.copy()
+                timepoint_data.pop('bipartite_graph', None)
+                
+                # Convert the timepoint data
+                converted_data = convert_for_json(timepoint_data)
+                
+                timepoint_info[timepoint] = {
+                    "status": "success",
+                    "stats": {
+                        "components": converted_data.get("stats", {}).get("components", {}),
+                        "coverage": converted_data.get("stats", {}).get("coverage", {}),
+                        "edge_coverage": converted_data.get("stats", {}).get("edge_coverage", {}),
+                        "complex_components": converted_data.get("complex_components", []),
+                        "interesting_components": converted_data.get("interesting_components", [])
+                    },
+                    "message": ""
+                }
             else:
                 timepoint_info[timepoint] = {
                     "status": "error",
-                    "message": data.get("message", "Unknown error")
+                    "message": data.get("message", "Unknown error"),
+                    "stats": {}
                 }
 
-        # Convert data for template
-        template_data = convert_for_json({
-            "statistics": total_stats,  # Just the overall totals
-            "timepoint_info": timepoint_info  # All timepoint data
-        })
-
-        # Add debug print of entire template data
-        print("\nFull Template Data:")
-        import json
-        print(json.dumps(template_data, indent=2))
+        # Convert the final structure
+        template_data = {
+            "statistics": convert_for_json(total_stats),
+            "timepoint_info": timepoint_info  # Already converted above
+        }
 
         return render_template(
             "statistics.html",
