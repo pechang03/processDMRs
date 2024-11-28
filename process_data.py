@@ -175,7 +175,7 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
     return create_gene_mapping(all_genes, max_dmr_id)
 
 
-def process_overall_timepoint(df: pd.DataFrame) -> Dict:
+def process_DSStimeseries_timepoint(df: pd.DataFrame) -> Dict:
     """Process the overall DSS1 timepoint."""
     gene_id_mapping = create_master_gene_mapping(df)
     return process_timepoint(df, "DSS1", gene_id_mapping)
@@ -185,7 +185,7 @@ def process_overall_timepoint(df: pd.DataFrame) -> Dict:
 
 
 def process_data():
-    """Process all timepoints including overall/DSS1 with configurable layouts"""
+    """Process all timepoints including DSStimeseries/DSS1 with configurable layouts"""
     try:
         # Define layout options for different timepoint types
         layout_options = {
@@ -201,19 +201,19 @@ def process_data():
             },
         }
 
-        # Process overall/DSS1 timepoint first
-        print("\nProcessing overall timepoint (DSS1)...", flush=True)
-        df_overall = read_excel_file(app.config["DSS1_FILE"])
+        # Process DSStimeseries/DSS1 timepoint first
+        print("\nProcessing DSStimeseries timepoint (DSS1)...", flush=True)
+        df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
 
         # Create master gene mapping
-        gene_id_mapping = create_master_gene_mapping(df_overall)
+        gene_id_mapping = create_master_gene_mapping(df_DSStimeseries)
 
         # Initialize timepoint data dictionary
         timepoint_data = {}
 
         # Process DSS1 timepoint
         timepoint_data["overall"] = process_timepoint(
-            df_overall, "DSS1", gene_id_mapping, layout_options["overall"]
+            df_DSStimeseries, "DSS1", gene_id_mapping, layout_options["overall"]
         )
 
         # Process pairwise timepoints

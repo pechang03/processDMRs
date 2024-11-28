@@ -156,10 +156,10 @@ def main():
 
     # Process overall DSS1 file
     print("\nProcessing DSS1 file...")
-    df_overall = read_excel_file(args.input)
-    if df_overall is not None:
-        all_genes.update(get_genes_from_df(df_overall))
-        max_dmr_id = len(df_overall) - 1  # Set max_dmr_id based on number of rows
+    df_DSStimeseries = read_excel_file(args.input)
+    if df_DSStimeseries is not None:
+        all_genes.update(get_genes_from_df(df_DSStimeseries))
+        max_dmr_id = len(df_DSStimeseries) - 1  # Set max_dmr_id based on number of rows
 
     # Create and write gene mapping
     gene_id_mapping = create_gene_mapping(all_genes)
@@ -172,9 +172,9 @@ def main():
         process_single_dataset(df, output_file, args, gene_id_mapping, sheet)
 
     # Process overall DSS1 file
-    print("\nProcessing DSS1 overall file...")
+    print("\nProcessing DSS1 DSStimeseries file...")
     process_single_dataset(
-        df_overall, "bipartite_graph_output.txt", args, gene_id_mapping, "DSS1"
+        df_DSStimeseries, "bipartite_graph_output.txt", args, gene_id_mapping, "DSS1"
     )
 
 

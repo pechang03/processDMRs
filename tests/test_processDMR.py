@@ -217,7 +217,7 @@ class TestBipartiteGraph(unittest.TestCase):
                 self.assertIn(neighbor, dominating_set)
 
     def test_complete_bipartite_graph_overall(self):
-        """Test creation and validation of complete bipartite graph for overall/DSS1 data"""
+        """Test creation and validation of complete bipartite graph for DSStimeseries/DSS1 data"""
         # Test K_{3,3} bipartite graph for DSS1
         data = {
             "DMR_No.": [1, 2, 3],

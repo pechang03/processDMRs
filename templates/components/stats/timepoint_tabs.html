@@ -2,7 +2,11 @@
   {% for timepoint in timepoint_info.keys() %}
   <li class="nav-item">
     <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ timepoint }}-tab" data-bs-toggle="tab" href="#{{ timepoint }}" role="tab">
-      {{ timepoint }}
+      {% if timepoint == "DSStimeseries" %}
+        DSS Timeseries
+      {% else %}
+        {{ timepoint }}
+      {% endif %}
     </a>
   </li>
   {% endfor %}

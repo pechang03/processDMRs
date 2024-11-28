@@ -19,7 +19,7 @@ def component_detail_route(component_id, type="biclique"):
 
         # Determine which components to search based on type
         if type == "triconnected":
-            components = results.get("overall", {}).get("stats", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", [])
+            components = results.get("DSStimeseries", {}).get("stats", {}).get("components", {}).get("original", {}).get("triconnected", {}).get("components", [])
         else:  # Default to biclique
             components = results.get("interesting_components", [])
 
@@ -80,6 +80,6 @@ def component_detail_route(component_id, type="biclique"):
 def graph_components_route():
     """Handle graph components overview page."""
     results = process_data()
-    overall_data = results.get("overall", {})
-    component_stats = convert_for_json(overall_data.get("stats", {}).get("components", {}))
+    DSStimeseries_data = results.get("DSStimeseries", {})
+    component_stats = convert_for_json(DSStimeseries_data.get("stats", {}).get("components", {}))
     return render_template("components/graph_components.html", statistics={"components": component_stats})

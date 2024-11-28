@@ -22,7 +22,7 @@ def index_route():
             return render_template("error.html", message=results["error"])
 
         # Get overall data
-        overall_data = results.get("overall", {})
+        DSStimeseries_data = results.get("DSStimeseries", {})
 
         # Ensure complete statistics structure with defaults
         default_stats = {
@@ -117,21 +117,21 @@ def index_route():
                 }
 
         # Convert all data structures using JSON utils
-        statistics = convert_for_json(overall_data.get("stats", default_stats))
+        statistics = convert_for_json(DSStimeseries_data.get("stats", default_stats))
         timepoint_info = convert_for_json(timepoint_info)
-        overall_data = convert_for_json(overall_data)
+        DSStimeseries_data = convert_for_json(DSStimeseries_data)
 
         return render_template(
             "index.html",
-            results=overall_data,
+            results=DSStimeseries_data,
             statistics=statistics,
             timepoint_info=timepoint_info,
-            dmr_metadata=overall_data.get("dmr_metadata", {}),
-            gene_metadata=overall_data.get("gene_metadata", {}),
-            bicliques_result=overall_data,
-            coverage=overall_data.get("coverage", {}),
-            node_labels=overall_data.get("node_labels", {}),
-            dominating_set=overall_data.get("dominating_set", {}),
+            dmr_metadata=DSStimeseries_data.get("dmr_metadata", {}),
+            gene_metadata=DSStimeseries_data.get("gene_metadata", {}),
+            bicliques_result=DSStimeseries_data,
+            coverage=DSStimeseries_data.get("coverage", {}),
+            node_labels=DSStimeseries_data.get("node_labels", {}),
+            dominating_set=DSStimeseries_data.get("dominating_set", {}),
         )
     except Exception as e:
         import traceback
@@ -182,27 +182,27 @@ def statistics_route():
                 }
 
         # Get overall data
-        overall_data = results.get("overall", {})
+        DSStimeseries_data = results.get("DSStimeseries", {})
 
         # Structure the template data
         statistics = {
             "total_dmrs": total_dmrs,
             "total_genes": total_genes,
             "total_edges": total_edges,
-            "timepoint_count": len([k for k in results.keys() if k != "overall"]),
-            "components": overall_data.get("stats", {}).get("components", {}),
-            "interesting_components": overall_data.get(
+            "timepoint_count": len([k for k in results.keys() if k != "DSStimeseries"]),
+            "components": DSStimeseries_data.get("stats", {}).get("components", {}),
+            "interesting_components": DSStimeseries_data.get(
                 "interesting_components", []
             ),  # Make sure this is included
-            "complex_components": overall_data.get("complex_components", []),
-            "stats": overall_data.get("stats", {}),
-            "edge_coverage": overall_data.get("stats", {}).get("edge_coverage", {}),
-            "coverage": overall_data.get("stats", {}).get("coverage", {}),
+            "complex_components": DSStimeseries_data.get("complex_components", []),
+            "stats": DSStimeseries_data.get("stats", {}),
+            "edge_coverage": DSStimeseries_data.get("stats", {}).get("edge_coverage", {}),
+            "coverage": DSStimeseries_data.get("stats", {}).get("coverage", {}),
             # Add these additional fields that might be needed by the template
-            "edge_classifications": overall_data.get("edge_classifications", {}),
-            "node_labels": overall_data.get("node_labels", {}),
-            "dmr_metadata": overall_data.get("dmr_metadata", {}),
-            "gene_metadata": overall_data.get("gene_metadata", {}),
+            "edge_classifications": DSStimeseries_data.get("edge_classifications", {}),
+            "node_labels": DSStimeseries_data.get("node_labels", {}),
+            "dmr_metadata": DSStimeseries_data.get("dmr_metadata", {}),
+            "gene_metadata": DSStimeseries_data.get("gene_metadata", {}),
         }
 
         # Debug print to check the data
@@ -212,7 +212,7 @@ def statistics_route():
             "statistics.html",
             statistics=statistics,
             timepoint_info=timepoint_info,
-            overall_data=overall_data,
+            DSStimeseries_data=DSStimeseries_data,
             edge_classifications=statistics[
                 "edge_classifications"
             ],  # Make sure this is passed
@@ -238,7 +238,7 @@ def component_detail_route(component_id, type="biclique"):
         if type == "triconnected":
             # Use triconnected components from original graph
             components = (
-                results.get("overall", {})
+                results.get("DSStimeseries", {})
                 .get("stats", {})
                 .get("components", {})
                 .get("original", {})
