@@ -109,12 +109,8 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
 
     # Add genes from gene column (case-insensitive)
     gene_col = next(
-        (
-            col
-            for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]
-            if col in df.columns
-        ),
-        None,
+        (col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] if col in df.columns),
+        None
     )
     if gene_col:
         # Filter out empty values, ".", "N/A" etc.
@@ -123,15 +119,16 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
         all_genes.update(valid_genes)
 
     # Add genes from enhancer info
-    df["Processed_Enhancer_Info"] = df[
-        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
-    ].apply(process_enhancer_info)
-
+    df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
+    
     for genes in df["Processed_Enhancer_Info"]:
         if genes:  # Only process non-empty gene lists
             # Filter out invalid entries
             valid_genes = {g.strip().lower() for g in genes if g.strip() and g.strip() != "." and g.strip().lower() != "n/a"}
             all_genes.update(valid_genes)
+
+    # Remove any remaining invalid entries
+    all_genes = {g for g in all_genes if g and g != "." and g.lower() != "n/a"}
 
     # Use utility function to create mapping
     max_dmr_id = df["DMR_No."].max() - 1  # Convert to 0-based index
