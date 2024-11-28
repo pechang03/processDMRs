@@ -1,5 +1,5 @@
 <div
-  class="tab-pane fade"
+  class="tab-pane fade {% if loop.first %}show active{% endif %}"
   id="{{ timepoint }}"
   role="tabpanel"
   data-timepoint="{{ timepoint }}"
@@ -31,25 +31,20 @@
                 </tr>
               </thead>
               <tbody>
-                {% for comp_type in ['connected', 'biconnected', 'triconnected']
-                %}
+                {% for comp_type in ['connected', 'biconnected', 'triconnected'] %}
                 <tr class="{{ comp_type }}-row">
                   <td>{{ comp_type|capitalize }}</td>
                   <td class="total-cell">
-                    {{ stats.get('components', {}).get('original',
-                    {}).get(comp_type, {}).get('total', 0) }}
+                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('total', 0) }}
                   </td>
                   <td class="single-node-cell">
-                    {{ stats.get('components', {}).get('original',
-                    {}).get(comp_type, {}).get('single_node', 0) }}
+                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('single_node', 0) }}
                   </td>
                   <td class="small-cell">
-                    {{ stats.get('components', {}).get('original',
-                    {}).get(comp_type, {}).get('small', 0) }}
+                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('small', 0) }}
                   </td>
                   <td class="interesting-cell">
-                    {{ stats.get('components', {}).get('original',
-                    {}).get(comp_type, {}).get('interesting', 0) }}
+                    {{ stats.get('components', {}).get('original', {}).get(comp_type, {}).get('interesting', 0) }}
                   </td>
                 </tr>
                 {% endfor %}
@@ -74,17 +69,22 @@
                 </tr>
               </thead>
               <tbody>
-                {% for category in ['Empty', 'Simple', 'Interesting', 'Complex']
-                %}
-                <tr>
-                  <td>{{ category }} Components</td>
-                  <td>
-                    {{ stats.get('components', {}).get('biclique',
-                    {}).get('connected', {}).get(category.lower().replace(' ',
-                    '_'), 0) }}
-                  </td>
+                <tr class="empty-row">
+                  <td>Empty Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('single_node', 0) }}</td>
                 </tr>
-                {% endfor %}
+                <tr class="simple-row">
+                  <td>Simple Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('small', 0) }}</td>
+                </tr>
+                <tr class="interesting-row">
+                  <td>Interesting Components</td>
+                  <td>{{ stats.get('components', {}).get('biclique', {}).get('connected', {}).get('interesting', 0) }}</td>
+                </tr>
+                <tr class="complex-row">
+                  <td>Complex Components</td>
+                  <td>{{ (stats.get('complex_components', [])|length) }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -96,7 +96,6 @@
         <!-- Plotly graph containers will be dynamically added here -->
       </div>
 
-      <!-- DEBUG: About to include interesting components -->
       <!-- Include interesting components template -->
       {% include 'components/stats/interesting_components.html' %}
     </div>
