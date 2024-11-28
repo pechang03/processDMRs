@@ -281,8 +281,15 @@ def process_components(
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
     dominating_set: Set[int] = None,
-) -> Tuple[List[Dict], List[Dict], List[Dict], Dict, Dict, Dict]:
-    # Create biclique graph from bicliques
+) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], Dict, Dict]:
+    """Process connected components of the graph."""
+    # Initialize component lists
+    complex_components = []
+    interesting_components = []
+    simple_components = []
+    non_simple_components = []
+
+    # Create biclique graph first
     biclique_graph = nx.Graph()
     if bicliques_result and "bicliques" in bicliques_result:
         for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
@@ -292,102 +299,10 @@ def process_components(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
 
-    """Process connected components of the graph."""
-    # Create analyzer
-
+    # Create and use analyzer
     analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
-
-    # Calculate initial statistics
-    statistics = {}
-    if bicliques_result and "bicliques" in bicliques_result:
-        statistics = calculate_biclique_statistics(
-            bicliques_result["bicliques"], bipartite_graph, dominating_set
-        )
-
-    # Get connected components
-    connected_components = list(nx.connected_components(bipartite_graph))
-    biconnected_stats = analyze_biconnected_components(bipartite_graph)
-    triconnected_components, tri_stats = analyze_triconnected_components(
-        bipartite_graph
-    )
-
-    # Initialize component lists
-    complex_components = []
-    interesting_components = []
-    simple_components = []
-    non_simple_components = []
-    component_stats = {}
-    statistics = {}
-    # Analyze components for both graphs
-    print("\nAnalyzing graph components")
-
-    # Original graph components
-    print(f"Found {len(connected_components)} connected components in original graph")
-    original_stats = analyze_components(connected_components, bipartite_graph)
-
-    biconn_comps, biconn_stats = analyze_biconnected_components(bipartite_graph)
-    triconn_comps, triconn_stats = analyze_triconnected_components(bipartite_graph)
-
-    # Biclique graph components
-    biclique_connected_comps = list(nx.connected_components(biclique_graph))
-    print(
-        f"Found {len(biclique_connected_comps)} connected components in biclique graph"
-    )
-    biclique_stats = analyze_components(biclique_connected_comps, biclique_graph)
-
-    biclique_biconn_comps, biclique_biconn_stats = analyze_biconnected_components(
-        biclique_graph
-    )
-    biclique_triconn_comps, biclique_triconn_stats = analyze_triconnected_components(
-        biclique_graph
-    )
-
-    # Get component statistics for both graphs
-    component_stats = {
-        "components": {
-            "original": {
-                "connected": {
-                    "components": connected_components,
-                    "stats": original_stats,
-                },
-                "biconnected": {"components": biconn_comps, "stats": biconn_stats},
-                "triconnected": {"components": triconn_comps, "stats": triconn_stats},
-            },
-            "biclique": {
-                "connected": {
-                    "single_node": len(
-                        [c for c in biclique_connected_comps if len(c) == 1]
-                    ),
-                    "small": len(
-                        [c for c in biclique_connected_comps if 1 < len(c) <= 2]
-                    ),
-                    "interesting": len(
-                        [
-                            c
-                            for c in interesting_components
-                            if c.get("category") == "interesting"
-                        ]
-                    ),
-                    "complex": len([c for c in complex_components]),
-                },
-                "components": {
-                    "connected": {
-                        "components": biclique_connected_comps,
-                        "stats": biclique_stats,
-                    },
-                    "biconnected": {
-                        "components": biclique_biconn_comps,
-                        "stats": biclique_biconn_stats,
-                    },
-                    "triconnected": {
-                        "components": biclique_triconn_comps,
-                        "stats": biclique_triconn_stats,
-                    },
-                },
-            },
-        }
-    }
-
+    component_stats = analyzer.analyze_components(dominating_set)
+    
     # Process individual components
     for idx, component_data in enumerate(bicliques_result.get("components", [])):
         if isinstance(component_data, dict):
@@ -415,17 +330,17 @@ def process_components(
                 "category": category.name.lower(),
                 "description": description,
             }
-            interesting_components.append(component_info)
 
-    # Extract component categories
-    complex_components = [
-        comp for comp in interesting_components if comp["category"] == "complex"
-    ]
-    non_simple_components = [
-        comp
-        for comp in interesting_components
-        if comp["category"] not in ["empty", "simple"]
-    ]
+            # Categorize component
+            if category == BicliqueSizeCategory.SIMPLE:
+                simple_components.append(component_info)
+            elif category == BicliqueSizeCategory.INTERESTING:
+                interesting_components.append(component_info)
+            elif category == BicliqueSizeCategory.COMPLEX:
+                complex_components.append(component_info)
+            
+            if category not in [BicliqueSizeCategory.EMPTY, BicliqueSizeCategory.SIMPLE]:
+                non_simple_components.append(component_info)
 
     # Calculate comprehensive statistics
     statistics = calculate_biclique_statistics(
@@ -444,49 +359,10 @@ def process_components(
         )
         interesting_components[0].update(component_data)
 
-    # Get triconnected components
-    triconn_comps, triconn_stats = analyze_triconnected_components(bipartite_graph)
-
-    # Debug prints
-    print("\nComponent Analysis Debug:")
-    print(f"Found {len(triconn_comps)} triconnected components")
-    print(f"Found {len(interesting_components)} interesting components")
-    print(f"Found {len(complex_components)} complex components")
-
-    # Convert triconnected components to proper format
-    formatted_triconn = []
-    for idx, comp_nodes in enumerate(triconn_comps):
-        dmrs = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 0}
-        genes = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 1}
-
-        formatted_triconn.append(
-            {
-                "id": idx + 1,
-                "component": comp_nodes,
-                "dmrs": len(dmrs),
-                "genes": len(genes),
-                "size": len(comp_nodes),
-                "category": "interesting"
-                if len(dmrs) >= 3 and len(genes) >= 3
-                else "small",
-            }
-        )
-
-    # Update component_stats with formatted triconnected components
-    if "components" not in component_stats:
-        component_stats["components"] = {}
-    if "original" not in component_stats["components"]:
-        component_stats["components"]["original"] = {}
-
-    component_stats["components"]["original"]["triconnected"] = {
-        "components": formatted_triconn,
-        "stats": triconn_stats,
-    }
-
     return (
         complex_components,
         interesting_components,
-        [],  # simple_connections
+        simple_components,  # Now properly populated
         non_simple_components,
         component_stats,
         statistics,
