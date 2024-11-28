@@ -369,13 +369,14 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                             classify_biclique_types(bicliques_result["bicliques"]), 
                             "biclique_types"
                         ),
-                        "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary")
+                        "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary"),
+                        # Move these inside stats
+                        "interesting_components": debug_json_conversion(interesting_components, "interesting_components"),
+                        "complex_components": debug_json_conversion(complex_components, "complex_components"),
+                        "non_simple_components": debug_json_conversion(non_simple_components, "non_simple_components")
                     },
-                    "complex_components": debug_json_conversion(complex_components, "complex_components"),
-                    "interesting_components": debug_json_conversion(interesting_components, "interesting_components"),
-                    "non_simple_components": debug_json_conversion(non_simple_components, "non_simple_components"),
                     "layout_used": debug_json_conversion(layout_options, "layout_options"),
-                    "bipartite_graph": graph,  # Add the graph for later use
+                    "bipartite_graph": graph
                 }
 
         # Return basic statistics if no bicliques found
