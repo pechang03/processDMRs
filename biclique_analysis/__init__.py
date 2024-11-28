@@ -46,6 +46,8 @@ __all__ = list(
             "write_bicliques",
             "write_analysis_results",
             "write_component_details",
+            # Timepoint processing
+            "process_timepoint",
         ]
     )
 )
