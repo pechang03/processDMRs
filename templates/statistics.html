@@ -67,11 +67,13 @@
     {% set triconn_stats = (
         statistics.get('components', {}).get('original', {}).get('triconnected', {}) or
         statistics.get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}) or
-        statistics.get('DSStimeseries', {}).get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {})
+        statistics.get('DSStimeseries', {}).get('stats', {}).get('components', {}).get('original', {}).get('triconnected', {}) or
+        {}
     ) %}
     {% if triconn_stats and (
         triconn_stats.get('interesting', 0) > 0 or 
-        triconn_stats.get('total', 0) > 0
+        triconn_stats.get('total', 0) > 0 or
+        triconn_stats.get('components', [])
     ) %}
       <div class="card mb-4">
         <div class="card-header">
