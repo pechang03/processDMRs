@@ -41,18 +41,7 @@ def index_route():
                     total_stats["total_edges"] += graph.number_of_edges()
 
                 # Structure timepoint data
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "stats": data.get("stats", {}),
-                    "coverage": data.get("coverage", {}),
-                    "components": data.get("components", {}),
-                    "interesting_components": data.get("interesting_components", []),
-                    "complex_components": data.get("complex_components", []),
-                    "edge_classifications": data.get("edge_classifications", {}),
-                    "node_labels": data.get("node_labels", {}),
-                    "dmr_metadata": data.get("dmr_metadata", {}),
-                    "gene_metadata": data.get("gene_metadata", {})
-                }
+                timepoint_info[timepoint] = data
 
         # Convert all data to JSON-safe format
         template_data = convert_for_json({
@@ -108,15 +97,7 @@ def statistics_route():
                     total_stats["total_edges"] += graph.number_of_edges()
 
                 # Structure timepoint data
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "data": {
-                        "stats": data.get("stats", {}),
-                        "complex_components": data.get("complex_components", []),
-                        "interesting_components": data.get("interesting_components", []),
-                        "non_simple_components": data.get("non_simple_components", [])
-                    }
-                }
+                timepoint_info[timepoint] = data
 
         # Convert all data to JSON-safe format
         template_data = convert_for_json({
