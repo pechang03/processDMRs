@@ -13,6 +13,10 @@ def statistics_route():
 
         DSStimeseries_data = results.get("DSStimeseries", {})
         
+        # Add debug print for bicliques summary
+        print("\nDebug: Bicliques Summary Data")
+        print(DSStimeseries_data.get("stats", {}).get("bicliques_summary", {}))
+        
         # Create complete statistics dictionary
         template_data = {
             "statistics": {
