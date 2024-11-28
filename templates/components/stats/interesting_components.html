@@ -1,4 +1,11 @@
 <div class="row">
+  <!-- Debug output -->
+  <div class="debug-info" style="display: none;">
+    <pre>
+      Statistics object: {{ statistics | tojson(indent=2) }}
+    </pre>
+  </div>
+
   <!-- Left side: Original Graph Triconnected Components -->
   <div class="col-md-6">
     <div class="card mb-4">
