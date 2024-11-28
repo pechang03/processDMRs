@@ -121,6 +121,11 @@ def statistics_route():
             "timepoint_info": timepoint_info  # All timepoint data
         })
 
+        # Add debug print of entire template data
+        print("\nFull Template Data:")
+        import json
+        print(json.dumps(template_data, indent=2))
+
         return render_template(
             "statistics.html",
             statistics=template_data["statistics"],
