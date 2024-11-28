@@ -13,12 +13,26 @@ def statistics_index():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Process timepoint data
+        # Calculate overall statistics
+        overall_stats = {
+            "total_dmrs": 0,
+            "total_genes": 0,
+            "total_edges": 0,
+            "timepoint_count": len(results)
+        }
+
+        # Process timepoint data and accumulate overall stats
         timepoint_info = {}
-        
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
-                # Extract stats directly from the timepoint data
+                # Add to overall stats if bipartite graph is present
+                if "bipartite_graph" in data:
+                    graph = data["bipartite_graph"]
+                    overall_stats["total_dmrs"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 0)
+                    overall_stats["total_genes"] += sum(1 for n, d in graph.nodes(data=True) if d["bipartite"] == 1)
+                    overall_stats["total_edges"] += graph.number_of_edges()
+
+                # Extract stats for this timepoint
                 timepoint_info[timepoint] = {
                     "status": "success",
                     "stats": {
@@ -30,7 +44,6 @@ def statistics_index():
                     "message": ""
                 }
                 
-                # Debug print for DSStimeseries
                 if timepoint == "DSStimeseries":
                     print("\nDEBUG: DSStimeseries Stats:")
                     print(json.dumps(timepoint_info[timepoint]["stats"], indent=2))
@@ -43,10 +56,12 @@ def statistics_index():
 
         # Convert to JSON-safe format before sending to template
         safe_timepoint_info = convert_for_json(timepoint_info)
+        safe_overall_stats = convert_for_json(overall_stats)
 
         return render_template(
             "statistics.html",
-            timepoint_info=safe_timepoint_info
+            timepoint_info=safe_timepoint_info,
+            statistics=safe_overall_stats  # Add overall stats to template context
         )
 
     except Exception as e:
