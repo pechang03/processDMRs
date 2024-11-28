@@ -3,24 +3,34 @@
 {% block title %}DMR Analysis Statistics{% endblock %}
 
 {% block content %}
-  <!-- Overall Statistics Card -->
-  {% include 'components/stats/overall_stats.html' %}
-
-  <!-- Timepoints Card -->
-  <div class="card mb-4">
+  <!-- Test version with simplified tabs -->
+  <div class="card">
     <div class="card-header">
-      {% include 'components/stats/timepoint_tabs.html' %}
+      <ul class="nav nav-tabs card-header-tabs" role="tablist">
+        {% for timepoint in timepoint_info.keys() %}
+        <li class="nav-item" role="presentation">
+          <button 
+            class="nav-link {% if loop.first %}active{% endif %}"
+            data-bs-toggle="tab"
+            data-bs-target="#tab-{{ timepoint }}"
+            type="button"
+            role="tab">
+            {{ timepoint }}
+          </button>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
     <div class="card-body">
       <div class="tab-content">
         {% for timepoint, data in timepoint_info.items() %}
-          <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-               id="{{ timepoint }}" 
-               role="tabpanel">
-            {% with status=data.get('status'), message=data.get('message'), stats=data.get('stats', {}) %}
-              {% include 'components/stats/timepoint_tab.html' %}
-            {% endwith %}
-          </div>
+        <div 
+          class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+          id="tab-{{ timepoint }}"
+          role="tabpanel">
+          <h3>{{ timepoint }}</h3>
+          <pre>{{ data|tojson(indent=2) }}</pre>
+        </div>
         {% endfor %}
       </div>
     </div>
