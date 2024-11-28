@@ -20,3 +20,4 @@ def register_blueprints(app):
 from . import main_routes
 from . import component_routes
 from . import stats_routes
+from . import timepoint_data
