@@ -72,7 +72,7 @@
     {% if triconn_stats and (
         triconn_stats.get('interesting', 0) > 0 or 
         triconn_stats.get('total', 0) > 0 or
-        triconn_stats.get('components', [])
+        triconn_stats.get('components', []) is not none
     ) %}
       <div class="card mb-4">
         <div class="card-header">
