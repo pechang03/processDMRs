@@ -58,6 +58,21 @@ def statistics_index():
         safe_timepoint_info = convert_for_json(timepoint_info)
         safe_overall_stats = convert_for_json(overall_stats)
 
+        # Debug print for statistics
+        for timepoint, data in safe_timepoint_info.items():
+            print(f"\nDEBUG: Statistics for {timepoint}:")
+            print("Components:")
+            if 'stats' in data and 'components' in data['stats']:
+                print(json.dumps(data['stats']['components'], indent=2))
+        
+            print("\nInteresting Components:")
+            if 'interesting_components' in data:
+                print(json.dumps(data['interesting_components'], indent=2))
+        
+            print("\nComplex Components:")
+            if 'complex_components' in data:
+                print(json.dumps(data['complex_components'], indent=2))
+
         return render_template(
             "statistics.html",
             timepoint_info=safe_timepoint_info,
