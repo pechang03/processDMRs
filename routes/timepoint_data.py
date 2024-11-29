@@ -56,12 +56,13 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
 
         # Populate gene metadata
         for gene_name in gene_id_mapping.keys():
-            gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
-            gene_metadata[gene_name] = {
-                "description": str(gene_matches.iloc[0]["Gene_Description"])
-                if not gene_matches.empty
-                else "N/A"
-            }
+            gene_metadata[gene_name] = {"description": "N/A"}
+            
+            # Check if the column exists before trying to use it
+            if "Gene_Symbol_Nearby" in df.columns:
+                gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
+                if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
+                    gene_metadata[gene_name]["description"] = str(gene_matches.iloc[0]["Gene_Description"])
 
         # Initialize base result structure
         result = {
