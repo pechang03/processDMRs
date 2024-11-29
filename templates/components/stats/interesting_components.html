@@ -73,14 +73,10 @@
               </tr>
             </thead>
             <tbody>
-              {% set all_components = (statistics.get('interesting_components',
-              []) + statistics.get('complex_components', [])) %} {% set
-              sorted_components = all_components|sort( attribute='category',
-              reverse=True, key=lambda x:
-              BicliqueSizeCategory.from_string(x.get('category',
-              'empty')).get_complexity_score() ) %} {% for component in
-              sorted_components %} {% if component.get('category') not in
-              ['empty', 'simple'] %}
+              {% set all_components = (statistics.get('interesting_components', []) + 
+                                      statistics.get('complex_components', [])) %}
+              {% for component in all_components %}
+                {% if component.get('category') not in ['empty', 'simple'] %}
               <tr>
                 <td>{{ component.get('id', 'N/A') }}</td>
                 <td>{{ component.get('dmrs', 0) }}</td>
