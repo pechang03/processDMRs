@@ -279,6 +279,7 @@ def convert_sets_to_lists(data):
 def process_components(
     bipartite_graph: nx.Graph,
     bicliques_result: Dict,
+    biclique_graph: nx.Graph,  # Now receives the graph to populate
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
     gene_id_mapping: Dict[str, int] = None,
@@ -291,18 +292,18 @@ def process_components(
     simple_components = []
     non_simple_components = []
 
-    # Create biclique graph first
-    biclique_graph = nx.Graph()
+    # Process each biclique and add to biclique_graph
     if bicliques_result and "bicliques" in bicliques_result:
         for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+            # Add nodes and edges to the passed biclique_graph
             biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
             biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
             biclique_graph.add_edges_from(
                 (dmr, gene) for dmr in dmr_nodes for gene in gene_nodes
             )
 
-    # Create and use analyzer
-    analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
+    # Create analyzer with both graphs
+    analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result, biclique_graph)
     component_stats = analyzer.analyze_components(dominating_set)
     
     def enrich_component_metadata(component_info: Dict) -> Dict:
