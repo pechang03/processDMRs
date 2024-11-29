@@ -3,27 +3,27 @@
     <h3>Overall Statistics</h3>
   </div>
   <div class="card-body">
-    <div class="row">
-      <div class="col-md-4">
-        <h4>Summary</h4>
-        <table class="table table-sm">
-          <tbody>
-            <tr>
-              <td>Total Timepoints:</td>
-              <td>{{ overall_stats.total_timepoints }}</td>
-            </tr>
-            <tr>
-              <td>Total Bicliques:</td>
-              <td>{{ overall_stats.total_bicliques }}</td>
-            </tr>
-            <tr>
-              <td>Total Components:</td>
-              <td>{{ overall_stats.total_components }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <h4>Graph Information</h4>
+    <table class="table table-sm">
+      <tbody>
+        <tr>
+          <td>Total DMRs:</td>
+          <td>{{ overall_stats.graph_info.total_dmrs }}</td>
+        </tr>
+        <tr>
+          <td>Total Genes:</td>
+          <td>{{ overall_stats.graph_info.total_genes }}</td>
+        </tr>
+        <tr>
+          <td>Total Edges:</td>
+          <td>{{ overall_stats.graph_info.total_edges }}</td>
+        </tr>
+        <tr>
+          <td>Timepoints:</td>
+          <td>{{ overall_stats.graph_info.timepoints }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
