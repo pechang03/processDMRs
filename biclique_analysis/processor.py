@@ -21,7 +21,15 @@ def process_bicliques(
     file_format: str = "gene_name",
     biclique_graph: nx.Graph = None,  # Add parameter to receive the graph
 ) -> Dict:
-    """Process bicliques and add detailed information."""
+    """
+    Call stack:
+    1. process_timepoint
+    2. [process_bicliques] (YOU ARE HERE)
+    3. read_bicliques_file
+    4. process_components
+    
+    Process bicliques and add detailed information.
+    """
     print(f"\nProcessing bicliques for {dataset_name}")
     print(f"Using format: {file_format}")
 
