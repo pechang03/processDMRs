@@ -11,6 +11,7 @@ from utils.node_info import NodeInfo
 from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
+from .classifier import BicliqueSizeCategory, classify_biclique
 
 
 def process_bicliques(
