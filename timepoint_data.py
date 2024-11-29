@@ -24,7 +24,10 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         original_graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
         print(f"Original graph created with {original_graph.number_of_nodes()} nodes and {original_graph.number_of_edges()} edges")
 
-        # Initialize base result with original graph data
+        # Create empty biclique graph that will be populated during processing
+        biclique_graph = nx.Graph()
+
+        # Initialize base result
         result = {
             "status": "success",
             "stats": {
@@ -55,7 +58,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             "layout_used": layout_options,
             "graphs": {
                 "original": convert_for_json(original_graph),
-                "biclique": None  # Will be populated if bicliques exist
+                "biclique": None  # Will be populated after processing
             }
         }
 
@@ -68,33 +71,24 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                                                file_format="gene-name")
 
             if bicliques_result and "bicliques" in bicliques_result:
-                # Create biclique graph
-                biclique_graph = nx.Graph()
-                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-
-                # Add biclique graph to result
-                result["graphs"]["biclique"] = convert_for_json(biclique_graph)
-
-                # Process components using both graphs
+                # Process components, passing both graphs
                 (complex_components, interesting_components, 
                  simple_components, non_simple_components,
                  component_stats, statistics) = process_components(
                     bipartite_graph=original_graph,
                     bicliques_result=bicliques_result,
-                    dmr_metadata=result.get('dmr_metadata', {}),
-                    gene_metadata=result.get('gene_metadata', {}),
-                    gene_id_mapping=gene_id_mapping
+                    biclique_graph=biclique_graph  # Pass empty graph to be populated
                 )
+
+                # Now biclique_graph has been populated, add it to result
+                result["graphs"]["biclique"] = convert_for_json(biclique_graph)
 
                 # Calculate additional statistics
                 coverage_stats = calculate_coverage_statistics(bicliques_result["bicliques"], original_graph)
                 edge_coverage = calculate_edge_coverage(bicliques_result["bicliques"], original_graph)
                 bicliques_summary = get_bicliques_summary(bicliques_result, original_graph)
 
-                # Update result with biclique-specific data
+                # Update result with statistics
                 result["stats"].update({
                     "components": convert_for_json(component_stats),
                     "coverage": convert_for_json(coverage_stats),
