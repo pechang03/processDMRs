@@ -24,122 +24,139 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Function to load timepoint data
-        function loadTimepointData(timepoint) {
-            const tabContent = document.querySelector(`#${timepoint}`);
-            if (!tabContent.dataset.loaded) {
-                const loadingIndicator = tabContent.querySelector('.loading-indicator');
-                const statsContainer = tabContent.querySelector('.stats-container');
-            
-                if (loadingIndicator) loadingIndicator.style.display = 'block';
-                if (statsContainer) statsContainer.style.display = 'none';
+      document.addEventListener('DOMContentLoaded', function() {
+          // Function to load timepoint data
+          function loadTimepointData(timepoint) {
+              const tabContent = document.querySelector(`#${timepoint}`);
+              if (!tabContent.dataset.loaded) {
+                  const loadingIndicator = tabContent.querySelector('.loading-indicator');
+                  const statsContainer = tabContent.querySelector('.stats-container');
 
-                fetch(`/statistics/timepoint/${timepoint}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            // Update the tab content with the new data
-                            updateTimepointContent(timepoint, data.data);
-                            tabContent.dataset.loaded = 'true';
-                        
-                            if (loadingIndicator) loadingIndicator.style.display = 'none';
-                            if (statsContainer) statsContainer.style.display = 'block';
-                        } else {
-                            console.error('Error loading timepoint data:', data.message);
-                            if (loadingIndicator) {
-                                loadingIndicator.textContent = 'Error loading data: ' + data.message;
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (loadingIndicator) {
-                            loadingIndicator.textContent = 'Network error: ' + error.message;
-                        }
-                    });
-            }
-        }
+                  if (loadingIndicator) loadingIndicator.style.display = 'block';
+                  if (statsContainer) statsContainer.style.display = 'none';
 
-        // Function to update timepoint content
-        function updateTimepointContent(timepoint, data) {
-            const tabContent = document.querySelector(`#${timepoint}`);
-        
-            // Update component statistics tables
-            updateComponentStats(tabContent, data.stats);
-        
-            // If there are component graphs, create visualizations
-            if (data.component_graphs) {
-                const visContainer = tabContent.querySelector('.components-visualization');
-                if (visContainer) {
-                    // Clear previous visualizations
-                    visContainer.innerHTML = '';
-                
-                    Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
-                        // Create a container for this component's graph
-                        const container = document.createElement('div');
-                        container.id = `component-${compId}`;
-                        container.classList.add('plotly-graph', 'mb-4');
-                        visContainer.appendChild(container);
-                    
-                        // Render Plotly graph
-                        Plotly.newPlot(container, graphData.data, graphData.layout, {
-                            responsive: true,
-                            displayModeBar: true,
-                            scrollZoom: true,
-                            displaylogo: false
-                        });
-                    });
-                }
-            }
-        }
+                  fetch(`/statistics/timepoint/${timepoint}`)
+                      .then(response => response.json())
+                      .then(data => {
+                          if (data.status === 'success') {
+                              // Update the tab content with the new data
+                              updateTimepointContent(timepoint, data.data);
+                              tabContent.dataset.loaded = 'true';
 
-        // Function to update component statistics tables
-        function updateComponentStats(tabContent, stats) {
-            // Update original graph components table
-            const originalCompTable = tabContent.querySelector('#original-components-table');
-            if (originalCompTable) {
-                const originalStats = stats.components.original;
-                updateComponentStatsTable(originalCompTable, originalStats);
-            }
+                              if (loadingIndicator) loadingIndicator.style.display = 'none';
+                              if (statsContainer) statsContainer.style.display = 'block';
+                          } else {
+                              console.error('Error loading timepoint data:', data.message);
+                              if (loadingIndicator) {
+                                  loadingIndicator.textContent = 'Error loading data: ' + data.message;
+                                  loadingIndicator.classList.add('text-danger');
+                              }
+                          }
+                      })
+                      .catch(error => {
+                          console.error('Error:', error);
+                          if (loadingIndicator) {
+                              loadingIndicator.textContent = 'Network error: ' + error.message;
+                              loadingIndicator.classList.add('text-danger');
+                          }
+                      });
+              }
+          }
 
-            // Update biclique graph components table
-            const bicliqueCompTable = tabContent.querySelector('#biclique-components-table');
-            if (bicliqueCompTable) {
-                const bicliquesStats = stats.components.biclique;
-                updateComponentStatsTable(bicliquesStats);
-            }
-        }
+          // Function to update timepoint content
+          function updateTimepointContent(timepoint, data) {
+              const tabContent = document.querySelector(`#${timepoint}`);
 
-        // Helper function to update component stats table
-        function updateComponentStatsTable(tableElement, stats) {
-            // Implement logic to update table rows with stats
-            // This will depend on your exact table structure
-            // Example:
-            const connectedRow = tableElement.querySelector('.connected-row');
-            if (connectedRow) {
-                connectedRow.querySelector('.total-cell').textContent = stats.connected.total;
-                connectedRow.querySelector('.single-node-cell').textContent = stats.connected.single_node;
-                // Add more cells as needed
-            }
-        }
+              // Update component statistics tables
+              updateComponentStats(tabContent, data.stats);
 
-        // Add click handlers to tabs
-        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-            tab.addEventListener('shown.bs.tab', function (event) {
-                const timepoint = event.target.getAttribute('href').substring(1);
-                loadTimepointData(timepoint);
-            });
-        });
+              // If there are component graphs, create visualizations
+              if (data.component_graphs) {
+                  const visContainer = tabContent.querySelector('.components-visualization');
+                  if (visContainer) {
+                      // Clear previous visualizations
+                      visContainer.innerHTML = '';
 
-        // Load initial tab data
-        const activeTab = document.querySelector('.nav-link.active');
-        if (activeTab) {
-            const timepoint = activeTab.getAttribute('href').substring(1);
-            loadTimepointData(timepoint);
-        }
-    });
-    </script>
+                      Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
+                          // Create a container for this component's graph
+                          const container = document.createElement('div');
+                          container.id = `component-${compId}`;
+                          container.classList.add('plotly-graph', 'mb-4');
+                          visContainer.appendChild(container);
+
+                          // Render Plotly graph
+                          Plotly.newPlot(container, graphData.data, graphData.layout, {
+                              responsive: true,
+                              displayModeBar: true,
+                              scrollZoom: true,
+                              displaylogo: false
+                          });
+                      });
+                  }
+              }
+          }
+
+          // Function to update component statistics tables
+          function updateComponentStats(tabContent, stats) {
+              // Update original graph components table
+              const originalCompTable = tabContent.querySelector('#original-components-table');
+              if (originalCompTable) {
+                  const originalStats = stats.components.original;
+                  updateComponentStatsTable(originalCompTable, originalStats, 'original');
+              }
+
+              // Update biclique graph components table
+              const bicliqueCompTable = tabContent.querySelector('#biclique-components-table');
+              if (bicliqueCompTable) {
+                  const bicliquesStats = stats.components.biclique;
+                  updateComponentStatsTable(bicliqueCompTable, bicliquesStats, 'biclique');
+              }
+          }
+
+          // Helper function to update component stats table
+          function updateComponentStatsTable(tableElement, stats, type) {
+              // Update rows dynamically based on the type of graph
+              const componentTypes = type === 'original'
+                  ? ['connected', 'biconnected', 'triconnected']
+                  : ['empty', 'simple', 'interesting', 'complex'];
+
+              componentTypes.forEach(compType => {
+                  const row = tableElement.querySelector(`.${compType}-row`);
+                  if (row) {
+                      const totalCell = row.querySelector('.total-cell');
+                      const singleNodeCell = row.querySelector('.single-node-cell');
+                      const smallCell = row.querySelector('.small-cell');
+                      const interestingCell = row.querySelector('.interesting-cell');
+
+                      if (type === 'original') {
+                          totalCell.textContent = stats[compType].total || 0;
+                          singleNodeCell.textContent = stats[compType].single_node || 0;
+                          smallCell.textContent = stats[compType].small || 0;
+                          interestingCell.textContent = stats[compType].interesting || 0;
+                      } else {
+                          // For biclique, just update the count
+                          row.querySelector('td:last-child').textContent = stats.connected[compType.replace(' ', '_')] || 0;
+                      }
+                  }
+              });
+          }
+
+          // Add click handlers to tabs
+          document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+              tab.addEventListener('shown.bs.tab', function (event) {
+                  const timepoint = event.target.getAttribute('href').substring(1);
+                  loadTimepointData(timepoint);
+              });
+          });
+
+          // Load initial tab data
+          const activeTab = document.querySelector('.nav-link.active');
+          if (activeTab) {
+              const timepoint = activeTab.getAttribute('href').substring(1);
+              loadTimepointData(timepoint);
+          }
+      });
+      </script>
     {% endblock %}
   </body>
 </html>

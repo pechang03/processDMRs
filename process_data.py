@@ -37,9 +37,9 @@ from utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
 from utils.json_utils import (
-    convert_dict_keys_to_str, 
-    convert_for_json, 
-    convert_sets_to_lists
+    convert_dict_keys_to_str,
+    convert_for_json,
+    convert_sets_to_lists,
 )
 
 from biclique_analysis import (
@@ -94,6 +94,8 @@ from data_loader import (
     validate_bipartite_graph,
 )
 
+from routes.timepoint_data import process_timepoint
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -109,8 +111,12 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
 
     # Add genes from gene column (case-insensitive)
     gene_col = next(
-        (col for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"] if col in df.columns),
-        None
+        (
+            col
+            for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]
+            if col in df.columns
+        ),
+        None,
     )
     if gene_col:
         # Filter out empty values, ".", "N/A" etc.
@@ -119,12 +125,18 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
         all_genes.update(valid_genes)
 
     # Add genes from enhancer info
-    df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(process_enhancer_info)
-    
+    df["Processed_Enhancer_Info"] = df[
+        "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+    ].apply(process_enhancer_info)
+
     for genes in df["Processed_Enhancer_Info"]:
         if genes:  # Only process non-empty gene lists
             # Filter out invalid entries
-            valid_genes = {g.strip().lower() for g in genes if g.strip() and g.strip() != "." and g.strip().lower() != "n/a"}
+            valid_genes = {
+                g.strip().lower()
+                for g in genes
+                if g.strip() and g.strip() != "." and g.strip().lower() != "n/a"
+            }
             all_genes.update(valid_genes)
 
     # Remove any remaining invalid entries
@@ -132,11 +144,11 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
 
     # Use utility function to create mapping
     max_dmr_id = df["DMR_No."].max() - 1  # Convert to 0-based index
-    
+
     print("\nGene mapping creation debug:")
     print(f"Total valid genes found: {len(all_genes)}")
     print("First 5 valid genes:", sorted(list(all_genes))[:5])
-    
+
     return create_gene_mapping(all_genes, max_dmr_id)
 
 
@@ -178,10 +190,10 @@ def process_data():
 
         # Process DSStimeseries timepoint (no longer using "overall")
         timepoint_data["DSStimeseries"] = process_timepoint(
-            df_DSStimeseries, 
+            df_DSStimeseries,
             "DSStimeseries",  # Use consistent timepoint name
-            gene_id_mapping, 
-            layout_options["DSStimeseries"]
+            gene_id_mapping,
+            layout_options["DSStimeseries"],
         )
 
         # Process pairwise timepoints
@@ -217,123 +229,6 @@ def process_data():
 
         traceback.print_exc()
         return {"error": str(e)}
-
-
-def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
-    """Process a single timepoint with configurable layout options."""
-    try:
-        # Create original bipartite graph
-        print("Creating original bipartite graph...")
-        original_graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-        print(f"Original graph created with {original_graph.number_of_nodes()} nodes and {original_graph.number_of_edges()} edges")
-
-        # Initialize base result with original graph data
-        result = {
-            "status": "success",
-            "stats": {
-                "components": calculate_component_statistics([], original_graph),
-                "coverage": {
-                    "dmrs": {"covered": 0, "total": 0, "percentage": 0},
-                    "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
-                },
-                "biclique_types": {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0,
-                },
-            },
-            "complex_components": [],
-            "interesting_components": [],
-            "non_simple_components": [],
-            "layout_used": layout_options,
-            "graphs": {
-                "original": convert_for_json(original_graph),
-                "biclique": None  # Will be populated if bicliques exist
-            }
-        }
-
-        # Process bicliques if file exists
-        biclique_file = BIPARTITE_GRAPH_OVERALL if timepoint == "DSStimeseries" else BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
-        if os.path.exists(biclique_file):
-            print(f"Processing bicliques from {biclique_file}")
-            bicliques_result = process_bicliques(original_graph, biclique_file, timepoint, 
-                                               gene_id_mapping=gene_id_mapping,
-                                               file_format="gene-name")
-
-            if bicliques_result and "bicliques" in bicliques_result:
-                # Create biclique graph
-                biclique_graph = nx.Graph()
-                for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-                    biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-                    biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-                    biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-
-                # Add biclique graph to result
-                result["graphs"]["biclique"] = convert_for_json(biclique_graph)
-
-                # Process components using both graphs
-                (complex_components, interesting_components, 
-                 simple_components, non_simple_components,
-                 component_stats, statistics) = process_components(
-                    original_graph=original_graph,
-                    biclique_graph=biclique_graph,
-                    bicliques_result=bicliques_result,
-                    dmr_metadata=create_dmr_metadata(df),
-                    gene_metadata=create_gene_metadata(df),
-                    gene_id_mapping=gene_id_mapping
-                )
-
-                # Calculate coverage statistics
-                coverage_stats = calculate_coverage_statistics(
-                    bicliques_result["bicliques"], original_graph
-                )
-                edge_coverage = calculate_edge_coverage(
-                    bicliques_result["bicliques"], original_graph
-                )
-
-                # Get bicliques summary
-                from biclique_analysis.reporting import get_bicliques_summary
-                bicliques_summary = get_bicliques_summary(bicliques_result, original_graph)
-
-                # Update result with biclique-specific data
-                result["stats"].update({
-                    "components": debug_json_conversion(component_stats, "component_stats"),
-                    "coverage": debug_json_conversion(coverage_stats, "coverage_stats"),
-                    "edge_coverage": debug_json_conversion(edge_coverage, "edge_coverage"),
-                    "biclique_types": debug_json_conversion(
-                        classify_biclique_types(bicliques_result["bicliques"]),
-                        "biclique_types"
-                    ),
-                    "bicliques_summary": debug_json_conversion(bicliques_summary, "bicliques_summary")
-                })
-                result["complex_components"] = debug_json_conversion(complex_components, "complex_components")
-                result["interesting_components"] = debug_json_conversion(interesting_components, "interesting_components")
-                result["non_simple_components"] = debug_json_conversion(non_simple_components, "non_simple_components")
-
-        return result
-
-    except Exception as e:
-        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e)}
-
-    except Exception as e:
-        print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
-        import traceback
-
-        traceback.print_exc()
-        return {"status": "error", "message": str(e)}
 
 
 # Add placeholder functions for missing metadata creation
