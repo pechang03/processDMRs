@@ -94,13 +94,18 @@ def timepoint_stats(timepoint):
 
         data = results[timepoint]
         if isinstance(data, dict) and "error" not in data:
+            # Ensure we have the expected structure
             timepoint_data = {
                 "status": "success",
-                "stats": {
-                    "coverage": data.get("stats", {}).get("coverage", {}),
-                    "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
-                    "components": data.get("stats", {}).get("components", {}),
-                    "bicliques_summary": data.get("stats", {}).get("bicliques_summary", {})
+                "data": {  # Wrap everything in a data field
+                    "stats": {
+                        "coverage": data.get("stats", {}).get("coverage", {}),
+                        "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
+                        "components": data.get("stats", {}).get("components", {}),
+                        "bicliques_summary": data.get("stats", {}).get("bicliques_summary", {})
+                    },
+                    "interesting_components": data.get("interesting_components", []),
+                    "complex_components": data.get("complex_components", [])
                 }
             }
             return jsonify(convert_for_json(timepoint_data))
