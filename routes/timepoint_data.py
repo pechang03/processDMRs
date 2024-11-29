@@ -112,6 +112,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 timepoint,
                 gene_id_mapping=gene_id_mapping,
                 file_format="gene-name",
+                biclique_graph=biclique_graph  # Pass the existing biclique graph
             )
 
             if bicliques_result and "bicliques" in bicliques_result:
@@ -126,7 +127,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 ) = process_components(
                     bipartite_graph=original_graph,
                     bicliques_result=bicliques_result,
-                    biclique_graph=biclique_graph,
+                    biclique_graph=biclique_graph,  # Pass the same biclique graph
                     dmr_metadata=dmr_metadata,
                     gene_metadata=gene_metadata,
                     gene_id_mapping=gene_id_mapping,

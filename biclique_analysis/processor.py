@@ -19,12 +19,18 @@ def process_bicliques(
     dataset_name: str,
     gene_id_mapping: Dict[str, int] = None,
     file_format: str = "gene_name",
+    biclique_graph: nx.Graph = None,  # Add parameter to receive the graph
 ) -> Dict:
     """Process bicliques and add detailed information."""
     print(f"\nProcessing bicliques for {dataset_name}")
     print(f"Using format: {file_format}")
 
     try:
+        # Use the passed biclique_graph instead of creating a new one
+        if biclique_graph is None:
+            print("Warning: No biclique graph provided, creating new one")
+            biclique_graph = nx.Graph()
+
         # Read bicliques using reader.py
         bicliques_result = read_bicliques_file(
             bicliques_file,
