@@ -12,11 +12,12 @@ from utils.edge_info import EdgeInfo
 class ComponentAnalyzer:
     """Handles analysis of graph components."""
 
-    def __init__(self, bipartite_graph: nx.Graph, bicliques_result: Dict):
+    def __init__(self, bipartite_graph: nx.Graph, bicliques_result: Dict, biclique_graph: nx.Graph = None):
         """Initialize with graphs and biclique data."""
         self.bipartite_graph = bipartite_graph
         self.bicliques_result = bicliques_result
-        self.biclique_graph = self._create_biclique_graph()
+        # Use provided biclique graph or create new one
+        self.biclique_graph = biclique_graph if biclique_graph is not None else self._create_biclique_graph()
 
     def _create_biclique_graph(self) -> nx.Graph:
         """Create graph from bicliques."""
