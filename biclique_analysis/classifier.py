@@ -19,6 +19,16 @@ class BicliqueSizeCategory(Enum):
     INTERESTING = auto()  # ≥3 DMRs and ≥3 genes
     COMPLEX = auto()  # Interesting with split genes (multiple interesting bicliques)
 
+    def get_complexity_score(self) -> int:
+        """Get numeric complexity score for sorting."""
+        # Values are 0-based, so EMPTY=1, SIMPLE=2, etc.
+        return self.value - 1
+
+    @classmethod
+    def from_string(cls, category: str) -> 'BicliqueSizeCategory':
+        """Convert string category name to enum."""
+        return cls[category.upper()]
+
 
 @dataclass
 class BicliqueSizes:
