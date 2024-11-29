@@ -71,8 +71,9 @@ def process_bicliques(
             component_stats,
             statistics,
         ) = process_components(
-            bipartite_graph,
-            bicliques_result,
+            bipartite_graph=bipartite_graph,
+            bicliques_result=bicliques_result,
+            biclique_graph=biclique_graph,  # Pass the existing biclique graph
             dominating_set=None,  # Add dominating set if needed
         )
 
