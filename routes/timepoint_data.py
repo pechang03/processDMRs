@@ -28,7 +28,15 @@ from biclique_analysis.reporting import get_bicliques_summary
 
 
 def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
-    """Process a single timepoint with configurable layout options."""
+    """
+    Call stack (top level):
+    1. [process_timepoint] (YOU ARE HERE)
+    2. create_bipartite_graph
+    3. process_bicliques
+    4. process_components
+    
+    Process a single timepoint with configurable layout options.
+    """
     try:
         # Create original bipartite graph
         print("Creating original bipartite graph...")

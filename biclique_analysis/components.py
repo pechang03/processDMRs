@@ -285,7 +285,17 @@ def process_components(
     gene_id_mapping: Dict[str, int] = None,
     dominating_set: Set[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], Dict, Dict]:
-    """Process connected components of the graph."""
+    """
+    Call stack:
+    1. process_timepoint
+    2. process_bicliques
+    3. [process_components] (YOU ARE HERE)
+    4. ComponentAnalyzer.analyze_components
+    5. enrich_component_metadata (internal)
+    6. visualize_component (for first component)
+    
+    Process connected components of the graph.
+    """
     # Initialize component lists
     complex_components = []
     interesting_components = []
