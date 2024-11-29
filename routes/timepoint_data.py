@@ -96,6 +96,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             "interesting_components": [],
             "simple_components": [],
             "non_simple_components": [],
+            "biclique_graph": biclique_graph,  # Add this line to store the graph
         }
 
         # Process bicliques if file exists
