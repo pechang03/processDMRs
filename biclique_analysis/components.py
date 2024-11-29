@@ -9,6 +9,8 @@ from biclique_analysis.statistics import (
     calculate_edge_coverage,
     calculate_node_participation,
     analyze_components,
+    calculate_size_distribution,
+    calculate_coverage_statistics,
 )
 from utils.json_utils import (
     convert_stats_for_json,
