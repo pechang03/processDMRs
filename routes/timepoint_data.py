@@ -43,9 +43,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         # Create original bipartite graph
         print("Creating original bipartite graph...")
         original_graph = create_bipartite_graph(df, gene_id_mapping, timepoint)
-        print(
-            f"Original graph created with {original_graph.number_of_nodes()} nodes and {original_graph.number_of_edges()} edges"
-        )
+        print(f"Original graph created with {original_graph.number_of_nodes()} nodes and {original_graph.number_of_edges()} edges")
 
         # Create empty biclique graph
         biclique_graph = nx.Graph()
@@ -74,16 +72,15 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
                     gene_metadata[gene_name]["description"] = str(gene_matches.iloc[0]["Gene_Description"])
 
-        # Initialize base result structure
-        # Initialize default component stats
+        # Initialize base result structure with default component stats
         default_component_stats = {
             "original": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
             },
             "biclique": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
             }
         }
 
@@ -103,11 +100,8 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         }
 
         # Process bicliques if file exists
-        biclique_file = (
-            BIPARTITE_GRAPH_OVERALL
-            if timepoint == "DSStimeseries"
-            else BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
-        )
+        biclique_file = BIPARTITE_GRAPH_OVERALL if timepoint == "DSStimeseries" else BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
+        
         if os.path.exists(biclique_file):
             print(f"\nProcessing bicliques from {biclique_file}")
             bicliques_result = process_bicliques(
@@ -153,26 +147,23 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     "bicliques": bicliques_result.get("bicliques", [])
                 })
 
-                print("\nComponent statistics:")
-                print(json.dumps(component_stats, indent=2))
-
         else:
             print(f"\nNo bicliques file found for {timepoint}")
-            # For timepoints without bicliques, calculate original graph components
+            # For timepoints without bicliques, calculate original graph components only
             connected_comps = list(nx.connected_components(original_graph))
             biconn_comps = list(nx.biconnected_components(original_graph))
             
             result["stats"]["components"]["original"] = {
                 "connected": analyze_components(connected_comps, original_graph),
                 "biconnected": analyze_components(biconn_comps, original_graph),
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
             }
 
-        return result
+        # Convert the result to JSON-safe format before returning
+        return convert_for_json(result)
 
     except Exception as e:
         print(f"Error processing timepoint {timepoint}: {str(e)}", flush=True)
         import traceback
-
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
