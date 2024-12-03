@@ -24,11 +24,12 @@ def statistics_index():
                 
                 # Get graph from data
                 graph = data.get("bipartite_graph")
-                if graph:
-                    # Count DMRs and genes from graph
-                    dmrs = len([n for n, d in graph.nodes(data=True) if d.get("bipartite") == 0])
-                    genes = [n for n, d in graph.nodes(data=True) if d.get("bipartite") == 1]
-                    edges = graph.number_of_edges()
+                if graph and isinstance(graph, dict):  # Check if it's the converted dict format
+                    # Count DMRs and genes from converted graph format
+                    node_attrs = graph.get("node_attributes", {})
+                    dmrs = len([n for n, d in node_attrs.items() if d.get("bipartite") == 0])
+                    genes = [n for n, d in node_attrs.items() if d.get("bipartite") == 1]
+                    edges = len(graph.get("edges", []))
                     
                     total_dmrs += dmrs
                     total_genes.update(genes)  # Add to set to avoid duplicates
