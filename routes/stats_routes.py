@@ -68,7 +68,8 @@ def statistics_index():
         return render_template(
             "statistics.html",
             timepoint_info=safe_timepoint_info,
-            overall_stats=safe_overall_stats  # Rename to overall_stats
+            overall_stats=safe_overall_stats,
+            statistics=safe_timepoint_info.get(next(iter(safe_timepoint_info), ""), {})
         )
 
     except Exception as e:
