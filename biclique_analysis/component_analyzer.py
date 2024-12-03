@@ -42,22 +42,30 @@ class ComponentAnalyzer:
 
     def _analyze_graph_components(self, graph: nx.Graph) -> Dict:
         """Analyze components of a single graph."""
+        # First check if this is the biclique graph
+        is_biclique_graph = graph == self.biclique_graph
+        
         connected_comps = list(nx.connected_components(graph))
         connected_stats = analyze_components(connected_comps, graph)
 
-        biconn_comps = list(nx.biconnected_components(graph))
-        biconn_stats = analyze_components(biconn_comps, graph)
-
-        return {
-            "connected": connected_stats,
-            "biconnected": biconn_stats,
-            "triconnected": {
+        result = {
+            "connected": connected_stats
+        }
+        
+        # Only add biconnected and triconnected stats for original graph
+        # or if biclique graph has components
+        if not is_biclique_graph or connected_stats["total"] > 0:
+            biconn_comps = list(nx.biconnected_components(graph))
+            result["biconnected"] = analyze_components(biconn_comps, graph)
+            
+            result["triconnected"] = {
                 "total": 0,
                 "single_node": 0,
                 "small": 0,
-                "interesting": 0,
-            },
-        }
+                "interesting": 0
+            }
+        
+        return result
 
     def _analyze_dominating_set(self, dominating_set: Set[int]) -> Dict:
         """Calculate statistics about the dominating set."""
