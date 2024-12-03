@@ -73,10 +73,22 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     gene_metadata[gene_name]["description"] = str(gene_matches.iloc[0]["Gene_Description"])
 
         # Initialize base result structure
+        # Initialize default component stats
+        default_component_stats = {
+            "original": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0},
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            },
+            "biclique": {
+                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            }
+        }
+
         result = {
             "status": "success",
             "stats": {
-                "components": calculate_component_statistics([], original_graph),
+                "components": default_component_stats,
                 "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
@@ -95,18 +107,20 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             else BIPARTITE_GRAPH_TEMPLATE.format(timepoint)
         )
         if os.path.exists(biclique_file):
-            print(f"Processing bicliques from {biclique_file}")
+            print(f"\nProcessing bicliques from {biclique_file}")
             bicliques_result = process_bicliques(
                 original_graph,
                 biclique_file,
                 timepoint,
                 gene_id_mapping=gene_id_mapping,
                 file_format="gene-name",
-                biclique_graph=biclique_graph  # Pass the existing biclique graph
+                biclique_graph=biclique_graph
             )
 
             if bicliques_result and "bicliques" in bicliques_result:
-                # Process components with all required parameters
+                print(f"\nFound {len(bicliques_result['bicliques'])} bicliques")
+                
+                # Process components
                 (
                     complex_components,
                     interesting_components,
@@ -117,43 +131,40 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 ) = process_components(
                     bipartite_graph=original_graph,
                     bicliques_result=bicliques_result,
-                    biclique_graph=biclique_graph,  # Pass the same biclique graph
+                    biclique_graph=biclique_graph,
                     dmr_metadata=dmr_metadata,
                     gene_metadata=gene_metadata,
                     gene_id_mapping=gene_id_mapping,
                 )
 
                 # Update result with processed data
-                result.update(
-                    {
-                        "complex_components": convert_for_json(complex_components),
-                        "interesting_components": convert_for_json(
-                            interesting_components
-                        ),
-                        "simple_components": convert_for_json(simple_components),
-                        "non_simple_components": convert_for_json(
-                            non_simple_components
-                        ),
-                        "stats": convert_for_json(
-                            {
-                                "components": component_stats,
-                                "coverage": calculate_coverage_statistics(
-                                    bicliques_result["bicliques"], original_graph
-                                ),
-                                "edge_coverage": calculate_edge_coverage(
-                                    bicliques_result["bicliques"], original_graph
-                                ),
-                                "biclique_types": classify_biclique_types(
-                                    bicliques_result["bicliques"]
-                                ),
-                            }
-                        ),
-                        "graphs": {
-                            "original": convert_for_json(original_graph),
-                            "biclique": convert_for_json(biclique_graph),
-                        },
-                    }
-                )
+                result.update({
+                    "complex_components": complex_components,
+                    "interesting_components": interesting_components,
+                    "simple_components": simple_components,
+                    "non_simple_components": non_simple_components,
+                    "stats": {
+                        "components": component_stats,
+                        "coverage": bicliques_result.get("coverage", {}),
+                        "edge_coverage": bicliques_result.get("edge_coverage", {}),
+                    },
+                    "bicliques": bicliques_result.get("bicliques", [])
+                })
+
+                print("\nComponent statistics:")
+                print(json.dumps(component_stats, indent=2))
+
+        else:
+            print(f"\nNo bicliques file found for {timepoint}")
+            # For timepoints without bicliques, calculate original graph components
+            connected_comps = list(nx.connected_components(original_graph))
+            biconn_comps = list(nx.biconnected_components(original_graph))
+            
+            result["stats"]["components"]["original"] = {
+                "connected": analyze_components(connected_comps, original_graph),
+                "biconnected": analyze_components(biconn_comps, original_graph),
+                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            }
 
         return result
 

@@ -12,30 +12,34 @@ def statistics_index():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Calculate overall statistics
+        # Calculate overall statistics by aggregating across all timepoints
+        total_dmrs = 0
+        total_genes = set()  # Use set to avoid counting duplicate genes
+        total_edges = 0
+        valid_timepoints = 0
+
+        for timepoint, data in results.items():
+            if isinstance(data, dict) and "error" not in data:
+                valid_timepoints += 1
+                
+                # Get graph from data
+                graph = data.get("bipartite_graph")
+                if graph:
+                    # Count DMRs and genes from graph
+                    dmrs = len([n for n, d in graph.nodes(data=True) if d.get("bipartite") == 0])
+                    genes = [n for n, d in graph.nodes(data=True) if d.get("bipartite") == 1]
+                    edges = graph.number_of_edges()
+                    
+                    total_dmrs += dmrs
+                    total_genes.update(genes)  # Add to set to avoid duplicates
+                    total_edges += edges
+
         overall_stats = {
             "graph_info": {
-                "total_dmrs": sum(
-                    len([n for n, attrs in data.get("graphs", {})
-                         .get("original", {}).get("node_attributes", {}).items()
-                         if attrs.get("bipartite") == 0])
-                    for data in results.values()
-                    if isinstance(data, dict) and "graphs" in data
-                ),
-                "total_genes": sum(
-                    len([n for n, attrs in data.get("graphs", {})
-                         .get("original", {}).get("node_attributes", {}).items()
-                         if attrs.get("bipartite") == 1])
-                    for data in results.values()
-                    if isinstance(data, dict) and "graphs" in data
-                ),
-                "total_edges": sum(
-                    len(data.get("graphs", {}).get("original", {}).get("edges", []))
-                    for data in results.values()
-                    if isinstance(data, dict) and "graphs" in data
-                ),
-                "timepoints": len([k for k, v in results.items() 
-                                 if isinstance(v, dict) and "error" not in v])
+                "total_dmrs": total_dmrs,
+                "total_genes": len(total_genes),  # Get unique count
+                "total_edges": total_edges,
+                "timepoints": valid_timepoints
             }
         }
 
