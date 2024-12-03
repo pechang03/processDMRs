@@ -22,12 +22,14 @@ def analyze_components(
             - single_node: Number of single-node components
             - small: Number of components with ≤2 nodes or ≤1 DMR/gene
             - interesting: Number of components with >2 nodes and ≥2 DMR/gene
+            - complex: Number of components with multiple interesting bicliques
             - avg_dmrs: Average number of DMRs in interesting components
             - avg_genes: Average number of genes in interesting components
     """
     interesting_comps = []
     single_node = 0
     small = 0
+    complex = 0  # Add complex counter
 
     for comp in components:
         dmrs = {n for n in comp if graph.nodes[n].get('bipartite') == 0}
@@ -38,7 +40,13 @@ def analyze_components(
         elif len(dmrs) <= 1 or len(genes) <= 1:
             small += 1
         else:
-            interesting_comps.append((comp, dmrs, genes))
+            # Check if component is complex (has multiple interesting bicliques)
+            from .classifier import classify_component, BicliqueSizeCategory
+            category = classify_component(dmrs, genes, [(dmrs, genes)])
+            if category == BicliqueSizeCategory.COMPLEX:
+                complex += 1
+            else:
+                interesting_comps.append((comp, dmrs, genes))
 
     interesting = len(interesting_comps)
 
@@ -51,6 +59,7 @@ def analyze_components(
         "single_node": single_node,
         "small": small,
         "interesting": interesting,
+        "complex": complex,  # Add complex count
         "avg_dmrs": total_dmrs / interesting if interesting else 0,
         "avg_genes": total_genes / interesting if interesting else 0
     }
