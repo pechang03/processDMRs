@@ -80,31 +80,12 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
-                    "edges": {
-                        "single_coverage": 0,
-                        "multiple_coverage": 0,
-                        "uncovered": 0,
-                        "total": 0,
-                        "single_percentage": 0,
-                        "multiple_percentage": 0,
-                        "uncovered_percentage": 0,
-                    },
-                },
-                "biclique_types": {
-                    "empty": 0,
-                    "simple": 0,
-                    "interesting": 0,
-                    "complex": 0,
                 },
             },
-            "layout_used": layout_options,
             "dmr_metadata": dmr_metadata,
             "gene_metadata": gene_metadata,
-            "complex_components": [],
-            "interesting_components": [],
-            "simple_components": [],
-            "non_simple_components": [],
-            "biclique_graph": biclique_graph,  # Add this line to store the graph
+            "bipartite_graph": original_graph,
+            "biclique_graph": biclique_graph,
         }
 
         # Process bicliques if file exists
