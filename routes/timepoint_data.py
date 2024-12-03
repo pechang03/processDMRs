@@ -3,6 +3,8 @@ import networkx as nx
 from typing import Dict
 import networkx as nx
 import pandas as pd
+import json
+from biclique_analysis.statistics import analyze_components
 
 from utils.constants import (
     DSS1_FILE,
