@@ -12,15 +12,31 @@ def statistics_index():
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
-        # Calculate true overall statistics
+        # Calculate overall statistics
         overall_stats = {
-            "total_timepoints": len([k for k, v in results.items() if isinstance(v, dict) and "error" not in v]),
-            "total_bicliques": sum(len(v.get("bicliques", [])) for v in results.values() if isinstance(v, dict)),
-            "total_components": sum(
-                len(v.get("interesting_components", [])) + 
-                len(v.get("complex_components", [])) 
-                for v in results.values() if isinstance(v, dict)
-            )
+            "graph_info": {
+                "total_dmrs": sum(
+                    len([n for n, attrs in data.get("graphs", {})
+                         .get("original", {}).get("node_attributes", {}).items()
+                         if attrs.get("bipartite") == 0])
+                    for data in results.values()
+                    if isinstance(data, dict) and "graphs" in data
+                ),
+                "total_genes": sum(
+                    len([n for n, attrs in data.get("graphs", {})
+                         .get("original", {}).get("node_attributes", {}).items()
+                         if attrs.get("bipartite") == 1])
+                    for data in results.values()
+                    if isinstance(data, dict) and "graphs" in data
+                ),
+                "total_edges": sum(
+                    len(data.get("graphs", {}).get("original", {}).get("edges", []))
+                    for data in results.values()
+                    if isinstance(data, dict) and "graphs" in data
+                ),
+                "timepoints": len([k for k, v in results.items() 
+                                 if isinstance(v, dict) and "error" not in v])
+            }
         }
 
         # Process timepoint data
