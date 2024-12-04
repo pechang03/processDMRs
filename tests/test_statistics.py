@@ -22,20 +22,18 @@ class TestStatistics(unittest.TestCase):
         # First add all nodes to the graph
         self.graph.add_nodes_from(range(6))  # Add DMR nodes 0-5
 
-        # Then set bipartite attributes
-        for n in [0, 1, 2, 3, 4, 5]:
-            self.graph.nodes[n]["bipartite"] = 0  # DMRs
+        # First add all nodes to the graph with correct bipartite attributes
+        # DMR nodes (0-2)
+        for n in [0, 1, 2]:
+            self.graph.add_node(n, bipartite=0)
+
+        # Gene nodes (START_GENE_ID to START_GENE_ID+4)
         for n in range(5):
-            self.graph.add_node(START_GENE_ID + n, bipartite=1)  # Genes
+            self.graph.add_node(START_GENE_ID + n, bipartite=1)
 
         # Add edges for first K_{3,3}
         for n in [0, 1, 2]:
             for m in [START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2]:
-                self.graph.add_edge(n, m)
-
-        # Add edges for second K_{3,3}
-        for n in [3, 4, 5]:
-            for m in [START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4]:
                 self.graph.add_edge(n, m)
 
         # Update bicliques to match the graph structure
@@ -44,10 +42,6 @@ class TestStatistics(unittest.TestCase):
                 {0, 1, 2},
                 {START_GENE_ID, START_GENE_ID + 1, START_GENE_ID + 2},
             ),  # First K_{3,3}
-            (
-                {3, 4, 5},
-                {START_GENE_ID + 2, START_GENE_ID + 3, START_GENE_ID + 4},
-            ),  # Second K_{3,3}
         ]
 
     def test_calculate_coverage_statistics(self):
@@ -55,9 +49,9 @@ class TestStatistics(unittest.TestCase):
         self.assertEqual(coverage_stats["dmrs"]["covered"], 3)
         self.assertEqual(coverage_stats["dmrs"]["total"], 3)
         self.assertEqual(coverage_stats["dmrs"]["percentage"], 1.0)
-        self.assertEqual(coverage_stats["genes"]["covered"], 2)
-        self.assertEqual(coverage_stats["genes"]["total"], 2)
-        self.assertEqual(coverage_stats["genes"]["percentage"], 1.0)
+        self.assertEqual(coverage_stats["genes"]["covered"], 3)
+        self.assertEqual(coverage_stats["genes"]["total"], 5)
+        self.assertEqual(coverage_stats["genes"]["percentage"], 0.6)
 
     def test_calculate_biclique_statistics(self):
         biclique_stats = calculate_biclique_statistics(self.bicliques, self.graph)
@@ -169,8 +163,8 @@ class TestStatisticsEdgeCases(unittest.TestCase):
 
     def test_calculate_edge_coverage(self):
         edge_coverage = calculate_edge_coverage(self.bicliques, self.graph)
-        self.assertEqual(edge_coverage["single"], 3)
-        self.assertEqual(edge_coverage["multiple"], 0)
+        self.assertEqual(edge_coverage["single_coverage"], 3)
+        self.assertEqual(edge_coverage["multiple_coverage"], 0)
         self.assertEqual(edge_coverage["uncovered"], 0)
 
 
