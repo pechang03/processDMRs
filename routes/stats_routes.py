@@ -88,14 +88,25 @@ def timepoint_stats(timepoint):
     try:
         results = process_data()
         if "error" in results or timepoint not in results:
-            return jsonify({"status": "error", "message": "Timepoint not found"})
+            return jsonify({
+                "status": "error", 
+                "message": "Timepoint not found",
+                "debug": {"available_timepoints": list(results.keys())}
+            })
 
         data = results[timepoint]
         if isinstance(data, dict) and "error" not in data:
-            # Ensure we have the expected structure
+            # Create detailed debug information
+            debug_info = {
+                "data_keys": list(data.keys()),
+                "stats_keys": list(data.get("stats", {}).keys()),
+                "components_keys": list(data.get("stats", {}).get("components", {}).keys()),
+                "raw_data": data  # Include full data for debugging
+            }
+
             timepoint_data = {
                 "status": "success",
-                "data": {  # Wrap everything in a data field
+                "data": {
                     "stats": {
                         "coverage": data.get("stats", {}).get("coverage", {}),
                         "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
@@ -103,18 +114,33 @@ def timepoint_stats(timepoint):
                         "bicliques_summary": data.get("stats", {}).get("bicliques_summary", {})
                     },
                     "interesting_components": data.get("interesting_components", []),
-                    "complex_components": data.get("complex_components", [])
-                }
+                    "complex_components": data.get("complex_components", []),
+                    "dominating_set": data.get("dominating_set", {}),
+                    "bicliques": data.get("bicliques", [])
+                },
+                "debug": debug_info
             }
+            
+            print(f"\nTimepoint {timepoint} data being sent:")
+            print(json.dumps(timepoint_data, indent=2))
+            
             return jsonify(convert_for_json(timepoint_data))
 
         return jsonify({
             "status": "error",
-            "message": data.get("message", "Unknown error")
+            "message": data.get("message", "Unknown error"),
+            "debug": {"raw_data": data}
         })
 
     except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Error in timepoint_stats: {str(e)}\n{error_traceback}")
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": str(e),
+            "debug": {
+                "traceback": error_traceback,
+                "error_type": type(e).__name__
+            }
         })
