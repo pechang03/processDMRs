@@ -104,6 +104,22 @@ def timepoint_stats(timepoint):
                 "raw_data": data  # Include full data for debugging
             }
 
+            # Get bicliques summary for this timepoint
+            bicliques_summary = {
+                "graph_info": {
+                    "total_dmrs": data.get("stats", {}).get("coverage", {}).get("dmrs", {}).get("total", 0),
+                    "total_genes": data.get("stats", {}).get("coverage", {}).get("genes", {}).get("total", 0),
+                    "total_edges": data.get("stats", {}).get("edge_coverage", {}).get("total", 0),
+                    "total_bicliques": len(data.get("bicliques", [])),
+                },
+                "header_stats": data.get("debug", {}).get("header_stats", {
+                    "Nb operations": 0,
+                    "Nb splits": 0,
+                    "Nb deletions": 0,
+                    "Nb additions": 0
+                })
+            }
+
             timepoint_data = {
                 "status": "success",
                 "data": {
@@ -111,7 +127,7 @@ def timepoint_stats(timepoint):
                         "coverage": data.get("stats", {}).get("coverage", {}),
                         "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
                         "components": data.get("stats", {}).get("components", {}),
-                        "bicliques_summary": data.get("stats", {}).get("bicliques_summary", {})
+                        "bicliques_summary": bicliques_summary  # Add bicliques summary here
                     },
                     "interesting_components": data.get("interesting_components", []),
                     "complex_components": data.get("complex_components", []),
