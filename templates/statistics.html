@@ -35,13 +35,16 @@
   {% block extra_scripts %}
   {{ super() }}
   <script>
+    // Debug configuration
+    const DEBUG = true;  // Toggle debugging
+    const EXPECTED_DATA_KEYS = ['stats', 'interesting_components', 'complex_components', 'bicliques'];
+
     document.addEventListener('DOMContentLoaded', function() {
         // Track loaded timepoints
         const loadedTimepoints = new Set();
 
         // Function to load timepoint data
         function loadTimepointData(timepoint) {
-            // Check if already loaded
             if (loadedTimepoints.has(timepoint)) {
                 return;
             }
@@ -55,33 +58,64 @@
             const loadingIndicator = tabPane.querySelector('.loading-indicator');
             const statsContainer = tabPane.querySelector('.stats-container');
 
+            function showError(message, debugInfo = null) {
+                console.error(`Error loading ${timepoint}:`, message);
+                if (debugInfo && DEBUG) {
+                    console.debug('Debug info:', debugInfo);
+                }
+                if (loadingIndicator) {
+                    loadingIndicator.textContent = `Error: ${message}`;
+                    loadingIndicator.classList.add('text-danger');
+                }
+            }
+
             if (loadingIndicator) loadingIndicator.style.display = 'block';
             if (statsContainer) statsContainer.style.display = 'none';
 
-            // Fetch data from server
             fetch(`/stats/timepoint/${timepoint}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.status === 'success') {
-                        updateTimepointContent(timepoint, data.data);
-                        loadedTimepoints.add(timepoint);
+                    if (DEBUG) {
+                        console.debug(`Raw data received for ${timepoint}:`, data);
+                    }
 
-                        if (loadingIndicator) loadingIndicator.style.display = 'none';
-                        if (statsContainer) statsContainer.style.display = 'block';
-                    } else {
-                        console.error('Error loading timepoint data:', data.message);
-                        if (loadingIndicator) {
-                            loadingIndicator.textContent = 'Error loading data: ' + data.message;
-                            loadingIndicator.classList.add('text-danger');
+                    if (data.status === 'success') {
+                        // Validate data structure
+                        const missingKeys = EXPECTED_DATA_KEYS.filter(key => !(key in data.data));
+                        if (missingKeys.length > 0) {
+                            showError(
+                                `Missing required data keys: ${missingKeys.join(', ')}`,
+                                data.debug
+                            );
+                            return;
                         }
+
+                        try {
+                            updateTimepointContent(timepoint, data.data);
+                            loadedTimepoints.add(timepoint);
+
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            if (statsContainer) statsContainer.style.display = 'block';
+                        } catch (error) {
+                            showError(
+                                `Error updating content: ${error.message}`,
+                                { error: error.stack, data: data.debug }
+                            );
+                        }
+                    } else {
+                        showError(data.message, data.debug);
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    if (loadingIndicator) {
-                        loadingIndicator.textContent = 'Network error: ' + error.message;
-                        loadingIndicator.classList.add('text-danger');
-                    }
+                    showError(
+                        `Network or parsing error: ${error.message}`,
+                        { error: error.stack }
+                    );
                 });
         }
 
