@@ -85,7 +85,7 @@ class TestStatistics(unittest.TestCase):
             biclique_stats["node_participation"]["genes"][1], 4
         )  # 4 genes appear in 1 biclique
         self.assertEqual(
-            biclique_stats["node_participation"]["genes"][2], 3
+            biclique_stats["node_participation"]["genes"][2], 1
         )  # 1 gene appears in 2 bicliques
         self.assertEqual(biclique_stats["edge_coverage"]["single"], 24)
         self.assertEqual(biclique_stats["edge_coverage"]["multiple"], 3)
