@@ -96,28 +96,29 @@ def timepoint_stats(timepoint):
 
         data = results[timepoint]
         if isinstance(data, dict) and "error" not in data:
-            # Create detailed debug information
-            debug_info = {
-                "data_keys": list(data.keys()),
-                "stats_keys": list(data.get("stats", {}).keys()),
-                "components_keys": list(data.get("stats", {}).get("components", {}).keys()),
-                "raw_data": data  # Include full data for debugging
-            }
+            # Get header stats directly from debug section
+            header_stats = data.get("debug", {}).get("header_stats", {})
+            
+            # Get edge counts from coverage stats
+            edge_stats = data.get("stats", {}).get("coverage", {}).get("edges", {})
+            total_edges = (edge_stats.get("single_coverage", 0) + 
+                         edge_stats.get("multiple_coverage", 0) + 
+                         edge_stats.get("uncovered", 0))
 
-            # Get bicliques summary for this timepoint
+            # Create comprehensive bicliques summary
             bicliques_summary = {
                 "graph_info": {
                     "total_dmrs": data.get("stats", {}).get("coverage", {}).get("dmrs", {}).get("total", 0),
                     "total_genes": data.get("stats", {}).get("coverage", {}).get("genes", {}).get("total", 0),
-                    "total_edges": data.get("stats", {}).get("edge_coverage", {}).get("total", 0),
+                    "total_edges": total_edges,
                     "total_bicliques": len(data.get("bicliques", [])),
                 },
-                "header_stats": data.get("debug", {}).get("header_stats", {
-                    "Nb operations": 0,
-                    "Nb splits": 0,
-                    "Nb deletions": 0,
-                    "Nb additions": 0
-                })
+                "header_stats": {
+                    "Nb operations": header_stats.get("Nb operations", 0),
+                    "Nb splits": header_stats.get("Nb splits", 0),
+                    "Nb deletions": header_stats.get("Nb deletions", 0),
+                    "Nb additions": header_stats.get("Nb additions", 0)
+                }
             }
 
             timepoint_data = {
@@ -125,16 +126,30 @@ def timepoint_stats(timepoint):
                 "data": {
                     "stats": {
                         "coverage": data.get("stats", {}).get("coverage", {}),
-                        "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
+                        "edge_coverage": edge_stats,
                         "components": data.get("stats", {}).get("components", {}),
-                        "bicliques_summary": bicliques_summary  # Add bicliques summary here
+                        "bicliques_summary": bicliques_summary
                     },
                     "interesting_components": data.get("interesting_components", []),
                     "complex_components": data.get("complex_components", []),
                     "dominating_set": data.get("dominating_set", {}),
                     "bicliques": data.get("bicliques", [])
                 },
-                "debug": debug_info
+                "debug": {
+                    "raw_header_stats": header_stats,
+                    "raw_edge_stats": edge_stats,
+                    "data_structure": {
+                        "keys_present": list(data.keys()),
+                        "stats_present": list(data.get("stats", {}).keys()),
+                        "components_present": list(data.get("stats", {}).get("components", {}).keys()),
+                    },
+                    "validation": {
+                        "has_header_stats": bool(header_stats),
+                        "has_edge_stats": bool(edge_stats),
+                        "bicliques_count": len(data.get("bicliques", [])),
+                        "total_edges_calculated": total_edges
+                    }
+                }
             }
             
             print(f"\nTimepoint {timepoint} data being sent:")
@@ -145,7 +160,12 @@ def timepoint_stats(timepoint):
         return jsonify({
             "status": "error",
             "message": data.get("message", "Unknown error"),
-            "debug": {"raw_data": data}
+            "debug": {
+                "error_type": "DataError",
+                "data_received": bool(data),
+                "data_type": type(data).__name__,
+                "data_keys": list(data.keys()) if isinstance(data, dict) else None
+            }
         })
 
     except Exception as e:
@@ -157,6 +177,11 @@ def timepoint_stats(timepoint):
             "message": str(e),
             "debug": {
                 "traceback": error_traceback,
-                "error_type": type(e).__name__
+                "error_type": type(e).__name__,
+                "error_details": {
+                    "args": getattr(e, 'args', None),
+                    "message": str(e),
+                    "location": "timepoint_stats"
+                }
             }
         })
