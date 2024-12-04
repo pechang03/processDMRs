@@ -87,30 +87,56 @@
 
         // Function to update timepoint content
         function updateTimepointContent(timepoint, data) {
+            if (DEBUG) {
+                console.debug(`Updating content for ${timepoint}:`, data);
+            }
+
             const tabPane = document.getElementById(timepoint);
-            
-            // Update component statistics tables
-            updateComponentStats(tabPane, data.stats);
-            
-            // Update visualizations if present
-            if (data.component_graphs) {
-                const visContainer = tabPane.querySelector('.components-visualization');
-                if (visContainer) {
-                    visContainer.innerHTML = '';
-                    Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
-                        const container = document.createElement('div');
-                        container.id = `component-${timepoint}-${compId}`;
-                        container.classList.add('plotly-graph', 'mb-4');
-                        visContainer.appendChild(container);
-                        
-                        Plotly.newPlot(container, graphData.data, graphData.layout, {
-                            responsive: true,
-                            displayModeBar: true,
-                            scrollZoom: true,
-                            displaylogo: false
+            if (!tabPane) {
+                throw new Error(`Tab pane not found for ${timepoint}`);
+            }
+
+            // Validate required data
+            if (!data.stats) {
+                throw new Error('Missing stats data');
+            }
+
+            try {
+                // Update component statistics tables
+                updateComponentStats(tabPane, data.stats);
+                
+                // Update visualizations if present
+                if (data.component_graphs) {
+                    const visContainer = tabPane.querySelector('.components-visualization');
+                    if (visContainer) {
+                        visContainer.innerHTML = '';
+                        Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
+                            if (DEBUG) {
+                                console.debug(`Creating visualization for component ${compId}`);
+                            }
+                            
+                            const container = document.createElement('div');
+                            container.id = `component-${timepoint}-${compId}`;
+                            container.classList.add('plotly-graph', 'mb-4');
+                            visContainer.appendChild(container);
+                            
+                            try {
+                                Plotly.newPlot(container, graphData.data, graphData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    scrollZoom: true,
+                                    displaylogo: false
+                                });
+                            } catch (error) {
+                                console.error(`Error creating plot for component ${compId}:`, error);
+                                container.innerHTML = `<div class="alert alert-danger">Error creating visualization: ${error.message}</div>`;
+                            }
                         });
-                    });
+                    }
                 }
+            } catch (error) {
+                console.error(`Error updating ${timepoint} content:`, error);
+                throw error;  // Re-throw to be caught by the main error handler
             }
         }
 
