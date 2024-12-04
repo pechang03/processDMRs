@@ -35,8 +35,7 @@
   {% block extra_scripts %}
   {{ super() }}
   <script>
-    // Debug configuration
-    const DEBUG = true;  // Toggle debugging
+    // Remove DEBUG declaration since it's in base.html
     const EXPECTED_DATA_KEYS = ['stats', 'interesting_components', 'complex_components', 'bicliques'];
 
     document.addEventListener('DOMContentLoaded', function() {
