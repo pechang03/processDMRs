@@ -24,6 +24,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}
     <script>
+      // Global debug configuration
+      const DEBUG = true;  // Move this here so it's only declared once
+
       document.addEventListener('DOMContentLoaded', function() {
           // Function to load timepoint data
           function loadTimepointData(timepoint) {

@@ -7,36 +7,44 @@
   <div class="loading-indicator" style="display: block">Loading data...</div>
 
   {% if data and data.get('status') == "error" %}
-  <div class="alert alert-danger">
-    Error processing timepoint: {{ data.get('message', 'Unknown error') }}
-  </div>
+    <div class="alert alert-danger">
+      Error processing timepoint: {{ data.get('message', 'Unknown error') }}
+    </div>
   {% else %}
-  <div class="stats-container" style="display: none">
-    <div class="card mb-4">
-      <div class="card-header">
-        <h3>{{ timepoint }} Statistics</h3>
-      </div>
-      <div class="card-body">
-        <!-- Add Bicliques Summary at the top of each timepoint -->
-        {% include 'components/stats/bicliques_summary.html' %}
-
-        <!-- Coverage Statistics -->
-        <div class="row">
-          {% include 'components/stats/coverage.html' %}
-          {% include 'components/stats/edge_coverage.html' %}
-          {% include 'components/stats/dominating_set.html' %}
+    <div class="stats-container" style="display: none">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>{{ timepoint }} Statistics</h3>
         </div>
+        <div class="card-body">
+          {% with statistics=data.get('data', {}) %}
+            <!-- Add Bicliques Summary at the top of each timepoint -->
+            {% include 'components/stats/bicliques_summary.html' %}
 
-        <!-- Component Analysis -->
-        <div class="row mt-4">
-          {% include 'components/stats/original_graph.html' %}
-          {% include 'components/stats/biclique_graph.html' %}
-        </div>
+            <!-- Coverage Statistics -->
+            <div class="row">
+              {% include 'components/stats/coverage.html' %}
+              {% include 'components/stats/edge_coverage.html' %}
+              {% include 'components/stats/dominating_set.html' %}
+            </div>
 
-        <!-- Component Visualizations -->
-        <div class="row mt-4">
-          {% include 'components/stats/interesting_components.html' %}
-        </div>
+            <!-- Component Analysis -->
+            <div class="row mt-4">
+              {% include 'components/stats/original_graph.html' %}
+              {% include 'components/stats/biclique_graph.html' %}
+            </div>
+
+            <!-- Component Visualizations -->
+            <div class="row mt-4">
+              {% include 'components/stats/interesting_components.html' %}
+            </div>
+          {% endwith %}
+
+          {% if DEBUG %}
+          <div class="debug-info" style="display: none;">
+            <pre>{{ data|tojson(indent=2) }}</pre>
+          </div>
+          {% endif %}
       </div>
     </div>
   </div>
