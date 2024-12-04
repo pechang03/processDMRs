@@ -16,29 +16,40 @@ class TestGraphStatistics(unittest.TestCase):
         """Set up test graph with proper K_{2,2} structure and correct ID ranges"""
         from utils.constants import START_GENE_ID
 
-        # Sample DataFrame setup for testing
+        # Sample DataFrame setup for testing - creating two overlapping K_{3,3} bicliques
         data = {
-            "DMR_No.": [1, 2],  # DMR IDs will be 0,1
+            "DMR_No.": [1, 2, 3, 4, 5, 6],  # DMR IDs will be 0-5
             "Gene_Symbol_Nearby": [
+                "genea",  # First biclique genes
                 "genea",
-                "geneb",
-            ],  # Will map to START_GENE_ID, START_GENE_ID+1
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                "genec",  # Additional gene to test with
-                "genec",  # Same gene for both DMRs
+                "genea",
+                "gened",  # Second biclique genes
+                "gened",
+                "gened",
             ],
-            "Gene_Description": ["Desc1", "Desc2"],
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
+                "geneb;genec",  # Complete first K_{3,3}
+                "geneb;genec",
+                "geneb;genec",
+                "genee;genef",  # Complete second K_{3,3}
+                "genee;genef",
+                "genee;genef",
+            ],
+            "Gene_Description": ["Desc1", "Desc2", "Desc3", "Desc4", "Desc5", "Desc6"],
         }
         self.df = pd.DataFrame(data)
         self.df["Processed_Enhancer_Info"] = self.df[
             "ENCODE_Enhancer_Interaction(BingRen_Lab)"
         ].apply(process_enhancer_info)
 
-        # Create gene_id_mapping with explicit IDs starting at START_GENE_ID (10000)
+        # Create gene_id_mapping with explicit IDs starting at START_GENE_ID (100000)
         self.gene_id_mapping = {
-            "genea": START_GENE_ID,  # 10000
-            "geneb": START_GENE_ID + 1,  # 10001
-            "genec": START_GENE_ID + 2,  # 10002
+            "genea": START_GENE_ID,      # 100000
+            "geneb": START_GENE_ID + 1,  # 100001
+            "genec": START_GENE_ID + 2,  # 100002 - shared between bicliques
+            "gened": START_GENE_ID + 3,  # 100003
+            "genee": START_GENE_ID + 4,  # 100004
+            "genef": START_GENE_ID + 5,  # 100005
         }
 
         # Create the bipartite graph
