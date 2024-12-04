@@ -1,5 +1,8 @@
 import unittest
 import networkx as nx
+
+# from biclique_analysis.classifier import BicliqueSizeCategory
+from utils.constants import START_GENE_ID
 from biclique_analysis.statistics import (
     calculate_coverage_statistics,
     calculate_biclique_statistics,
@@ -7,10 +10,8 @@ from biclique_analysis.statistics import (
     calculate_node_participation,
     calculate_edge_coverage,
     InvalidGraphError,
-    validate_graph,
+    # validate_graph,
 )
-from biclique_analysis.classifier import BicliqueSizeCategory
-from utils.constants import START_GENE_ID
 
 
 class TestStatistics(unittest.TestCase):
@@ -90,15 +91,6 @@ class TestStatistics(unittest.TestCase):
         size_dist = calculate_size_distribution(self.bicliques)
         self.assertEqual(size_dist[(3, 3)], 2)  # Two bicliques with 2 DMRs and 1 gene
 
-    def test_calculate_node_participation(self):
-        node_participation = calculate_node_participation(self.bicliques)
-        self.assertEqual(
-            node_participation["dmrs"][2], 6
-        )  # 3 DMRs appear in 2 bicliques
-        self.assertEqual(
-            node_participation["genes"][8], 2
-        )  # 2 genes appear in 2 bicliques
-
     def test_calculate_edge_coverage(self):
         edge_coverage = calculate_edge_coverage(self.bicliques, self.graph)
         self.assertEqual(edge_coverage["single"], 3)  # 3 edges covered once
@@ -151,10 +143,6 @@ class TestStatistics(unittest.TestCase):
         )  # 1 gene (node 8) appears in 2 bicliques
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestStatisticsEdgeCases(unittest.TestCase):
     def setUp(self):
         """Set up test graph with simple structure"""
@@ -184,3 +172,7 @@ class TestStatisticsEdgeCases(unittest.TestCase):
         self.assertEqual(edge_coverage["single"], 3)
         self.assertEqual(edge_coverage["multiple"], 0)
         self.assertEqual(edge_coverage["uncovered"], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
