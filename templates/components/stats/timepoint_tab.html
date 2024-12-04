@@ -17,6 +17,9 @@
         <h3>{{ timepoint }} Statistics</h3>
       </div>
       <div class="card-body">
+        <!-- Add Bicliques Summary at the top of each timepoint -->
+        {% include 'components/stats/bicliques_summary.html' %}
+
         <!-- Coverage Statistics -->
         <div class="row">
           {% include 'components/stats/coverage.html' %}
