@@ -45,27 +45,43 @@ class ComponentAnalyzer:
         # First check if this is the biclique graph
         is_biclique_graph = graph == self.biclique_graph
         
-        connected_comps = list(nx.connected_components(graph))
-        connected_stats = analyze_components(connected_comps, graph)
-
-        result = {
-            "connected": connected_stats
-        }
-        
-        # Only add biconnected and triconnected stats for original graph
-        # or if biclique graph has components
-        if not is_biclique_graph or connected_stats["total"] > 0:
-            biconn_comps = list(nx.biconnected_components(graph))
-            result["biconnected"] = analyze_components(biconn_comps, graph)
-            
-            result["triconnected"] = {
-                "total": 0,
-                "single_node": 0,
-                "small": 0,
-                "interesting": 0
+        if is_biclique_graph:
+            # For biclique graph, use biclique classification
+            components = list(nx.connected_components(graph))
+            biclique_stats = {
+                "empty": 0,
+                "simple": 0,
+                "interesting": 0,
+                "complex": 0
             }
-        
-        return result
+            
+            for comp in components:
+                # Get bicliques for this component
+                comp_bicliques = [b for b in self.bicliques_result.get("bicliques", [])
+                                if any(node in comp for node in b[0] | b[1])]
+                
+                # Classify the component
+                dmr_nodes = {n for n in comp if graph.nodes[n].get("bipartite") == 0}
+                gene_nodes = {n for n in comp if graph.nodes[n].get("bipartite") == 1}
+                category = classify_component(dmr_nodes, gene_nodes, comp_bicliques)
+                biclique_stats[category.name.lower()] += 1
+                
+            return {"biclique_components": biclique_stats}
+        else:
+            # Original graph analysis with proper triconnected component handling
+            connected_comps = list(nx.connected_components(graph))
+            connected_stats = analyze_components(connected_comps, graph)
+            biconn_comps = list(nx.biconnected_components(graph))
+            biconn_stats = analyze_components(biconn_comps, graph)
+            
+            # Get triconnected components properly
+            triconn_stats = self._analyze_triconnected_components(graph)
+            
+            return {
+                "connected": connected_stats,
+                "biconnected": biconn_stats,
+                "triconnected": triconn_stats
+            }
 
     def _analyze_dominating_set(self, dominating_set: Set[int]) -> Dict:
         """Calculate statistics about the dominating set."""
@@ -249,3 +265,14 @@ class ComponentAnalyzer:
                 ],
             },
         }
+    def _analyze_triconnected_components(self, graph: nx.Graph) -> Dict:
+        """Analyze triconnected components properly."""
+        from biclique_analysis.triconnected import find_separation_pairs
+        
+        # Get triconnected components
+        separation_pairs = find_separation_pairs(graph)
+        if not separation_pairs:
+            return {"total": 0, "single_node": 0, "small": 0, "interesting": 0}
+            
+        # Analyze the components
+        return analyze_components(separation_pairs, graph)

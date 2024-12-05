@@ -108,49 +108,21 @@ def timepoint_stats(timepoint):
                          edge_stats.get("multiple_coverage", 0) + 
                          edge_stats.get("uncovered", 0))
 
-            # Create comprehensive bicliques summary
-            bicliques_summary = {
-                "graph_info": {
-                    "total_dmrs": data.get("stats", {}).get("coverage", {}).get("dmrs", {}).get("total", 0),
-                    "total_genes": data.get("stats", {}).get("coverage", {}).get("genes", {}).get("total", 0),
-                    "total_edges": total_edges,
-                    "total_bicliques": len(data.get("bicliques", [])),
-                },
-                "header_stats": {
-                    "Nb operations": header_stats.get("Nb operations", 0),
-                    "Nb splits": header_stats.get("Nb splits", 0),
-                    "Nb deletions": header_stats.get("Nb deletions", 0),
-                    "Nb additions": header_stats.get("Nb additions", 0)
-                }
-            }
-
+            # Separate bicliques summary into its own section
             timepoint_data = {
                 "status": "success",
                 "data": {
                     "stats": {
                         "coverage": data.get("stats", {}).get("coverage", {}),
-                        "edge_coverage": edge_stats,
-                        "components": data.get("stats", {}).get("components", {}),
-                        "bicliques_summary": bicliques_summary
+                        "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
+                        "components": {
+                            "original": data.get("stats", {}).get("components", {}).get("original", {}),
+                            "biclique": data.get("stats", {}).get("components", {}).get("biclique", {}).get("biclique_components", {})
+                        }
                     },
-                    "interesting_components": data.get("interesting_components", []),
-                    "complex_components": data.get("complex_components", []),
-                    "dominating_set": data.get("dominating_set", {}),
-                    "bicliques": data.get("bicliques", [])
-                },
-                "debug": {
-                    "raw_header_stats": header_stats,
-                    "raw_edge_stats": edge_stats,
-                    "data_structure": {
-                        "keys_present": list(data.keys()),
-                        "stats_present": list(data.get("stats", {}).keys()),
-                        "components_present": list(data.get("stats", {}).get("components", {}).keys()),
-                    },
-                    "validation": {
-                        "has_header_stats": bool(header_stats),
-                        "has_edge_stats": bool(edge_stats),
-                        "bicliques_count": len(data.get("bicliques", [])),
-                        "total_edges_calculated": total_edges
+                    "bicliques_summary": {
+                        "graph_info": data.get("bicliques_summary", {}).get("graph_info", {}),
+                        "header_stats": data.get("bicliques_summary", {}).get("header_stats", {})
                     }
                 }
             }
