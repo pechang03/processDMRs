@@ -119,6 +119,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Add these functions before the event listener setup
+
+    function updateComponentStats(tabContent, stats) {
+        // Update original graph components table
+        const originalCompTable = tabContent.querySelector('#original-components-table');
+        if (originalCompTable) {
+            const originalStats = stats.components.original;
+            updateComponentStatsTable(originalCompTable, originalStats, 'original');
+        }
+
+        // Update biclique graph components table
+        const bicliqueCompTable = tabContent.querySelector('#biclique-components-table');
+        if (bicliqueCompTable) {
+            const bicliquesStats = stats.components.biclique;
+            updateComponentStatsTable(bicliqueCompTable, bicliquesStats, 'biclique');
+        }
+    }
+
+    function updateComponentStatsTable(tableElement, stats, type) {
+        // Determine which components to update based on type
+        const componentTypes = type === 'original'
+            ? ['connected', 'biconnected', 'triconnected']
+            : ['empty', 'simple', 'interesting', 'complex'];
+
+        componentTypes.forEach(compType => {
+            const row = tableElement.querySelector(`.${compType}-row`);
+            if (row) {
+                if (type === 'original') {
+                    // Update original graph row with all columns
+                    const cells = {
+                        total: row.querySelector('.total-cell'),
+                        single_node: row.querySelector('.single-node-cell'),
+                        small: row.querySelector('.small-cell'),
+                        interesting: row.querySelector('.interesting-cell')
+                    };
+
+                    Object.entries(cells).forEach(([key, cell]) => {
+                        if (cell) {
+                            cell.textContent = stats[compType]?.[key] || 0;
+                        }
+                    });
+                } else {
+                    // Update biclique graph row with single count
+                    const countCell = row.querySelector('td:last-child');
+                    if (countCell) {
+                        countCell.textContent = stats.connected?.[compType.replace(' ', '_')] || 0;
+                    }
+                }
+            }
+        });
+    }
+
     // Add click handlers to tabs
     document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', function (event) {
