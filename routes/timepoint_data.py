@@ -29,6 +29,10 @@ from biclique_analysis.statistics import (
 from biclique_analysis.reporting import get_bicliques_summary
 
 
+def format_timepoint_for_display(timepoint: str) -> str:
+    """Format timepoint name for display by removing _TSS suffix."""
+    return timepoint.replace('_TSS', '') if timepoint.endswith('_TSS') else timepoint
+
 def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
     """
     Call stack (top level):
