@@ -296,7 +296,7 @@ class TestBipartiteGraph(unittest.TestCase):
         mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1}
 
         # Test different timepoints
-        timepoints = ["P21-P28", "P21-P40", "P21-P60"]
+        timepoints = ["P21-P28_TSS", "P21-P40_TSS", "P21-P60_TSS"]  # Updated timepoint names
         graphs = {}
 
         for timepoint in timepoints:
@@ -313,13 +313,13 @@ class TestBipartiteGraph(unittest.TestCase):
                 self.assertEqual(graph.nodes[dmr]["timepoint"], timepoint)
 
                 # Verify DMR ID is in correct range
-                if timepoint == "P21-P28":
+                if timepoint == "P21-P28_TSS":
                     self.assertGreaterEqual(dmr, 10000)
                     self.assertLess(dmr, 20000)
-                elif timepoint == "P21-P40":
+                elif timepoint == "P21-P40_TSS":
                     self.assertGreaterEqual(dmr, 20000)
                     self.assertLess(dmr, 30000)
-                elif timepoint == "P21-P60":
+                elif timepoint == "P21-P60_TSS":
                     self.assertGreaterEqual(dmr, 30000)
                     self.assertLess(dmr, 40000)
 
