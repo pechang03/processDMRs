@@ -120,6 +120,10 @@ def timepoint_stats(timepoint):
                             "biclique": data.get("stats", {}).get("components", {}).get("biclique", {}).get("biclique_components", {})
                         }
                     },
+                    # Add these required fields back
+                    "interesting_components": data.get("interesting_components", []),
+                    "complex_components": data.get("complex_components", []),
+                    "bicliques": data.get("bicliques", []),
                     "bicliques_summary": {
                         "graph_info": data.get("bicliques_summary", {}).get("graph_info", {}),
                         "header_stats": data.get("bicliques_summary", {}).get("header_stats", {})
