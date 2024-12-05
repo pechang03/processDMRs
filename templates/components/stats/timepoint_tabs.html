@@ -1,12 +1,13 @@
 <ul class="nav nav-tabs card-header-tabs" role="tablist">
+  {% from "macros.html" import format_timepoint %}
   {% for timepoint in timepoint_info.keys() %}
   <li class="nav-item">
-    <a class="nav-link {% if loop.first %}active{% endif %}" id="{{ timepoint }}-tab" data-bs-toggle="tab" href="#{{ timepoint }}" role="tab">
-      {% if timepoint == "DSStimeseries" %}
-        DSS Timeseries
-      {% else %}
-        {{ timepoint }}
-      {% endif %}
+    <a class="nav-link {% if loop.first %}active{% endif %}" 
+       id="{{ timepoint }}-tab" 
+       data-bs-toggle="tab" 
+       href="#{{ timepoint }}" 
+       role="tab">
+      {{ format_timepoint(timepoint) }}
     </a>
   </li>
   {% endfor %}
