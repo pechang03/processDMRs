@@ -319,7 +319,7 @@ def process_components(
     def enrich_component_metadata(component_info: Dict) -> Dict:
         """Add rich metadata to a component."""
         # Get bicliques for this component
-        component_bicliques = component_info.get('raw_bicliques', [])
+        component_bicliques = [b for b in bicliques_result["bicliques"] if any(node in component_info['component'] for node in b[0] | b[1])]
         
         # Calculate biclique-related statistics
         component_info.update({
