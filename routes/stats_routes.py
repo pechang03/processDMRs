@@ -18,45 +18,35 @@ def statistics_index():
         total_edges = 0
         valid_timepoints = 0
 
+        # Process timepoint data
+        timepoint_info = {}
         for timepoint, data in results.items():
             if isinstance(data, dict) and "error" not in data:
                 valid_timepoints += 1
                 
-                # Get graph from data
+                # Get graph info
                 graph = data.get("bipartite_graph")
-                if graph and isinstance(graph, dict):  # Check if it's the converted dict format
-                    # Count DMRs and genes from converted graph format
+                if graph and isinstance(graph, dict):
                     node_attrs = graph.get("node_attributes", {})
                     dmrs = len([n for n, d in node_attrs.items() if d.get("bipartite") == 0])
                     genes = [n for n, d in node_attrs.items() if d.get("bipartite") == 1]
                     edges = len(graph.get("edges", []))
                     
                     total_dmrs += dmrs
-                    total_genes.update(genes)  # Add to set to avoid duplicates
+                    total_genes.update(genes)
                     total_edges += edges
 
-        overall_stats = {
-            "graph_info": {
-                "total_dmrs": total_dmrs,
-                "total_genes": len(total_genes),  # Get unique count
-                "total_edges": total_edges,
-                "timepoints": valid_timepoints
-            }
-        }
-
-        # Process timepoint data
-        timepoint_info = {}
-        for timepoint, data in results.items():
-            if isinstance(data, dict) and "error" not in data:
-                # Extract complete stats for this timepoint
+                # Process timepoint data with complete stats
                 timepoint_info[timepoint] = {
                     "status": "success",
-                    "stats": data.get("stats", {}),  # Include all stats
-                    "coverage": data.get("coverage", {}),
-                    "edge_coverage": data.get("edge_coverage", {}),
-                    "components": data.get("stats", {}).get("components", {}),
-                    "dominating_set": data.get("dominating_set", {}),
-                    "bicliques_summary": data.get("bicliques_summary", {}),
+                    "stats": convert_for_json(data.get("stats", {})),
+                    "coverage": convert_for_json(data.get("coverage", {})),
+                    "edge_coverage": convert_for_json(data.get("edge_coverage", {})),
+                    "components": convert_for_json(data.get("stats", {}).get("components", {})),
+                    "dominating_set": convert_for_json(data.get("dominating_set", {})),
+                    "bicliques_summary": convert_for_json(data.get("bicliques_summary", {})),
+                    "interesting_components": convert_for_json(data.get("interesting_components", [])),
+                    "complex_components": convert_for_json(data.get("complex_components", [])),
                     "message": ""
                 }
             else:
@@ -66,15 +56,28 @@ def statistics_index():
                     "stats": {}
                 }
 
-        # Convert to JSON-safe format
+        overall_stats = {
+            "graph_info": {
+                "total_dmrs": total_dmrs,
+                "total_genes": len(total_genes),
+                "total_edges": total_edges,
+                "timepoints": valid_timepoints
+            }
+        }
+
+        # Convert everything to JSON-safe format
         safe_timepoint_info = convert_for_json(timepoint_info)
         safe_overall_stats = convert_for_json(overall_stats)
+
+        # Get first timepoint's statistics for initial display
+        first_timepoint = next(iter(safe_timepoint_info), "")
+        initial_stats = safe_timepoint_info.get(first_timepoint, {})
 
         return render_template(
             "statistics.html",
             timepoint_info=safe_timepoint_info,
             overall_stats=safe_overall_stats,
-            statistics=safe_timepoint_info.get(next(iter(safe_timepoint_info), ""), {})
+            statistics=initial_stats
         )
 
     except Exception as e:
