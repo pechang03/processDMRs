@@ -69,32 +69,54 @@
           // Function to update timepoint content
           function updateTimepointContent(timepoint, data) {
               const tabContent = document.querySelector(`#${timepoint}`);
+              if (!tabContent) {
+                  console.error(`Tab content not found for timepoint: ${timepoint}`);
+                  return;
+              }
 
-              // Update component statistics tables
-              updateComponentStats(tabContent, data.stats);
+              const loadingIndicator = tabContent.querySelector('.loading-indicator');
+              const statsContainer = tabContent.querySelector('.stats-container');
+          
+              if (data.debug) {
+                  const debugInfo = tabContent.querySelector('.debug-info');
+                  if (debugInfo) {
+                      debugInfo.textContent = JSON.stringify(data.debug, null, 2);
+                      if (DEBUG) {
+                          debugInfo.style.display = 'block';
+                      }
+                  }
+              }
 
-              // If there are component graphs, create visualizations
-              if (data.component_graphs) {
-                  const visContainer = tabContent.querySelector('.components-visualization');
-                  if (visContainer) {
-                      // Clear previous visualizations
-                      visContainer.innerHTML = '';
+              // Update edge coverage stats if present
+              if (data.debug && data.debug.raw_edge_stats) {
+                  updateEdgeCoverageStats(tabContent, data.debug.raw_edge_stats);
+              }
 
-                      Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
-                          // Create a container for this component's graph
-                          const container = document.createElement('div');
-                          container.id = `component-${compId}`;
-                          container.classList.add('plotly-graph', 'mb-4');
-                          visContainer.appendChild(container);
+              // Update component statistics
+              if (data.stats && data.stats.components) {
+                  updateComponentStats(tabContent, data.stats);
+              }
 
-                          // Render Plotly graph
-                          Plotly.newPlot(container, graphData.data, graphData.layout, {
-                              responsive: true,
-                              displayModeBar: true,
-                              scrollZoom: true,
-                              displaylogo: false
-                          });
-                      });
+              if (loadingIndicator) loadingIndicator.style.display = 'none';
+              if (statsContainer) statsContainer.style.display = 'block';
+          }
+
+          function updateEdgeCoverageStats(container, stats) {
+              const coverageTable = container.querySelector('.card table');
+              if (coverageTable) {
+                  const rows = coverageTable.querySelectorAll('tbody tr');
+                  if (rows.length >= 3) {
+                      // Update single coverage
+                      rows[0].querySelector('td:last-child').textContent = 
+                          `${stats.single_coverage} (${(stats.single_percentage * 100).toFixed(1)}%)`;
+                  
+                      // Update multiple coverage
+                      rows[1].querySelector('td:last-child').textContent = 
+                          `${stats.multiple_coverage} (${(stats.multiple_percentage * 100).toFixed(1)}%)`;
+                  
+                      // Update uncovered
+                      rows[2].querySelector('td:last-child').textContent = 
+                          `${stats.uncovered} (${(stats.uncovered_percentage * 100).toFixed(1)}%)`;
                   }
               }
           }
