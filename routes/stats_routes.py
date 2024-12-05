@@ -117,10 +117,9 @@ def timepoint_stats(timepoint):
                         "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
                         "components": {
                             "original": data.get("stats", {}).get("components", {}).get("original", {}),
-                            "biclique": data.get("stats", {}).get("components", {}).get("biclique", {}).get("biclique_components", {})
+                            "biclique": data.get("stats", {}).get("components", {}).get("biclique", {})
                         }
                     },
-                    # Add these required fields back
                     "interesting_components": data.get("interesting_components", []),
                     "complex_components": data.get("complex_components", []),
                     "bicliques": data.get("bicliques", []),
@@ -131,10 +130,13 @@ def timepoint_stats(timepoint):
                 }
             }
             
-            print(f"\nTimepoint {timepoint} data being sent:")
-            print(json.dumps(timepoint_data, indent=2))
+            # Convert to JSON-safe format only when returning
+            json_safe_data = convert_for_json(timepoint_data)
             
-            return jsonify(convert_for_json(timepoint_data))
+            print(f"\nTimepoint {timepoint} data being sent:")
+            print(json.dumps(json_safe_data, indent=2))
+            
+            return jsonify(json_safe_data)
 
         return jsonify({
             "status": "error",
