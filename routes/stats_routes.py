@@ -122,6 +122,8 @@ def timepoint_stats(timepoint):
                     },
                     "interesting_components": data.get("interesting_components", []),
                     "complex_components": data.get("complex_components", []),
+                    "simple_components": data.get("simple_components", []),  # Add this
+                    "non_simple_components": data.get("non_simple_components", []),  # Add this
                     "bicliques": data.get("bicliques", []),
                     "bicliques_summary": {
                         "graph_info": data.get("bicliques_summary", {}).get("graph_info", {}),
