@@ -95,8 +95,20 @@ def main():
     # Register blueprints
     register_blueprints(app)
 
+    # Add MIME type handling
+    app.config['MIME_TYPES'] = {
+        '.css': 'text/css',
+        '.js': 'application/javascript'
+    }
+
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
+
+    # Add route for static files
+    @app.route('/static/<path:filename>')
+    def serve_static(filename):
+        """Serve static files."""
+        return send_from_directory(app.static_folder, filename)
 
     # Debug: Print registered routes
     print("\nRegistered Routes:")
