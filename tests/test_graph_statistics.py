@@ -109,11 +109,11 @@ class TestGraphStatistics(unittest.TestCase):
     def test_graph_structure(self):
         """Test the basic structure of the graph"""
         # Test number of nodes
-        expected_nodes = 5  # 2 DMRs + 3 genes (A,B,C,D,E,F)
+        expected_nodes = 12  # 6 DMRs + 6 genes (genea through genef)
         self.assertEqual(len(self.bipartite_graph.nodes()), expected_nodes)
 
         # Test number of edges
-        expected_edges = 6  # Each DMR connects 3 genes
+        expected_edges = 18  # Each DMR connects to 3 genes
         self.assertEqual(len(self.bipartite_graph.edges()), expected_edges)
 
     def test_graph_validation(self):
