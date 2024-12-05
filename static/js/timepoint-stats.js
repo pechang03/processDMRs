@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (statsContainer) statsContainer.style.display = 'none';
         if (errorContainer) errorContainer.style.display = 'none';
 
-        fetch(`/statistics/timepoint/${timepoint}`)
+        fetch(`/stats/timepoint/${timepoint}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
