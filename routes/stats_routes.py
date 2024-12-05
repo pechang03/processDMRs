@@ -139,12 +139,12 @@ def timepoint_stats(timepoint):
         return jsonify({
             "status": "error",
             "message": data.get("message", "Unknown error"),
-            "debug": {
+            "debug": convert_for_json({
                 "error_type": "DataError",
                 "data_received": bool(data),
                 "data_type": type(data).__name__,
                 "data_keys": list(data.keys()) if isinstance(data, dict) else None
-            }
+            })
         })
 
     except Exception as e:
@@ -154,7 +154,7 @@ def timepoint_stats(timepoint):
         return jsonify({
             "status": "error",
             "message": str(e),
-            "debug": {
+            "debug": convert_for_json({
                 "traceback": error_traceback,
                 "error_type": type(e).__name__,
                 "error_details": {
@@ -162,5 +162,5 @@ def timepoint_stats(timepoint):
                     "message": str(e),
                     "location": "timepoint_stats"
                 }
-            }
+            })
         })
