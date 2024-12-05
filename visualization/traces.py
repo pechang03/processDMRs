@@ -95,7 +95,10 @@ def create_gene_trace(
         # Set node color based on biclique membership
         if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            color = biclique_colors[biclique_idx % len(biclique_colors)] if biclique_colors else "gray"
+            # Add validation to check if biclique_idx is valid
+            color = (biclique_colors[biclique_idx % len(biclique_colors)] 
+                    if biclique_colors and biclique_idx < len(biclique_colors) 
+                    else "gray")
         else:
             color = "gray"
         colors.append(color)
@@ -237,7 +240,10 @@ def create_dmr_trace(
         # Set node color based on biclique membership
         if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            color = biclique_colors[biclique_idx % len(biclique_colors)] if biclique_colors else "gray"
+            # Add validation to check if biclique_idx is valid
+            color = (biclique_colors[biclique_idx % len(biclique_colors)]
+                    if biclique_colors and biclique_idx < len(biclique_colors)
+                    else "gray")
         else:
             color = "gray"
         colors.append(color)
