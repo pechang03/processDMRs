@@ -69,6 +69,37 @@
               </form>
             </div>
           </div>
+
+          <!-- Add component statistics -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>Component Statistics</h3>
+            </div>
+            <div class="card-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Total Components</td>
+                    <td>{{ statistics.components.original.connected.total }}</td>
+                  </tr>
+                  <tr>
+                    <td>Interesting Components</td>
+                    <td>{{ statistics.components.original.connected.interesting }}</td>
+                  </tr>
+                  <tr>
+                    <td>Complex Components</td>
+                    <td>{{ statistics.components.original.connected.complex }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           {% endif %} {% if results.simple_connections %}
           <div class="card mb-4">
             <div class="card-header">
