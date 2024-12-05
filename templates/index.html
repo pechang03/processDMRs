@@ -29,7 +29,7 @@
           <a
             class="nav-link"
             id="statistics-tab"
-            href="{{ url_for('stats_bp.statistics_index') }}"
+            href="{{ url_for('stats.statistics_index') }}"
             >Statistics</a
           >
         </li>
@@ -54,13 +54,13 @@
                       onchange="window.location.href=this.value"
                     >
                       <option value="">Select a component</option>
-                      {% for component in bicliques_result.interesting_components %}
+                      {% for component in
+                      bicliques_result.interesting_components %}
                       <option
                         value="{{ url_for('component_detail', component_id=component.id) }}"
                       >
-                        Component {{ component.id }} 
-                        ({{ component.dmrs }} DMRs, {{ component.genes }} Genes)
-                        - {{ component.category }}
+                        Component {{ component.id }} ({{ component.dmrs }} DMRs,
+                        {{ component.genes }} Genes) - {{ component.category }}
                       </option>
                       {% endfor %}
                     </select>
@@ -103,8 +103,7 @@
         </div>
 
         <div class="tab-pane fade" id="statistics" role="tabpanel">
-          <div class="statistics-container">
-          </div>
+          <div class="statistics-container"></div>
         </div>
       </div>
     </div>

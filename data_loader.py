@@ -6,13 +6,15 @@ import pandas as pd
 from typing import Dict, List, Set, Tuple
 import os
 
+from pandas.core.arrays.period import DIFFERENT_FREQ
+
 from utils.id_mapping import create_dmr_id, create_gene_mapping, validate_gene_mapping
 from utils.data_processing import process_enhancer_info
 from utils.graph_io import (
-    read_bipartite_graph, 
+    read_bipartite_graph,
     write_bipartite_graph,
     remove_isolated_nodes,
-    preprocess_graph_for_visualization
+    preprocess_graph_for_visualization,
 )
 from utils.constants import (
     DATA_DIR,
@@ -20,7 +22,7 @@ from utils.constants import (
     DSS_PAIRWISE_FILE,
     BIPARTITE_GRAPH_TEMPLATE,
     BIPARTITE_GRAPH_OVERALL,
-    START_GENE_ID
+    START_GENE_ID,
 )
 
 
@@ -119,9 +121,9 @@ def read_excel_file(filepath, sheet_name=None):
         dtype_map = {
             "DMR_No.": int,
             "Gene_Symbol_Nearby": str,
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": str
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": str,
         }
-        
+
         if sheet_name:
             df = pd.read_excel(filepath, sheet_name=sheet_name, dtype=dtype_map)
         else:
@@ -133,7 +135,9 @@ def read_excel_file(filepath, sheet_name=None):
                 "ENCODE_Enhancer_Interaction(BingRen_Lab)"
             ].apply(process_enhancer_info)
 
-        print(f"Read {len(df)} rows with DMR range: {df['DMR_No.'].min()}-{df['DMR_No.'].max()}")
+        print(
+            f"Read {len(df)} rows with DMR range: {df['DMR_No.'].min()}-{df['DMR_No.'].max()}"
+        )
         return df  # Return the DataFrame directly
 
     except Exception as e:
@@ -205,7 +209,10 @@ def create_bipartite_graph(
     timepoint: str = "DSS1",
     closest_gene_col: str = "Gene_Symbol_Nearby",
 ) -> nx.Graph:
-    """Create a bipartite graph from DataFrame."""
+    """Create a bipartite graph from DataFrame.
+     This function parses the spreadsheet and creates a bipartie graph from this which is DIFFERENT_FREQ
+    from utils/graph_io.py read_bipartite_graph because that only reads the graph from the file.
+    """
     B = nx.Graph()
 
     print(f"\nCreating bipartite graph for timepoint: {timepoint}")
@@ -222,14 +229,14 @@ def create_bipartite_graph(
         if "DMR_No." not in row:
             print(f"Warning: DMR_No. column missing in row: {row}")
             continue
-            
+
         dmr_num = int(row["DMR_No."]) - 1  # Convert to 0-based index
         dmr_id = create_dmr_id(dmr_num, timepoint, min_gene_id)
-        
+
         # Debug output for first few DMRs
         if len(dmr_nodes) < 5:
             print(f"Adding DMR {dmr_num} with ID {dmr_id}")
-            
+
         dmr_nodes.add(dmr_id)
         B.add_node(dmr_id, bipartite=0, timepoint=timepoint)
 
@@ -274,10 +281,13 @@ def create_bipartite_graph(
     print(f"DMR nodes: {len(dmr_nodes)}")
     print(f"Gene nodes: {len([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])}")
     print(f"Total edges added: {len(edges_added)}")
-    
+
     if len(dmr_nodes) < 5:
         print("\nDMR nodes (first 5):", sorted(list(dmr_nodes))[:5])
-        print("Gene nodes (first 5):", sorted([n for n in B.nodes() if B.nodes[n]['bipartite'] == 1])[:5])
+        print(
+            "Gene nodes (first 5):",
+            sorted([n for n in B.nodes() if B.nodes[n]["bipartite"] == 1])[:5],
+        )
         print("Edges (first 5):", sorted(list(edges_added))[:5])
 
     # Remove isolated nodes and preprocess graph

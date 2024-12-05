@@ -19,4 +19,4 @@ coverage report
 coverage html
 
 # Exit with the test suite's exit code
-exit ${PIPESTATUS[0]}
+exit ${{PIPESTATUS[0]}}
