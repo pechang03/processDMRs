@@ -63,13 +63,6 @@ def index_route():
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
-@main_bp.route("/statistics/timepoint/<timepoint>")
-def timepoint_data_route(timepoint):
-    """Handle dynamic loading of timepoint data."""
-    try:
-        results = process_data()
-        if "error" in results or timepoint not in results:
-            return jsonify({"status": "error", "message": "Timepoint not found"})
 
         data = results[timepoint]
         if isinstance(data, dict) and "error" not in data:
