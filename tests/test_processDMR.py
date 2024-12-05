@@ -9,12 +9,17 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Now import the modules
-from processDMR import create_bipartite_graph, process_enhancer_info
+from processDMR import process_enhancer_info
 from rb_domination import greedy_rb_domination
 from visualization.core import create_biclique_visualization
 from utils.constants import START_GENE_ID
-from data_loader import get_excel_sheets, read_excel_file, validate_bipartite_graph
-from utils.id_mapping import create_gene_mapping
+from data_loader import (
+    create_bipartite_graph,
+    validate_bipartite_graph,
+    get_excel_sheets,
+    read_excel_file,
+)
+# from utils.id_mapping import create_gene_mapping
 
 
 class TestBipartiteGraph(unittest.TestCase):
@@ -32,9 +37,16 @@ class TestBipartiteGraph(unittest.TestCase):
 
         # Create gene_id_mapping using START_GENE_ID
         from utils.constants import START_GENE_ID
+
         all_genes = set()
         all_genes.update(df["Gene_Symbol_Nearby"].str.strip().str.lower())
-        all_genes.update([g.strip().lower() for genes in df["Processed_Enhancer_Info"] for g in genes])
+        all_genes.update(
+            [
+                g.strip().lower()
+                for genes in df["Processed_Enhancer_Info"]
+                for g in genes
+            ]
+        )
         self.gene_id_mapping = {
             gene: START_GENE_ID + idx for idx, gene in enumerate(sorted(all_genes))
         }
@@ -225,35 +237,36 @@ class TestBipartiteGraph(unittest.TestCase):
             "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
                 "GeneA;GeneB;GeneC",
                 "GeneA;GeneB;GeneC",
-                "GeneA;GeneB;GeneC"
-            ]
+                "GeneA;GeneB;GeneC",
+            ],
         }
         df = pd.DataFrame(data)
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
-            process_enhancer_info
-        )
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
         from utils.constants import START_GENE_ID
+
         mapping = {
             "GeneA": START_GENE_ID,
             "GeneB": START_GENE_ID + 1,
-            "GeneC": START_GENE_ID + 2
+            "GeneC": START_GENE_ID + 2,
         }
-        
+
         # Create graph for DSS1/overall
         graph = create_bipartite_graph(df, mapping, "DSS1")
-        
+
         # Validate graph structure
         self.assertTrue(nx.is_bipartite(graph))
         self.assertEqual(len(graph.edges()), 9)  # K_{3,3} should have 9 edges
-        
+
         # Verify node attributes
         dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
         gene_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 1}
-        
+
         self.assertEqual(len(dmr_nodes), 3)
         self.assertEqual(len(gene_nodes), 3)
-        
+
         # Verify timepoint attribute on DMR nodes
         for dmr in dmr_nodes:
             self.assertEqual(graph.nodes[dmr]["timepoint"], "DSS1")
@@ -271,49 +284,44 @@ class TestBipartiteGraph(unittest.TestCase):
         data = {
             "DMR_No.": [1, 2],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": [
-                "GeneA;GeneB",
-                "GeneA;GeneB"
-            ]
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB", "GeneA;GeneB"],
         }
         df = pd.DataFrame(data)
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
-            process_enhancer_info
-        )
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
         from utils.constants import START_GENE_ID
-        mapping = {
-            "GeneA": START_GENE_ID,
-            "GeneB": START_GENE_ID + 1
-        }
-        
+
+        mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1}
+
         # Test different timepoints
         timepoints = ["P21-P28", "P21-P40", "P21-P60"]
         graphs = {}
-        
+
         for timepoint in timepoints:
             graphs[timepoint] = create_bipartite_graph(df, mapping, timepoint)
-            
+
             # Basic validation for each graph
             graph = graphs[timepoint]
             self.assertTrue(nx.is_bipartite(graph))
             self.assertEqual(len(graph.edges()), 4)  # K_{2,2} should have 4 edges
-            
+
             # Verify DMR IDs are in correct range for timepoint
             dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
             for dmr in dmr_nodes:
                 self.assertEqual(graph.nodes[dmr]["timepoint"], timepoint)
-                
+
                 # Verify DMR ID is in correct range
                 if timepoint == "P21-P28":
-                    self.assertGreaterEqual(dmr, 1000000)
-                    self.assertLess(dmr, 2000000)
+                    self.assertGreaterEqual(dmr, 10000)
+                    self.assertLess(dmr, 20000)
                 elif timepoint == "P21-P40":
-                    self.assertGreaterEqual(dmr, 2000000)
-                    self.assertLess(dmr, 3000000)
+                    self.assertGreaterEqual(dmr, 20000)
+                    self.assertLess(dmr, 30000)
                 elif timepoint == "P21-P60":
-                    self.assertGreaterEqual(dmr, 3000000)
-                    self.assertLess(dmr, 4000000)
+                    self.assertGreaterEqual(dmr, 30000)
+                    self.assertLess(dmr, 40000)
 
     def test_graph_validation(self):
         """Test graph validation functionality"""
@@ -321,30 +329,30 @@ class TestBipartiteGraph(unittest.TestCase):
         data = {
             "DMR_No.": [1, 2],
             "Gene_Symbol_Nearby": ["GeneA", "GeneB"],
-            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB", "GeneA;GeneB"]
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)": ["GeneA;GeneB", "GeneA;GeneB"],
         }
         df = pd.DataFrame(data)
-        df["Processed_Enhancer_Info"] = df["ENCODE_Enhancer_Interaction(BingRen_Lab)"].apply(
-            process_enhancer_info
-        )
+        df["Processed_Enhancer_Info"] = df[
+            "ENCODE_Enhancer_Interaction(BingRen_Lab)"
+        ].apply(process_enhancer_info)
 
         from utils.constants import START_GENE_ID
-        mapping = {
-            "GeneA": START_GENE_ID,
-            "GeneB": START_GENE_ID + 1
-        }
-        
+
+        mapping = {"GeneA": START_GENE_ID, "GeneB": START_GENE_ID + 1}
+
         graph = create_bipartite_graph(df, mapping, "DSS1")
-        
+
         # Test validation
         validated_graph = validate_bipartite_graph(graph)
         self.assertIsInstance(validated_graph, nx.Graph)
-        
+
         # Test validation with isolated nodes
         isolated_graph = graph.copy()
         isolated_graph.add_node(START_GENE_ID + 2, bipartite=1)  # Add isolated gene
         validated_isolated = validate_bipartite_graph(isolated_graph)
-        self.assertEqual(len(validated_isolated.nodes()), len(graph.nodes()))  # Should remove isolated node
+        self.assertEqual(
+            len(validated_isolated.nodes()), len(graph.nodes())
+        )  # Should remove isolated node
 
 
 if __name__ == "__main__":
