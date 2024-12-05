@@ -24,7 +24,11 @@ def component_detail_route(component_id, type="biclique"):
         component = None
         timepoint_data = None
 
+        from timepoint_data import format_timepoint_for_display
+
         for timepoint, data in results.items():
+            # Format timepoint for display
+            display_timepoint = format_timepoint_for_display(timepoint)
             if not isinstance(data, dict) or "error" in data:
                 continue
 

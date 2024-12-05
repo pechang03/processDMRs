@@ -15,12 +15,17 @@
   <body>
     <div class="container mt-5">
       <!-- Navigation -->
+      {% from "macros.html" import format_timepoint %}
+
       <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
             <a href="{{ url_for('index_route') }}">Home</a>
           </li>
           <li class="breadcrumb-item active" aria-current="page">
+            {% if timepoint %}
+              {{ format_timepoint(timepoint) }}
+            {% endif %}
             Component {{ component.id }}
           </li>
         </ol>
