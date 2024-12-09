@@ -163,9 +163,8 @@ def main():
                     df = read_excel_file(constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name)
 
                 if df is not None:  # Only process if we got valid data
-
-                # Populate DMRs
-                populate_dmrs(session, df, timepoint.id)
+                    # Populate DMRs
+                    populate_dmrs(session, df, timepoint.id)
 
                 # Process bicliques
                 biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
