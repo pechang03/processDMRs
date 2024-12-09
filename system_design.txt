@@ -8,11 +8,46 @@
   system's operation.
 
     Key Components
+    --------------
 
 1 Data Processing
   • Excel Input Handling: Describe how the system handles different Excel formats and potential errors.
   • Bipartite Graph Creation: Explain the process of creating the bipartite graph, including how nodes and edges are
     added.
+  +Manages gene ID mapping system
+    **Data Organization**
+    ----------------
+    1. **File Naming vs Timepoint Naming**
+       - Input Files:
+         * DSS1.xlsx - Contains the DSStimeseries data
+         * DSS_PAIRWISE.xlsx - Contains pairwise comparison data
+       - Timepoint Names:
+         * "DSStimeseries" - Used internally for the main timeseries analysis (from DSS1.xlsx)
+         * Pairwise timepoints (from DSS_PAIRWISE.xlsx sheets):
+           - "P21-P28_TSS"
+           - "P21-P40_TSS"
+           - "P21-P60_TSS" 
+           - "P21-P180_TSS"
+           - "TP28-TP180_TSS"
+           - "TP40-TP180_TSS"
+           - "TP60-TP180_TSS"
+
+    2. **Data Flow**
+       - Excel Files → Data Loading → Internal Processing → Database
+       - File names are used only for I/O operations
+       - Timepoint names are used for:
+         * Database storage
+         * Results organization
+         * API endpoints
+         * Visualization labels
+
+    3. **Naming Conventions**
+       - File Names: Original Excel file names (e.g., "DSS1.xlsx")
+       - Internal Names: Standardized timepoint names (e.g., "DSStimeseries")
+       - Database Keys: Uses standardized timepoint names
+       - API Routes: Uses standardized timepoint names
+       - Visualization Labels: Uses timepoint names for labels
+
 2 Biclique Analysis
   • Biclique Identification: Provide a brief overview of the algorithms used to identify bicliques.
   • Edge Classification: Explain the criteria for classifying edges as permanent, false_positive, or false_negative.
