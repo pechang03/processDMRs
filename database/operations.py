@@ -12,12 +12,6 @@ def insert_timepoint(session: Session, name: str, description: str = None):
     session.commit()
     return timepoint.id
 
-def insert_gene(session: Session, symbol: str, description: str = None, master_gene_id: int = None):
-    """Insert a new gene into the database."""
-    gene = Gene(symbol=symbol, description=description, master_gene_id=master_gene_id)
-    session.add(gene)
-    session.commit()
-    return gene.id
 
 def insert_dmr(session: Session, timepoint_id: int, dmr_number: int, **kwargs):
     """Insert a new DMR into the database."""
