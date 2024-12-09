@@ -108,6 +108,27 @@ def populate_relationships(session: Session, relationships: list):
         operations.insert_relationship(session, **rel)
 
 
+def clean_database(session: Session):
+    """Clean out existing data from all tables."""
+    print("Cleaning existing data from database...")
+    try:
+        # Delete in reverse order of dependencies
+        session.query(ComponentBiclique).delete()
+        session.query(Relationship).delete()
+        session.query(Metadata).delete()
+        session.query(Statistic).delete()
+        session.query(Biclique).delete()
+        session.query(Component).delete()
+        session.query(DMR).delete()
+        session.query(Gene).delete()
+        session.query(Timepoint).delete()
+        session.commit()
+        print("Database cleaned successfully")
+    except Exception as e:
+        session.rollback()
+        print(f"Error cleaning database: {str(e)}")
+        raise
+
 def main():
     """Main function to initialize the database."""
     try:
@@ -119,6 +140,9 @@ def main():
 
         # Start a session
         with Session(engine) as session:
+            # Clean existing data
+            clean_database(session)
+
             # Populate timepoints
             populate_timepoints(session)
 
