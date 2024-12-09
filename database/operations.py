@@ -60,6 +60,17 @@ def insert_relationship(session: Session, source_type: str, source_id: int, targ
     session.add(rel)
     session.commit()
 
+def insert_gene(session: Session, symbol: str, description: str = None, master_gene_id: int = None):
+    """Insert a new gene into the database."""
+    gene = Gene(
+        symbol=symbol, 
+        description=description, 
+        master_gene_id=master_gene_id
+    )
+    session.add(gene)
+    session.commit()
+    return gene.id
+
 # Query functions
 def query_timepoints(session: Session):
     """Query all timepoints."""
