@@ -148,8 +148,8 @@ def main():
             # Populate timepoints
             populate_timepoints(session)
 
-            # Process DSS1 file
-            df_DSStimeseries = pd.read_excel(constants.DSS1_FILE)
+            # Process DSS1 file using data_loader function
+            df_DSStimeseries = read_excel_file(constants.DSS1_FILE)
             gene_id_mapping = id_mapping.create_gene_mapping(df_DSStimeseries)
             populate_genes(session, gene_id_mapping)
 
@@ -160,9 +160,9 @@ def main():
                 if timepoint.name == "DSS1":
                     df = df_DSStimeseries
                 else:
-                    df = pd.read_excel(
-                        constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name
-                    )
+                    df = read_excel_file(constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name)
+
+                if df is not None:  # Only process if we got valid data
 
                 # Populate DMRs
                 populate_dmrs(session, df, timepoint.id)
