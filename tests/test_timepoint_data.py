@@ -254,7 +254,7 @@ class TestTimepointData(unittest.TestCase):
 
     def test_json_conversion(self):
         """Test that data can be properly converted to JSON."""
-        with patch("routes.timepoint_data.process_data") as mock_process:
+        with patch("process_data.process_data") as mock_process:
             mock_process.return_value = {"DSS1": self.mock_bicliques_result}
 
             # Convert to JSON-safe format
