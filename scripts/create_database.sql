@@ -19,13 +19,30 @@ CREATE TABLE genes (
     master_gene_id INTEGER REFERENCES master_gene_ids(id)
 );
 
--- Create DMRs Table
+-- Create DMR IDs Table with timepoint relationship and offset handling
 CREATE TABLE dmrs (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
+    id INTEGER PRIMARY KEY,
+    timepoint_id INTEGER REFERENCES timepoints(id),
+    dmr_number INTEGER NOT NULL,  -- Original DMR number before offset
     area_stat FLOAT,
-    description TEXT
+    description TEXT,
+    -- Common Excel file columns
+    dmr_name VARCHAR(255),
+    gene_description TEXT,
+    chromosome VARCHAR(50),
+    start_position INTEGER,
+    end_position INTEGER,
+    strand VARCHAR(1),
+    p_value FLOAT,
+    q_value FLOAT,
+    mean_methylation FLOAT,
+    -- Add constraint to ensure unique DMR numbers within a timepoint
+    UNIQUE(timepoint_id, dmr_number)
 );
+
+-- Create index for efficient DMR lookups
+CREATE INDEX idx_dmrs_timepoint ON dmrs(timepoint_id);
+CREATE INDEX idx_dmrs_number ON dmrs(dmr_number);
 
 -- Create Bicliques Table
 CREATE TABLE bicliques (
