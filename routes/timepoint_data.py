@@ -23,6 +23,8 @@ from biclique_analysis.statistics import analyze_components
 # from process_data import process_data
 
 
+from process_data import process_data
+
 def process_timepoint(
     df: pd.DataFrame,
     timepoint: str,
