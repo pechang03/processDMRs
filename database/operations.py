@@ -107,34 +107,50 @@ def insert_gene(
     session: Session, symbol: str, description: str = None, master_gene_id: int = None
 ):
     """Insert a new gene into the database."""
+    # Validate and clean gene symbol
+    if not symbol or symbol.lower().startswith('unnamed:'):
+        raise ValueError(f"Invalid gene symbol: {symbol}")
+
+    symbol = symbol.strip()
+
     # Check for duplicate gene symbols
     existing_gene = session.query(Gene).filter_by(symbol=symbol).first()
     if existing_gene:
         return existing_gene.id
 
-    # Create or get MasterGeneID if master_gene_id is provided
-    if master_gene_id is not None:
-        # Try to get existing master gene ID
-        master_gene = session.query(MasterGeneID).filter_by(id=master_gene_id).first()
-        if not master_gene:
-            # Create new master gene ID if it doesn't exist
-            master_gene = MasterGeneID(id=master_gene_id, gene_symbol=symbol)
-            session.add(master_gene)
-            try:
-                session.flush()  # Try to flush changes to catch any constraints
-            except Exception as e:
-                session.rollback()
-                raise ValueError(f"Error creating master gene ID: {str(e)}")
-
-    # Create the gene
-    gene = Gene(symbol=symbol, description=description, master_gene_id=master_gene_id)
-    session.add(gene)
     try:
-        session.commit()
-        return gene.id
+        # Create or get MasterGeneID if master_gene_id is provided
+        if master_gene_id is not None:
+            # Try to get existing master gene ID
+            master_gene = session.query(MasterGeneID).filter_by(id=master_gene_id).first()
+            if not master_gene:
+                # Check if gene symbol already exists in master_gene_ids
+                existing_master = session.query(MasterGeneID).filter_by(gene_symbol=symbol).first()
+                if existing_master:
+                    master_gene_id = existing_master.id
+                else:
+                    # Create new master gene ID
+                    master_gene = MasterGeneID(id=master_gene_id, gene_symbol=symbol)
+                    session.add(master_gene)
+                    try:
+                        session.flush()  # Try to flush changes to catch any constraints
+                    except Exception as e:
+                        session.rollback()
+                        raise ValueError(f"Error creating master gene ID: {str(e)}")
+
+        # Create the gene
+        gene = Gene(symbol=symbol, description=description, master_gene_id=master_gene_id)
+        session.add(gene)
+        try:
+            session.commit()
+            return gene.id
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Error creating gene: {str(e)}")
+
     except Exception as e:
         session.rollback()
-        raise ValueError(f"Error creating gene: {str(e)}")
+        raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
 
 
 def get_or_create_gene(
