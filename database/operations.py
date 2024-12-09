@@ -107,11 +107,17 @@ def insert_gene(
     session: Session, symbol: str, description: str = None, master_gene_id: int = None
 ):
     """Insert a new gene into the database."""
-    # Validate and clean gene symbol
-    if not symbol or symbol.lower().startswith('unnamed:'):
-        raise ValueError(f"Invalid gene symbol: {symbol}")
-
-    symbol = symbol.strip()
+    # Skip invalid gene symbols
+    if not symbol:  # Handle None or empty string
+        return None
+        
+    # Clean the symbol
+    symbol = str(symbol).strip()
+    
+    # Extended validation for unnamed columns and invalid symbols
+    invalid_patterns = ['unnamed:', 'nan', '.', 'n/a', '']
+    if any(symbol.lower().startswith(pat) for pat in invalid_patterns) or not symbol:
+        return None  # Skip invalid symbols instead of raising error
 
     # Check for duplicate gene symbols
     existing_gene = session.query(Gene).filter_by(symbol=symbol).first()
