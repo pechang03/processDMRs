@@ -14,13 +14,28 @@ DB_URL = os.getenv('DATABASE_URL')
 
 def get_db_engine():
     """Create and return a database engine."""
-    if not DB_URL:
-        raise ValueError("DATABASE_URL environment variable not set")
+    # Try multiple .env locations
+    env_files = [
+        '.env',  # Root directory
+        '../.env',  # One level up
+        '../../.env',  # Two levels up
+        os.path.join(os.path.dirname(__file__), '.env'),  # Same directory as this file
+    ]
+    
+    for env_file in env_files:
+        if os.path.exists(env_file):
+            load_dotenv(env_file)
+            break
+            
+    db_url = os.getenv('DATABASE_URL')
+    if not db_url:
+        # Provide a default SQLite URL if none specified
+        db_url = 'sqlite:///dmr_analysis.db'
+        
+    if not database_exists(db_url):
+        create_database(db_url)
 
-    if not database_exists(DB_URL):
-        create_database(DB_URL)
-
-    engine = create_engine(DB_URL, echo=True)
+    engine = create_engine(db_url, echo=True)
     return engine
 
 def get_db_session(engine):
