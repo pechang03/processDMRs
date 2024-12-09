@@ -38,6 +38,8 @@ def get_db_engine():
     engine = create_engine(db_url, echo=True)
     return engine
 
+from sqlalchemy.orm import sessionmaker
+
 def get_db_session(engine):
     """Create and return a database session."""
     Session = sessionmaker(bind=engine)

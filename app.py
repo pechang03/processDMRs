@@ -74,6 +74,8 @@ def configure_data_paths(data_dir: str):
     app.config["DATA_DIR"] = data_dir
 
 
+from dotenv import load_dotenv
+
 def configure_app(app):
     """Configure Flask application."""
     # Try multiple .env locations
