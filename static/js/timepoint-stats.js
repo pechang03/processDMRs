@@ -18,56 +18,66 @@ document.addEventListener('DOMContentLoaded', function() {
         if (errorContainer) errorContainer.style.display = 'none';
 
         fetch(`/stats/timepoint/${timepoint}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'success') {
-                    // Update the tab content with the new data
-                    updateTimepointContent(timepoint, data.data);
+                    try {
+                        // Update the tab content with the new data
+                        updateTimepointContent(timepoint, data.data);
 
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-                    if (statsContainer) statsContainer.style.display = 'block';
-                    if (errorContainer) errorContainer.style.display = 'none';
+                        if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        if (statsContainer) statsContainer.style.display = 'block';
+                        if (errorContainer) errorContainer.style.display = 'none';
+                    } catch (error) {
+                        showError(
+                            `Error updating content: ${error.message}`,
+                            { error: error.stack, data: data.debug }
+                        );
+                    }
                 } else {
-                    console.error('Error loading timepoint data:', data.message);
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'none';
-                    }
-                    if (errorContainer) {
-                        errorContainer.innerHTML = `
-                            <div class="alert alert-danger">
-                                <h4>Error Loading Data</h4>
-                                <p>${data.message}</p>
-                                ${DEBUG && data.debug ? `
-                                    <div class="debug-info mt-3">
-                                        <h5>Debug Information:</h5>
-                                        <pre class="error-details">${JSON.stringify(data.debug, null, 2)}</pre>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
-                        errorContainer.style.display = 'block';
-                    }
+                    showError(data.message, data.debug);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-                if (errorContainer) {
-                    errorContainer.innerHTML = `
-                        <div class="alert alert-danger">
-                            <h4>Network Error</h4>
-                            <p>${error.message}</p>
-                            ${DEBUG ? `
-                                <div class="debug-info mt-3">
-                                    <h5>Debug Information:</h5>
-                                    <pre class="error-details">${error.stack}</pre>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                    errorContainer.style.display = 'block';
-                }
+                showError(
+                    `Network or parsing error: ${error.message}`,
+                    { error: error.stack }
+                );
             });
+    }
+
+    // Add this helper function for showing errors
+    function showError(message, debug = null) {
+        const tabPane = document.querySelector('.tab-pane.active');
+        if (!tabPane) return;
+
+        const loadingIndicator = tabPane.querySelector('.loading-indicator');
+        const statsContainer = tabPane.querySelector('.stats-container');
+        const errorContainer = tabPane.querySelector('.error-container');
+
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        if (statsContainer) statsContainer.style.display = 'none';
+    
+        if (errorContainer) {
+            errorContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <h4>Error</h4>
+                    <p>${message}</p>
+                    ${window.DEBUG && debug ? `
+                        <div class="debug-info mt-3">
+                            <h5>Debug Information:</h5>
+                            <pre class="error-details">${JSON.stringify(debug, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            errorContainer.style.display = 'block';
+        }
     }
 
     function updateTimepointContent(timepoint, data) {
