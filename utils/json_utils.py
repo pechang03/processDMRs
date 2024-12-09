@@ -4,6 +4,9 @@ import numpy as np
 import networkx as nx
 from typing import Any, Dict, List, Set, Tuple
 
+#  AI. 1 Keep data in native Python types throughout the business logic (biclique_analysis/*)
+#  AI. 2 Otherwise always convert to JSON-safe formats at the API boundary (routes/*.py)
+
 
 def convert_for_json(data: Any) -> Any:
     """Comprehensive conversion of data types for JSON serialization."""
@@ -32,7 +35,7 @@ def convert_for_json(data: Any) -> Any:
             "nodes": list(data.nodes()),
             "edges": list(data.edges()),
             "node_attributes": {str(n): d for n, d in data.nodes(data=True)},
-            "edge_attributes": {f"{u}_{v}": d for (u, v, d) in data.edges(data=True)}
+            "edge_attributes": {f"{u}_{v}": d for (u, v, d) in data.edges(data=True)},
         }
     return data
 
