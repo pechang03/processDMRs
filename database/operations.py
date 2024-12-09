@@ -62,6 +62,16 @@ def insert_relationship(session: Session, source_type: str, source_id: int, targ
 
 def insert_gene(session: Session, symbol: str, description: str = None, master_gene_id: int = None):
     """Insert a new gene into the database."""
+    # Check for duplicate gene symbols
+    existing_gene = session.query(Gene).filter_by(symbol=symbol).first()
+    if existing_gene:
+        return existing_gene.id
+
+    # Validate master_gene_id if provided
+    if master_gene_id is not None:
+        if not session.query(MasterGeneID).filter_by(id=master_gene_id).first():
+            raise ValueError(f"Invalid master_gene_id: {master_gene_id}")
+
     gene = Gene(
         symbol=symbol, 
         description=description, 
@@ -70,6 +80,14 @@ def insert_gene(session: Session, symbol: str, description: str = None, master_g
     session.add(gene)
     session.commit()
     return gene.id
+
+def get_or_create_gene(session: Session, symbol: str, description: str = None, master_gene_id: int = None) -> int:
+    """Get an existing gene or create a new one if it doesn't exist."""
+    gene = session.query(Gene).filter_by(symbol=symbol).first()
+    if gene:
+        return gene.id
+    else:
+        return insert_gene(session, symbol, description, master_gene_id)
 
 # Query functions
 def query_timepoints(session: Session):
