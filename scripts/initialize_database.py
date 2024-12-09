@@ -17,14 +17,14 @@ load_dotenv()
 def populate_timepoints(session: Session):
     """Populate timepoints table."""
     timepoints = [
-        "DSS1",
+        "DSStimeseries",  # Changed from DSS1 to DSStimeseries
         "P21-P28_TSS",
-        "P21-P40_TSS",
+        "P21-P40_TSS", 
         "P21-P60_TSS",
         "P21-P180_TSS",
         "TP28-TP180_TSS",
         "TP40-TP180_TSS",
-        "TP60-TP180_TSS",
+        "TP60-TP180_TSS"
     ]
     for tp in timepoints:
         operations.insert_timepoint(session, tp)
