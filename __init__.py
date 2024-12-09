@@ -1,5 +1,6 @@
 from .rb_domination import greedy_rb_domination
-from .graph_utils import validate_bipartite_graph, create_bipartite_graph
+from data_loader import validate_bipartite_graph, create_bipartite_graph
+from data_loader import process_enhancer_info
 
 __all__ = [
     "create_bipartite_graph",
