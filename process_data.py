@@ -94,7 +94,7 @@ from data_loader import (
     validate_bipartite_graph,
 )
 
-from data_processor import process_timepoint
+from routes.timepoint_data import process_timepoint
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
