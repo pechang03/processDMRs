@@ -9,6 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Change to the project root directory
 cd "$SCRIPT_DIR"
 
+# Add project root to PYTHONPATH
+export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+
 echo "Setting up DMR Analysis Database..."
 
 # Check if PostgreSQL is running
