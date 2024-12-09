@@ -27,11 +27,9 @@ def get_db_engine():
             load_dotenv(env_file)
             break
             
-    db_url = os.getenv('DATABASE_URL')
-    if not db_url:
-        # Provide a default SQLite URL if none specified
-        db_url = 'sqlite:///dmr_analysis.db'
-        
+    # Set default configuration
+    db_url = os.getenv('DATABASE_URL', 'sqlite:///dmr_analysis.db')
+    
     if not database_exists(db_url):
         create_database(db_url)
 
