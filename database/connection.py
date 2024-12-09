@@ -1,7 +1,8 @@
 """Database connection handling for DMR analysis system."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import pandas as pd
+from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database
 import os
