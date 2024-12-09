@@ -161,9 +161,125 @@ def process_DSStimeseries_timepoint(df: pd.DataFrame) -> Dict:
 # Removed process_pairwise_timepoints function
 
 
+def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, int]:
+    """
+    Read gene mapping from CSV file.
+    
+    Args:
+        mapping_file: Path to the gene mapping CSV file
+        
+    Returns:
+        Dictionary mapping gene symbols to IDs
+    """
+    try:
+        # Check if file exists
+        if not os.path.exists(mapping_file):
+            print(f"Warning: Gene mapping file {mapping_file} not found")
+            return {}
+            
+        # Read CSV file
+        df = pd.read_csv(mapping_file)
+        
+        # Convert to dictionary
+        gene_mapping = {}
+        for _, row in df.iterrows():
+            if 'gene_symbol' in df.columns and 'id' in df.columns:
+                symbol = str(row['gene_symbol']).strip().lower()
+                if symbol and symbol != 'nan':
+                    gene_mapping[symbol] = int(row['id'])
+                    
+        print(f"Read {len(gene_mapping)} gene mappings from {mapping_file}")
+        return gene_mapping
+        
+    except Exception as e:
+        print(f"Error reading gene mapping: {str(e)}")
+        return {}
+
+def update_gene_metadata(
+    session: Session,
+    df: pd.DataFrame,
+    gene_id_mapping: Dict[str, int],
+    timepoint: str = None
+) -> None:
+    """
+    Update gene metadata from DataFrame.
+    
+    Args:
+        session: Database session
+        df: DataFrame containing gene metadata
+        gene_id_mapping: Mapping of gene symbols to IDs
+        timepoint: Optional timepoint name for tracking metadata source
+    """
+    from database.operations import insert_metadata
+    
+    try:
+        # Track updates for logging
+        updates = 0
+        skipped = 0
+        
+        # Process each gene in mapping
+        for gene_symbol, gene_id in gene_id_mapping.items():
+            # Look for gene in DataFrame (case-insensitive)
+            gene_rows = df[df['Gene_Symbol_Nearby'].str.lower() == gene_symbol.lower()]
+            
+            if not gene_rows.empty:
+                row = gene_rows.iloc[0]
+                
+                # Collect available metadata
+                metadata = {}
+                
+                # Add description if available
+                if 'Gene_Description' in row and pd.notna(row['Gene_Description']):
+                    metadata['description'] = str(row['Gene_Description'])
+                    
+                # Add other available metadata
+                if 'Gene_Type' in row and pd.notna(row['Gene_Type']):
+                    metadata['gene_type'] = str(row['Gene_Type'])
+                if 'Chromosome' in row and pd.notna(row['Chromosome']):
+                    metadata['chromosome'] = str(row['Chromosome'])
+                    
+                # Add timepoint if provided
+                if timepoint:
+                    metadata['timepoint'] = timepoint
+                
+                # Insert each metadata item
+                for key, value in metadata.items():
+                    try:
+                        insert_metadata(
+                            session,
+                            entity_type='gene',
+                            entity_id=gene_id,
+                            key=key,
+                            value=value
+                        )
+                        updates += 1
+                    except Exception as e:
+                        print(f"Error updating metadata for gene {gene_symbol}: {str(e)}")
+                        skipped += 1
+            else:
+                skipped += 1
+                
+        print(f"\nGene metadata update summary:")
+        print(f"Updated: {updates} metadata entries")
+        print(f"Skipped: {skipped} genes")
+        
+    except Exception as e:
+        print(f"Error in update_gene_metadata: {str(e)}")
+        session.rollback()
+        raise
+
 def process_data():
     """Process all timepoints including DSStimeseries with configurable layouts"""
     try:
+        # Read existing gene mapping first
+        gene_id_mapping = read_gene_mapping()
+        
+        # If no existing mapping, create new one
+        if not gene_id_mapping:
+            print("No existing gene mapping found, creating new mapping...")
+            df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
+            gene_id_mapping = create_master_gene_mapping(df_DSStimeseries)
+            
         # Define layout options for different timepoint types
         layout_options = {
             "DSStimeseries": {
@@ -184,9 +300,6 @@ def process_data():
         # Process DSStimeseries timepoint first
         print("\nProcessing DSStimeseries timepoint...", flush=True)
         df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
-
-        # Create master gene mapping
-        gene_id_mapping = create_master_gene_mapping(df_DSStimeseries)
 
         # Process DSStimeseries timepoint (no longer using "overall")
         timepoint_data["DSStimeseries"] = process_timepoint(
@@ -210,6 +323,9 @@ def process_data():
                     timepoint_data[sheet_name] = process_timepoint(
                         df, sheet_name, gene_id_mapping, layout_options["pairwise"]
                     )
+                    
+                    # Update gene metadata
+                    update_gene_metadata(session, df, gene_id_mapping, sheet_name)
                 else:
                     print(f"Empty sheet: {sheet_name}", flush=True)
                     timepoint_data[sheet_name] = {
