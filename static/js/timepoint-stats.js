@@ -1,6 +1,5 @@
 
 document.addEventListener('DOMContentLoaded', function() {
-    const DEBUG = true;  // Move this here so it's only declared once
     
     function loadTimepointData(timepoint) {
         const tabPane = document.getElementById(timepoint);

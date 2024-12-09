@@ -93,9 +93,12 @@ def timepoint_stats(timepoint):
         if "error" in results or timepoint not in results:
             return jsonify({
                 "status": "error", 
-                "message": "Timepoint not found",
-                "debug": {"available_timepoints": list(results.keys())}
-            })
+                "message": f"Timepoint {timepoint} not found",
+                "debug": {
+                    "available_timepoints": list(results.keys()),
+                    "error": results.get("error")
+                }
+            }), 404  # Add proper status code
 
         data = results[timepoint]
         if isinstance(data, dict) and "error" not in data:
@@ -140,31 +143,26 @@ def timepoint_stats(timepoint):
             
             return jsonify(json_safe_data)
 
+        if isinstance(data, dict) and "error" not in data:
+            return jsonify({
+                "status": "success",
+                "data": convert_for_json(data)
+            })
+
         return jsonify({
             "status": "error",
             "message": data.get("message", "Unknown error"),
-            "debug": convert_for_json({
-                "error_type": "DataError",
-                "data_received": bool(data),
-                "data_type": type(data).__name__,
-                "data_keys": list(data.keys()) if isinstance(data, dict) else None
-            })
-        })
+            "debug": data
+        }), 400  # Add proper status code
 
     except Exception as e:
         import traceback
         error_traceback = traceback.format_exc()
-        print(f"Error in timepoint_stats: {str(e)}\n{error_traceback}")
         return jsonify({
             "status": "error",
             "message": str(e),
-            "debug": convert_for_json({
+            "debug": {
                 "traceback": error_traceback,
-                "error_type": type(e).__name__,
-                "error_details": {
-                    "args": getattr(e, 'args', None),
-                    "message": str(e),
-                    "location": "timepoint_stats"
-                }
-            })
-        })
+                "error_type": type(e).__name__
+            }
+        }), 500  # Add proper status code
