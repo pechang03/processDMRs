@@ -153,9 +153,9 @@ def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
 
 
 def process_DSStimeseries_timepoint(df: pd.DataFrame) -> Dict:
-    """Process the overall DSS1 timepoint."""
+    """Process the overall DSStimeseries timepoint."""
     gene_id_mapping = create_master_gene_mapping(df)
-    return process_timepoint(df, "DSS1", gene_id_mapping)
+    return process_timepoint(df, "DSStimeseries", gene_id_mapping)
 
 
 # Removed process_pairwise_timepoints function

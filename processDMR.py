@@ -75,7 +75,7 @@ def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoin
         max_dmr_id = None
 
         # Use the correct column name based on timepoint
-        if timepoint == "DSS1":
+        if timepoint == "DSStimeseries":
             interaction_col = "ENCODE_Promoter_Interaction(BingRen_Lab)"
         else:
             interaction_col = "ENCODE_Enhancer_Interaction(BingRen_Lab)"
