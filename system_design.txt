@@ -147,3 +147,134 @@ DMR Analysis System Design
  │       └── biclique_graph.html     # Biclique graph statistics                                                          
  └── statistics.html                 # Main template                                                                      
                             
+# System Design Overview
+
+## Architecture
+
+### Frontend
+- HTML/CSS/JavaScript for user interface
+- Flask templates for rendering dynamic content
+
+### Backend
+- Flask web framework for handling HTTP requests and responses
+- Python for business logic, data processing, and analysis
+
+### Database Layer
+- PostgreSQL for data storage
+- SQLAlchemy ORM for database interactions
+
+### Data Processing
+- Pandas for data manipulation
+- NetworkX for graph operations
+- Custom modules for biclique analysis, component analysis, and statistics calculation
+
+### Visualization
+- Plotly for interactive visualizations
+- Custom visualization modules for specific graph layouts
+
+## Database Schema
+
+### Core Entity Tables
+
+**timepoints**
+- id (PK)
+- name
+- description
+
+**genes**
+- id (PK)
+- symbol
+- description
+
+**dmrs**
+- id (PK)
+- name
+- area_stat
+- description
+
+### Bicliques Table
+
+**bicliques**
+- id (PK)
+- timepoint_id (FK)
+- component_id (FK)
+- dmr_ids (ARRAY)
+- gene_ids (ARRAY)
+
+### Components Table
+
+**components**
+- id (PK)
+- timepoint_id (FK)
+- category
+- size
+- dmr_count
+- gene_count
+- edge_count
+- density
+
+**component_bicliques** (Junction Table)
+- component_id (FK)
+- biclique_id (FK)
+
+### Statistics Tables
+
+**statistics**
+- id (PK)
+- category
+- key
+- value
+
+### Supporting Tables
+
+**metadata**
+- id (PK)
+- entity_type (e.g., 'gene', 'dmr')
+- entity_id (FK)
+- key
+- value
+
+**relationships**
+- id (PK)
+- source_entity_type
+- source_entity_id (FK)
+- target_entity_type
+- target_entity_id (FK)
+- relationship_type
+
+## Indexing
+
+- Index on `timepoints.name` for quick lookup
+- Index on `genes.symbol` for fast gene searches
+- Index on `bicliques.timepoint_id` and `bicliques.component_id` for performance in queries involving timepoints and components
+- Composite index on `component_bicliques(component_id, biclique_id)` for efficient joins
+
+## Example Queries
+
+### Find all bicliques for a specific timepoint:
+```sql
+SELECT * FROM bicliques WHERE timepoint_id = (SELECT id FROM timepoints WHERE name = 'DSS1');
+```
+
+### Get statistics for a specific category:
+```sql
+SELECT key, value FROM statistics WHERE category = 'coverage';
+```
+
+### Retrieve genes in a specific biclique:
+```sql
+SELECT g.* FROM genes g
+JOIN bicliques b ON b.gene_ids @> ARRAY[g.id]
+WHERE b.id = 1;
+```
+
+## Schema Design Decisions
+
+- **Normalization**: Core entities like genes and DMRs are normalized to avoid data redundancy.
+- **Array Columns**: Used in `bicliques` table to store multiple DMRs and genes, allowing for efficient querying of biclique members.
+- **Junction Table**: `component_bicliques` to manage many-to-many relationship between components and bicliques.
+- **Key-Value Design**: For statistics, allowing for flexible storage of various metrics without altering the schema for each new statistic.
+- **Metadata Table**: To store additional information about entities without bloating the main tables.
+- **Relationships Table**: To capture complex relationships between different entities, allowing for future expansion of relationship types.
+
+This design aims to balance between query performance, data integrity, and flexibility for future enhancements in the analysis pipeline.
