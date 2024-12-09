@@ -1,5 +1,7 @@
 """Database schema definitions for DMR analysis system."""
 
+import json
+from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy import (
     create_engine,
     Column,
@@ -7,10 +9,24 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
-    ARRAY,
     Float,
     UniqueConstraint,
 )
+
+class ArrayType(TypeDecorator):
+    """Convert between Python list and string stored in database."""
+    
+    impl = TEXT
+    
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return json.dumps(value)
+    
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return json.loads(value)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -64,8 +80,8 @@ class Biclique(Base):
     id = Column(Integer, primary_key=True)
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
     component_id = Column(Integer, ForeignKey("components.id"))
-    dmr_ids = Column(ARRAY(Integer))
-    gene_ids = Column(ARRAY(Integer))
+    dmr_ids = Column(ArrayType)
+    gene_ids = Column(ArrayType)
 
 
 class Component(Base):
