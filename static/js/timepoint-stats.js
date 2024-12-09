@@ -1,6 +1,5 @@
 
 document.addEventListener('DOMContentLoaded', function() {
-    
     function loadTimepointData(timepoint) {
         const tabPane = document.getElementById(timepoint);
         if (!tabPane) {
@@ -17,41 +16,66 @@ document.addEventListener('DOMContentLoaded', function() {
         if (statsContainer) statsContainer.style.display = 'none';
         if (errorContainer) errorContainer.style.display = 'none';
 
-        fetch(`/stats/timepoint/${timepoint}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'success') {
-                    try {
-                        // Update the tab content with the new data
-                        updateTimepointContent(timepoint, data.data);
+        // Add retry logic for race conditions
+        let retryCount = 0;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
 
-                        if (loadingIndicator) loadingIndicator.style.display = 'none';
-                        if (statsContainer) statsContainer.style.display = 'block';
-                        if (errorContainer) errorContainer.style.display = 'none';
-                    } catch (error) {
+        function tryFetch() {
+            fetch(`/stats/timepoint/${timepoint}`)
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 404 && retryCount < maxRetries) {
+                            retryCount++;
+                            console.log(`Retry ${retryCount} for ${timepoint}`);
+                            setTimeout(tryFetch, retryDelay);
+                            return;
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('JSON Parse Error:', text.substring(0, 100));
+                            throw new Error('Invalid JSON response');
+                        }
+                    });
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        try {
+                            updateTimepointContent(timepoint, data.data);
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            if (statsContainer) statsContainer.style.display = 'block';
+                            if (errorContainer) errorContainer.style.display = 'none';
+                        } catch (error) {
+                            showError(
+                                `Error updating content: ${error.message}`,
+                                { error: error.stack, data: data.debug }
+                            );
+                        }
+                    } else {
+                        showError(data.message, data.debug);
+                    }
+                })
+                .catch(error => {
+                    if (retryCount < maxRetries && error.message.includes('Invalid JSON')) {
+                        retryCount++;
+                        console.log(`Retry ${retryCount} for ${timepoint} due to invalid JSON`);
+                        setTimeout(tryFetch, retryDelay);
+                    } else {
                         showError(
-                            `Error updating content: ${error.message}`,
-                            { error: error.stack, data: data.debug }
+                            `Network or parsing error: ${error.message}`,
+                            { error: error.stack }
                         );
                     }
-                } else {
-                    showError(data.message, data.debug);
-                }
-            })
-            .catch(error => {
-                showError(
-                    `Network or parsing error: ${error.message}`,
-                    { error: error.stack }
-                );
-            });
+                });
+        }
+
+        tryFetch();
     }
 
-    // Add this helper function for showing errors
     function showError(message, debug = null) {
         const tabPane = document.querySelector('.tab-pane.active');
         if (!tabPane) return;
@@ -62,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         if (statsContainer) statsContainer.style.display = 'none';
-    
+        
         if (errorContainer) {
             errorContainer.innerHTML = `
                 <div class="alert alert-danger">
@@ -91,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const debugInfo = tabContent.querySelector('.debug-info');
             if (debugInfo) {
                 debugInfo.textContent = JSON.stringify(data.debug, null, 2);
-                if (DEBUG) {
+                if (window.DEBUG) {
                     debugInfo.style.display = 'block';
                 }
             }
@@ -127,8 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
-    // Add these functions before the event listener setup
 
     function updateComponentStats(tabContent, stats) {
         // Update original graph components table

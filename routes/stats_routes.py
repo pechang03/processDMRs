@@ -90,6 +90,17 @@ def timepoint_stats(timepoint):
     """Get statistics for a specific timepoint."""
     try:
         results = process_data()
+        
+        # Special handling for DSStimeseries
+        if timepoint == "DSStimeseries":
+            # Ensure data is ready
+            if not results or "DSStimeseries" not in results:
+                return jsonify({
+                    "status": "error",
+                    "message": "Data still processing",
+                    "retry": True
+                }), 404
+
         if "error" in results or timepoint not in results:
             return jsonify({
                 "status": "error", 
@@ -98,51 +109,9 @@ def timepoint_stats(timepoint):
                     "available_timepoints": list(results.keys()),
                     "error": results.get("error")
                 }
-            }), 404  # Add proper status code
+            }), 404
 
         data = results[timepoint]
-        if isinstance(data, dict) and "error" not in data:
-            # Get header stats directly from debug section
-            header_stats = data.get("debug", {}).get("header_stats", {})
-            
-            # Get edge counts from coverage stats
-            edge_stats = data.get("stats", {}).get("coverage", {}).get("edges", {})
-            total_edges = (edge_stats.get("single_coverage", 0) + 
-                         edge_stats.get("multiple_coverage", 0) + 
-                         edge_stats.get("uncovered", 0))
-
-            # Separate bicliques summary into its own section
-            timepoint_data = {
-                "status": "success",
-                "data": {
-                    "stats": {
-                        "coverage": data.get("stats", {}).get("coverage", {}),
-                        "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
-                        "components": {
-                            "original": data.get("stats", {}).get("components", {}).get("original", {}),
-                            "biclique": data.get("stats", {}).get("components", {}).get("biclique", {})
-                        }
-                    },
-                    "interesting_components": data.get("interesting_components", []),
-                    "complex_components": data.get("complex_components", []),
-                    "simple_components": data.get("simple_components", []),  # Add this
-                    "non_simple_components": data.get("non_simple_components", []),  # Add this
-                    "bicliques": data.get("bicliques", []),
-                    "bicliques_summary": {
-                        "graph_info": data.get("bicliques_summary", {}).get("graph_info", {}),
-                        "header_stats": data.get("bicliques_summary", {}).get("header_stats", {})
-                    }
-                }
-            }
-            
-            # Convert to JSON-safe format only when returning
-            json_safe_data = convert_for_json(timepoint_data)
-            
-            print(f"\nTimepoint {timepoint} data being sent:")
-            print(json.dumps(json_safe_data, indent=2))
-            
-            return jsonify(json_safe_data)
-
         if isinstance(data, dict) and "error" not in data:
             return jsonify({
                 "status": "success",
@@ -153,7 +122,7 @@ def timepoint_stats(timepoint):
             "status": "error",
             "message": data.get("message", "Unknown error"),
             "debug": data
-        }), 400  # Add proper status code
+        }), 400
 
     except Exception as e:
         import traceback
@@ -165,4 +134,4 @@ def timepoint_stats(timepoint):
                 "traceback": error_traceback,
                 "error_type": type(e).__name__
             }
-        }), 500  # Add proper status code
+        }), 500
