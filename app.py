@@ -74,6 +74,26 @@ def configure_data_paths(data_dir: str):
     app.config["DATA_DIR"] = data_dir
 
 
+def configure_app(app):
+    """Configure Flask application."""
+    # Try multiple .env locations
+    env_files = ['.env', '../.env', '../../.env']
+    env_loaded = False
+    
+    for env_file in env_files:
+        if os.path.exists(env_file):
+            load_dotenv(env_file)
+            env_loaded = True
+            break
+    
+    # Set default configuration
+    app.config.setdefault('DATABASE_URL', 'sqlite:///dmr_analysis.db')
+    app.config.setdefault('FLASK_ENV', 'development')
+    
+    # Override with environment variables if they exist
+    app.config['DATABASE_URL'] = os.getenv('DATABASE_URL', app.config['DATABASE_URL'])
+    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', app.config['FLASK_ENV'])
+
 def main():
     """Main entry point for the application."""
     args = parse_arguments()
@@ -88,6 +108,9 @@ def main():
 
     # Store format in app config
     app.config["BICLIQUE_FORMAT"] = args.format
+
+    # Configure the Flask app
+    configure_app(app)
 
     # Add this line to configure static files path
     app.static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
