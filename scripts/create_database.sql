@@ -5,11 +5,18 @@ CREATE TABLE timepoints (
     description TEXT
 );
 
+-- Create Master Gene IDs Table
+CREATE TABLE master_gene_ids (
+    id INTEGER PRIMARY KEY,
+    gene_symbol VARCHAR(255) NOT NULL UNIQUE
+);
+
 -- Create Genes Table
 CREATE TABLE genes (
     id SERIAL PRIMARY KEY,
     symbol VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT
+    description TEXT,
+    master_gene_id INTEGER REFERENCES master_gene_ids(id)
 );
 
 -- Create DMRs Table
