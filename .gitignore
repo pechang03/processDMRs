@@ -1,2 +1,6 @@
 .aider*
 .env
+# Environment files
+.env
+*.env
+!sample.env
