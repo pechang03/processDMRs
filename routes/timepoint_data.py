@@ -3,19 +3,6 @@ import networkx as nx
 from typing import Dict
 import networkx as nx
 import pandas as pd
-import json
-from biclique_analysis.statistics import analyze_components
-
-from utils.constants import (
-    DSS1_FILE,
-    DSS_PAIRWISE_FILE,
-    BIPARTITE_GRAPH_TEMPLATE,
-    BIPARTITE_GRAPH_OVERALL,
-    START_GENE_ID,
-)
-
-from utils.json_utils import convert_for_json
-from data_loader import create_bipartite_graph
 from biclique_analysis import (
     process_bicliques,
     process_components,
@@ -27,21 +14,16 @@ from biclique_analysis.statistics import (
     calculate_edge_coverage,
 )
 from biclique_analysis.reporting import get_bicliques_summary
+from data_loader import create_bipartite_graph
+from utils.json_utils import convert_for_json
 
-
-def format_timepoint_for_display(timepoint: str) -> str:
-    """Format timepoint name for display by removing _TSS suffix."""
-    return timepoint.replace('_TSS', '') if timepoint.endswith('_TSS') else timepoint
-
-def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
+def process_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int], layout_options=None) -> Dict:
     """
-    Call stack (top level):
-    1. [process_timepoint] (YOU ARE HERE)
-    2. create_bipartite_graph
-    3. process_bicliques
-    4. process_components
-    
     Process a single timepoint with configurable layout options.
+    
+    This is an API boundary function that:
+    1. Calls business logic functions that work with native Python types
+    2. Converts results to JSON-safe format before returning
     """
     try:
         # Create original bipartite graph
@@ -52,7 +34,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
         # Create empty biclique graph
         biclique_graph = nx.Graph()
 
-        # Create metadata dictionaries
+        # Create metadata dictionaries with native Python types
         dmr_metadata = {}
         gene_metadata = {}
 
@@ -61,37 +43,31 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
             dmr_id = f"DMR_{row['DMR_No.']}"
             dmr_metadata[dmr_id] = {
                 "area": str(row["Area_Stat"]) if "Area_Stat" in df.columns else "N/A",
-                "description": str(row["Gene_Description"])
-                if "Gene_Description" in df.columns
-                else "N/A",
+                "description": str(row["Gene_Description"]) if "Gene_Description" in df.columns else "N/A",
             }
 
         # Populate gene metadata
         for gene_name in gene_id_mapping.keys():
             gene_metadata[gene_name] = {"description": "N/A"}
-            
-            # Check if the column exists before trying to use it
             if "Gene_Symbol_Nearby" in df.columns:
                 gene_matches = df[df["Gene_Symbol_Nearby"].str.lower() == gene_name.lower()]
                 if not gene_matches.empty and "Gene_Description" in gene_matches.columns:
                     gene_metadata[gene_name]["description"] = str(gene_matches.iloc[0]["Gene_Description"])
 
-        # Initialize base result structure with default component stats
-        default_component_stats = {
-            "original": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
-                "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
-                "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
-            },
-            "biclique": {
-                "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
-            }
-        }
-
+        # Initialize result structure with native Python types
         result = {
             "status": "success",
             "stats": {
-                "components": default_component_stats,
+                "components": {
+                    "original": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
+                        "biconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0},
+                        "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
+                    },
+                    "biclique": {
+                        "connected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
+                    }
+                },
                 "coverage": {
                     "dmrs": {"covered": 0, "total": 0, "percentage": 0},
                     "genes": {"covered": 0, "total": 0, "percentage": 0},
@@ -137,7 +113,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                     gene_id_mapping=gene_id_mapping,
                 )
 
-                # Update result with processed data
+                # Update result with processed data (still native Python types)
                 result.update({
                     "complex_components": complex_components,
                     "interesting_components": interesting_components,
@@ -163,7 +139,7 @@ def process_timepoint(df, timepoint, gene_id_mapping, layout_options=None):
                 "triconnected": {"total": 0, "single_node": 0, "small": 0, "interesting": 0, "complex": 0}
             }
 
-        # Convert the result to JSON-safe format before returning
+        # Convert to JSON-safe format only at the API boundary return
         return convert_for_json(result)
 
     except Exception as e:
