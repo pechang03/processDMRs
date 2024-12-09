@@ -17,6 +17,9 @@ from biclique_analysis.reporting import get_bicliques_summary
 from data_loader import create_bipartite_graph
 from utils.json_utils import convert_for_json
 
+from utils.constants import BIPARTITE_GRAPH_OVERALL, BIPARTITE_GRAPH_TEMPLATE
+from biclique_analysis.statistics import analyze_components
+
 def process_timepoint(df: pd.DataFrame, timepoint: str, gene_id_mapping: Dict[str, int], layout_options=None) -> Dict:
     """
     Process a single timepoint with configurable layout options.
