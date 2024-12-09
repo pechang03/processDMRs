@@ -196,7 +196,6 @@ def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, in
         return {}
 
 def update_gene_metadata(
-    session: Session,
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
     timepoint: str = None
@@ -205,67 +204,68 @@ def update_gene_metadata(
     Update gene metadata from DataFrame.
     
     Args:
-        session: Database session
         df: DataFrame containing gene metadata
         gene_id_mapping: Mapping of gene symbols to IDs
         timepoint: Optional timepoint name for tracking metadata source
     """
+    from database.connection import get_db_session
     from database.operations import insert_metadata
     
     try:
-        # Track updates for logging
-        updates = 0
-        skipped = 0
-        
-        # Process each gene in mapping
-        for gene_symbol, gene_id in gene_id_mapping.items():
-            # Look for gene in DataFrame (case-insensitive)
-            gene_rows = df[df['Gene_Symbol_Nearby'].str.lower() == gene_symbol.lower()]
+        # Create a new session
+        with get_db_session() as session:
+            # Track updates for logging
+            updates = 0
+            skipped = 0
             
-            if not gene_rows.empty:
-                row = gene_rows.iloc[0]
+            # Process each gene in mapping
+            for gene_symbol, gene_id in gene_id_mapping.items():
+                # Look for gene in DataFrame (case-insensitive)
+                gene_rows = df[df['Gene_Symbol_Nearby'].str.lower() == gene_symbol.lower()]
                 
-                # Collect available metadata
-                metadata = {}
-                
-                # Add description if available
-                if 'Gene_Description' in row and pd.notna(row['Gene_Description']):
-                    metadata['description'] = str(row['Gene_Description'])
+                if not gene_rows.empty:
+                    row = gene_rows.iloc[0]
                     
-                # Add other available metadata
-                if 'Gene_Type' in row and pd.notna(row['Gene_Type']):
-                    metadata['gene_type'] = str(row['Gene_Type'])
-                if 'Chromosome' in row and pd.notna(row['Chromosome']):
-                    metadata['chromosome'] = str(row['Chromosome'])
+                    # Collect available metadata
+                    metadata = {}
                     
-                # Add timepoint if provided
-                if timepoint:
-                    metadata['timepoint'] = timepoint
-                
-                # Insert each metadata item
-                for key, value in metadata.items():
-                    try:
-                        insert_metadata(
-                            session,
-                            entity_type='gene',
-                            entity_id=gene_id,
-                            key=key,
-                            value=value
-                        )
-                        updates += 1
-                    except Exception as e:
-                        print(f"Error updating metadata for gene {gene_symbol}: {str(e)}")
-                        skipped += 1
-            else:
-                skipped += 1
-                
-        print(f"\nGene metadata update summary:")
-        print(f"Updated: {updates} metadata entries")
-        print(f"Skipped: {skipped} genes")
-        
+                    # Add description if available
+                    if 'Gene_Description' in row and pd.notna(row['Gene_Description']):
+                        metadata['description'] = str(row['Gene_Description'])
+                        
+                    # Add other available metadata
+                    if 'Gene_Type' in row and pd.notna(row['Gene_Type']):
+                        metadata['gene_type'] = str(row['Gene_Type'])
+                    if 'Chromosome' in row and pd.notna(row['Chromosome']):
+                        metadata['chromosome'] = str(row['Chromosome'])
+                        
+                    # Add timepoint if provided
+                    if timepoint:
+                        metadata['timepoint'] = timepoint
+                    
+                    # Insert each metadata item
+                    for key, value in metadata.items():
+                        try:
+                            insert_metadata(
+                                session,
+                                entity_type='gene',
+                                entity_id=gene_id,
+                                key=key,
+                                value=value
+                            )
+                            updates += 1
+                        except Exception as e:
+                            print(f"Error updating metadata for gene {gene_symbol}: {str(e)}")
+                            skipped += 1
+                else:
+                    skipped += 1
+                    
+            print(f"\nGene metadata update summary:")
+            print(f"Updated: {updates} metadata entries")
+            print(f"Skipped: {skipped} genes")
+            
     except Exception as e:
         print(f"Error in update_gene_metadata: {str(e)}")
-        session.rollback()
         raise
 
 def process_data():
@@ -325,7 +325,7 @@ def process_data():
                     )
                     
                     # Update gene metadata
-                    update_gene_metadata(session, df, gene_id_mapping, sheet_name)
+                    update_gene_metadata(df, gene_id_mapping, sheet_name)
                 else:
                     print(f"Empty sheet: {sheet_name}", flush=True)
                     timepoint_data[sheet_name] = {
