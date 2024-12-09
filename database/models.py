@@ -11,7 +11,6 @@ class Timepoint(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
-    genes = relationship("Gene", back_populates="timepoint")
     dmrs = relationship("DMR", back_populates="timepoint")
     bicliques = relationship("Biclique", back_populates="timepoint")
     components = relationship("Component", back_populates="timepoint")
@@ -22,8 +21,6 @@ class Gene(Base):
     symbol = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     master_gene_id = Column(Integer, ForeignKey('master_gene_ids.id'))
-    timepoint_id = Column(Integer, ForeignKey('timepoints.id'))
-    timepoint = relationship("Timepoint", back_populates="genes")
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
 class MasterGeneID(Base):
