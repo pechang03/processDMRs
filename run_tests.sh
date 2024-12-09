@@ -4,7 +4,7 @@
 set -e
 
 # Get the directory containing this script
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Change to the project root directory
 cd "$SCRIPT_DIR"
@@ -19,4 +19,4 @@ coverage report
 coverage html
 
 # Exit with the test suite's exit code
-exit ${{PIPESTATUS[0]}}
+exit ${PIPESTATUS[0]}
