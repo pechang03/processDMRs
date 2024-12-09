@@ -17,7 +17,7 @@ load_dotenv()
 def populate_timepoints(session: Session):
     """Populate timepoints table."""
     timepoints = [
-        "DSStimeseries",  # Changed from DSS1 to DSStimeseries
+        "DSS1",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
         "P21-P28_TSS",
         "P21-P40_TSS", 
         "P21-P60_TSS",
