@@ -108,6 +108,8 @@ def populate_relationships(session: Session, relationships: list):
         operations.insert_relationship(session, **rel)
 
 
+from database.schema import ComponentBiclique, Relationship, Metadata, Statistic, Biclique, Component, DMR, Gene, Timepoint
+
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
