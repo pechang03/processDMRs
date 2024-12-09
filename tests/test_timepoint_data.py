@@ -141,7 +141,7 @@ class TestTimepointData(unittest.TestCase):
 
     def test_timepoint_data_structure(self):
         """Test that timepoint data contains all required fields with correct structure."""
-        with patch("routes.timepoint_data.process_data") as mock_process:
+        with patch("process_data.process_data") as mock_process:
             mock_process.return_value = {
                 "DSS1": {
                     "interesting_components": [],
