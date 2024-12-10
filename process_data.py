@@ -92,6 +92,7 @@ from data_loader import (
     read_excel_file,
     create_bipartite_graph,
     validate_bipartite_graph,
+    read_gene_mapping
 )
 
 from routes.timepoint_data import process_timepoint
