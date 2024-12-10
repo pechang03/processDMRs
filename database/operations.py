@@ -3,6 +3,7 @@
 from typing import Set, Dict, List, Tuple
 import pandas as pd
 
+from utils import node_info, edge_info
 from .models import TriconnectedComponent
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -389,6 +390,7 @@ def process_gene_sources(
             if pd.notna(enhancer_info):
                 # Split enhancer info on '/' to get gene name and promoter info
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(enhancer_info)
                 for gene in genes:
                     gene_symbol = str(gene).strip().lower()
@@ -420,6 +422,7 @@ def process_gene_sources(
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
             if pd.notna(promoter_info):
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(
                     promoter_info
                 )  # Reuse enhancer processing
@@ -450,10 +453,12 @@ def populate_dmrs(
     """Populate DMRs table with dominating set information."""
     # Create bipartite graph
     from data_loader import create_bipartite_graph
+
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping, "DSStimeseries")
 
     # Calculate dominating set
     from rb_domination import calculate_dominating_sets
+
     dominating_set = calculate_dominating_sets(bipartite_graph, df, "DSStimeseries")
 
     for _, row in df.iterrows():
