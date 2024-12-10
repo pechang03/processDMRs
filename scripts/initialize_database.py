@@ -295,7 +295,7 @@ def main():
             timepoint = session.query(Timepoint).filter_by(name="DSStimeseries").first()
             if timepoint and df_DSStimeseries is not None:
                 print("\nProcessing DSStimeseries timepoint...")
-                populate_dmrs(session, df_DSStimeseries, timepoint.id)
+                populate_dmrs(session, df_DSStimeseries, timepoint.id, gene_id_mapping)
 
                 # Create bipartite graph
                 bipartite_graph = create_bipartite_graph(
@@ -324,7 +324,7 @@ def main():
                     )
                     if timepoint:
                         # Populate DMRs
-                        populate_dmrs(session, df, timepoint.id)
+                        populate_dmrs(session, df, timepoint.id, gene_id_mapping)
 
                         # Create bipartite graph
                         bipartite_graph = create_bipartite_graph(
