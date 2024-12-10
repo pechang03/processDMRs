@@ -10,7 +10,7 @@ from database import schema, connection, operations
 from utils import id_mapping, constants
 from biclique_analysis import processor, reader
 from data_loader import read_excel_file
-from process_data import read_gene_mapping
+# from process_data import read_gene_mapping
 
 # Load environment variables
 load_dotenv()
