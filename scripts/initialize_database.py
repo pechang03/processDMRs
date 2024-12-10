@@ -492,6 +492,7 @@ def main():
                             )
 
                         # Update gene metadata
+                        from database.operations import update_gene_metadata
                         update_gene_metadata(df, gene_id_mapping, sheet_name)
 
                 except Exception as e:
