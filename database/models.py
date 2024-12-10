@@ -43,11 +43,19 @@ class Gene(Base):
 
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
+from sqlalchemy import Index
+from sqlalchemy.sql import func
+
 class MasterGeneID(Base):
     __tablename__ = 'master_gene_ids'
     id = Column(Integer, primary_key=True)
-    gene_symbol = Column(String(255), unique=True, nullable=False)
+    gene_symbol = Column(String(255), nullable=False)
     genes = relationship("Gene", back_populates="master_gene")
+    
+    # Create case-insensitive unique index
+    __table_args__ = (
+        Index('ix_master_gene_ids_gene_symbol_lower', func.lower(gene_symbol), unique=True),
+    )
 
 class DMR(Base):
     __tablename__ = 'dmrs'

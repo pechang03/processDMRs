@@ -159,26 +159,25 @@ def insert_gene(
     try:
         # Create or get MasterGeneID if master_gene_id is provided
         if master_gene_id is not None:
-            # Try to get existing master gene ID
+            # Try to get existing master gene ID (case-insensitive)
             master_gene = (
-                session.query(MasterGeneID).filter_by(id=master_gene_id).first()
+                session.query(MasterGeneID)
+                .filter(func.lower(MasterGeneID.gene_symbol) == symbol.lower())
+                .first()
             )
-            if not master_gene:
-                # Check if gene symbol already exists in master_gene_ids
-                existing_master = (
-                    session.query(MasterGeneID).filter_by(gene_symbol=symbol).first()
-                )
-                if existing_master:
-                    master_gene_id = existing_master.id
-                else:
-                    # Create new master gene ID
-                    master_gene = MasterGeneID(id=master_gene_id, gene_symbol=symbol)
-                    session.add(master_gene)
-                    try:
-                        session.flush()  # Try to flush changes to catch any constraints
-                    except Exception as e:
-                        session.rollback()
-                        raise ValueError(f"Error creating master gene ID: {str(e)}")
+        
+            if master_gene:
+                master_gene_id = master_gene.id
+            else:
+                # Create new master gene ID
+                master_gene = MasterGeneID(id=master_gene_id, gene_symbol=symbol)
+                session.add(master_gene)
+                try:
+                    session.flush()
+                except Exception as e:
+                    session.rollback()
+                    print(f"Error creating master gene ID for {symbol}: {str(e)}")
+                    return None
 
         # Create the gene
         gene = Gene(
