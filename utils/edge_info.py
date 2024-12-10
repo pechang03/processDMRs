@@ -38,10 +38,22 @@ class EdgeInfo:
         """Add a source to the edge."""
         self.sources.add(source)
 
+    @property
+    def source(self) -> int:
+        """Get source node ID."""
+        return self.edge[0]
+
+    @property 
+    def target(self) -> int:
+        """Get target node ID."""
+        return self.edge[1]
+
     def to_dict(self):
         """Convert EdgeInfo to a dictionary (useful for JSON serialization)."""
         return {
             "edge": self.edge,
+            "source": self.source,
+            "target": self.target,
             "label": self.label,
             "sources": list(self.sources),
         }
