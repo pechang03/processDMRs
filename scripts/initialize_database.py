@@ -195,9 +195,18 @@ def process_gene_sources(
     print(f"Processed {len(processed_genes)} unique genes")
 
 
+from rb_domination import calculate_dominating_sets
+
 def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int):
-    """Populate DMRs table."""
+    """Populate DMRs table with dominating set information."""
+    # Create bipartite graph
+    bipartite_graph = create_bipartite_graph(df, gene_id_mapping, "DSStimeseries")
+    
+    # Calculate dominating set
+    dominating_set = calculate_dominating_sets(bipartite_graph, df, "DSStimeseries")
+    
     for _, row in df.iterrows():
+        dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
         dmr_data = {
             "dmr_number": row["DMR_No."],
             "area_stat": row.get("Area_Stat"),
@@ -211,6 +220,7 @@ def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int):
             "p_value": row.get("P-value"),
             "q_value": row.get("Q-value"),
             "mean_methylation": row.get("Mean_Methylation"),
+            "is_hub": dmr_id in dominating_set
         }
         operations.insert_dmr(session, timepoint_id, **dmr_data)
 
