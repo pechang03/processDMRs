@@ -87,37 +87,8 @@ def populate_genes(
     # Now populate genes table with available info
     genes_added = 0
     if df_DSStimeseries is not None:
-        for gene_symbol, gene_id in gene_id_mapping.items():
-            # Look for gene description in DSStimeseries data
-            gene_rows = df_DSStimeseries[
-                df_DSStimeseries["Gene_Symbol_Nearby"].str.lower()
-                == gene_symbol.lower()
-            ]
-
-            description = None
-            if not gene_rows.empty and "Gene_Description" in gene_rows.columns:
-                description = gene_rows.iloc[0]["Gene_Description"]
-
-            # Create gene entry with available info
-            gene = Gene(
-                symbol=gene_symbol,
-                description=description,
-                master_gene_id=gene_id,
-                node_type="regular_gene",  # Default type, can be updated later
-                degree=0,  # Will be updated when processing each timepoint
-                is_hub=False,  # Will be updated when dominating sets are calculated
-            )
-            session.add(gene)
-            genes_added += 1
-
-            # Commit in batches
-            if genes_added % 100 == 0:
-                try:
-                    session.commit()
-                except Exception as e:
-                    session.rollback()
-                    print(f"Error adding genes batch: {str(e)}")
-                    raise
+        # Process each gene source separately
+        process_gene_sources(df_DSStimeseries, gene_id_mapping, session)
 
     # Final commit for remaining genes
     try:
