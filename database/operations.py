@@ -174,6 +174,7 @@ def update_gene_metadata(
     is_hub: bool = None
 ):
     """Update gene metadata for a specific timepoint."""
+    from sqlalchemy import func
     gene = session.query(Gene).filter(func.lower(Gene.symbol) == gene_symbol.lower()).first()
     if gene:
         if degree is not None:
@@ -236,6 +237,7 @@ def query_metadata(session: Session):
 def query_relationships(session: Session):
     """Query all relationships."""
     return session.query(Relationship).all()
+from typing import Set, Dict
 def update_gene_hub_status(session: Session, timepoint: str, dominating_set: Set[int], gene_id_mapping: Dict[str, int]):
     """Update hub status for genes in dominating set."""
     reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
