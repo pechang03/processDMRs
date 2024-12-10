@@ -224,6 +224,10 @@ def populate_relationships(session: Session, relationships: list):
         operations.insert_relationship(session, **rel)
 
 
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
@@ -386,6 +390,8 @@ def main():
 
                     # Create and populate metadata
                     print("\nPopulating metadata...")
+from biclique_analysis.processor import create_node_metadata
+
                     dmr_metadata, gene_metadata = create_node_metadata(
                         df_DSStimeseries,
                         gene_id_mapping,
@@ -454,6 +460,8 @@ def main():
                             populate_statistics(session, component_results)
 
                             # Create and populate metadata
+from biclique_analysis.processor import create_node_metadata
+
                             dmr_metadata, gene_metadata = create_node_metadata(
                                 df, gene_id_mapping, analyzer.get_node_biclique_map()
                             )
