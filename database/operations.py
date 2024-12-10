@@ -74,6 +74,9 @@ def insert_triconnected_component(
     category: str,
     separation_pairs: List[Tuple[int, int]],
     nodes: List[int],
+    avg_dmrs: float = None,
+    avg_genes: float = None,
+    is_simple: bool = None,
 ) -> int:
     """Insert a new triconnected component into the database."""
     component = TriconnectedComponent(
@@ -86,6 +89,9 @@ def insert_triconnected_component(
         category=category,
         separation_pairs=separation_pairs,
         nodes=nodes,
+        avg_dmrs=avg_dmrs,
+        avg_genes=avg_genes,
+        is_simple=is_simple,
     )
     session.add(component)
     session.commit()
