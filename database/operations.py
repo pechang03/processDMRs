@@ -96,6 +96,9 @@ def insert_triconnected_component(
     session.add(component)
     session.commit()
     return component.id
+    session.add(component)
+    session.commit()
+    return component.id
 
 
 def insert_component_biclique(session: Session, component_id: int, biclique_id: int):
