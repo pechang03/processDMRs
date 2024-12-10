@@ -1,13 +1,27 @@
 """SQLAlchemy models for DMR analysis system."""
 
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, ARRAY, Float, Boolean, DateTime, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    ForeignKey,
+    ARRAY,
+    Float,
+    Boolean,
+    DateTime,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Index
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
+
 class Timepoint(Base):
-    __tablename__ = 'timepoints'
+    __tablename__ = "timepoints"
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
@@ -15,52 +29,55 @@ class Timepoint(Base):
     bicliques = relationship("Biclique", back_populates="timepoint")
     components = relationship("Component", back_populates="timepoint")
 
+
 class Gene(Base):
-    __tablename__ = 'genes'
+    __tablename__ = "genes"
     id = Column(Integer, primary_key=True)
     symbol = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
-    master_gene_id = Column(Integer, ForeignKey('master_gene_ids.id'))
-    
+    master_gene_id = Column(Integer, ForeignKey("master_gene_ids.id"))
+
     # Node type from node_info.py (regular_gene, split_gene)
     node_type = Column(String(50))
-    
+
     # Gene type based on source (Enhancer, Promoter, Nearby)
     gene_type = Column(String(50))
-    
+
     # Additional genetic context
     promoter_info = Column(Text)  # Store the second part of promoter data
-    interaction_source = Column(String(50))  # Where this gene was found (Enhancer/Promoter column)
-    
+    interaction_source = Column(
+        String(50)
+    )  # Where this gene was found (Enhancer/Promoter column)
+
     # Connectivity information
     biclique_ids = Column(ARRAY(Integer))  # List of bicliques this gene belongs to
     connected_component_id = Column(Integer)  # Single connected component ID
     triconnected_component_id = Column(Integer)  # Single triconnected component ID
-    
+
     # Network properties
     degree = Column(Integer, default=0)
-    
 
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
-from sqlalchemy import Index
-from sqlalchemy.sql import func
 
 class MasterGeneID(Base):
-    __tablename__ = 'master_gene_ids'
+    __tablename__ = "master_gene_ids"
     id = Column(Integer, primary_key=True)
     gene_symbol = Column(String(255), nullable=False)
     genes = relationship("Gene", back_populates="master_gene")
-    
+
     # Create case-insensitive unique index
     __table_args__ = (
-        Index('ix_master_gene_ids_gene_symbol_lower', func.lower(gene_symbol), unique=True),
+        Index(
+            "ix_master_gene_ids_gene_symbol_lower", func.lower(gene_symbol), unique=True
+        ),
     )
 
+
 class DMR(Base):
-    __tablename__ = 'dmrs'
+    __tablename__ = "dmrs"
     id = Column(Integer, primary_key=True)
-    timepoint_id = Column(Integer, ForeignKey('timepoints.id'))
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
     dmr_number = Column(Integer, nullable=False)
     area_stat = Column(Float)
     description = Column(Text)
@@ -73,24 +90,30 @@ class DMR(Base):
     p_value = Column(Float)
     q_value = Column(Float)
     mean_methylation = Column(Float)
-    is_hub = Column(Boolean, default=False)  # Add this - True if DMR is in dominating set
+    is_hub = Column(
+        Boolean, default=False
+    )  # Add this - True if DMR is in dominating set
     timepoint = relationship("Timepoint", back_populates="dmrs")
-    __table_args__ = (UniqueConstraint('timepoint_id', 'dmr_number', name='uq_dmrs_timepoint_dmr'),)
+    __table_args__ = (
+        UniqueConstraint("timepoint_id", "dmr_number", name="uq_dmrs_timepoint_dmr"),
+    )
+
 
 class Biclique(Base):
-    __tablename__ = 'bicliques'
+    __tablename__ = "bicliques"
     id = Column(Integer, primary_key=True)
-    timepoint_id = Column(Integer, ForeignKey('timepoints.id'))
-    component_id = Column(Integer, ForeignKey('components.id'))
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
+    component_id = Column(Integer, ForeignKey("components.id"))
     dmr_ids = Column(ARRAY(Integer))
     gene_ids = Column(ARRAY(Integer))
     timepoint = relationship("Timepoint", back_populates="bicliques")
     component = relationship("Component", back_populates="bicliques")
 
+
 class Component(Base):
-    __tablename__ = 'components'
+    __tablename__ = "components"
     id = Column(Integer, primary_key=True)
-    timepoint_id = Column(Integer, ForeignKey('timepoints.id'))
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
     category = Column(String(50))
     size = Column(Integer)
     dmr_count = Column(Integer)
@@ -101,30 +124,59 @@ class Component(Base):
     bicliques = relationship("Biclique", back_populates="component")
     component_bicliques = relationship("ComponentBiclique", back_populates="component")
 
+
 class ComponentBiclique(Base):
-    __tablename__ = 'component_bicliques'
-    component_id = Column(Integer, ForeignKey('components.id'), primary_key=True)
-    biclique_id = Column(Integer, ForeignKey('bicliques.id'), primary_key=True)
+    __tablename__ = "component_bicliques"
+    component_id = Column(Integer, ForeignKey("components.id"), primary_key=True)
+    biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
     component = relationship("Component", back_populates="component_bicliques")
     biclique = relationship("Biclique")
 
+
+class TriconnectedComponent(Base):
+    __tablename__ = "triconnected_components"
+    id = Column(Integer, primary_key=True)
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
+
+    # Basic metrics
+    size = Column(Integer)
+    dmr_count = Column(Integer)
+    gene_count = Column(Integer)
+    edge_count = Column(Integer)
+    density = Column(Float)
+
+    # Classification
+    category = Column(String(50))  # single_node, small, interesting
+
+    # Component structure
+    nodes = Column(ARRAY(Integer))  # Store actual nodes in component
+    separation_pairs = Column(ARRAY(Integer))  # Store pairs that separate component
+
+    # Additional statistics
+    avg_dmrs = Column(Float)  # Average DMRs for interesting components
+    avg_genes = Column(Float)  # Average genes for interesting components
+    is_simple = Column(Boolean)  # Whether component was marked as simple
+
+
 class Statistic(Base):
-    __tablename__ = 'statistics'
+    __tablename__ = "statistics"
     id = Column(Integer, primary_key=True)
     category = Column(String(50))
     key = Column(String(255))
     value = Column(Text)
 
+
 class Metadata(Base):
-    __tablename__ = 'metadata'
+    __tablename__ = "metadata"
     id = Column(Integer, primary_key=True)
     entity_type = Column(String(50))
     entity_id = Column(Integer)
     key = Column(String(255))
     value = Column(Text)
 
+
 class Relationship(Base):
-    __tablename__ = 'relationships'
+    __tablename__ = "relationships"
     id = Column(Integer, primary_key=True)
     source_entity_type = Column(String(50))
     source_entity_id = Column(Integer)
