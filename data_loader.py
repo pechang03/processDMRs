@@ -295,3 +295,36 @@ def create_bipartite_graph(
     B = preprocess_graph_for_visualization(B, remove_isolates=True, keep_dmrs=True)
 
     return B
+def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, int]:
+    """
+    Read gene mapping from CSV file.
+    
+    Args:
+        mapping_file: Path to the gene mapping CSV file
+        
+    Returns:
+        Dictionary mapping gene symbols to IDs
+    """
+    try:
+        # Check if file exists
+        if not os.path.exists(mapping_file):
+            print(f"Warning: Gene mapping file {mapping_file} not found")
+            return {}
+            
+        # Read CSV file
+        df = pd.read_csv(mapping_file)
+        
+        # Convert to dictionary
+        gene_mapping = {}
+        for _, row in df.iterrows():
+            if 'gene_symbol' in df.columns and 'id' in df.columns:
+                symbol = str(row['gene_symbol']).strip().lower()
+                if symbol and symbol != 'nan':
+                    gene_mapping[symbol] = int(row['id'])
+                    
+        print(f"Read {len(gene_mapping)} gene mappings from {mapping_file}")
+        return gene_mapping
+        
+    except Exception as e:
+        print(f"Error reading gene mapping: {str(e)}")
+        return {}
