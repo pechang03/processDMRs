@@ -78,7 +78,7 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
         stats["avg_dmrs"] = total_dmrs / stats["interesting"]
         stats["avg_genes"] = total_genes / stats["interesting"]
     
-    return triconnected_components, stats
+    return triconnected_components, stats, avg_dmrs, avg_genes, is_simple
 
 def find_separation_pairs(graph: nx.Graph) -> List[Set]:
     """
