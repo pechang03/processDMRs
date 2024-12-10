@@ -21,10 +21,30 @@ class Gene(Base):
     symbol = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     master_gene_id = Column(Integer, ForeignKey('master_gene_ids.id'))
-    node_type = Column(String(50))  # regular_gene, split_gene
+    
+    # Node type from node_info.py (regular_gene, split_gene)
+    node_type = Column(String(50))
+    
+    # Gene type based on source (Enhancer, Promoter, Nearby)
+    gene_type = Column(String(50))
+    
+    # Additional genetic context
+    promoter_info = Column(Text)  # Store the second part of promoter data
+    interaction_source = Column(String(50))  # Where this gene was found (Enhancer/Promoter column)
+    
+    # Connectivity information
+    biclique_ids = Column(ARRAY(Integer))  # List of bicliques this gene belongs to
+    connected_component_id = Column(Integer)  # Single connected component ID
+    triconnected_component_id = Column(Integer)  # Single triconnected component ID
+    
+    # Network properties
     degree = Column(Integer, default=0)
-    from sqlalchemy import Boolean
-    is_hub = Column(Boolean, default=False)
+    is_hub = Column(Boolean, default=False)  # True if in dominating set
+    
+    # Timestamps for tracking
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
 class MasterGeneID(Base):
