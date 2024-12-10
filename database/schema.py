@@ -10,6 +10,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Float,
+    Boolean,
     UniqueConstraint,
 )
 
