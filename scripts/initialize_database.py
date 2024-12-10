@@ -137,6 +137,7 @@ def process_bicliques_for_timepoint(session: Session, timepoint_id: int, bicliqu
     
     try:
         # Create bipartite graph from DataFrame
+        from data_loader import create_bipartite_graph
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
         
         # Read and process bicliques
@@ -327,7 +328,7 @@ def main():
                         file_format="gene_name",
                     )
                     populate_bicliques(session, bicliques_result, timepoint.id)
-                    populate_components(session, bicliques_result, timepoint.id)
+                    # Remove the call to populate_components as it's now integrated into process_bicliques_for_timepoint
                     populate_statistics(session, bicliques_result.get("statistics", {}))
                     populate_metadata(session, bicliques_result.get("metadata", {}))
 
@@ -362,9 +363,7 @@ def main():
                                 populate_bicliques(
                                     session, bicliques_result, timepoint.id
                                 )
-                                populate_components(
-                                    session, bicliques_result, timepoint.id
-                                )
+                                # Remove the call to populate_components as it's now integrated into process_bicliques_for_timepoint
                                 populate_statistics(
                                     session, bicliques_result.get("statistics", {})
                                 )
