@@ -212,7 +212,8 @@ def main():
             clean_database(session)
 
             # First read master gene mapping
-            gene_id_mapping = data_loader.read_gene_mapping()
+            from data_loader import read_gene_mapping
+            gene_id_mapping = read_gene_mapping()
             if not gene_id_mapping:
                 print("Error: Could not read master gene mapping")
                 return
