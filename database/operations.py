@@ -148,7 +148,16 @@ def insert_relationship(
 
 
 def insert_gene(
-    session: Session, symbol: str, description: str = None, master_gene_id: int = None
+    session: Session,
+    symbol: str,
+    description: str = None,
+    master_gene_id: int = None,
+    node_type: str = "regular_gene",
+    gene_type: str = None,
+    interaction_source: str = None,
+    promoter_info: str = None,
+    degree: int = 0,
+    is_hub: bool = False
 ):
     """Insert a new gene into the database."""
     # Skip invalid gene symbols
@@ -164,9 +173,7 @@ def insert_gene(
         return None  # Skip invalid symbols instead of raising error
 
     # Check for duplicate gene symbols (case-insensitive)
-    existing_gene = (
-        session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
-    )
+    existing_gene = session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
     if existing_gene:
         return existing_gene.id
 
@@ -198,9 +205,12 @@ def insert_gene(
             symbol=symbol,
             description=description,
             master_gene_id=master_gene_id,
-            node_type="regular_gene",
-            degree=0,
-            is_hub=False,
+            node_type=node_type,
+            gene_type=gene_type,
+            interaction_source=interaction_source,
+            promoter_info=promoter_info,
+            degree=degree,
+            is_hub=is_hub
         )
         session.add(gene)
         try:
