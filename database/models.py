@@ -1,6 +1,6 @@
 """SQLAlchemy models for DMR analysis system."""
 
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, ARRAY, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, ARRAY, Float, Boolean, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
