@@ -76,10 +76,7 @@ class DMR(Base):
     p_value = Column(Float)
     q_value = Column(Float)
     mean_methylation = Column(Float)
-    is_hub = Column(Boolean, default=False)  # Add this line
-    is_hub = Column(
-        Boolean, default=False
-    )  # Add this - True if DMR is in dominating set
+    is_hub = Column(Boolean, default=False)  # Single definition
     timepoint = relationship("Timepoint", back_populates="dmrs")
     __table_args__ = (
         UniqueConstraint("timepoint_id", "dmr_number", name="uq_dmrs_timepoint_dmr"),
