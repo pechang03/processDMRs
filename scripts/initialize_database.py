@@ -37,6 +37,7 @@ def populate_genes(session: Session, gene_id_mapping: dict, df_DSStimeseries: pd
     
     # First populate master_gene_ids
     for gene_symbol, gene_id in gene_id_mapping.items():
+        from database.schema import MasterGeneID
         master_gene = MasterGeneID(
             id=gene_id,
             gene_symbol=gene_symbol
