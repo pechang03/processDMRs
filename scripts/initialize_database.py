@@ -218,6 +218,7 @@ def main():
                                 populate_metadata(session, bicliques_result.get("metadata", {}))
                                 
                             # Update gene metadata
+                            from data_loader import update_gene_metadata
                             update_gene_metadata(df, gene_id_mapping, sheet_name)
                     else:
                         print(f"Empty sheet: {sheet_name}")
