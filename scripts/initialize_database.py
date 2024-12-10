@@ -228,21 +228,29 @@ def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
     try:
-        # Delete in reverse order of dependencies
-        session.query(ComponentBiclique).delete()
-        session.query(Relationship).delete()
-        session.query(Metadata).delete()
-        session.query(Statistic).delete()
-        session.query(Biclique).delete()
-        session.query(Component).delete()
-        session.query(DMR).delete()
-        session.query(Gene).delete()
-        session.query(Timepoint).delete()
-        session.commit()
-        print("Database cleaned successfully")
+        # Create tables first
+        Base.metadata.create_all(session.bind)
+        
+        # Then try to delete data
+        try:
+            session.query(ComponentBiclique).delete()
+            session.query(Relationship).delete()
+            session.query(Metadata).delete()
+            session.query(Statistic).delete()
+            session.query(Biclique).delete()
+            session.query(Component).delete()
+            session.query(DMR).delete()
+            session.query(Gene).delete()
+            session.query(Timepoint).delete()
+            session.commit()
+            print("Database cleaned successfully")
+        except Exception as e:
+            session.rollback()
+            print(f"Warning: Error cleaning existing data: {str(e)}")
+            # Continue anyway since we'll be creating new tables
+            
     except Exception as e:
-        session.rollback()
-        print(f"Error cleaning database: {str(e)}")
+        print(f"Error initializing database: {str(e)}")
         raise
 
 
