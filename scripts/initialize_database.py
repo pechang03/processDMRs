@@ -16,8 +16,11 @@ import networkx as nx
 from sqlalchemy.orm import Session
 from database import schema, connection, operations
 from utils import id_mapping, constants
-from biclique_analysis import processor, reader
+from utils import node_info, edge_info
+from biclique_analysis import reader
+from biclique_analysis.processor import create_node_metadata
 from data_loader import create_bipartite_graph
+# from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
 from data_loader import (
     get_excel_sheets,
@@ -228,13 +231,14 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
     try:
         # Create tables first
         Base.metadata.create_all(session.bind)
-        
+
         # Then try to delete data
         try:
             session.query(ComponentBiclique).delete()
@@ -252,7 +256,7 @@ def clean_database(session: Session):
             session.rollback()
             print(f"Warning: Error cleaning existing data: {str(e)}")
             # Continue anyway since we'll be creating new tables
-            
+
     except Exception as e:
         print(f"Error initializing database: {str(e)}")
         raise
@@ -390,7 +394,6 @@ def main():
 
                     # Create and populate metadata
                     print("\nPopulating metadata...")
-from biclique_analysis.processor import create_node_metadata
 
                     dmr_metadata, gene_metadata = create_node_metadata(
                         df_DSStimeseries,
@@ -460,7 +463,6 @@ from biclique_analysis.processor import create_node_metadata
                             populate_statistics(session, component_results)
 
                             # Create and populate metadata
-from biclique_analysis.processor import create_node_metadata
 
                             dmr_metadata, gene_metadata = create_node_metadata(
                                 df, gene_id_mapping, analyzer.get_node_biclique_map()
