@@ -11,6 +11,8 @@ from .operations import (
     insert_statistics,
     insert_metadata,
     insert_relationship,
+    populate_dmrs,  # Add this
+    populate_genes,  # Add this
     query_timepoints,
     query_genes,
     query_dmrs,
