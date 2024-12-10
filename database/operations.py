@@ -58,6 +58,34 @@ def insert_component(session: Session, timepoint_id: int, **kwargs):
     return component.id
 
 
+def insert_triconnected_component(
+    session: Session,
+    timepoint_id: int,
+    size: int,
+    dmr_count: int,
+    gene_count: int,
+    edge_count: int,
+    density: float,
+    category: str,
+    separation_pairs: List[Tuple[int, int]],
+    nodes: List[int]
+) -> int:
+    """Insert a new triconnected component into the database."""
+    component = TriconnectedComponent(
+        timepoint_id=timepoint_id,
+        size=size,
+        dmr_count=dmr_count,
+        gene_count=gene_count,
+        edge_count=edge_count,
+        density=density,
+        category=category,
+        separation_pairs=separation_pairs,
+        nodes=nodes
+    )
+    session.add(component)
+    session.commit()
+    return component.id
+
 def insert_component_biclique(session: Session, component_id: int, biclique_id: int):
     """Insert a relationship between a component and a biclique."""
     comp_biclique = ComponentBiclique(

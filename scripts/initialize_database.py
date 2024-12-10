@@ -5,6 +5,10 @@ import sys
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from biclique_analysis.component_analyzer import ComponentAnalyzer
+from biclique_analysis.triconnected import analyze_triconnected_components, find_separation_pairs
+from biclique_analysis.classifier import classify_component
+import networkx as nx
 from sqlalchemy.orm import Session
 from database import schema, connection, operations
 from utils import id_mapping, constants
