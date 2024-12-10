@@ -186,6 +186,22 @@ class ComponentAnalyzer:
 
         return True
 
+    def get_node_biclique_map(self) -> Dict[int, List[int]]:
+        """
+        Create a mapping of nodes to their biclique indices.
+        
+        Returns:
+            Dict mapping node IDs to list of biclique indices they belong to
+        """
+        node_biclique_map = defaultdict(list)
+        
+        # Iterate through bicliques and track which nodes appear in each
+        for idx, (dmr_nodes, gene_nodes) in enumerate(self.bicliques_result["bicliques"]):
+            for node in dmr_nodes | gene_nodes:  # Union of both node sets
+                node_biclique_map[node].append(idx)
+                
+        return dict(node_biclique_map)  # Convert defaultdict to regular dict
+
     def optimize_dominating_set(self, dominating_set: Set[int]) -> Set[int]:
         """
         Try to reduce dominating set size by removing redundant nodes.
