@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from database import schema, connection, operations
 from utils import id_mapping, constants
 from biclique_analysis import processor, reader
+from data_loader import create_bipartite_graph
 
 from data_loader import (
     get_excel_sheets,
@@ -26,7 +27,6 @@ from data_loader import (
     # validate_bipartite_graph,
 )
 
-from utils import node_info, edge_info
 from utils.graph_io import write_gene_mappings
 from utils import process_enhancer_info
 from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
@@ -46,6 +46,8 @@ from database.schema import (
 # Load environment variables
 load_dotenv()
 
+from database.operations import populate_genes, populate_dmrs
+
 
 def populate_timepoints(session: Session):
     """Populate timepoints table."""
@@ -61,168 +63,6 @@ def populate_timepoints(session: Session):
     ]
     for tp in timepoints:
         operations.insert_timepoint(session, tp)
-
-
-def populate_genes(
-    session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None
-):
-    """Populate genes and master_gene_ids tables."""
-    print("\nPopulating gene tables...")
-
-    # First populate master_gene_ids
-    for gene_symbol, gene_id in gene_id_mapping.items():
-        from database.schema import MasterGeneID
-
-        master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
-        session.add(master_gene)
-
-    try:
-        session.commit()
-        print(f"Added {len(gene_id_mapping)} master gene IDs")
-    except Exception as e:
-        session.rollback()
-        print(f"Error adding master gene IDs: {str(e)}")
-        raise
-
-    # Now populate genes table with available info
-    genes_added = 0
-    if df_DSStimeseries is not None:
-        # Process each gene source separately
-        process_gene_sources(df_DSStimeseries, gene_id_mapping, session)
-
-    # Final commit for remaining genes
-    try:
-        session.commit()
-        print(f"Added {genes_added} genes")
-    except Exception as e:
-        session.rollback()
-        print(f"Error adding final genes: {str(e)}")
-        raise
-
-
-def process_gene_sources(
-    df: pd.DataFrame, gene_id_mapping: Dict[str, int], session: Session
-):
-    """
-    Process genes from different sources and populate the gene table with metadata.
-
-    Args:
-        df: DataFrame containing gene information
-        gene_id_mapping: Mapping of gene symbols to IDs
-        session: Database session
-    """
-    print("\nProcessing genes from different sources...")
-
-    # Track processed genes to avoid duplicates
-    processed_genes = set()
-
-    # Process each row in the dataframe
-    for _, row in df.iterrows():
-        # Process nearby genes
-        if "Gene_Symbol_Nearby" in df.columns and pd.notna(row["Gene_Symbol_Nearby"]):
-            gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
-            if gene_symbol and gene_symbol not in processed_genes:
-                gene_id = gene_id_mapping.get(gene_symbol)
-                if gene_id:
-                    gene_data = {
-                        "symbol": gene_symbol,
-                        "description": row.get("Gene_Description", "N/A"),
-                        "master_gene_id": gene_id,
-                        "node_type": "regular_gene",
-                        "gene_type": "Nearby",
-                        "interaction_source": "Gene_Symbol_Nearby",
-                        "degree": 0,
-                    }
-                    operations.insert_gene(session, **gene_data)
-                    processed_genes.add(gene_symbol)
-
-        # Process enhancer interactions
-        if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
-            enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            if pd.notna(enhancer_info):
-                # Split enhancer info on '/' to get gene name and promoter info
-                genes = process_enhancer_info(enhancer_info)
-                for gene in genes:
-                    gene_symbol = str(gene).strip().lower()
-                    if gene_symbol and gene_symbol not in processed_genes:
-                        gene_id = gene_id_mapping.get(gene_symbol)
-                        if gene_id:
-                            # Check if there's promoter info (after '/')
-                            promoter_info = None
-                            if "/" in str(enhancer_info):
-                                _, promoter_part = str(enhancer_info).split("/", 1)
-                                promoter_info = promoter_part.strip()
-
-                            gene_data = {
-                                "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", "N/A"),
-                                "master_gene_id": gene_id,
-                                "node_type": "regular_gene",
-                                "gene_type": "Enhancer",
-                                "promoter_info": promoter_info,
-                                "interaction_source": "ENCODE_Enhancer",
-                                "degree": 0,
-                                "is_hub": False,
-                            }
-                            operations.insert_gene(session, **gene_data)
-                            processed_genes.add(gene_symbol)
-
-        # Process promoter interactions
-        if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
-            promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if pd.notna(promoter_info):
-                genes = process_enhancer_info(
-                    promoter_info
-                )  # Reuse enhancer processing
-                for gene in genes:
-                    gene_symbol = str(gene).strip().lower()
-                    if gene_symbol and gene_symbol not in processed_genes:
-                        gene_id = gene_id_mapping.get(gene_symbol)
-                        if gene_id:
-                            gene_data = {
-                                "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", "N/A"),
-                                "master_gene_id": gene_id,
-                                "node_type": "regular_gene",
-                                "gene_type": "Promoter",
-                                "interaction_source": "ENCODE_Promoter",
-                                "degree": 0,
-                                "is_hub": False,
-                            }
-                            operations.insert_gene(session, **gene_data)
-                            processed_genes.add(gene_symbol)
-
-    print(f"Processed {len(processed_genes)} unique genes")
-
-
-from rb_domination import calculate_dominating_sets
-
-def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int, gene_id_mapping: dict):
-    """Populate DMRs table with dominating set information."""
-    # Create bipartite graph
-    bipartite_graph = create_bipartite_graph(df, gene_id_mapping, "DSStimeseries")
-    
-    # Calculate dominating set
-    dominating_set = calculate_dominating_sets(bipartite_graph, df, "DSStimeseries")
-    
-    for _, row in df.iterrows():
-        dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
-        dmr_data = {
-            "dmr_number": row["DMR_No."],
-            "area_stat": row.get("Area_Stat"),
-            "description": row.get("Gene_Description"),
-            "dmr_name": row.get("DMR_Name"),
-            "gene_description": row.get("Gene_Description"),
-            "chromosome": row.get("Chromosome"),
-            "start_position": row.get("Start"),
-            "end_position": row.get("End"),
-            "strand": row.get("Strand"),
-            "p_value": row.get("P-value"),
-            "q_value": row.get("Q-value"),
-            "mean_methylation": row.get("Mean_Methylation"),
-            "is_hub": dmr_id in dominating_set
-        }
-        operations.insert_dmr(session, timepoint_id, **dmr_data)
 
 
 def populate_bicliques(session: Session, bicliques_result: dict, timepoint_id: int):
@@ -246,7 +86,6 @@ def process_bicliques_for_timepoint(
 
     try:
         # Create bipartite graph from DataFrame
-        from data_loader import create_bipartite_graph
 
         bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
 
