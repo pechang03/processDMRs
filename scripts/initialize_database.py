@@ -31,10 +31,68 @@ def populate_timepoints(session: Session):
         operations.insert_timepoint(session, tp)
 
 
-def populate_genes(session: Session, gene_id_mapping: dict):
-    """Populate genes table."""
-    for gene_name, gene_id in gene_id_mapping.items():
-        operations.insert_gene(session, gene_name, master_gene_id=gene_id)
+def populate_genes(session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None):
+    """Populate genes and master_gene_ids tables."""
+    print("\nPopulating gene tables...")
+    
+    # First populate master_gene_ids
+    for gene_symbol, gene_id in gene_id_mapping.items():
+        master_gene = MasterGeneID(
+            id=gene_id,
+            gene_symbol=gene_symbol
+        )
+        session.add(master_gene)
+    
+    try:
+        session.commit()
+        print(f"Added {len(gene_id_mapping)} master gene IDs")
+    except Exception as e:
+        session.rollback()
+        print(f"Error adding master gene IDs: {str(e)}")
+        raise
+
+    # Now populate genes table with available info
+    genes_added = 0
+    if df_DSStimeseries is not None:
+        for gene_symbol, gene_id in gene_id_mapping.items():
+            # Look for gene description in DSStimeseries data
+            gene_rows = df_DSStimeseries[
+                df_DSStimeseries['Gene_Symbol_Nearby'].str.lower() == gene_symbol.lower()
+            ]
+            
+            description = None
+            if not gene_rows.empty and 'Gene_Description' in gene_rows.columns:
+                description = gene_rows.iloc[0]['Gene_Description']
+            
+            # Create gene entry with available info
+            gene = Gene(
+                symbol=gene_symbol,
+                description=description,
+                master_gene_id=gene_id,
+                node_type='regular_gene',  # Default type, can be updated later
+                degree=0,  # Will be updated when processing each timepoint
+                is_hub=False  # Will be updated when dominating sets are calculated
+            )
+            session.add(gene)
+            genes_added += 1
+            
+            # Commit in batches
+            if genes_added % 100 == 0:
+                try:
+                    session.commit()
+                except Exception as e:
+                    session.rollback()
+                    print(f"Error adding genes batch: {str(e)}")
+                    raise
+    
+    # Final commit for remaining genes
+    try:
+        session.commit()
+        print(f"Added {genes_added} genes")
+    except Exception as e:
+        session.rollback()
+        print(f"Error adding final genes: {str(e)}")
+        raise
 
 
 def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int):
@@ -147,27 +205,24 @@ def clean_database(session: Session):
 def main():
     """Main function to initialize the database."""
     try:
-        # Create database engine
         engine = connection.get_db_engine()
-
-        # Create tables
         schema.create_tables(engine)
 
-        # Start a session
         with Session(engine) as session:
-            # Clean existing data
             clean_database(session)
 
-            # First process DSStimeseries (from DSS1_FILE)
-            print("\nProcessing DSStimeseries timepoint...")
+            # First read master gene mapping
+            gene_id_mapping = data_loader.read_gene_mapping()
+            if not gene_id_mapping:
+                print("Error: Could not read master gene mapping")
+                return
+
+            # Read DSStimeseries data
             df_DSStimeseries = read_excel_file(constants.DSS1_FILE)
             
-            # Create gene mapping from DSStimeseries data
-            gene_id_mapping = id_mapping.create_gene_mapping(df_DSStimeseries)
+            # Populate genes with initial data
+            populate_genes(session, gene_id_mapping, df_DSStimeseries)
             
-            # Populate genes first
-            populate_genes(session, gene_id_mapping)
-
             # Populate timepoints
             populate_timepoints(session)
 
