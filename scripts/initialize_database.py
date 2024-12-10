@@ -131,24 +131,101 @@ def populate_bicliques(session: Session, bicliques_result: dict, timepoint_id: i
         )
 
 
-def populate_components(session: Session, bicliques_result: dict, timepoint_id: int):
-    """Populate components table."""
-    for component in bicliques_result.get("components", []):
-        if isinstance(component, dict):
-            comp_data = {
-                "category": component.get("category"),
-                "size": component.get("size"),
-                "dmr_count": component.get("dmrs"),
-                "gene_count": component.get("genes"),
-                "edge_count": component.get("total_edges"),
-                "density": component.get("density"),
-            }
-            comp_id = operations.insert_component(session, timepoint_id, **comp_data)
-            for biclique in component.get("raw_bicliques", []):
-                biclique_id = operations.insert_biclique(
-                    session, timepoint_id, comp_id, list(biclique[0]), list(biclique[1])
+def process_bicliques_for_timepoint(session: Session, timepoint_id: int, bicliques_file: str, df: pd.DataFrame, gene_id_mapping: dict):
+    """Process bicliques for a timepoint and store results in database."""
+    print(f"\nProcessing bicliques for timepoint {timepoint_id} from {bicliques_file}")
+    
+    try:
+        # Create bipartite graph from DataFrame
+        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        
+        # Read and process bicliques
+        bicliques_result = reader.read_bicliques_file(
+            bicliques_file,
+            bipartite_graph,
+            gene_id_mapping=gene_id_mapping,
+            file_format="gene_name"
+        )
+        
+        if not bicliques_result or not bicliques_result.get("bicliques"):
+            print("No bicliques found")
+            return
+
+        # Create biclique graph
+        biclique_graph = nx.Graph()
+        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
+            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+            biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+
+        # Process components using ComponentAnalyzer
+        analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result, biclique_graph)
+        component_results = analyzer.analyze_components()
+
+        # Store bicliques
+        for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
+            biclique_id = operations.insert_biclique(
+                session,
+                timepoint_id=timepoint_id,
+                component_id=None,  # Will update after creating component
+                dmr_ids=list(dmr_nodes),
+                gene_ids=list(gene_nodes)
+            )
+
+        # Store components
+        for comp_type, comp_data in component_results["components"].items():
+            for category, count in comp_data.items():
+                comp_id = operations.insert_component(
+                    session,
+                    timepoint_id=timepoint_id,
+                    category=f"{comp_type}_{category}",
+                    size=count,
+                    dmr_count=len({n for n in bipartite_graph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 0}),
+                    gene_count=len({n for n in bipartite_graph.nodes() if bipartite_graph.nodes[n]["bipartite"] == 1}),
+                    edge_count=bipartite_graph.number_of_edges(),
+                    density=2.0 * bipartite_graph.number_of_edges() / (bipartite_graph.number_of_nodes() * (bipartite_graph.number_of_nodes() - 1))
                 )
-                operations.insert_component_biclique(session, comp_id, biclique_id)
+
+        # Process triconnected components
+        tricomps, stats = analyze_triconnected_components(bipartite_graph)
+        for comp_nodes in tricomps:
+            subgraph = bipartite_graph.subgraph(comp_nodes)
+            dmr_nodes = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 0}
+            gene_nodes = {n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 1}
+            
+            # Find separation pairs for this component
+            separation_pairs = find_separation_pairs(subgraph)
+            
+            operations.insert_triconnected_component(
+                session,
+                timepoint_id=timepoint_id,
+                size=len(comp_nodes),
+                dmr_count=len(dmr_nodes),
+                gene_count=len(gene_nodes),
+                edge_count=subgraph.number_of_edges(),
+                density=2.0 * subgraph.number_of_edges() / (len(comp_nodes) * (len(comp_nodes) - 1)) if len(comp_nodes) > 1 else 0,
+                category=classify_component(dmr_nodes, gene_nodes, [(dmr_nodes, gene_nodes)]).name.lower(),
+                separation_pairs=list(separation_pairs),
+                nodes=list(comp_nodes)
+            )
+
+        # Store statistics
+        for category, stats in bicliques_result.get("statistics", {}).items():
+            if isinstance(stats, dict):
+                for key, value in stats.items():
+                    operations.insert_statistics(
+                        session,
+                        category=category,
+                        key=key,
+                        value=str(value)
+                    )
+
+        print(f"Processed {len(bicliques_result['bicliques'])} bicliques")
+        print(f"Found {len(tricomps)} triconnected components")
+        
+    except Exception as e:
+        print(f"Error processing bicliques: {str(e)}")
+        raise
 
 
 def populate_statistics(session: Session, statistics: dict):
