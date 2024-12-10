@@ -61,6 +61,8 @@ def insert_component(session: Session, timepoint_id: int, **kwargs):
     return component.id
 
 
+from .models import TriconnectedComponent
+
 def insert_triconnected_component(
     session: Session,
     timepoint_id: int,
