@@ -99,6 +99,97 @@ def populate_genes(
         print(f"Error adding final genes: {str(e)}")
         raise
 
+def process_gene_sources(df: pd.DataFrame, gene_id_mapping: Dict[str, int], session: Session):
+    """
+    Process genes from different sources and populate the gene table with metadata.
+    
+    Args:
+        df: DataFrame containing gene information
+        gene_id_mapping: Mapping of gene symbols to IDs
+        session: Database session
+    """
+    print("\nProcessing genes from different sources...")
+    
+    # Track processed genes to avoid duplicates
+    processed_genes = set()
+    
+    # Process each row in the dataframe
+    for _, row in df.iterrows():
+        # Process nearby genes
+        if 'Gene_Symbol_Nearby' in df.columns and pd.notna(row['Gene_Symbol_Nearby']):
+            gene_symbol = str(row['Gene_Symbol_Nearby']).strip().lower()
+            if gene_symbol and gene_symbol not in processed_genes:
+                gene_id = gene_id_mapping.get(gene_symbol)
+                if gene_id:
+                    gene_data = {
+                        'symbol': gene_symbol,
+                        'description': row.get('Gene_Description', 'N/A'),
+                        'master_gene_id': gene_id,
+                        'node_type': 'regular_gene',
+                        'gene_type': 'Nearby',
+                        'interaction_source': 'Gene_Symbol_Nearby',
+                        'degree': 0,
+                        'is_hub': False
+                    }
+                    operations.insert_gene(session, **gene_data)
+                    processed_genes.add(gene_symbol)
+
+        # Process enhancer interactions
+        if 'ENCODE_Enhancer_Interaction(BingRen_Lab)' in df.columns:
+            enhancer_info = row['ENCODE_Enhancer_Interaction(BingRen_Lab)']
+            if pd.notna(enhancer_info):
+                # Split enhancer info on '/' to get gene name and promoter info
+                genes = process_enhancer_info(enhancer_info)
+                for gene in genes:
+                    gene_symbol = str(gene).strip().lower()
+                    if gene_symbol and gene_symbol not in processed_genes:
+                        gene_id = gene_id_mapping.get(gene_symbol)
+                        if gene_id:
+                            # Check if there's promoter info (after '/')
+                            promoter_info = None
+                            if '/' in str(enhancer_info):
+                                _, promoter_part = str(enhancer_info).split('/', 1)
+                                promoter_info = promoter_part.strip()
+
+                            gene_data = {
+                                'symbol': gene_symbol,
+                                'description': row.get('Gene_Description', 'N/A'),
+                                'master_gene_id': gene_id,
+                                'node_type': 'regular_gene',
+                                'gene_type': 'Enhancer',
+                                'promoter_info': promoter_info,
+                                'interaction_source': 'ENCODE_Enhancer',
+                                'degree': 0,
+                                'is_hub': False
+                            }
+                            operations.insert_gene(session, **gene_data)
+                            processed_genes.add(gene_symbol)
+
+        # Process promoter interactions
+        if 'ENCODE_Promoter_Interaction(BingRen_Lab)' in df.columns:
+            promoter_info = row['ENCODE_Promoter_Interaction(BingRen_Lab)']
+            if pd.notna(promoter_info):
+                genes = process_enhancer_info(promoter_info)  # Reuse enhancer processing
+                for gene in genes:
+                    gene_symbol = str(gene).strip().lower()
+                    if gene_symbol and gene_symbol not in processed_genes:
+                        gene_id = gene_id_mapping.get(gene_symbol)
+                        if gene_id:
+                            gene_data = {
+                                'symbol': gene_symbol,
+                                'description': row.get('Gene_Description', 'N/A'),
+                                'master_gene_id': gene_id,
+                                'node_type': 'regular_gene',
+                                'gene_type': 'Promoter',
+                                'interaction_source': 'ENCODE_Promoter',
+                                'degree': 0,
+                                'is_hub': False
+                            }
+                            operations.insert_gene(session, **gene_data)
+                            processed_genes.add(gene_symbol)
+
+    print(f"Processed {len(processed_genes)} unique genes")
+
 
 def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int):
     """Populate DMRs table."""
