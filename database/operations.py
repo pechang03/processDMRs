@@ -380,7 +380,7 @@ def process_gene_sources(
                         "interaction_source": "Gene_Symbol_Nearby",
                         "degree": 0,
                     }
-                    operations.insert_gene(session, **gene_data)
+                    insert_gene(session, **gene_data)
                     processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
@@ -411,7 +411,7 @@ def process_gene_sources(
                                 "degree": 0,
                                 "is_hub": False,
                             }
-                            operations.insert_gene(session, **gene_data)
+                            insert_gene(session, **gene_data)
                             processed_genes.add(gene_symbol)
 
         # Process promoter interactions
@@ -436,7 +436,7 @@ def process_gene_sources(
                                 "degree": 0,
                                 "is_hub": False,
                             }
-                            operations.insert_gene(session, **gene_data)
+                            insert_gene(session, **gene_data)
                             processed_genes.add(gene_symbol)
 
     print(f"Processed {len(processed_genes)} unique genes")
