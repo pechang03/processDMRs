@@ -158,37 +158,30 @@ def main():
             # Clean existing data
             clean_database(session)
 
+            # First process DSStimeseries (from DSS1_FILE)
+            print("\nProcessing DSStimeseries timepoint...")
+            df_DSStimeseries = read_excel_file(constants.DSS1_FILE)
+            
+            # Create gene mapping from DSStimeseries data
+            gene_id_mapping = id_mapping.create_gene_mapping(df_DSStimeseries)
+            
+            # Populate genes first
+            populate_genes(session, gene_id_mapping)
+
             # Populate timepoints
             populate_timepoints(session)
 
-            # Process DSS1 file using data_loader function
-            df_DSStimeseries = read_excel_file(constants.DSS1_FILE)
-            gene_id_mapping = id_mapping.create_gene_mapping(df_DSStimeseries)
-            populate_genes(session, gene_id_mapping)
-
-            # Process each timepoint
-            timepoints = operations.query_timepoints(session)
-            for timepoint in timepoints:
-                print(f"Processing timepoint: {timepoint.name}")
-                if timepoint.name == "DSS1":
-                    df = df_DSStimeseries
-                else:
-                    df = read_excel_file(
-                        constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name
-                    )
-
-                if df is not None:  # Only process if we got valid data
-                    # Populate DMRs
-                    populate_dmrs(session, df, timepoint.id)
-
-                # Process bicliques
-                biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
-                    timepoint.name
-                )
+            # Process DSStimeseries
+            timepoint = session.query(Timepoint).filter_by(name="DSStimeseries").first()
+            if timepoint:
+                populate_dmrs(session, df_DSStimeseries, timepoint.id)
+                
+                # Process bicliques for DSStimeseries
+                biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format("DSStimeseries")
                 if os.path.exists(biclique_file):
                     bicliques_result = reader.read_bicliques_file(
                         biclique_file,
-                        None,  # No original graph needed for reading
+                        None,  # Original graph not needed for reading
                         gene_id_mapping=gene_id_mapping,
                         file_format="gene_name",
                     )
@@ -196,13 +189,45 @@ def main():
                     populate_components(session, bicliques_result, timepoint.id)
                     populate_statistics(session, bicliques_result.get("statistics", {}))
                     populate_metadata(session, bicliques_result.get("metadata", {}))
-                    populate_relationships(
-                        session, bicliques_result.get("relationships", [])
-                    )
-                else:
-                    print(f"No bicliques file found for {timepoint.name}")
+
+            # Process pairwise timepoints from DSS_PAIRWISE_FILE
+            print("\nProcessing pairwise timepoints...")
+            xl = pd.ExcelFile(constants.DSS_PAIRWISE_FILE)
+            
+            for sheet_name in xl.sheet_names:
+                print(f"\nProcessing timepoint: {sheet_name}")
+                try:
+                    df = pd.read_excel(constants.DSS_PAIRWISE_FILE, sheet_name=sheet_name)
+                    if not df.empty:
+                        timepoint = session.query(Timepoint).filter_by(name=sheet_name).first()
+                        if timepoint:
+                            populate_dmrs(session, df, timepoint.id)
+                            
+                            # Process bicliques for this timepoint
+                            biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(sheet_name)
+                            if os.path.exists(biclique_file):
+                                bicliques_result = reader.read_bicliques_file(
+                                    biclique_file,
+                                    None,
+                                    gene_id_mapping=gene_id_mapping,
+                                    file_format="gene_name",
+                                )
+                                populate_bicliques(session, bicliques_result, timepoint.id)
+                                populate_components(session, bicliques_result, timepoint.id)
+                                populate_statistics(session, bicliques_result.get("statistics", {}))
+                                populate_metadata(session, bicliques_result.get("metadata", {}))
+                                
+                            # Update gene metadata
+                            update_gene_metadata(df, gene_id_mapping, sheet_name)
+                    else:
+                        print(f"Empty sheet: {sheet_name}")
+                except Exception as e:
+                    print(f"Error processing sheet {sheet_name}: {str(e)}")
+                    session.rollback()
+                    continue
 
             print("Database initialization completed successfully.")
+            
     except Exception as e:
         print(f"An error occurred during database initialization: {str(e)}")
         sys.exit(1)
