@@ -143,16 +143,16 @@ def insert_gene(
     if not symbol:  # Handle None or empty string
         return None
 
-    # Clean the symbol
-    symbol = str(symbol).strip()
+    # Clean and lowercase the symbol
+    symbol = str(symbol).strip().lower()
 
     # Extended validation for unnamed columns and invalid symbols
     invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-    if any(symbol.lower().startswith(pat) for pat in invalid_patterns) or not symbol:
+    if any(symbol.startswith(pat) for pat in invalid_patterns) or not symbol:
         return None  # Skip invalid symbols instead of raising error
 
-    # Check for duplicate gene symbols
-    existing_gene = session.query(Gene).filter_by(symbol=symbol).first()
+    # Check for duplicate gene symbols (case-insensitive)
+    existing_gene = session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
     if existing_gene:
         return existing_gene.id
 
