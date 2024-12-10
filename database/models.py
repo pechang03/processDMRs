@@ -21,6 +21,9 @@ class Gene(Base):
     symbol = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     master_gene_id = Column(Integer, ForeignKey('master_gene_ids.id'))
+    node_type = Column(String(50))  # regular_gene, split_gene
+    degree = Column(Integer, default=0)
+    is_hub = Column(Boolean, default=False)
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
 class MasterGeneID(Base):

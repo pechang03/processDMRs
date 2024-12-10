@@ -145,7 +145,14 @@ def insert_gene(
                         raise ValueError(f"Error creating master gene ID: {str(e)}")
 
         # Create the gene
-        gene = Gene(symbol=symbol, description=description, master_gene_id=master_gene_id)
+        gene = Gene(
+            symbol=symbol,
+            description=description,
+            master_gene_id=master_gene_id,
+            node_type='regular_gene',
+            degree=0,
+            is_hub=False
+        )
         session.add(gene)
         try:
             session.commit()
@@ -157,6 +164,26 @@ def insert_gene(
     except Exception as e:
         session.rollback()
         raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
+
+def update_gene_metadata(
+    session: Session,
+    gene_symbol: str,
+    timepoint: str,
+    degree: int = None,
+    node_type: str = None,
+    is_hub: bool = None
+):
+    """Update gene metadata for a specific timepoint."""
+    gene = session.query(Gene).filter(func.lower(Gene.symbol) == gene_symbol.lower()).first()
+    if gene:
+        if degree is not None:
+            gene.degree = max(gene.degree, degree)  # Keep highest degree across timepoints
+        if node_type:
+            if node_type == 'split_gene':  # Once split, always split
+                gene.node_type = 'split_gene'
+        if is_hub is not None:
+            gene.is_hub = gene.is_hub or is_hub  # True if hub in any timepoint
+        session.commit()
 
 
 def get_or_create_gene(
@@ -209,3 +236,16 @@ def query_metadata(session: Session):
 def query_relationships(session: Session):
     """Query all relationships."""
     return session.query(Relationship).all()
+def update_gene_hub_status(session: Session, timepoint: str, dominating_set: Set[int], gene_id_mapping: Dict[str, int]):
+    """Update hub status for genes in dominating set."""
+    reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
+    
+    for gene_id in dominating_set:
+        if gene_id in reverse_mapping:
+            gene_symbol = reverse_mapping[gene_id]
+            update_gene_metadata(
+                session,
+                gene_symbol,
+                timepoint,
+                is_hub=True
+            )
