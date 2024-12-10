@@ -40,9 +40,6 @@ class Gene(Base):
     # Network properties
     degree = Column(Integer, default=0)
     
-    # Timestamps for tracking
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     master_gene = relationship("MasterGeneID", back_populates="genes")
 
