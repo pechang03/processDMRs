@@ -18,14 +18,14 @@ load_dotenv()
 def populate_timepoints(session: Session):
     """Populate timepoints table."""
     timepoints = [
-        "DSS1",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
+        "DSStimeseries",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
         "P21-P28_TSS",
-        "P21-P40_TSS", 
+        "P21-P40_TSS",
         "P21-P60_TSS",
         "P21-P180_TSS",
         "TP28-TP180_TSS",
         "TP40-TP180_TSS",
-        "TP60-TP180_TSS"
+        "TP60-TP180_TSS",
     ]
     for tp in timepoints:
         operations.insert_timepoint(session, tp)
@@ -109,7 +109,18 @@ def populate_relationships(session: Session, relationships: list):
         operations.insert_relationship(session, **rel)
 
 
-from database.schema import ComponentBiclique, Relationship, Metadata, Statistic, Biclique, Component, DMR, Gene, Timepoint
+from database.schema import (
+    ComponentBiclique,
+    Relationship,
+    Metadata,
+    Statistic,
+    Biclique,
+    Component,
+    DMR,
+    Gene,
+    Timepoint,
+)
+
 
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
@@ -131,6 +142,7 @@ def clean_database(session: Session):
         session.rollback()
         print(f"Error cleaning database: {str(e)}")
         raise
+
 
 def main():
     """Main function to initialize the database."""
@@ -161,7 +173,9 @@ def main():
                 if timepoint.name == "DSS1":
                     df = df_DSStimeseries
                 else:
-                    df = read_excel_file(constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name)
+                    df = read_excel_file(
+                        constants.DSS_PAIRWISE_FILE, sheet_name=timepoint.name
+                    )
 
                 if df is not None:  # Only process if we got valid data
                     # Populate DMRs
