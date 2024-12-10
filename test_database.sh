@@ -12,7 +12,7 @@ cd "$SCRIPT_DIR"
 echo "Running DMR Analysis Database Tests..."
 
 # Run database-specific tests with coverage
-PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m coverage run -m pytest tests/database/ -v
+PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m coverage run -m pytest tests/test_database/ -v
 
 # Generate coverage report for database modules
 coverage report --include="database/*,scripts/initialize_database.py"

@@ -16,8 +16,8 @@ echo "Setting up DMR Analysis Database..."
 
 # Check if PostgreSQL is running
 if ! pg_isready; then
-    echo "Error: PostgreSQL is not running"
-    exit 1
+  echo "Error: PostgreSQL is not running"
+  exit 1
 fi
 
 # Create database if it doesn't exist
@@ -35,8 +35,8 @@ echo "Initializing database schema..."
 python scripts/initialize_database.py
 
 # Run database tests
-echo "Running database tests..."
-PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m pytest tests/database/ -v
+#echo "Running database tests..."
+#PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m pytest tests/database/ -v
 
 echo "Database setup complete!"
 

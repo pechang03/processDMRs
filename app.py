@@ -8,16 +8,19 @@ from flask import send_from_directory
 from extensions import app
 from routes import register_blueprints  # Import from routes instead of utils
 
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    """Serve static files."""
-    return send_from_directory(app.static_folder, filename)
-from process_data import process_data
-from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
-from data_loader import get_excel_sheets
+
+# from process_data import process_data
+# from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE
+# from data_loader import get_excel_sheets
 
 # Version constant
 __version__ = "0.0.3-alpha"
+
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    """Serve static files."""
+    return send_from_directory(app.static_folder, filename)
 
 
 def parse_arguments():
@@ -76,25 +79,27 @@ def configure_data_paths(data_dir: str):
 
 from dotenv import load_dotenv
 
+
 def configure_app(app):
     """Configure Flask application."""
     # Try multiple .env locations
-    env_files = ['.env', '../.env', '../../.env']
+    env_files = [".env", "../.env", "../../.env"]
     env_loaded = False
-    
+
     for env_file in env_files:
         if os.path.exists(env_file):
             load_dotenv(env_file)
             env_loaded = True
             break
-    
+
     # Set default configuration
-    app.config.setdefault('DATABASE_URL', 'sqlite:///dmr_analysis.db')
-    app.config.setdefault('FLASK_ENV', 'development')
-    
+    app.config.setdefault("DATABASE_URL", "sqlite:///dmr_analysis.db")
+    app.config.setdefault("FLASK_ENV", "development")
+
     # Override with environment variables if they exist
-    app.config['DATABASE_URL'] = os.getenv('DATABASE_URL', app.config['DATABASE_URL'])
-    app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', app.config['FLASK_ENV'])
+    app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", app.config["DATABASE_URL"])
+    app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", app.config["FLASK_ENV"])
+
 
 def main():
     """Main entry point for the application."""
@@ -115,22 +120,21 @@ def main():
     configure_app(app)
 
     # Add this line to configure static files path
-    app.static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    app.static_folder = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "static"
+    )
 
     # Register blueprints
     register_blueprints(app)
 
     # Add MIME type handling
-    app.config['MIME_TYPES'] = {
-        '.css': 'text/css',
-        '.js': 'application/javascript'
-    }
+    app.config["MIME_TYPES"] = {".css": "text/css", ".js": "application/javascript"}
 
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
 
     # Add route for static files
-    @app.route('/static/<path:filename>')
+    @app.route("/static/<path:filename>")
     def serve_static(filename):
         """Serve static files."""
         return send_from_directory(app.static_folder, filename)

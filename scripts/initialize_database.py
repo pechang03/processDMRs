@@ -10,6 +10,7 @@ from database import schema, connection, operations
 from utils import id_mapping, constants
 from biclique_analysis import processor, reader
 from data_loader import read_excel_file
+from process_data import read_gene_mapping
 
 # Load environment variables
 load_dotenv()
@@ -31,19 +32,19 @@ def populate_timepoints(session: Session):
         operations.insert_timepoint(session, tp)
 
 
-def populate_genes(session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None):
+def populate_genes(
+    session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None
+):
     """Populate genes and master_gene_ids tables."""
     print("\nPopulating gene tables...")
-    
+
     # First populate master_gene_ids
     for gene_symbol, gene_id in gene_id_mapping.items():
         from database.schema import MasterGeneID
-        master_gene = MasterGeneID(
-            id=gene_id,
-            gene_symbol=gene_symbol
-        )
+
+        master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
         session.add(master_gene)
-    
+
     try:
         session.commit()
         print(f"Added {len(gene_id_mapping)} master gene IDs")
@@ -58,25 +59,26 @@ def populate_genes(session: Session, gene_id_mapping: dict, df_DSStimeseries: pd
         for gene_symbol, gene_id in gene_id_mapping.items():
             # Look for gene description in DSStimeseries data
             gene_rows = df_DSStimeseries[
-                df_DSStimeseries['Gene_Symbol_Nearby'].str.lower() == gene_symbol.lower()
+                df_DSStimeseries["Gene_Symbol_Nearby"].str.lower()
+                == gene_symbol.lower()
             ]
-            
+
             description = None
-            if not gene_rows.empty and 'Gene_Description' in gene_rows.columns:
-                description = gene_rows.iloc[0]['Gene_Description']
-            
+            if not gene_rows.empty and "Gene_Description" in gene_rows.columns:
+                description = gene_rows.iloc[0]["Gene_Description"]
+
             # Create gene entry with available info
             gene = Gene(
                 symbol=gene_symbol,
                 description=description,
                 master_gene_id=gene_id,
-                node_type='regular_gene',  # Default type, can be updated later
+                node_type="regular_gene",  # Default type, can be updated later
                 degree=0,  # Will be updated when processing each timepoint
-                is_hub=False  # Will be updated when dominating sets are calculated
+                is_hub=False,  # Will be updated when dominating sets are calculated
             )
             session.add(gene)
             genes_added += 1
-            
+
             # Commit in batches
             if genes_added % 100 == 0:
                 try:
@@ -85,7 +87,7 @@ def populate_genes(session: Session, gene_id_mapping: dict, df_DSStimeseries: pd
                     session.rollback()
                     print(f"Error adding genes batch: {str(e)}")
                     raise
-    
+
     # Final commit for remaining genes
     try:
         session.commit()
@@ -213,7 +215,6 @@ def main():
             clean_database(session)
 
             # First read master gene mapping
-            from data_loader import read_gene_mapping
             gene_id_mapping = read_gene_mapping()
             if not gene_id_mapping:
                 print("Error: Could not read master gene mapping")
@@ -221,10 +222,10 @@ def main():
 
             # Read DSStimeseries data
             df_DSStimeseries = read_excel_file(constants.DSS1_FILE)
-            
+
             # Populate genes with initial data
             populate_genes(session, gene_id_mapping, df_DSStimeseries)
-            
+
             # Populate timepoints
             populate_timepoints(session)
 
@@ -232,9 +233,11 @@ def main():
             timepoint = session.query(Timepoint).filter_by(name="DSStimeseries").first()
             if timepoint:
                 populate_dmrs(session, df_DSStimeseries, timepoint.id)
-                
+
                 # Process bicliques for DSStimeseries
-                biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format("DSStimeseries")
+                biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
+                    "DSStimeseries"
+                )
                 if os.path.exists(biclique_file):
                     bicliques_result = reader.read_bicliques_file(
                         biclique_file,
@@ -250,18 +253,24 @@ def main():
             # Process pairwise timepoints from DSS_PAIRWISE_FILE
             print("\nProcessing pairwise timepoints...")
             xl = pd.ExcelFile(constants.DSS_PAIRWISE_FILE)
-            
+
             for sheet_name in xl.sheet_names:
                 print(f"\nProcessing timepoint: {sheet_name}")
                 try:
-                    df = pd.read_excel(constants.DSS_PAIRWISE_FILE, sheet_name=sheet_name)
+                    df = pd.read_excel(
+                        constants.DSS_PAIRWISE_FILE, sheet_name=sheet_name
+                    )
                     if not df.empty:
-                        timepoint = session.query(Timepoint).filter_by(name=sheet_name).first()
+                        timepoint = (
+                            session.query(Timepoint).filter_by(name=sheet_name).first()
+                        )
                         if timepoint:
                             populate_dmrs(session, df, timepoint.id)
-                            
+
                             # Process bicliques for this timepoint
-                            biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(sheet_name)
+                            biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
+                                sheet_name
+                            )
                             if os.path.exists(biclique_file):
                                 bicliques_result = reader.read_bicliques_file(
                                     biclique_file,
@@ -269,13 +278,22 @@ def main():
                                     gene_id_mapping=gene_id_mapping,
                                     file_format="gene_name",
                                 )
-                                populate_bicliques(session, bicliques_result, timepoint.id)
-                                populate_components(session, bicliques_result, timepoint.id)
-                                populate_statistics(session, bicliques_result.get("statistics", {}))
-                                populate_metadata(session, bicliques_result.get("metadata", {}))
-                                
+                                populate_bicliques(
+                                    session, bicliques_result, timepoint.id
+                                )
+                                populate_components(
+                                    session, bicliques_result, timepoint.id
+                                )
+                                populate_statistics(
+                                    session, bicliques_result.get("statistics", {})
+                                )
+                                populate_metadata(
+                                    session, bicliques_result.get("metadata", {})
+                                )
+
                             # Update gene metadata
                             from data_loader import update_gene_metadata
+
                             update_gene_metadata(df, gene_id_mapping, sheet_name)
                     else:
                         print(f"Empty sheet: {sheet_name}")
@@ -285,7 +303,7 @@ def main():
                     continue
 
             print("Database initialization completed successfully.")
-            
+
     except Exception as e:
         print(f"An error occurred during database initialization: {str(e)}")
         sys.exit(1)

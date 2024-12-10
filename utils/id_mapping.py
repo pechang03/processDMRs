@@ -13,7 +13,7 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         "TP28-TP180_TSS": 50000,
         "TP40-TP180_TSS": 60000,
         "TP60-TP180_TSS": 70000,
-        "DSS1": 0,  # Base timepoint uses original numbers
+        # "DSS1": 0,  # Base timepoint uses original numbers
         "DSStimeseries": 0,
     }
 
@@ -41,8 +41,8 @@ def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, in
 
     # Convert all gene names to lowercase and remove any empty strings or invalid values
     cleaned_genes = {
-        gene.strip().lower() 
-        for gene in genes 
+        gene.strip().lower()
+        for gene in genes
         if gene and isinstance(gene, str) and gene.strip() not in {".", "n/a", ""}
     }
     cleaned_genes.discard("")  # Extra check to remove any remaining empty strings
