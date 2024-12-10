@@ -1,6 +1,9 @@
 """Core database operations for DMR analysis system."""
 
+from typing import Set, Dict, List, Tuple
+
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from .models import (
     Timepoint,
     Gene,
@@ -68,7 +71,7 @@ def insert_triconnected_component(
     density: float,
     category: str,
     separation_pairs: List[Tuple[int, int]],
-    nodes: List[int]
+    nodes: List[int],
 ) -> int:
     """Insert a new triconnected component into the database."""
     component = TriconnectedComponent(
@@ -80,11 +83,12 @@ def insert_triconnected_component(
         density=density,
         category=category,
         separation_pairs=separation_pairs,
-        nodes=nodes
+        nodes=nodes,
     )
     session.add(component)
     session.commit()
     return component.id
+
 
 def insert_component_biclique(session: Session, component_id: int, biclique_id: int):
     """Insert a relationship between a component and a biclique."""
@@ -138,12 +142,12 @@ def insert_gene(
     # Skip invalid gene symbols
     if not symbol:  # Handle None or empty string
         return None
-        
+
     # Clean the symbol
     symbol = str(symbol).strip()
-    
+
     # Extended validation for unnamed columns and invalid symbols
-    invalid_patterns = ['unnamed:', 'nan', '.', 'n/a', '']
+    invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
     if any(symbol.lower().startswith(pat) for pat in invalid_patterns) or not symbol:
         return None  # Skip invalid symbols instead of raising error
 
@@ -156,10 +160,14 @@ def insert_gene(
         # Create or get MasterGeneID if master_gene_id is provided
         if master_gene_id is not None:
             # Try to get existing master gene ID
-            master_gene = session.query(MasterGeneID).filter_by(id=master_gene_id).first()
+            master_gene = (
+                session.query(MasterGeneID).filter_by(id=master_gene_id).first()
+            )
             if not master_gene:
                 # Check if gene symbol already exists in master_gene_ids
-                existing_master = session.query(MasterGeneID).filter_by(gene_symbol=symbol).first()
+                existing_master = (
+                    session.query(MasterGeneID).filter_by(gene_symbol=symbol).first()
+                )
                 if existing_master:
                     master_gene_id = existing_master.id
                 else:
@@ -177,9 +185,9 @@ def insert_gene(
             symbol=symbol,
             description=description,
             master_gene_id=master_gene_id,
-            node_type='regular_gene',
+            node_type="regular_gene",
             degree=0,
-            is_hub=False
+            is_hub=False,
         )
         session.add(gene)
         try:
@@ -193,23 +201,29 @@ def insert_gene(
         session.rollback()
         raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
 
+
 def update_gene_metadata(
     session: Session,
     gene_symbol: str,
     timepoint: str,
     degree: int = None,
     node_type: str = None,
-    is_hub: bool = None
+    is_hub: bool = None,
 ):
     """Update gene metadata for a specific timepoint."""
-    from sqlalchemy import func
-    gene = session.query(Gene).filter(func.lower(Gene.symbol) == gene_symbol.lower()).first()
+    gene = (
+        session.query(Gene)
+        .filter(func.lower(Gene.symbol) == gene_symbol.lower())
+        .first()
+    )
     if gene:
         if degree is not None:
-            gene.degree = max(gene.degree, degree)  # Keep highest degree across timepoints
+            gene.degree = max(
+                gene.degree, degree
+            )  # Keep highest degree across timepoints
         if node_type:
-            if node_type == 'split_gene':  # Once split, always split
-                gene.node_type = 'split_gene'
+            if node_type == "split_gene":  # Once split, always split
+                gene.node_type = "split_gene"
         if is_hub is not None:
             gene.is_hub = gene.is_hub or is_hub  # True if hub in any timepoint
         session.commit()
@@ -265,17 +279,18 @@ def query_metadata(session: Session):
 def query_relationships(session: Session):
     """Query all relationships."""
     return session.query(Relationship).all()
-from typing import Set, Dict
-def update_gene_hub_status(session: Session, timepoint: str, dominating_set: Set[int], gene_id_mapping: Dict[str, int]):
+
+
+def update_gene_hub_status(
+    session: Session,
+    timepoint: str,
+    dominating_set: Set[int],
+    gene_id_mapping: Dict[str, int],
+):
     """Update hub status for genes in dominating set."""
     reverse_mapping = {v: k for k, v in gene_id_mapping.items()}
-    
+
     for gene_id in dominating_set:
         if gene_id in reverse_mapping:
             gene_symbol = reverse_mapping[gene_id]
-            update_gene_metadata(
-                session,
-                gene_symbol,
-                timepoint,
-                is_hub=True
-            )
+            update_gene_metadata(session, gene_symbol, timepoint, is_hub=True)
