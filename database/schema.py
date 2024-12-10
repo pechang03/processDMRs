@@ -96,18 +96,6 @@ class Component(Base):
     density = Column(Float)
 
 
-class TriconnectedComponent(Base):
-    __tablename__ = "triconnected_components"
-    id = Column(Integer, primary_key=True)
-    timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
-    size = Column(Integer)
-    dmr_count = Column(Integer)
-    gene_count = Column(Integer)
-    edge_count = Column(Integer)
-    density = Column(Float)
-    category = Column(String(50))  # e.g., 'single_node', 'small', 'interesting'
-    separation_pairs = Column(ArrayType)  # Store pairs of nodes that separate the component
-    nodes = Column(ArrayType)  # Store the nodes in this component
 
 class ComponentBiclique(Base):
     __tablename__ = "component_bicliques"
