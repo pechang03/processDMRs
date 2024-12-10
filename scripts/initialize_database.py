@@ -197,7 +197,7 @@ def process_gene_sources(
 
 from rb_domination import calculate_dominating_sets
 
-def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int):
+def populate_dmrs(session: Session, df: pd.DataFrame, timepoint_id: int, gene_id_mapping: dict):
     """Populate DMRs table with dominating set information."""
     # Create bipartite graph
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping, "DSStimeseries")
