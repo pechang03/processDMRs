@@ -14,7 +14,9 @@ from biclique_analysis.triconnected import (
 from biclique_analysis.classifier import classify_component
 import networkx as nx
 from sqlalchemy.orm import Session
-from database import schema, connection, operations
+from database import schema, connection, operations, clean_database
+from database.models import Base
+
 from utils import id_mapping, constants
 from utils import node_info, edge_info
 from biclique_analysis import reader
@@ -309,6 +311,7 @@ def main():
     """Main entry point for initializing the database."""
     try:
         engine = connection.get_db_engine()
+        Base.metadata.create_all(engine)
 
         with Session(engine) as session:
             # Clean and recreate database
