@@ -48,6 +48,9 @@ from database.schema import (
     Timepoint,
 )
 from database.operations import populate_genes, populate_dmrs
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 # Load environment variables
 load_dotenv()
@@ -229,13 +232,6 @@ def populate_relationships(session: Session, relationships: list):
         operations.insert_relationship(session, **rel)
 
 
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
-
-
-
-
 def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
     """Extract all genes from a dataframe."""
     genes = set()
@@ -284,11 +280,11 @@ def main():
     try:
         engine = connection.get_db_engine()
         Base.metadata.create_all(engine)
-
+        schema.create_tables(engine)
         with Session(engine) as session:
             # Clean and recreate database
             clean_database(session)
-
+            """
             print("\nCollecting all unique genes across timepoints...")
 
             # Read sheets from pairwise file
@@ -394,9 +390,7 @@ def main():
                         for edge in edge_list
                     ]
                     populate_relationships(session, relationships)
-
                 session.commit()
-
             # Process pairwise timepoints
             for sheet_name, df in pairwise_dfs.items():
                 print(f"\nProcessing timepoint: {sheet_name}")
@@ -460,13 +454,13 @@ def main():
                                 for edge in edge_list
                             ]
                             populate_relationships(session, relationships)
-
+                        
                         session.commit()
                 except Exception as e:
                     print(f"Error processing timepoint {sheet_name}: {str(e)}")
                     session.rollback()
                     continue
-
+            """
             print("\nDatabase initialization completed successfully")
 
     except Exception as e:

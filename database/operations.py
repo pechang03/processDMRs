@@ -3,7 +3,8 @@
 from typing import Set, Dict, List, Tuple
 import pandas as pd
 
-from utils import node_info, edge_info
+# from utils import node_info, edge_info
+
 from .models import TriconnectedComponent
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -157,7 +158,6 @@ def insert_gene(
     interaction_source: str = None,
     promoter_info: str = None,
     degree: int = 0,
-    is_hub: bool = False
 ):
     """Insert a new gene into the database."""
     # Skip invalid gene symbols
@@ -173,7 +173,9 @@ def insert_gene(
         return None  # Skip invalid symbols instead of raising error
 
     # Check for duplicate gene symbols (case-insensitive)
-    existing_gene = session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
+    existing_gene = (
+        session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
+    )
     if existing_gene:
         return existing_gene.id
 
@@ -210,7 +212,6 @@ def insert_gene(
             interaction_source=interaction_source,
             promoter_info=promoter_info,
             degree=degree,
-            is_hub=is_hub
         )
         session.add(gene)
         try:
