@@ -98,9 +98,35 @@ def insert_triconnected_component(
     session.add(component)
     session.commit()
     return component.id
-    session.add(component)
+
+def update_biclique_category(
+    session: Session, 
+    biclique_id: int,
+    dmr_ids: List[int],
+    gene_ids: List[int]
+) -> None:
+    """
+    Update the category field for a biclique based on its composition.
+    
+    Args:
+        session: Database session
+        biclique_id: ID of the biclique to update
+        dmr_ids: List of DMR IDs in the biclique
+        gene_ids: List of gene IDs in the biclique
+    """
+    from biclique_analysis.classifier import classify_biclique, BicliqueSizeCategory
+    
+    # Get the biclique
+    biclique = session.query(Biclique).get(biclique_id)
+    if not biclique:
+        return
+        
+    # Classify the biclique
+    category = classify_biclique(set(dmr_ids), set(gene_ids))
+    
+    # Update the category
+    biclique.category = category.name.lower()
     session.commit()
-    return component.id
 
 
 def insert_component_biclique(session: Session, component_id: int, biclique_id: int):
