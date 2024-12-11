@@ -341,7 +341,6 @@ def main():
                     timepoint_name=sheet_name,
                     gene_id_mapping=gene_id_mapping
                 )
-                    continue
             # """
             print("\nDatabase initialization completed successfully")
 
