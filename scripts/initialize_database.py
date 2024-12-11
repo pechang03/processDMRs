@@ -325,140 +325,22 @@ def main():
             session.commit()
 
             # Process DSStimeseries timepoint
-            timepoint = session.query(Timepoint).filter_by(name="DSStimeseries").first()
-            if timepoint and df_DSStimeseries is not None:
-                print("\nProcessing DSStimeseries timepoint...")
-
-                # Create bipartite graph
-                bipartite_graph = create_bipartite_graph(
-                    df_DSStimeseries, gene_id_mapping, "DSStimeseries"
+            if df_DSStimeseries is not None:
+                process_timepoint_data(
+                    session=session,
+                    df=df_DSStimeseries,
+                    timepoint_name="DSStimeseries",
+                    gene_id_mapping=gene_id_mapping
                 )
 
-                # Read and process bicliques
-                biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
-                    "DSStimeseries"
-                )
-                if os.path.exists(biclique_file):
-                    bicliques_result = reader.read_bicliques_file(
-                        biclique_file,
-                        bipartite_graph,
-                        gene_id_mapping=gene_id_mapping,
-                        file_format="gene_name",
-                    )
-
-                    # Populate DMRs
-                    populate_dmrs(
-                        session, df_DSStimeseries, timepoint.id, gene_id_mapping
-                    )
-
-                    # Populate bicliques
-                    print("\nPopulating bicliques...")
-                    populate_bicliques(session, bicliques_result, timepoint.id)
-
-                    # Process components and populate related data
-                    analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result)
-                    component_results = analyzer.analyze_components()
-
-                    # Populate statistics
-                    print("\nPopulating statistics...")
-                    populate_statistics(session, component_results)
-
-                    # Create and populate metadata
-                    print("\nPopulating metadata...")
-
-                    dmr_metadata, gene_metadata = create_node_metadata(
-                        df_DSStimeseries,
-                        gene_id_mapping,
-                        analyzer.get_node_biclique_map(),
-                    )
-                    populate_metadata(
-                        session, {"dmr": dmr_metadata, "gene": gene_metadata}
-                    )
-
-                    # Populate relationships
-                    print("\nPopulating relationships...")
-                    edge_classifications = analyzer.get_edge_classifications()
-                    relationships = [
-                        {
-                            "source_type": "dmr",
-                            "source_id": edge.source,
-                            "target_type": "gene",
-                            "target_id": edge.target,
-                            "relationship_type": edge.label,
-                        }
-                        for edge_list in edge_classifications.values()
-                        for edge in edge_list
-                    ]
-                    populate_relationships(session, relationships)
-                session.commit()
             # Process pairwise timepoints
             for sheet_name, df in pairwise_dfs.items():
-                print(f"\nProcessing timepoint: {sheet_name}")
-                try:
-                    timepoint = (
-                        session.query(Timepoint).filter_by(name=sheet_name).first()
-                    )
-                    if timepoint:
-                        # Create bipartite graph
-                        bipartite_graph = create_bipartite_graph(
-                            df, gene_id_mapping, sheet_name
-                        )
-
-                        # Read and process bicliques
-                        biclique_file = constants.BIPARTITE_GRAPH_TEMPLATE.format(
-                            sheet_name
-                        )
-                        if os.path.exists(biclique_file):
-                            bicliques_result = reader.read_bicliques_file(
-                                biclique_file,
-                                bipartite_graph,
-                                gene_id_mapping=gene_id_mapping,
-                                file_format="gene_name",
-                            )
-
-                            # Populate DMRs
-                            populate_dmrs(session, df, timepoint.id, gene_id_mapping)
-
-                            # Populate bicliques
-                            populate_bicliques(session, bicliques_result, timepoint.id)
-
-                            # Process components and populate related data
-                            analyzer = ComponentAnalyzer(
-                                bipartite_graph, bicliques_result
-                            )
-                            component_results = analyzer.analyze_components()
-
-                            # Populate statistics
-                            populate_statistics(session, component_results)
-
-                            # Create and populate metadata
-
-                            dmr_metadata, gene_metadata = create_node_metadata(
-                                df, gene_id_mapping, analyzer.get_node_biclique_map()
-                            )
-                            populate_metadata(
-                                session, {"dmr": dmr_metadata, "gene": gene_metadata}
-                            )
-
-                            # Populate relationships
-                            edge_classifications = analyzer.get_edge_classifications()
-                            relationships = [
-                                {
-                                    "source_type": "dmr",
-                                    "source_id": edge.source,
-                                    "target_type": "gene",
-                                    "target_id": edge.target,
-                                    "relationship_type": edge.label,
-                                }
-                                for edge_list in edge_classifications.values()
-                                for edge in edge_list
-                            ]
-                            populate_relationships(session, relationships)
-
-                        session.commit()
-                except Exception as e:
-                    print(f"Error processing timepoint {sheet_name}: {str(e)}")
-                    session.rollback()
+                process_timepoint_data(
+                    session=session,
+                    df=df,
+                    timepoint_name=sheet_name,
+                    gene_id_mapping=gene_id_mapping
+                )
                     continue
             # """
             print("\nDatabase initialization completed successfully")
