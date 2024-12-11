@@ -284,7 +284,7 @@ def main():
         with Session(engine) as session:
             # Clean and recreate database
             clean_database(session)
-            """
+            # """
             print("\nCollecting all unique genes across timepoints...")
 
             # Read sheets from pairwise file
@@ -454,13 +454,13 @@ def main():
                                 for edge in edge_list
                             ]
                             populate_relationships(session, relationships)
-                        
+
                         session.commit()
                 except Exception as e:
                     print(f"Error processing timepoint {sheet_name}: {str(e)}")
                     session.rollback()
                     continue
-            """
+            # """
             print("\nDatabase initialization completed successfully")
 
     except Exception as e:
