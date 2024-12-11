@@ -46,11 +46,17 @@ def insert_biclique(
     gene_ids: list,
 ):
     """Insert a new biclique into the database."""
+    from biclique_analysis.classifier import classify_biclique
+    
+    # Classify the biclique
+    category = classify_biclique(set(dmr_ids), set(gene_ids))
+    
     biclique = Biclique(
         timepoint_id=timepoint_id,
         component_id=component_id,
         dmr_ids=dmr_ids,
         gene_ids=gene_ids,
+        category=category.name.lower()  # Add category
     )
     session.add(biclique)
     session.commit()
