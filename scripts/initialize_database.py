@@ -31,6 +31,7 @@ from data_loader import (
     create_gene_mapping,
     # validate_bipartite_graph,
 )
+from biclique_analysis import process_timepoint_data
 
 from utils.graph_io import write_gene_mappings
 from utils import process_enhancer_info
