@@ -2,16 +2,18 @@
 
 from sqlalchemy.orm import Session
 from .models import (
+    DMR,
+    Gene,
+    Timepoint,
+    MasterGeneID,
     ComponentBiclique,
-    Relationship, 
+    Relationship,
     Metadata,
     Statistic,
     Biclique,
     Component,
-    DMR,
-    Gene,
-    Timepoint
 )
+
 
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
@@ -27,6 +29,7 @@ def clean_database(session: Session):
         session.query(DMR).delete()
         session.query(Gene).delete()
         session.query(Timepoint).delete()
+        session.query(MasterGeneID).delete()
         session.commit()
         print("Database cleaned successfully")
     except Exception as e:

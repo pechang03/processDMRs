@@ -2,6 +2,10 @@
 
 import json
 from sqlalchemy.types import TypeDecorator, TEXT
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
+
 from sqlalchemy import (
     create_engine,
     Column,
@@ -14,24 +18,23 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
+Base = declarative_base()
+
+
 class ArrayType(TypeDecorator):
     """Convert between Python list and string stored in database."""
-    
+
     impl = TEXT
-    
+
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
         return json.dumps(value)
-    
+
     def process_result_value(self, value, dialect):
         if value is None:
             return None
         return json.loads(value)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-
-Base = declarative_base()
 
 
 class Timepoint(Base):
@@ -47,6 +50,12 @@ class Gene(Base):
     symbol = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     master_gene_id = Column(Integer, ForeignKey("master_gene_ids.id"))
+    node_type = Column(String(30), nullable=True)
+    gene_type = Column(String(30), nullable=True)
+    interaction_source = Column(String(30), nullable=True)
+    promoter_info = Column(String(30), nullable=True)
+    degree = Column(Integer, nullable=True)
+    # AI We need to code the relationship for genes-timepoint-biclique
 
 
 class MasterGeneID(Base):
@@ -72,7 +81,7 @@ class DMR(Base):
     q_value = Column(Float)
     mean_methylation = Column(Float)
     is_hub = Column(Boolean, default=False)  # Single definition
-    
+
     __table_args__ = (
         UniqueConstraint("timepoint_id", "dmr_number", name="uq_dmrs_timepoint_dmr"),
     )
@@ -97,7 +106,6 @@ class Component(Base):
     gene_count = Column(Integer)
     edge_count = Column(Integer)
     density = Column(Float)
-
 
 
 class ComponentBiclique(Base):
