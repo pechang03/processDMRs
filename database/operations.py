@@ -455,7 +455,6 @@ def process_gene_sources(
                                 "promoter_info": promoter_info,
                                 "interaction_source": "ENCODE_Enhancer",
                                 "degree": 0,
-                                "is_hub": False,
                             }
                             insert_gene(session, **gene_data)
                             processed_genes.add(gene_symbol)
@@ -482,7 +481,6 @@ def process_gene_sources(
                                 "gene_type": "Promoter",
                                 "interaction_source": "ENCODE_Promoter",
                                 "degree": 0,
-                                "is_hub": False,
                             }
                             insert_gene(session, **gene_data)
                             processed_genes.add(gene_symbol)
