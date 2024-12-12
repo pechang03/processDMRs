@@ -9,14 +9,14 @@ import pandas as pd
 from .operations import (
     # insert_timepoint,
     insert_dmr,
-    # insert_biclique,
-    # insert_component,
-    # insert_triconnected_component,
-    # update_biclique_category,
-    # insert_component_biclique,
-    # insert_statistics,
-    # insert_metadata,
-    # insert_relationship,
+    insert_biclique,
+    insert_component,
+    insert_triconnected_component,
+    update_biclique_category,
+    insert_component_biclique,
+    insert_statistics,
+    insert_metadata,
+    insert_relationship,
     insert_gene,
     upsert_dmr_timepoint_annotation,
     upsert_gene_timepoint_annotation,
@@ -710,7 +710,7 @@ def populate_timepoints(session: Session):
         "TP60-TP180_TSS",
     ]
     for tp in timepoints:
-        operations.insert_timepoint(session, tp)
+        insert_timepoint(session, tp)
 
 
 def populate_bicliques(
@@ -723,15 +723,13 @@ def populate_bicliques(
     """Populate bicliques table."""
     for biclique in bicliques_result["bicliques"]:
         dmr_ids, gene_ids = biclique
-        operations.insert_biclique(
-            session, timepoint_id, None, list(dmr_ids), list(gene_ids)
-        )
+        insert_biclique(session, timepoint_id, None, list(dmr_ids), list(gene_ids))
 
     # Store bicliques
     for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
         # AI we need to classify this biclque and then also record is classification
         split_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-        biclique_id = operations.insert_biclique(
+        biclique_id = insert_biclique(
             session,
             timepoint_id=timepoint_id,
             component_id=None,  # Will update after creating component
@@ -782,7 +780,7 @@ def populate_gene_annotations(
                 node_type = "split_gene"
             biclique_ids = ",".join(map(str, participating_bicliques))
 
-        operations.upsert_gene_timepoint_annotation(
+        upsert_gene_timepoint_annotation(
             session=session,
             timepoint_id=timepoint_id,
             gene_id=gene,
@@ -821,7 +819,7 @@ def populate_dmr_annotations(
             ]
             biclique_ids = ",".join(map(str, participating_bicliques))
 
-        operations.upsert_dmr_timepoint_annotation(
+        upsert_dmr_timepoint_annotation(
             session=session,
             timepoint_id=timepoint_id,
             dmr_id=dmr,
@@ -831,3 +829,24 @@ def populate_dmr_annotations(
             is_isolate=is_isolate,
             biclique_ids=biclique_ids,
         )
+
+
+def populate_statistics(session: Session, statistics: dict):
+    """Populate statistics table."""
+    for category, stats in statistics.items():
+        for key, value in stats.items():
+            insert_statistics(session, category, key, str(value))
+
+
+def populate_metadata(session: Session, metadata: dict):
+    """Populate metadata table."""
+    for entity_type, entity_data in metadata.items():
+        for entity_id, entity_metadata in entity_data.items():
+            for key, value in entity_metadata.items():
+                insert_metadata(session, entity_type, entity_id, key, str(value))
+
+
+def populate_relationships(session: Session, relationships: list):
+    """Populate relationships table."""
+    for rel in relationships:
+        insert_relationship(session, **rel)
