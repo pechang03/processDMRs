@@ -1,6 +1,6 @@
 """Database module for DMR analysis system."""
 
-from .schema import create_tables
+from .models import create_tables
 from .connection import get_db_engine
 from .cleanup import clean_database
 from .operations import (
