@@ -112,7 +112,7 @@ class DMR(Base):
 
 
 class DMRTimepointAnnotation(Base):
-    __table__name = "dmr_timepoint_annotations"
+    __tablename__ = "dmr_timepoint_annotations"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     dmr_id = Column(Integer, ForeignKey("dmr.id"), primary_key=True)
     component_id = Column(Integer, ForeignKey("components.id"), primary_key=False)
