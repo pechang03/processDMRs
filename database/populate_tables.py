@@ -7,7 +7,7 @@ import pandas as pd
 
 # from utils import node_info, edge_info
 from .operations import (
-    # insert_timepoint,
+    insert_timepoint,
     insert_dmr,
     insert_biclique,
     insert_component,
@@ -279,6 +279,11 @@ def upsert_gene_timepoint_annotation(
     gene_type: str = None,
     is_isolate: bool = False,
     biclique_ids: str = None,
+    symbol: str = None,
+    master_gene_id: int = None,
+    description: str = None,
+    interaction_source: str = None,
+    promoter_info: str = None,
 ):
     """
     Update or insert gene annotation for a specific timepoint.
