@@ -5,6 +5,8 @@ import pandas as pd
 
 # from utils import node_info, edge_info
 
+from sqlalchemy import and_
+from .models import GeneTimepointAnnotation
 from .models import TriconnectedComponent
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -47,16 +49,16 @@ def insert_biclique(
 ):
     """Insert a new biclique into the database."""
     from biclique_analysis.classifier import classify_biclique
-    
+
     # Classify the biclique
     category = classify_biclique(set(dmr_ids), set(gene_ids))
-    
+
     biclique = Biclique(
         timepoint_id=timepoint_id,
         component_id=component_id,
         dmr_ids=dmr_ids,
         gene_ids=gene_ids,
-        category=category.name.lower()  # Add category
+        category=category.name.lower(),  # Add category
     )
     session.add(biclique)
     session.commit()
@@ -105,15 +107,13 @@ def insert_triconnected_component(
     session.commit()
     return component.id
 
+
 def update_biclique_category(
-    session: Session, 
-    biclique_id: int,
-    dmr_ids: List[int],
-    gene_ids: List[int]
+    session: Session, biclique_id: int, dmr_ids: List[int], gene_ids: List[int]
 ) -> None:
     """
     Update the category field for a biclique based on its composition.
-    
+
     Args:
         session: Database session
         biclique_id: ID of the biclique to update
@@ -121,15 +121,15 @@ def update_biclique_category(
         gene_ids: List of gene IDs in the biclique
     """
     from biclique_analysis.classifier import classify_biclique, BicliqueSizeCategory
-    
+
     # Get the biclique
     biclique = session.query(Biclique).get(biclique_id)
     if not biclique:
         return
-        
+
     # Classify the biclique
     category = classify_biclique(set(dmr_ids), set(gene_ids))
-    
+
     # Update the category
     biclique.category = category.name.lower()
     session.commit()
@@ -180,6 +180,72 @@ def insert_relationship(
     session.commit()
 
 
+def insert_gene(
+    session: Session,
+    symbol: str,
+    description: str = None,
+    master_gene_id: int = None,
+    interaction_source: str = None,
+    promoter_info: str = None,
+    # degree: int = 0,
+):
+    """Insert a new gene into the database."""
+    # Skip invalid gene symbols
+    if not symbol:  # Handle None or empty string
+        return None
+
+    # Clean and lowercase the symbol
+    symbol = str(symbol).strip().lower()
+
+    # Extended validation for unnamed columns and invalid symbols
+    invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
+    if any(symbol.startswith(pat) for pat in invalid_patterns) or not symbol:
+        return None  # Skip invalid symbols instead of raising error
+
+    # Check for duplicate gene symbols (case-insensitive)
+    existing_gene = (
+        session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
+    )
+    if existing_gene:
+        return existing_gene.id
+
+    """
+    Insert a new gene into the database with the updated schema.
+    Moved timepoint-specific fields to GeneTimepointAnnotation table.
+    """
+    # Skip invalid gene symbols
+    if not symbol:
+        return None
+
+    # Clean and lowercase the symbol
+    symbol = str(symbol).strip().lower()
+
+    # Check for duplicate gene symbols (case-insensitive)
+    existing_gene = (
+        session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
+    )
+    if existing_gene:
+        return existing_gene.id
+
+    # Create the gene
+    try:
+        gene = Gene(
+            symbol=symbol,
+            description=description,
+            master_gene_id=master_gene_id,
+            interaction_source=interaction_source,
+            promoter_info=promoter_info,
+            # degree=degree,
+        )
+        session.add(gene)
+        session.commit()
+        return gene.id
+
+    except Exception as e:
+        session.rollback()
+        raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
+
+
 def upsert_gene_timepoint_annotation(
     session: Session,
     timepoint_id: int,
@@ -190,11 +256,11 @@ def upsert_gene_timepoint_annotation(
     node_type: str = None,
     gene_type: str = None,
     is_isolate: bool = False,
-    biclique_ids: str = None
+    biclique_ids: str = None,
 ):
     """
     Update or insert gene annotation for a specific timepoint.
-    
+
     Args:
         session: Database session
         timepoint_id: Timepoint ID
@@ -207,17 +273,19 @@ def upsert_gene_timepoint_annotation(
         is_isolate: Whether the gene is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
-    from sqlalchemy import and_
-    from .models import GeneTimepointAnnotation
-    
+
     # Try to get existing annotation
-    annotation = session.query(GeneTimepointAnnotation).filter(
-        and_(
-            GeneTimepointAnnotation.timepoint_id == timepoint_id,
-            GeneTimepointAnnotation.gene_id == gene_id
+    annotation = (
+        session.query(GeneTimepointAnnotation)
+        .filter(
+            and_(
+                GeneTimepointAnnotation.timepoint_id == timepoint_id,
+                GeneTimepointAnnotation.gene_id == gene_id,
+            )
         )
-    ).first()
-    
+        .first()
+    )
+
     if annotation:
         # Update existing annotation
         if component_id is not None:
@@ -234,9 +302,13 @@ def upsert_gene_timepoint_annotation(
             annotation.is_isolate = is_isolate
         if biclique_ids:
             # Append new biclique ID to existing list
-            existing_ids = set(annotation.biclique_ids.split(',')) if annotation.biclique_ids else set()
+            existing_ids = (
+                set(annotation.biclique_ids.split(","))
+                if annotation.biclique_ids
+                else set()
+            )
             existing_ids.add(str(biclique_ids))
-            annotation.biclique_ids = ','.join(sorted(existing_ids))
+            annotation.biclique_ids = ",".join(sorted(existing_ids))
     else:
         # Create new annotation
         annotation = GeneTimepointAnnotation(
@@ -248,10 +320,10 @@ def upsert_gene_timepoint_annotation(
             node_type=node_type,
             gene_type=gene_type,
             is_isolate=is_isolate,
-            biclique_ids=str(biclique_ids) if biclique_ids else None
+            biclique_ids=str(biclique_ids) if biclique_ids else None,
         )
         session.add(annotation)
-    
+
     try:
         session.commit()
     except Exception as e:

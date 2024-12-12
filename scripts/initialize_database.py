@@ -4,7 +4,9 @@ import os
 import sys
 from typing import Dict, List, Set, Tuple
 import pandas as pd
+import networkx as nx
 from dotenv import load_dotenv
+from pandas.core.api import DataFrame
 from sqlalchemy import create_engine
 from biclique_analysis.component_analyzer import ComponentAnalyzer
 from biclique_analysis.triconnected import (
@@ -12,7 +14,6 @@ from biclique_analysis.triconnected import (
     find_separation_pairs,
 )
 from biclique_analysis.classifier import classify_component
-import networkx as nx
 from sqlalchemy.orm import Session
 from database import schema, connection, operations, clean_database
 from database.models import Base
@@ -27,9 +28,9 @@ from data_loader import create_bipartite_graph
 from data_loader import (
     get_excel_sheets,
     read_excel_file,
-    create_bipartite_graph,
+    create_original_graph,
     create_gene_mapping,
-    # validate_bipartite_graph,
+    # validate_original_graph,
 )
 from biclique_analysis import process_timepoint_data
 
@@ -73,13 +74,45 @@ def populate_timepoints(session: Session):
         operations.insert_timepoint(session, tp)
 
 
-def populate_bicliques(session: Session, bicliques_result: dict, timepoint_id: int):
+def populate_bicliques(
+    # AI fix this function
+    session: Session,
+    split_bigraph: nx.graph,
+    bicliques_result: dict,
+    timepoint_id: int,
+):
     """Populate bicliques table."""
     for biclique in bicliques_result["bicliques"]:
         dmr_ids, gene_ids = biclique
         operations.insert_biclique(
             session, timepoint_id, None, list(dmr_ids), list(gene_ids)
         )
+
+    # Store bicliques
+    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
+        # AI we need to classify this biclque and then also record is classification
+        split_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+        biclique_id = operations.insert_biclique(
+            session,
+            timepoint_id=timepoint_id,
+            component_id=None,  # Will update after creating component
+            dmr_ids=list(dmr_nodes),
+            gene_ids=list(gene_nodes),
+        )
+
+        # AI todo we need to update genes and dmrs in the database with the bclilque id
+        # AI As a gene can be part of more one biclique and the this varies betwen timepoints
+        # AI THis detail needs a many-to-many table index by timepoint_id, gene_id with a list of blciqueids
+
+
+def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
+    """Split graph into DMRs and genes."""
+    # For a given timepoint the dmr_nodes and gene_nodes are the same.
+    dmr_nodes = [node for node in original_graph.nodes if node in original_graph[0]]
+    gene_nodes = [node for node in original_graph.nodes if node in original_graph[1]]
+    split_graph.add_nodes_from(dmr_nodes, bipartite=0)
+    split_graph.add_nodes_from(gene_nodes, bipartite=1)
+    ## We don't add the edge yet as the are not the same between original and split graphs
 
 
 def process_bicliques_for_timepoint(
@@ -94,13 +127,14 @@ def process_bicliques_for_timepoint(
 
     try:
         # Create bipartite graph from DataFrame
-
-        bipartite_graph = create_bipartite_graph(df, gene_id_mapping)
+        original_graph = nx.Graph()
+        split_graph = nx.Graph()
+        original_graph = create_bipartite_graph(df, gene_id_mapping)
 
         # Read and process bicliques
         bicliques_result = reader.read_bicliques_file(
             bicliques_file,
-            bipartite_graph,
+            original_graph,
             gene_id_mapping=gene_id_mapping,
             file_format="gene_name",
         )
@@ -108,32 +142,24 @@ def process_bicliques_for_timepoint(
         if not bicliques_result or not bicliques_result.get("bicliques"):
             print("No bicliques found")
             return
+        add_split_graph_nodes(original_graph, split_graph)
+        populate_bicliques(session, split_graph, biclique_result, timepoint_id)
 
         # Create biclique graph
-        biclique_graph = nx.Graph()
-        for dmr_nodes, gene_nodes in bicliques_result["bicliques"]:
-            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
-            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
-            biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-
         # Process components using ComponentAnalyzer
-        analyzer = ComponentAnalyzer(bipartite_graph, bicliques_result, biclique_graph)
+        # AI We need to itterate through the original graph compoents first and record the componet data
+        # AI original_graph -> components (original type) -> triconnected_components
+        # AI split_graph -> components (split type) -> bicliques
+        # AI Split vertices are vertices in the split graph that belong to more than one biclique in that component
+        # AI complex split_graph components contain more than one biclique and thus split vertices (genes) are present
+        # AI Functions like populate_bicliques and populate_components should be called but need to be modified to also update the tables correctly
+        analyzer = ComponentAnalyzer(
+            original_graph, bicliques_result, split_graph
+        )  # AI this class/function may need reviewing
         component_results = analyzer.analyze_components()
-
-        # Store bicliques
-        for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
-            biclique_id = operations.insert_biclique(
-                session,
-                timepoint_id=timepoint_id,
-                component_id=None,  # Will update after creating component
-                dmr_ids=list(dmr_nodes),
-                gene_ids=list(gene_nodes),
-            )
-
-        # Store components
         for comp_type, comp_data in component_results["components"].items():
             for category, count in comp_data.items():
-                comp_id = operations.insert_component(
+                component_id = operations.insert_component(
                     session,
                     timepoint_id=timepoint_id,
                     category=f"{comp_type}_{category}",
@@ -141,35 +167,38 @@ def process_bicliques_for_timepoint(
                     dmr_count=len(
                         {
                             n
-                            for n in bipartite_graph.nodes()
-                            if bipartite_graph.nodes[n]["bipartite"] == 0
+                            for n in original_graph.nodes()
+                            if original_graph.nodes[n]["bipartite"] == 0
                         }
                     ),
                     gene_count=len(
                         {
                             n
-                            for n in bipartite_graph.nodes()
-                            if bipartite_graph.nodes[n]["bipartite"] == 1
+                            for n in original_graph.nodes()
+                            if original_graph.nodes[n]["bipartite"] == 1
                         }
                     ),
-                    edge_count=bipartite_graph.number_of_edges(),
+                    edge_count=original_graph.number_of_edges(),
                     density=2.0
-                    * bipartite_graph.number_of_edges()
+                    * original_graph.number_of_edges()
                     / (
-                        bipartite_graph.number_of_nodes()
-                        * (bipartite_graph.number_of_nodes() - 1)
+                        original_graph.number_of_nodes()
+                        * (original_graph.number_of_nodes() - 1)
                     ),
                 )
+                # The component can differ between timepoints
+                # AI todo a timepoint, gene, component_id table is appropriate.
 
         # Process triconnected components
-        tricomps, stats = analyze_triconnected_components(bipartite_graph)
+        # AI extract this block to a function
+        tricomps, stats = analyze_triconnected_components(original_graph)
         for comp_nodes in tricomps:
-            subgraph = bipartite_graph.subgraph(comp_nodes)
+            subgraph = original_graph.subgraph(comp_nodes)
             dmr_nodes = {
-                n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 0
+                n for n in comp_nodes if original_graph.nodes[n]["bipartite"] == 0
             }
             gene_nodes = {
-                n for n in comp_nodes if bipartite_graph.nodes[n]["bipartite"] == 1
+                n for n in comp_nodes if original_graph.nodes[n]["bipartite"] == 1
             }
 
             # Find separation pairs for this component
@@ -193,6 +222,8 @@ def process_bicliques_for_timepoint(
                 separation_pairs=list(separation_pairs),
                 nodes=list(comp_nodes),
             )
+            # The component can differ between timepoints
+            # AI todo a timepoint, gene, component_id table is appropriate.
 
         # Store statistics
         for category, stats in bicliques_result.get("statistics", {}).items():
@@ -331,7 +362,7 @@ def main():
                     session=session,
                     df=df_DSStimeseries,
                     timepoint_name="DSStimeseries",
-                    gene_id_mapping=gene_id_mapping
+                    gene_id_mapping=gene_id_mapping,
                 )
 
             # Process pairwise timepoints
@@ -340,7 +371,7 @@ def main():
                     session=session,
                     df=df,
                     timepoint_name=sheet_name,
-                    gene_id_mapping=gene_id_mapping
+                    gene_id_mapping=gene_id_mapping,
                 )
             # """
             print("\nDatabase initialization completed successfully")
