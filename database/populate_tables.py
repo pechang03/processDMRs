@@ -517,22 +517,6 @@ def update_gene_hub_status(
             update_gene_metadata(session, gene_symbol, timepoint, is_hub=True)
 
 
-def populate_timepoints(session: Session):
-    """Populate timepoints table."""
-    timepoints = [
-        "DSStimeseries",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
-        "P21-P28_TSS",
-        "P21-P40_TSS",
-        "P21-P60_TSS",
-        "P21-P180_TSS",
-        "TP28-TP180_TSS",
-        "TP40-TP180_TSS",
-        "TP60-TP180_TSS",
-    ]
-    for tp in timepoints:
-        operations.insert_timepoint(session, tp)
-
-
 def populate_genes(
     session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None
 ):
@@ -544,38 +528,37 @@ def populate_genes(
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
         gene_symbol = str(gene_symbol).strip().lower()
-        
+
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if (
+            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
+            or not gene_symbol
+        ):
             continue
 
         # Check if master gene ID already exists
-        existing = session.query(MasterGeneID).filter(
-            func.lower(MasterGeneID.gene_symbol) == gene_symbol
-        ).first()
-        
+        existing = (
+            session.query(MasterGeneID)
+            .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol)
+            .first()
+        )
+
         if not existing:
             try:
-                master_gene = MasterGeneID(
-                    id=gene_id,
-                    gene_symbol=gene_symbol
-                )
+                master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
                 session.add(master_gene)
                 genes_added += 1
-                
+
                 # Create corresponding gene entry
-                gene = Gene(
-                    symbol=gene_symbol,
-                    master_gene_id=gene_id
-                )
+                gene = Gene(symbol=gene_symbol, master_gene_id=gene_id)
                 session.add(gene)
-                
+
                 # Commit in smaller batches to avoid memory issues
                 if genes_added % 1000 == 0:
                     session.commit()
                     print(f"Added {genes_added} master gene IDs")
-                    
+
             except Exception as e:
                 session.rollback()
                 print(f"Error adding master gene ID for {gene_symbol}: {str(e)}")
