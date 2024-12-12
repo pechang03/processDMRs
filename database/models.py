@@ -189,8 +189,8 @@ class TriconnectedComponent(Base):
     # Classification
 
     # Component structure
-    nodes = Column(ARRAY(Integer))  # Store actual nodes in component
-    separation_pairs = Column(ARRAY(Integer))  # Store pairs that separate component
+    nodes = Column(ArrayType)  # Store actual nodes in component 
+    separation_pairs = Column(ArrayType)  # Store pairs that separate component
 
     # Additional statistics
     avg_dmrs = Column(Float)  # Average DMRs for interesting components
