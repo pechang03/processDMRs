@@ -69,9 +69,7 @@ class GeneTimepointAnnotation(Base):
     node_type = Column(String(30), nullable=True)
     gene_type = Column(String(30), nullable=True)
     is_issolate = Column(Boolean, default=False)
-    biclique_ids = Column(
-        String(255), nullable=True
-    )  # 1:many ,this should be a table but this could cause complexity blowout and result in us changing to a neo4j yuck
+    biclique_ids = Column(ArrayType, nullable=True)
 
 
 class MasterGeneID(Base):
@@ -123,9 +121,7 @@ class DMRTimepointAnnotation(Base):
     node_type = Column(String(30), nullable=True)
     gene_type = Column(String(30), nullable=True)
     is_issolate = Column(Boolean, default=False)
-    biclique_ids = Column(
-        String(255), nullable=True
-    )  # 1:many ,this should be a table but this could cause complexity blowout and result in us changing to a neo4j yuck
+    biclique_ids = Column(ArrayType, nullable=True)
 
 
 class Biclique(Base):
