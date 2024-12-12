@@ -566,3 +566,21 @@ def update_gene_hub_status(
         if gene_id in reverse_mapping:
             gene_symbol = reverse_mapping[gene_id]
             update_gene_metadata(session, gene_symbol, timepoint, is_hub=True)
+def verify_relationships(session: Session):
+    """Verify that many-to-many relationships are properly populated."""
+    # Check ComponentBiclique relationships
+    component_bicliques = session.query(ComponentBiclique).all()
+    print(f"Found {len(component_bicliques)} component-biclique relationships")
+
+    # Check Biclique annotations
+    dmr_annotations = session.query(DMRTimepointAnnotation).filter(
+        DMRTimepointAnnotation.biclique_ids.isnot(None)
+    ).all()
+    print(f"Found {len(dmr_annotations)} DMR-biclique annotations")
+
+    gene_annotations = session.query(GeneTimepointAnnotation).filter(
+        GeneTimepointAnnotation.biclique_ids.isnot(None)
+    ).all()
+    print(f"Found {len(gene_annotations)} Gene-biclique annotations")
+
+    return len(component_bicliques) > 0 and len(dmr_annotations) > 0 and len(gene_annotations) > 0

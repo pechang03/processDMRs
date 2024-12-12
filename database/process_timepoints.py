@@ -165,8 +165,7 @@ def process_bicliques_for_timepoint(
     for component in nx.connected_components(split_graph):
         comp_subgraph = split_graph.subgraph(component)
         comp_bicliques = [
-            b
-            for b in bicliques_result["bicliques"]
+            b for b in bicliques_result["bicliques"]
             if any(n in component for n in b[0] | b[1])
         ]
 
@@ -184,26 +183,25 @@ def process_bicliques_for_timepoint(
                 timepoint_id=timepoint_id,
                 component_id=comp_id,
                 dmr_nodes=biclique[0],
-                gene_nodes=biclique[1],
+                gene_nodes=biclique[1]
             )
 
-        # Update annotations with biclique information
-        populate_dmr_annotations(
-            session=session,
-            timepoint_id=timepoint_id,
-            component_id=comp_id,
-            graph=comp_subgraph,
-            bicliques=comp_bicliques,
-            df=df,
-            is_original=False,
-        )
+            # Update DMR annotations
+            for dmr_id in biclique[0]:
+                upsert_dmr_timepoint_annotation(
+                    session,
+                    timepoint_id=timepoint_id,
+                    dmr_id=dmr_id,
+                    component_id=comp_id,
+                    biclique_ids=[biclique_id]  # Now using ArrayType
+                )
 
-        populate_gene_annotations(
-            session=session,
-            timepoint_id=timepoint_id,
-            component_id=comp_id,
-            graph=comp_subgraph,
-            bicliques=comp_bicliques,
-            df=df,
-            is_original=False,
-        )
+            # Update Gene annotations
+            for gene_id in biclique[1]:
+                upsert_gene_timepoint_annotation(
+                    session,
+                    timepoint_id=timepoint_id,
+                    gene_id=gene_id,
+                    component_id=comp_id,
+                    biclique_ids=[biclique_id]  # Now using ArrayType
+                )
