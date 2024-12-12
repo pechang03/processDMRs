@@ -122,7 +122,7 @@ def process_bicliques_for_timepoint(
     add_split_graph_nodes(original_graph, split_graph)
 
     # Process bicliques
-    bicliques_result = reader.read_bicliques_file(
+    bicliques_result = biclique_analysis.reader.read_bicliques_file(
         bicliques_file,
         original_graph,
         gene_id_mapping=gene_id_mapping,
@@ -135,7 +135,7 @@ def process_bicliques_for_timepoint(
     # First pass: Process original graph components
     for component in nx.connected_components(original_graph):
         comp_subgraph = original_graph.subgraph(component)
-        comp_id = operations.insert_component(
+        comp_id = database.operations.insert_component(
             session,
             timepoint_id=timepoint_id,
             graph_type="original",
@@ -169,7 +169,7 @@ def process_bicliques_for_timepoint(
             if any(n in component for n in b[0] | b[1])
         ]
 
-        comp_id = operations.insert_component(
+        comp_id = database.operations.insert_component(
             session,
             timepoint_id=timepoint_id,
             graph_type="split",
@@ -188,7 +188,7 @@ def process_bicliques_for_timepoint(
 
             # Update DMR annotations
             for dmr_id in biclique[0]:
-                upsert_dmr_timepoint_annotation(
+                database.operations.upsert_dmr_timepoint_annotation(
                     session,
                     timepoint_id=timepoint_id,
                     dmr_id=dmr_id,
@@ -198,7 +198,7 @@ def process_bicliques_for_timepoint(
 
             # Update Gene annotations
             for gene_id in biclique[1]:
-                upsert_gene_timepoint_annotation(
+                database.operations.upsert_gene_timepoint_annotation(
                     session,
                     timepoint_id=timepoint_id,
                     gene_id=gene_id,
