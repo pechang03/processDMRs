@@ -4,6 +4,7 @@
 import os
 from typing import Dict, List, Union, Tuple, Set
 import networkx as nx
+import json
 
 
 def read_bicliques_file(
