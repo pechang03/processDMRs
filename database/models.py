@@ -54,6 +54,7 @@ class Gene(Base):
     master_gene_id = Column(Integer, ForeignKey("master_gene_ids.id"))
     interaction_source = Column(String(30), nullable=True)
     promoter_info = Column(String(30), nullable=True)
+    master_gene = relationship("MasterGeneID", back_populates="genes")
     # AI We need to code the relationship for genes-timepoint-biclique
 
 
