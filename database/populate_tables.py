@@ -354,6 +354,7 @@ def upsert_gene_timepoint_annotation(
         raise
     """Insert a new gene into the database."""
     # Skip invalid gene symbols
+    # Skip invalid gene symbols
     if not symbol:  # Handle None or empty string
         return None
 
@@ -757,7 +758,7 @@ def populate_bicliques(
     # Store bicliques
     for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
         # AI we need to classify this biclque and then also record is classification
-        split_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+        split_bigraph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
         biclique_id = insert_biclique(
             session,
             timepoint_id=timepoint_id,
