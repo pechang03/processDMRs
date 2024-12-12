@@ -187,7 +187,7 @@ def insert_gene(
     master_gene_id: int = None,
     interaction_source: str = None,
     promoter_info: str = None,
-    # degree: int = 0,
+    degree: int = 0,
 ):
     """Insert a new gene into the database."""
     # Skip invalid gene symbols
@@ -457,8 +457,6 @@ def upsert_gene_timepoint_annotation(
             symbol=symbol,
             description=description,
             master_gene_id=master_gene_id,
-            node_type=node_type,
-            gene_type=gene_type,
             interaction_source=interaction_source,
             promoter_info=promoter_info,
             degree=degree,
