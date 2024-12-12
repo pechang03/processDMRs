@@ -536,16 +536,40 @@ def populate_genes(
     # First populate master_gene_ids
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():
-        # Check if gene ID already exists
-        existing = session.query(MasterGeneID).filter_by(id=gene_id).first()
+        # Clean and lowercase the symbol
+        gene_symbol = str(gene_symbol).strip().lower()
+        
+        # Skip invalid symbols
+        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
+        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+            continue
+
+        # Check if master gene ID already exists
+        existing = session.query(MasterGeneID).filter(
+            func.lower(MasterGeneID.gene_symbol) == gene_symbol
+        ).first()
+        
         if not existing:
             try:
-                master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
+                master_gene = MasterGeneID(
+                    id=gene_id,
+                    gene_symbol=gene_symbol
+                )
                 session.add(master_gene)
                 genes_added += 1
+                
+                # Create corresponding gene entry
+                gene = Gene(
+                    symbol=gene_symbol,
+                    master_gene_id=gene_id
+                )
+                session.add(gene)
+                
                 # Commit in smaller batches to avoid memory issues
                 if genes_added % 1000 == 0:
                     session.commit()
+                    print(f"Added {genes_added} master gene IDs")
+                    
             except Exception as e:
                 session.rollback()
                 print(f"Error adding master gene ID for {gene_symbol}: {str(e)}")
@@ -555,6 +579,11 @@ def populate_genes(
         # Final commit for remaining genes
         session.commit()
         print(f"Added {genes_added} master gene IDs")
+
+        # Now populate additional gene information if DataFrame is provided
+        if df_DSStimeseries is not None:
+            process_gene_sources(df_DSStimeseries, gene_id_mapping, session)
+
     except Exception as e:
         session.rollback()
         print(f"Error adding master gene IDs: {str(e)}")
