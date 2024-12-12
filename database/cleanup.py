@@ -12,6 +12,9 @@ from .models import (
     Statistic,
     Biclique,
     Component,
+    TriconnectedComponent,
+    DMRTimepointAnnotation,
+    GeneTimepointAnnotation,
 )
 
 
@@ -20,6 +23,9 @@ def clean_database(session: Session):
     print("Cleaning existing data from database...")
     try:
         # Delete data from all tables in correct order
+        session.query(GeneTimepointAnnotation).delete()
+        session.query(DMRTimepointAnnotation).delete()
+        session.query(TriconnectedComponent).delete()
         session.query(ComponentBiclique).delete()
         session.query(Relationship).delete()
         session.query(Metadata).delete()
