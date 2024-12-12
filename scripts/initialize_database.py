@@ -8,21 +8,25 @@ import networkx as nx
 from dotenv import load_dotenv
 from pandas.core.api import DataFrame
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.ext.declarative import declarative_base
+
+# from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
+from utils import id_mapping, constants
+from utils import node_info, edge_info
+from utils.graph_io import write_gene_mappings
+from utils import process_enhancer_info
+
+from data_loader import create_bipartite_graph
+from biclique_analysis import process_timepoint_data
+from biclique_analysis import reader
+from biclique_analysis.processor import create_node_metadata
 from biclique_analysis.component_analyzer import ComponentAnalyzer
+from biclique_analysis.classifier import classify_component
 from biclique_analysis.triconnected import (
     analyze_triconnected_components,
     find_separation_pairs,
 )
-from biclique_analysis.classifier import classify_component
-from sqlalchemy.orm import Session
-from database import schema, connection, operations, clean_database
-from database.models import Base
-
-from utils import id_mapping, constants
-from utils import node_info, edge_info
-from biclique_analysis import reader
-from biclique_analysis.processor import create_node_metadata
-from data_loader import create_bipartite_graph
 # from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
 from data_loader import (
@@ -32,13 +36,10 @@ from data_loader import (
     create_gene_mapping,
     # validate_original_graph,
 )
-from biclique_analysis import process_timepoint_data
 
-from utils.graph_io import write_gene_mappings
-from utils import process_enhancer_info
-from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
-
-from database.schema import (
+from database import models, connection, operations, clean_database
+from database.models import Base
+from database.models import (
     ComponentBiclique,
     Relationship,
     Metadata,
@@ -49,60 +50,19 @@ from database.schema import (
     Gene,
     Timepoint,
 )
-from database.operations import populate_genes, populate_dmrs
-from sqlalchemy.ext.declarative import declarative_base
+from database.populate_tables import (
+    populate_timepoints,
+    populate_genes,
+    populate_dmrs,
+    populate_dmr_annotations,
+    populate_gene_annotations,
+    populate_bicliques,
+)
 
 Base = declarative_base()
 
 # Load environment variables
 load_dotenv()
-
-
-def populate_timepoints(session: Session):
-    """Populate timepoints table."""
-    timepoints = [
-        "DSStimeseries",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
-        "P21-P28_TSS",
-        "P21-P40_TSS",
-        "P21-P60_TSS",
-        "P21-P180_TSS",
-        "TP28-TP180_TSS",
-        "TP40-TP180_TSS",
-        "TP60-TP180_TSS",
-    ]
-    for tp in timepoints:
-        operations.insert_timepoint(session, tp)
-
-
-def populate_bicliques(
-    # AI fix this function
-    session: Session,
-    split_bigraph: nx.graph,
-    bicliques_result: dict,
-    timepoint_id: int,
-):
-    """Populate bicliques table."""
-    for biclique in bicliques_result["bicliques"]:
-        dmr_ids, gene_ids = biclique
-        operations.insert_biclique(
-            session, timepoint_id, None, list(dmr_ids), list(gene_ids)
-        )
-
-    # Store bicliques
-    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
-        # AI we need to classify this biclque and then also record is classification
-        split_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-        biclique_id = operations.insert_biclique(
-            session,
-            timepoint_id=timepoint_id,
-            component_id=None,  # Will update after creating component
-            dmr_ids=list(dmr_nodes),
-            gene_ids=list(gene_nodes),
-        )
-
-        # AI todo we need to update genes and dmrs in the database with the bclilque id
-        # AI As a gene can be part of more one biclique and the this varies betwen timepoints
-        # AI THis detail needs a many-to-many table index by timepoint_id, gene_id with a list of blciqueids
 
 
 def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
@@ -312,7 +272,7 @@ def main():
     try:
         engine = connection.get_db_engine()
         Base.metadata.create_all(engine)
-        schema.create_tables(engine)
+        models.create_tables(engine)
         with Session(engine) as session:
             # Clean and recreate database
             clean_database(session)
