@@ -571,7 +571,7 @@ def populate_genes(
 
         # Now populate additional gene information if DataFrame is provided
         if df_DSStimeseries is not None:
-            process_gene_sources(df_DSStimeseries, gene_id_mapping, session)
+            process_gene_sources(df_DSStimeseries, gene_id_mapping, session, timepoint_id=1)  # Replace 1 with the correct timepoint_id
 
     except Exception as e:
         session.rollback()
