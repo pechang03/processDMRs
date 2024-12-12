@@ -13,6 +13,7 @@ from sqlalchemy import (
     Float,
     Boolean,
     UniqueConstraint,
+    Index,
 )
 from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.ext.declarative import declarative_base
@@ -57,10 +58,10 @@ class Gene(Base):
 
 
 class GeneTimepointAnnotation(Base):
-    __table__name = "gene_timepoint_annotations"
+    __tablename__ = "gene_timepoint_annotations"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
-    component_id = Column(Integer, ForeignKey("components.id"), primary_key=false)
+    component_id = Column(Integer, ForeignKey("components.id"), primary_key=False)
     triconnected_id = Column(
         Integer, ForeignKey("triconnected_components.id"), nullable=True
     )  # 1:1
