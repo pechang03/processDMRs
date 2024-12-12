@@ -180,17 +180,84 @@ def insert_relationship(
     session.commit()
 
 
-def insert_gene(
+def upsert_gene_timepoint_annotation(
     session: Session,
-    symbol: str,
-    description: str = None,
-    master_gene_id: int = None,
-    node_type: str = "regular_gene",
+    timepoint_id: int,
+    gene_id: int,
+    component_id: int = None,
+    triconnected_id: int = None,
+    degree: int = None,
+    node_type: str = None,
     gene_type: str = None,
-    interaction_source: str = None,
-    promoter_info: str = None,
-    degree: int = 0,
+    is_isolate: bool = False,
+    biclique_ids: str = None
 ):
+    """
+    Update or insert gene annotation for a specific timepoint.
+    
+    Args:
+        session: Database session
+        timepoint_id: Timepoint ID
+        gene_id: Gene ID
+        component_id: Optional component ID
+        triconnected_id: Optional triconnected component ID
+        degree: Optional node degree
+        node_type: Optional node type (regular_gene, split_gene)
+        gene_type: Optional gene type (Nearby, Enhancer, Promoter)
+        is_isolate: Whether the gene is isolated
+        biclique_ids: Comma-separated list of biclique IDs
+    """
+    from sqlalchemy import and_
+    from .models import GeneTimepointAnnotation
+    
+    # Try to get existing annotation
+    annotation = session.query(GeneTimepointAnnotation).filter(
+        and_(
+            GeneTimepointAnnotation.timepoint_id == timepoint_id,
+            GeneTimepointAnnotation.gene_id == gene_id
+        )
+    ).first()
+    
+    if annotation:
+        # Update existing annotation
+        if component_id is not None:
+            annotation.component_id = component_id
+        if triconnected_id is not None:
+            annotation.triconnected_id = triconnected_id
+        if degree is not None:
+            annotation.degree = degree
+        if node_type is not None:
+            annotation.node_type = node_type
+        if gene_type is not None:
+            annotation.gene_type = gene_type
+        if is_isolate is not None:
+            annotation.is_isolate = is_isolate
+        if biclique_ids:
+            # Append new biclique ID to existing list
+            existing_ids = set(annotation.biclique_ids.split(',')) if annotation.biclique_ids else set()
+            existing_ids.add(str(biclique_ids))
+            annotation.biclique_ids = ','.join(sorted(existing_ids))
+    else:
+        # Create new annotation
+        annotation = GeneTimepointAnnotation(
+            timepoint_id=timepoint_id,
+            gene_id=gene_id,
+            component_id=component_id,
+            triconnected_id=triconnected_id,
+            degree=degree,
+            node_type=node_type,
+            gene_type=gene_type,
+            is_isolate=is_isolate,
+            biclique_ids=str(biclique_ids) if biclique_ids else None
+        )
+        session.add(annotation)
+    
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"Error updating gene annotation: {str(e)}")
+        raise
     """Insert a new gene into the database."""
     # Skip invalid gene symbols
     if not symbol:  # Handle None or empty string
