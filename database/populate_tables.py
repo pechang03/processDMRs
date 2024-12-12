@@ -744,134 +744,90 @@ def populate_bicliques(
         # AI THis detail needs a many-to-many table index by timepoint_id, gene_id with a list of blciqueids
 
 
-def populate_dmr_annotations(
-    session: Session,
-    timepoint_id: int,
-    original_graph: nx.Graph,
-    split_graph: nx.Graph,
-    bicliques: List[Tuple[Set[int], Set[int]]],
-    component_mapping: Dict[
-        int, Dict
-    ],  # Maps node_id -> {original_comp_id, split_comp_id}
-) -> None:
-    """
-    Populate DMR annotations for a specific timepoint.
-
-    Args:
-        session: Database session
-        timepoint_id: Current timepoint ID
-        original_graph: Original bipartite graph
-        split_graph: Graph constructed from bicliques
-        bicliques: List of (dmr_nodes, gene_nodes) tuples
-        component_mapping: Maps nodes to their component IDs in both graphs
-    """
-    # Create node -> bicliques mapping
-    node_to_bicliques = defaultdict(list)
-    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        for dmr in dmr_nodes:
-            node_to_bicliques[dmr].append(idx)
-
-    # Process each DMR node
-    dmr_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 0}
-    for dmr in dmr_nodes:
-        # Get component information
-        comp_info = component_mapping.get(dmr, {})
-        original_comp_id = comp_info.get("original")
-        split_comp_id = comp_info.get("split")
-
-        # Calculate node properties
-        degree = original_graph.degree(dmr)
-        is_isolate = degree == 0
-
-        # Determine node type based on graph structure
-        node_type = "isolated" if is_isolate else "regular"
-
-        # Get bicliques this DMR participates in
-        biclique_ids = node_to_bicliques[dmr]
-        biclique_str = ",".join(map(str, biclique_ids)) if biclique_ids else None
-
-        # Get triconnected component ID if available
-        triconn_id = None  # This would come from triconnected component analysis
-
-        # Update DMR annotation
-        operations.upsert_dmr_timepoint_annotation(
-            session=session,
-            timepoint_id=timepoint_id,
-            dmr_id=dmr,
-            component_id=original_comp_id,  # Use original graph component
-            triconnected_id=triconn_id,
-            degree=degree,
-            node_type=node_type,
-            is_isolate=is_isolate,
-            biclique_ids=biclique_str,
-        )
-
-
 def populate_gene_annotations(
     session: Session,
     timepoint_id: int,
-    original_graph: nx.Graph,
-    split_graph: nx.Graph,
-    bicliques: List[Tuple[Set[int], Set[int]]],
-    component_mapping: Dict[int, Dict],
-    gene_metadata: Dict[int, Dict] = None,
+    component_id: int,
+    graph: nx.Graph,
+    df: pd.DataFrame,
+    is_original: bool,
+    bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> None:
-    """
-    Populate gene annotations for a specific timepoint.
+    """Populate gene annotations for a component."""
 
-    Args:
-        session: Database session
-        timepoint_id: Current timepoint ID
-        original_graph: Original bipartite graph
-        split_graph: Graph constructed from bicliques
-        bicliques: List of (dmr_nodes, gene_nodes) tuples
-        component_mapping: Maps nodes to their component IDs in both graphs
-        gene_metadata: Optional metadata about genes (type, etc.)
-    """
-    # Create node -> bicliques mapping
-    node_to_bicliques = defaultdict(list)
-    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
-        for gene in gene_nodes:
-            node_to_bicliques[gene].append(idx)
+    gene_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 1}
 
-    # Process each gene node
-    gene_nodes = {n for n, d in original_graph.nodes(data=True) if d["bipartite"] == 1}
     for gene in gene_nodes:
-        # Get component information
-        comp_info = component_mapping.get(gene, {})
-        original_comp_id = comp_info.get("original")
-        split_comp_id = comp_info.get("split")
-
-        # Calculate node properties
-        degree = original_graph.degree(gene)
+        # Basic properties
+        degree = graph.degree(gene)
         is_isolate = degree == 0
 
-        # Determine node type based on biclique participation
-        biclique_ids = node_to_bicliques[gene]
-        is_split = len(biclique_ids) > 1
-        node_type = "split_gene" if is_split else "regular_gene"
-
-        # Convert biclique IDs to string
-        biclique_str = ",".join(map(str, biclique_ids)) if biclique_ids else None
-
-        # Get gene type from metadata if available
+        # Get gene type from DataFrame
         gene_type = None
-        if gene_metadata and gene in gene_metadata:
-            gene_type = gene_metadata[gene].get("gene_type")
+        if "Gene_Symbol_Nearby" in df.columns:
+            gene_type = "Nearby"
+        elif "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
+            gene_type = "Enhancer"
+        elif "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
+            gene_type = "Promoter"
 
-        # Get triconnected component ID if available
-        triconn_id = None  # This would come from triconnected component analysis
+        # Determine if split gene in split graph
+        node_type = "regular_gene"
+        biclique_ids = None
+        if not is_original and bicliques:
+            participating_bicliques = [
+                idx for idx, (_, genes) in enumerate(bicliques) if gene in genes
+            ]
+            if len(participating_bicliques) > 1:
+                node_type = "split_gene"
+            biclique_ids = ",".join(map(str, participating_bicliques))
 
-        # Update gene annotation
         operations.upsert_gene_timepoint_annotation(
             session=session,
             timepoint_id=timepoint_id,
             gene_id=gene,
-            component_id=original_comp_id,  # Use original graph component
-            triconnected_id=triconn_id,
+            component_id=component_id,
             degree=degree,
             node_type=node_type,
             gene_type=gene_type,
             is_isolate=is_isolate,
-            biclique_ids=biclique_str,
+            biclique_ids=biclique_ids,
+        )
+
+
+def populate_dmr_annotations(
+    session: Session,
+    timepoint_id: int,
+    component_id: int,
+    graph: nx.Graph,
+    df: pd.DataFrame,
+    is_original: bool,
+    bicliques: List[Tuple[Set[int], Set[int]]] = None,
+) -> None:
+    """Populate DMR annotations for a component."""
+
+    dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+
+    for dmr in dmr_nodes:
+        # Basic properties
+        degree = graph.degree(dmr)
+        is_isolate = degree == 0
+
+        # Get biclique participation if this is split graph
+        biclique_ids = None
+        if not is_original and bicliques:
+            participating_bicliques = [
+                idx for idx, (dmrs, _) in enumerate(bicliques) if dmr in dmrs
+            ]
+            biclique_ids = ",".join(map(str, participating_bicliques))
+
+        operations.upsert_dmr_timepoint_annotation(
+            session=session,
+            timepoint_id=timepoint_id,
+            dmr_id=dmr,
+            component_id=component_id,
+            degree=degree,
+            node_type="isolated" if is_isolate else "regular",
+            is_isolate=is_isolate,
+            biclique_ids=biclique_ids,
         )
