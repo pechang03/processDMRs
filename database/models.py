@@ -44,6 +44,7 @@ class Timepoint(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
+    bicliques = relationship("Biclique", back_populates="timepoint")
 
 
 class Gene(Base):
@@ -152,6 +153,7 @@ class Component(Base):
     edge_count = Column(Integer)
     density = Column(Float)
     endcoding = Column(String(255))
+    bicliques = relationship("Biclique", back_populates="component")
     component_bicliques = relationship("ComponentBiclique", back_populates="component")
 
 
