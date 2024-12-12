@@ -6,7 +6,7 @@ import pandas as pd
 # from utils import node_info, edge_info
 
 from sqlalchemy import and_
-from .models import GeneTimepointAnnotation
+from .models import GeneTimepointAnnotation, DMRTimepointAnnotation
 from .models import TriconnectedComponent
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -245,6 +245,85 @@ def insert_gene(
         session.rollback()
         raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
 
+
+def upsert_dmr_timepoint_annotation(
+    session: Session,
+    timepoint_id: int,
+    dmr_id: int,
+    component_id: int = None,
+    triconnected_id: int = None,
+    degree: int = None,
+    node_type: str = None,
+    is_isolate: bool = False,
+    biclique_ids: str = None,
+):
+    """
+    Update or insert DMR annotation for a specific timepoint.
+
+    Args:
+        session: Database session
+        timepoint_id: Timepoint ID
+        dmr_id: DMR ID
+        component_id: Optional component ID
+        triconnected_id: Optional triconnected component ID
+        degree: Optional node degree
+        node_type: Optional node type
+        is_isolate: Whether the DMR is isolated
+        biclique_ids: Comma-separated list of biclique IDs
+    """
+    # Try to get existing annotation
+    annotation = (
+        session.query(DMRTimepointAnnotation)
+        .filter(
+            and_(
+                DMRTimepointAnnotation.timepoint_id == timepoint_id,
+                DMRTimepointAnnotation.dmr_id == dmr_id,
+            )
+        )
+        .first()
+    )
+
+    if annotation:
+        # Update existing annotation
+        if component_id is not None:
+            annotation.component_id = component_id
+        if triconnected_id is not None:
+            annotation.triconnected_id = triconnected_id
+        if degree is not None:
+            annotation.degree = degree
+        if node_type is not None:
+            annotation.node_type = node_type
+        if is_isolate is not None:
+            annotation.is_isolate = is_isolate
+        if biclique_ids:
+            # Append new biclique ID to existing list
+            existing_ids = (
+                set(annotation.biclique_ids.split(","))
+                if annotation.biclique_ids
+                else set()
+            )
+            existing_ids.add(str(biclique_ids))
+            annotation.biclique_ids = ",".join(sorted(existing_ids))
+    else:
+        # Create new annotation
+        annotation = DMRTimepointAnnotation(
+            timepoint_id=timepoint_id,
+            dmr_id=dmr_id,
+            component_id=component_id,
+            triconnected_id=triconnected_id,
+            degree=degree,
+            node_type=node_type,
+            is_isolate=is_isolate,
+            biclique_ids=str(biclique_ids) if biclique_ids else None,
+        )
+        session.add(annotation)
+
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"Error updating DMR annotation: {str(e)}")
+        raise
 
 def upsert_gene_timepoint_annotation(
     session: Session,
