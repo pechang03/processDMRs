@@ -18,17 +18,17 @@ from utils import id_mapping, constants
 from utils import node_info, edge_info
 from utils.graph_io import write_gene_mappings
 from utils import process_enhancer_info
-
 from data_loader import create_bipartite_graph
-from biclique_analysis import process_timepoint_data
-from biclique_analysis import reader
-from biclique_analysis.processor import create_node_metadata
+
+# from biclique_analysis import process_timepoint_data
+# from biclique_analysis import reader
+# from biclique_analysis.processor import create_node_metadata
 from biclique_analysis.component_analyzer import ComponentAnalyzer
-from biclique_analysis.classifier import classify_component
-from biclique_analysis.triconnected import (
-    analyze_triconnected_components,
-    find_separation_pairs,
-)
+# from biclique_analysis.classifier import classify_component
+# from biclique_analysis.triconnected import (
+#    analyze_triconnected_components,
+#    find_separation_pairs,
+# )
 # from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
 from database.models import (
@@ -53,14 +53,59 @@ from database.populate_tables import (
     populate_bicliques,
 )
 
+
+def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
+    """Extract all genes from a dataframe."""
+    genes = set()
+
+    # Get gene column
+    gene_column = next(
+        (
+            col
+            for col in ["Gene_Symbol_Nearby", "Gene_Symbol", "Gene"]
+            if col in df.columns
+        ),
+        None,
+    )
+    if gene_column:
+        genes.update(df[gene_column].dropna().str.strip().str.lower())
+
+    # Get genes from enhancer/promoter info
+    if "Processed_Enhancer_Info" not in df.columns:
+        interaction_col = next(
+            (
+                col
+                for col in [
+                    "ENCODE_Enhancer_Interaction(BingRen_Lab)",
+                    "ENCODE_Promoter_Interaction(BingRen_Lab)",
+                ]
+                if col in df.columns
+            ),
+            None,
+        )
+
+        if interaction_col:
+            df["Processed_Enhancer_Info"] = df[interaction_col].apply(
+                process_enhancer_info
+            )
+
+    if "Processed_Enhancer_Info" in df.columns:
+        for gene_list in df["Processed_Enhancer_Info"]:
+            if gene_list:
+                genes.update(g.strip().lower() for g in gene_list)
+
+    return genes
+
+
 def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
     """Split graph into DMRs and genes."""
     # For a given timepoint the dmr_nodes and gene_nodes are the same.
     dmr_nodes = [node for node in original_graph.nodes if node in original_graph[0]]
     gene_nodes = [node for node in original_graph.nodes if node in original_graph[1]]
     split_graph.add_nodes_from(dmr_nodes, bipartite=0)
-    split_graph.add_nodes_from(gene_nodes, bipartite=:np.who()1)
+    split_graph.add_nodes_from(gene_nodes, bipartite=1)
     ## We don't add the edge yet as the are not the same between original and split graphs
+
 
 def process_bicliques_for_timepoint(
     session: Session,
