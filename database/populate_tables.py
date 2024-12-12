@@ -1,6 +1,8 @@
 """Core database operations for DMR analysis system."""
 
-from typing import Set, Dict, List, Tuple
+from collections import defaultdict
+import networkx as nx
+from typing import Dict, List, Set, Tuple
 import pandas as pd
 
 # from utils import node_info, edge_info
@@ -16,8 +18,8 @@ from .operations import (
     # insert_metadata,
     # insert_relationship,
     insert_gene,
-    # upsert_dmr_timepoint_annotation,
-    # upsert_gene_timepoint_annotation,
+    upsert_dmr_timepoint_annotation,
+    upsert_gene_timepoint_annotation,
     update_gene_metadata,
     # get_or_create_gene,
     # query_timepoints,
