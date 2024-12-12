@@ -732,32 +732,32 @@ def populate_timepoints(session: Session):
 
 
 def populate_bicliques(
-    # AI fix this function
     session: Session,
-    split_bigraph: nx.graph,
-    bicliques_result: dict,
     timepoint_id: int,
+    component_id: int,
+    dmr_nodes: Set[int],
+    gene_nodes: Set[int],
 ):
-    """Populate bicliques table."""
-    for biclique in bicliques_result["bicliques"]:
-        dmr_ids, gene_ids = biclique
-        insert_biclique(session, timepoint_id, None, list(dmr_ids), list(gene_ids))
+    """Populate bicliques table and establish relationships."""
+    # Create the biclique
+    biclique_id = insert_biclique(
+        session,
+        timepoint_id=timepoint_id,
+        component_id=component_id,
+        dmr_ids=list(dmr_nodes),
+        gene_ids=list(gene_nodes)
+    )
 
-    # Store bicliques
-    for idx, (dmr_nodes, gene_nodes) in enumerate(bicliques_result["bicliques"]):
-        # AI we need to classify this biclque and then also record is classification
-        split_bigraph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
-        biclique_id = insert_biclique(
-            session,
-            timepoint_id=timepoint_id,
-            component_id=None,  # Will update after creating component
-            dmr_ids=list(dmr_nodes),
-            gene_ids=list(gene_nodes),
-        )
+    # Create the many-to-many relationship
+    component_biclique = ComponentBiclique(
+        timepoint_id=timepoint_id,
+        component_id=component_id,
+        biclique_id=biclique_id
+    )
+    session.add(component_biclique)
+    session.commit()
 
-        # AI todo we need to update genes and dmrs in the database with the bclilque id
-        # AI As a gene can be part of more one biclique and the this varies betwen timepoints
-        # AI THis detail needs a many-to-many table index by timepoint_id, gene_id with a list of blciqueids
+    return biclique_id
 
 
 def populate_gene_annotations(
