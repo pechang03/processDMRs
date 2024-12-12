@@ -137,6 +137,8 @@ class Biclique(Base):
     endcoding = Column(String(255))
     timepoint = relationship("Timepoint", back_populates="bicliques")
     component = relationship("Component", back_populates="bicliques")
+    # Add this line:
+    component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
 
 
 class Component(Base):
@@ -164,6 +166,9 @@ class ComponentBiclique(Base):
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     component_id = Column(Integer, ForeignKey("components.id"), primary_key=True)
     biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
+    # Add these relationships:
+    component = relationship("Component", back_populates="component_bicliques")
+    biclique = relationship("Biclique", back_populates="component_bicliques")
 
 
 # AI there are two different graphs the original graph and the biconnected graph
