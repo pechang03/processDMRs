@@ -123,8 +123,13 @@ def main():
                         f"{sheet}_bicluster",
                     ),
                 )
-                timepoint_id=get_or_create_timepoint(session, sheet),
-                process_timepoint_data(session=session,timepoint_id=timepoint_id,df=df_sheet,gene_id_mapping)
+                timepoint_id = get_or_create_timepoint(session, sheet)
+                process_timepoint_data(
+                    session=session,
+                    timepoint_id=timepoint_id,
+                    df=df_sheet,
+                    gene_id_mapping=gene_id_mapping
+                )
                 original_graph_file = os.path.join(data_dir, "graphs", f"{sheet}_original.txt")
                 bicliques_file = os.path.join(data_dir, "bicliques", f"{sheet}_bicliques.txt")
                 
