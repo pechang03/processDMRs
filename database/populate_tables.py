@@ -378,7 +378,10 @@ def update_gene_hub_status(
 
 
 def populate_genes(
-    session: Session, gene_id_mapping: dict, df_DSStimeseries: pd.DataFrame = None
+    session: Session,
+    gene_id_mapping: dict,
+    df_DSStimeseries: pd.DataFrame = None,
+    timepoint_id: int = None,
 ):
     """Populate genes and master_gene_ids tables."""
     print("\nPopulating gene tables...")
@@ -430,20 +433,15 @@ def populate_genes(
         print(f"Added {genes_added} master gene IDs")
 
         # Now populate additional gene information if DataFrame is provided
-        if df_DSStimeseries is not None:
+        if df_DSStimeseries is not None and timepoint_id is not None:
             process_gene_sources(
-                df_DSStimeseries, gene_id_mapping, session, timepoint_id=1
-            )  # Replace 1 with the correct timepoint_id
+                df_DSStimeseries, gene_id_mapping, session, timepoint_id=timepoint_id
+            )
 
     except Exception as e:
         session.rollback()
         print(f"Error adding master gene IDs: {str(e)}")
         raise
-
-    # Now populate genes table with available info
-    if df_DSStimeseries is not None:
-        # Process each gene source separately
-        process_gene_sources(df_DSStimeseries, gene_id_mapping, session)
 
 
 def process_gene_sources(
