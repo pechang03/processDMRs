@@ -87,9 +87,18 @@ def main():
             )
             print("\nProcessing DSS1 data...")                                                                    
             df_DSS1 = read_excel_file(dss1_file, sheet_name="DSS_Time_Series")
+            if df_DSS1 is not None:                                                                               
+                 print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")                                    
+                 all_genes.update(get_genes_from_df(df_DSS1))                                                      
+                 max_dmr_id = len(df_DSS1) - 1
+            else:
+                print(f"Unable to read DSS1 fomr path {dds1_file}")
+                raise Exception("Unable to read DSS1 data") 
+
             process_bicliques_for_timepoint(
                 session=session,
-                timepoint_id=get_or_create_timepoint(session, "DSS_Time_Series"),
+                timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
+                original_graph_file=ts_original_graph_file,
                 bicliques_file=ts_bicliques_file,
                 df=df_DSS1,
                 gene_id_mapping=gene_id_mapping,
