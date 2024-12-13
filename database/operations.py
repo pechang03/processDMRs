@@ -29,7 +29,10 @@ def get_or_create_timepoint(session: Session, name: str, description: str = None
     timepoint = session.query(Timepoint).filter_by(name=name).first()
     if timepoint:
         return timepoint.id
-    return insert_timepoint(session, name, description)
+    new_timepoint = Timepoint(name=name, description=description)
+    session.add(new_timepoint)
+    session.commit()
+    return new_timepoint.id
 
 
 def get_or_create_timepoint(session: Session, name: str, description: str = None) -> int:
