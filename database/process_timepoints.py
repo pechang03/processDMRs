@@ -177,7 +177,8 @@ def process_bicliques_for_timepoint(
             if any(n in component for n in b[0] | b[1])
         ]
 
-        comp_id = database.operations.insert_component(
+        from . import operations
+        comp_id = operations.insert_component(
             session,
             timepoint_id=timepoint_id,
             graph_type="split",
