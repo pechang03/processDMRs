@@ -24,7 +24,8 @@ from .cleanup import clean_database
 
 from .operations import (
     # Core insert operations
-    insert_timepoint,
+    # insert_timepoint, depricated
+    get_or_create_timepoint,
     insert_gene,
     insert_dmr,
     insert_biclique,
@@ -91,7 +92,7 @@ __all__ = [
     "create_tables",
     "clean_database",
     # Core insert operations
-    "insert_timepoint",
+    "get_or_create_timepoint",
     "insert_gene",
     "insert_dmr",
     "insert_biclique",

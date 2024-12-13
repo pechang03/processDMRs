@@ -50,7 +50,7 @@ from database.models import (
     Gene,
     Timepoint,
 )
-from database.operations import insert_timepoint
+from database.operations import get_or_create_timepoint
 from database.populate_tables import (
     populate_timepoints,
     populate_core_genes,
@@ -124,6 +124,7 @@ def main():
             if df_DSStimeseries is not None:
                 from database.process_timepoints import process_bicliques_for_timepoint
                 from database.operations import get_or_create_timepoint
+
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
@@ -136,6 +137,7 @@ def main():
             for sheet_name, df in pairwise_dfs.items():
                 from database.process_timepoints import process_bicliques_for_timepoint
                 from database.operations import get_or_create_timepoint
+
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, sheet_name),

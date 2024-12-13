@@ -7,7 +7,8 @@ import pandas as pd
 
 # from utils import node_info, edge_info
 from .operations import (
-    insert_timepoint,
+    get_or_create_timepoint,
+    # insert_timepoint,
     insert_dmr,
     insert_biclique,
     insert_component,
@@ -395,7 +396,10 @@ def populate_core_genes(
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if (
+            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
+            or not gene_symbol
+        ):
             continue
 
         # Check if master gene ID already exists
@@ -433,6 +437,7 @@ def populate_core_genes(
         session.rollback()
         print(f"Error adding master gene IDs: {str(e)}")
         raise
+
 
 def populate_timepoint_genes(
     session: Session,
@@ -619,7 +624,7 @@ def populate_timepoints(session: Session):
         "TP60-TP180_TSS",
     ]
     for tp in timepoints:
-        insert_timepoint(session, tp)
+        get_or_create_timepoint(session, tp)
 
 
 def populate_bicliques(
