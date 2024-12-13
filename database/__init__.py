@@ -55,7 +55,8 @@ from .operations import (
 
 from .populate_tables import (
     populate_timepoints,
-    populate_genes,
+    populate_core_genes,
+    populate_timepoint_genes,
     populate_dmrs,
     populate_dmr_annotations,
     populate_gene_annotations,
@@ -108,7 +109,8 @@ __all__ = [
     "update_biclique_category",
     # Population operations
     "populate_timepoints",
-    "populate_genes",
+    "populate_core_genes",
+    "populate_timepoint_genes",
     "populate_dmrs",
     "populate_dmr_annotations",
     "populate_gene_annotations",
