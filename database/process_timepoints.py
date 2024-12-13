@@ -123,17 +123,23 @@ def process_timepoint_data(
 def process_bicliques_for_timepoint(
     session: Session,
     timepoint_id: int,
+    original_graph_file: str,  # Add parameter for original graph file
     bicliques_file: str,
     df: pd.DataFrame,
     gene_id_mapping: dict,
 ):
     """Process bicliques for a timepoint and store results in database."""
     print("Populating timepoint-specific graph data...")
+    print(f"Original graph file: {original_graph_file}")
     print(f"Bicliques file: {bicliques_file}")
     print(f"Number of genes in mapping: {len(gene_id_mapping)}")
 
     if not os.path.exists(bicliques_file):
         print(f"Warning: Bicliques file not found at {bicliques_file}")
+        return
+
+    if not os.path.exists(original_graph_file):
+        print(f"Warning: Original graph file not found at {original_graph_file}")
         return
 
     # Create graphs
