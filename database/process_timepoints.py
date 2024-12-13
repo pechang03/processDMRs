@@ -116,16 +116,26 @@ def process_bicliques_for_timepoint(
     gene_id_mapping: dict,
 ):
     """Process bicliques for a timepoint and store results in database."""
+    print(f"\nProcessing timepoint ID: {timepoint_id}")
+    print(f"DataFrame shape: {df.shape}")
+    print(f"Bicliques file: {bicliques_file}")
 
     # First populate timepoint-specific gene data
+    print("Populating timepoint-specific gene data...")
     populate_timepoint_genes(session, gene_id_mapping, df, timepoint_id)
 
     # Create graphs
+    print("Creating original graph...")
     original_graph = create_bipartite_graph(df, gene_id_mapping)
+    print(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
+    
+    print("Creating split graph...")
     split_graph = nx.Graph()
     add_split_graph_nodes(original_graph, split_graph)
+    print(f"Split graph: {len(split_graph.nodes())} nodes")
 
     # Process bicliques
+    print("Reading bicliques file...")
     from biclique_analysis import reader
     bicliques_result = reader.read_bicliques_file(
         bicliques_file,
@@ -133,9 +143,7 @@ def process_bicliques_for_timepoint(
         gene_id_mapping=gene_id_mapping,
         file_format="gene_name",
     )
-
-    # Create analyzer
-    analyzer = ComponentAnalyzer(original_graph, bicliques_result, split_graph)
+    print(f"Found {len(bicliques_result['bicliques'])} bicliques")
 
     # First pass: Process original graph components
     for component in nx.connected_components(original_graph):
