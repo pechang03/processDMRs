@@ -82,9 +82,7 @@ def main():
             session.commit()
 
             ts_original_graph_file = os.path.join(data_dir, "bipartite_graph_output.txt")
-            ts_bicliques_file = (
-                os.path.join(data_dir, "bipartite_graph_output.txt.bicluster"),
-            )
+            ts_bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.bicluster")
             print("\nProcessing DSS1 data...")                                                                    
             df_DSS1 = read_excel_file(dss1_file, sheet_name="DSS_Time_Series")
             if df_DSS1 is not None:                                                                               
@@ -116,13 +114,7 @@ def main():
                 original_graph_file = os.path.join(
                     data_dir, "bipartite_graph_output_", f"{sheet}.txt"
                 )
-                bicliques_file = (
-                    os.path.join(
-                        data_dir,
-                        "bipartite_graph_output.txt.",
-                        f"{sheet}_bicluster",
-                    ),
-                )
+                bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.", f"{sheet}_bicluster")
                 timepoint_id = get_or_create_timepoint(session, sheet)
                 process_timepoint_data(
                     session=session,
