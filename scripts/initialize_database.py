@@ -12,10 +12,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 
 # from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
-from utils import id_mapping, constants
-from utils import node_info, edge_info
-from utils.graph_io import write_gene_mappings
-from utils import process_enhancer_info
+from dotenv import load_dotenv
 
 # from data_loader import create_bipartite_graph
 # from biclique_analysis import process_timepoint_data
@@ -54,10 +51,6 @@ from database.operations import get_or_create_timepoint
 from database.populate_tables import (
     populate_timepoints,
     populate_core_genes,
-    populate_dmrs,
-    populate_dmr_annotations,
-    populate_gene_annotations,
-    populate_bicliques,
 )
 
 from database.process_timepoints import (
@@ -67,8 +60,8 @@ from database.process_timepoints import (
 
 Base = declarative_base()
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from sample.env
+load_dotenv('sample.env')
 
 
 def main():
@@ -103,13 +96,13 @@ def main():
 
                 # Create gene ID mapping before processing timepoints
                 gene_id_mapping = create_gene_mapping(all_genes)
-                write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
+                write_gene_mappings(gene_id_mapping, os.path.join(data_dir, "master_gene_ids.csv"), "All_Timepoints")
 
                 # Process the timepoint data
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),  # Use sheet name as timepoint
-                    bicliques_file=os.path.join("data", "bicliques", "DSStimeseries_bicliques.txt"),
+                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
+                    bicliques_file=os.path.join(data_dir, "bicliques", "DSStimeseries_bicliques.txt"),
                     df=df_DSS1,
                     gene_id_mapping=gene_id_mapping,
                 )
@@ -126,7 +119,9 @@ def main():
             # Create and write gene mapping
             gene_id_mapping = create_gene_mapping(all_genes)
             write_gene_mappings(
-                gene_id_mapping, "master_gene_ids.csv", "All_Timepoints"
+                gene_id_mapping, 
+                os.path.join(data_dir, "master_gene_ids.csv"), 
+                "All_Timepoints"
             )
 
             # Populate timepoints
@@ -154,13 +149,10 @@ def main():
 
             # Process pairwise timepoints
             for sheet_name, df in pairwise_dfs.items():
-                from database.process_timepoints import process_bicliques_for_timepoint
-                from database.operations import get_or_create_timepoint
-
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, sheet_name),
-                    bicliques_file=f"path/to/{sheet_name}_bicliques_file",
+                    bicliques_file=os.path.join(data_dir, "bicliques", f"{sheet_name}_bicliques.txt"),
                     df=df,
                     gene_id_mapping=gene_id_mapping,
                 )
