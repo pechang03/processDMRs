@@ -116,7 +116,7 @@ def main():
 
             # Populate genes with initial data
             print("\nPopulating genes table...")
-            populate_core_genes(session, gene_id_mapping, df_DSStimeseries)
+            populate_core_genes(session, gene_id_mapping)
             session.commit()
 
             # Process DSStimeseries timepoint
