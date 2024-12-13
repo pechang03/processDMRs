@@ -74,6 +74,10 @@ class GeneTimepointAnnotation(Base):
     biclique_ids = Column(ArrayType, nullable=True)
 
 
+# AI MasterGeneID is a table separte to Genes. It should be used to find the ID for genes
+# But is a separte entity to the genes table as it is independent to the genes
+
+
 class MasterGeneID(Base):
     __tablename__ = "master_gene_ids"
     id = Column(Integer, primary_key=True)
@@ -193,7 +197,7 @@ class TriconnectedComponent(Base):
     # Classification
 
     # Component structure
-    nodes = Column(ArrayType)  # Store actual nodes in component 
+    nodes = Column(ArrayType)  # Store actual nodes in component
     separation_pairs = Column(ArrayType)  # Store pairs that separate component
 
     # Additional statistics
