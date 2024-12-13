@@ -52,7 +52,7 @@ from database.models import (
 )
 from database.populate_tables import (
     populate_timepoints,
-    populate_genes,
+    populate_core_genes,
     populate_dmrs,
     populate_dmr_annotations,
     populate_gene_annotations,
@@ -116,7 +116,7 @@ def main():
 
             # Populate genes with initial data
             print("\nPopulating genes table...")
-            populate_genes(session, gene_id_mapping, df_DSStimeseries)
+            populate_core_genes(session, gene_id_mapping, df_DSStimeseries)
             session.commit()
 
             # Process DSStimeseries timepoint
