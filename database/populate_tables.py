@@ -541,8 +541,6 @@ def process_gene_sources(
                         "symbol": gene_symbol,
                         "description": row.get("Gene_Description", "N/A"),
                         "master_gene_id": gene_id,
-                        "node_type": "regular_gene",
-                        "gene_type": "Nearby",
                         "interaction_source": "Gene_Symbol_Nearby",
                     }
                     inserted_gene_id = insert_gene(session, **gene_data)
@@ -614,8 +612,6 @@ def process_gene_sources(
                                 "symbol": gene_symbol,
                                 "description": row.get("Gene_Description", "N/A"),
                                 "master_gene_id": gene_id,
-                                "node_type": "regular_gene",
-                                "gene_type": "Promoter",
                                 "interaction_source": "ENCODE_Promoter",
                             }
                             insert_gene_id = insert_gene(session, **gene_data)

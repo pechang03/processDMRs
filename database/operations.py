@@ -461,7 +461,6 @@ def upsert_gene_timepoint_annotation(
             master_gene_id=master_gene_id,
             interaction_source=interaction_source,
             promoter_info=promoter_info,
-            degree=degree,
         )
         session.add(gene)
         try:
