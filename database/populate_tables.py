@@ -395,10 +395,10 @@ def populate_core_genes(
         
         print(f"Processing gene: {gene_symbol} with ID: {gene_id}")  # Debug line
 
-        # Skip invalid symbols
-        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
-            print(f"Skipping invalid gene symbol: {gene_symbol}")  # Debug line
+        # Skip invalid symbols - now using exact matching
+        invalid_values = {"unnamed:", "nan", ".", "n/a", "", "none", "null"}  # Set of exact matches
+        if gene_symbol in invalid_values:
+            print(f"Skipping invalid gene symbol: {gene_symbol}")
             continue
 
         # Check if master gene ID already exists
