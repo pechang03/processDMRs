@@ -24,13 +24,20 @@ from .models import (
 )
 from utils.node_info import NodeInfo
 
+def get_or_create_timepoint(session: Session, name: str, description: str = None) -> int:
+    """Get existing timepoint or create if it doesn't exist."""
+    timepoint = session.query(Timepoint).filter_by(name=name).first()
+    if timepoint:
+        return timepoint.id
+    return insert_timepoint(session, name, description)
 
-def insert_timepoint(session: Session, name: str, description: str = None):
-    """Insert a new timepoint into the database."""
-    timepoint = Timepoint(name=name, description=description)
-    session.add(timepoint)
-    session.commit()
-    return timepoint.id
+
+def get_or_create_timepoint(session: Session, name: str, description: str = None) -> int:
+    """Get existing timepoint or create if it doesn't exist."""
+    timepoint = session.query(Timepoint).filter_by(name=name).first()
+    if timepoint:
+        return timepoint.id
+    return insert_timepoint(session, name, description)
 
 
 def insert_dmr(session: Session, timepoint_id: int, dmr_number: int, **kwargs):
