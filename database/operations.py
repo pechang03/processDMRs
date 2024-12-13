@@ -236,7 +236,6 @@ def insert_gene(
             master_gene_id=master_gene_id,
             interaction_source=interaction_source,
             promoter_info=promoter_info,
-            # degree=degree,
         )
         session.add(gene)
         session.commit()
