@@ -90,12 +90,12 @@ def main():
 
             # First, define the mapping between file names and timepoint names
             TIMEPOINT_MAPPING = {
-                "DSS1": "DSStimeseries",  # Maps file name to sheet name
+                "DSS1": "DSS_Time_Series",  # Maps file name to actual worksheet name
                 # Add other mappings as needed
             }
 
             print("\nProcessing DSS1 data...")
-            df_DSS1 = read_excel_file(constants.DSS1_FILE, sheet_name="DSStimeseries")  # Specify sheet name
+            df_DSS1 = read_excel_file(constants.DSS1_FILE, sheet_name="DSS_Time_Series")  # Use correct sheet name
             if df_DSS1 is not None:
                 print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")
                 all_genes.update(get_genes_from_df(df_DSS1))
