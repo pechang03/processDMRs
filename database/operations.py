@@ -595,3 +595,12 @@ def verify_relationships(session: Session):
         and len(dmr_annotations) > 0
         and len(gene_annotations) > 0
     )
+def get_or_create_gene(
+    session: Session, symbol: str, description: str = None, master_gene_id: int = None
+) -> int:
+    """Get an existing gene or create a new one if it doesn't exist."""
+    gene = session.query(Gene).filter(func.lower(Gene.symbol) == symbol.lower()).first()
+    if gene:
+        return gene.id
+    else:
+        return insert_gene(session, symbol, description, master_gene_id)
