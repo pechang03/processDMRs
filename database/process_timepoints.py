@@ -117,6 +117,9 @@ def process_bicliques_for_timepoint(
 ):
     """Process bicliques for a timepoint and store results in database."""
 
+    # First populate timepoint-specific gene data
+    populate_timepoint_genes(session, gene_id_mapping, df, timepoint_id)
+
     # Create graphs
     original_graph = create_bipartite_graph(df, gene_id_mapping)
     split_graph = nx.Graph()
@@ -153,6 +156,7 @@ def process_bicliques_for_timepoint(
             is_original=True,
         )
 
+        # Now populate_gene_annotations will only update annotations, not create genes
         populate_gene_annotations(
             session=session,
             timepoint_id=timepoint_id,
