@@ -121,19 +121,23 @@ def main():
 
             # Process DSStimeseries timepoint
             if df_DSStimeseries is not None:
-                process_timepoint_data(
+                from database.process_timepoints import process_bicliques_for_timepoint
+                process_bicliques_for_timepoint(
                     session=session,
+                    timepoint_id=insert_timepoint(session, "DSStimeseries"),
+                    bicliques_file="path/to/bicliques_file",
                     df=df_DSStimeseries,
-                    timepoint_name="DSStimeseries",
                     gene_id_mapping=gene_id_mapping,
                 )
 
             # Process pairwise timepoints
             for sheet_name, df in pairwise_dfs.items():
-                process_timepoint_data(
+                from database.process_timepoints import process_bicliques_for_timepoint
+                process_bicliques_for_timepoint(
                     session=session,
+                    timepoint_id=insert_timepoint(session, sheet_name),
+                    bicliques_file=f"path/to/{sheet_name}_bicliques_file",
                     df=df,
-                    timepoint_name=sheet_name,
                     gene_id_mapping=gene_id_mapping,
                 )
             # """
