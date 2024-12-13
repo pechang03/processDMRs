@@ -50,6 +50,7 @@ from database.models import (
     Gene,
     Timepoint,
 )
+from database.operations import insert_timepoint
 from database.populate_tables import (
     populate_timepoints,
     populate_core_genes,
