@@ -74,7 +74,7 @@ def main():
             populate_timepoints(session)
             session.commit()
             
-            gene_id_mapping = read_gene_mapping(os.path.join(data_dir, "master_gene_ids.csv"))
+            gene_id_mapping = create_gene_mapping(all_genes)
                 
             # Populate genes with initial data
             print("\nPopulating genes table...")
@@ -92,7 +92,7 @@ def main():
                  all_genes.update(get_genes_from_df(df_DSS1))                                                      
                  max_dmr_id = len(df_DSS1) - 1
             else:
-                print(f"Unable to read DSS1 fomr path {dds1_file}")
+                print(f"Unable to read DSS1 from path {dss1_file}")
                 raise Exception("Unable to read DSS1 data") 
 
             process_bicliques_for_timepoint(
