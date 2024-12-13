@@ -161,48 +161,6 @@ def get_excel_sheets(filepath: str) -> List[str]:
         raise
 
 
-def read_bipartite_graph(
-    filepath: str, timepoint: str = "DSS1"
-) -> Tuple[nx.Graph, int]:
-    """
-    Read a bipartite graph from file, including the first gene ID.
-
-    Returns:
-        Tuple of (graph, first_gene_id)
-    """
-    try:
-        B = nx.Graph()
-
-        with open(filepath, "r") as f:
-            # Read header
-            n_dmrs, n_genes = map(int, f.readline().strip().split())
-            # Read first gene ID
-            first_gene_id = int(f.readline().strip())
-
-            # Read edges
-            for line in f:
-                dmr_id, gene_id = map(int, line.strip().split())
-                # Map the DMR ID to its timepoint-specific range
-                actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id)
-                # Add nodes with proper bipartite attributes
-                B.add_node(actual_dmr_id, bipartite=0, timepoint=timepoint)
-                B.add_node(gene_id, bipartite=1)
-                # Add edge
-                B.add_edge(actual_dmr_id, gene_id)
-
-        print(f"\nRead graph from {filepath}:")
-        print(f"DMRs: {n_dmrs}")
-        print(f"Genes: {n_genes}")
-        print(f"First Gene ID: {first_gene_id}")
-        print(f"Edges: {B.number_of_edges()}")
-
-        return B, first_gene_id
-
-    except Exception as e:
-        print(f"Error reading graph from {filepath}: {e}")
-        raise
-
-
 def create_bipartite_graph(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
@@ -295,13 +253,15 @@ def create_bipartite_graph(
     B = preprocess_graph_for_visualization(B, remove_isolates=True, keep_dmrs=True)
 
     return B
+
+
 def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, int]:
     """
     Read gene mapping from CSV file.
-    
+
     Args:
         mapping_file: Path to the gene mapping CSV file
-        
+
     Returns:
         Dictionary mapping gene symbols to IDs
     """
@@ -310,21 +270,21 @@ def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, in
         if not os.path.exists(mapping_file):
             print(f"Warning: Gene mapping file {mapping_file} not found")
             return {}
-            
+
         # Read CSV file
         df = pd.read_csv(mapping_file)
-        
+
         # Convert to dictionary
         gene_mapping = {}
         for _, row in df.iterrows():
-            if 'gene_symbol' in df.columns and 'id' in df.columns:
-                symbol = str(row['gene_symbol']).strip().lower()
-                if symbol and symbol != 'nan':
-                    gene_mapping[symbol] = int(row['id'])
-                    
+            if "gene_symbol" in df.columns and "id" in df.columns:
+                symbol = str(row["gene_symbol"]).strip().lower()
+                if symbol and symbol != "nan":
+                    gene_mapping[symbol] = int(row["id"])
+
         print(f"Read {len(gene_mapping)} gene mappings from {mapping_file}")
         return gene_mapping
-        
+
     except Exception as e:
         print(f"Error reading gene mapping: {str(e)}")
         return {}

@@ -27,10 +27,6 @@ from extensions import app
 import pandas as pd
 
 from utils.constants import (
-    DSS1_FILE,
-    DSS_PAIRWISE_FILE,
-    BIPARTITE_GRAPH_TEMPLATE,
-    BIPARTITE_GRAPH_OVERALL,
     START_GENE_ID,
 )
 from utils.id_mapping import create_gene_mapping
