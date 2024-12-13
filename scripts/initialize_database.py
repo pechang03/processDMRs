@@ -140,15 +140,15 @@ def main():
             session.commit()
 
             # Process DSStimeseries timepoint
-            if df_DSStimeseries is not None:
+            if df_DSS1 is not None:
                 from database.process_timepoints import process_bicliques_for_timepoint
                 from database.operations import get_or_create_timepoint
 
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
-                    bicliques_file="path/to/bicliques_file",
-                    df=df_DSStimeseries,
+                    bicliques_file=os.path.join("data", "bicliques", "DSStimeseries_bicliques.txt"),
+                    df=df_DSS1,
                     gene_id_mapping=gene_id_mapping,
                 )
 
