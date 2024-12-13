@@ -11,42 +11,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 
-# from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
-from dotenv import load_dotenv
-
-# from data_loader import create_bipartite_graph
-# from biclique_analysis import process_timepoint_data
-# from biclique_analysis import reader
-# from biclique_analysis.processor import create_node_metadata
-# from biclique_analysis.component_analyzer import ComponentAnalyzer
-# from biclique_analysis.classifier import classify_component
-# from biclique_analysis.triconnected import (
-#    analyze_triconnected_components,
-#    find_separation_pairs,
-# )
-# from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
-
 from data_loader import (
     get_excel_sheets,
     read_excel_file,
     create_bipartite_graph,
     create_gene_mapping,
-    # validate_original_graph,
 )
 
 from database import models, connection, operations, clean_database
 from database.models import Base
-from database.models import (
-    ComponentBiclique,
-    Relationship,
-    Metadata,
-    Statistic,
-    Biclique,
-    Component,
-    DMR,
-    Gene,
-    Timepoint,
-)
 from database.operations import get_or_create_timepoint
 from database.populate_tables import (
     populate_timepoints,
@@ -56,107 +29,101 @@ from database.populate_tables import (
 from database.process_timepoints import (
     process_bicliques_for_timepoint,
     get_genes_from_df,
+    process_timepoint_data,
 )
 
 Base = declarative_base()
 
 # Load environment variables from sample.env
-load_dotenv('sample.env')
+load_dotenv("sample.env")
 
 
 def main():
     """Main entry point for initializing the database."""
     try:
+        # Get paths from environment variables
+        data_dir = os.getenv("DATA_DIR", "./data")
+        dss1_file = os.getenv("DSS1_FILE", os.path.join(data_dir, "DSS1.xlsx"))
+
+        dss_pairwise_file = os.getenv(
+            "DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
+        )
         engine = connection.get_db_engine()
         Base.metadata.create_all(engine)
         models.create_tables(engine)
+
         with Session(engine) as session:
             # Clean and recreate database
             clean_database(session)
-            # """
+
             print("\nCollecting all unique genes across timepoints...")
 
             # Read sheets from pairwise file
-            pairwise_sheets = get_excel_sheets(constants.DSS_PAIRWISE_FILE)
+            pairwise_sheets = get_excel_sheets(dss_pairwise_file)
             all_genes = set()
-            max_dmr_id = None
-
-            # First, define the mapping between file names and timepoint names
-            TIMEPOINT_MAPPING = {
-                "DSS1": "DSS_Time_Series",  # Maps file name to actual worksheet name
-                # Add other mappings as needed
-            }
-
-            print("\nProcessing DSS1 data...")
-            df_DSS1 = read_excel_file(constants.DSS1_FILE, sheet_name="DSS_Time_Series")  # Use correct sheet name
-            if df_DSS1 is not None:
-                print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")
-                all_genes.update(get_genes_from_df(df_DSS1))
-                max_dmr_id = len(df_DSS1) - 1
-
-                # Create gene ID mapping before processing timepoints
-                gene_id_mapping = create_gene_mapping(all_genes)
-                write_gene_mappings(gene_id_mapping, os.path.join(data_dir, "master_gene_ids.csv"), "All_Timepoints")
-
-                # Process the timepoint data
-                process_bicliques_for_timepoint(
-                    session=session,
-                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
-                    bicliques_file=os.path.join(data_dir, "bicliques", "DSStimeseries_bicliques.txt"),
-                    df=df_DSS1,
-                    gene_id_mapping=gene_id_mapping,
-                )
-
-            # Process pairwise sheets
-            pairwise_dfs = {}
-            for sheet in pairwise_sheets:
-                print(f"\nProcessing sheet: {sheet}")
-                df = read_excel_file(constants.DSS_PAIRWISE_FILE, sheet_name=sheet)
-                if df is not None:
-                    pairwise_dfs[sheet] = df
-                    all_genes.update(get_genes_from_df(df))
-
             # Create and write gene mapping
-            gene_id_mapping = create_gene_mapping(all_genes)
-            write_gene_mappings(
-                gene_id_mapping, 
-                os.path.join(data_dir, "master_gene_ids.csv"), 
-                "All_Timepoints"
-            )
+            # AI NO NO NO do not write the gene mappings
+            # write_gene_mappings(
+            #    gene_id_mapping,
+            #    os.path.join(data_dir, "master_gene_ids.csv"),
+            #    "All_Timepoints",
+            # )
 
             # Populate timepoints
             print("\nPopulating timepoints...")
             populate_timepoints(session)
             session.commit()
-
+            
+            gene_id_mapping = read_gene_mapping(os.path.join(data_dir, "master_gene_ids.csv"))
+                
             # Populate genes with initial data
             print("\nPopulating genes table...")
             populate_core_genes(session, gene_id_mapping)
             session.commit()
 
-            # Process DSStimeseries timepoint
-            if df_DSS1 is not None:
-                from database.process_timepoints import process_bicliques_for_timepoint
-                from database.operations import get_or_create_timepoint
+            ts_original_graph_file = os.path.join(data_dir, "bipartite_graph_output.txt")
+            ts_bicliques_file = (
+                os.path.join(data_dir, "bipartite_graph_output.txt.bicluster"),
+            )
+            print("\nProcessing DSS1 data...")                                                                    
+            df_DSS1 = read_excel_file(dss1_file, sheet_name="DSS_Time_Series")
+            process_bicliques_for_timepoint(
+                session=session,
+                timepoint_id=get_or_create_timepoint(session, "DSS_Time_Series"),
+                bicliques_file=ts_bicliques_file,
+                df=df_DSS1,
+                gene_id_mapping=gene_id_mapping,
+            )
+            session.commit()
+            # Process pairwise sheets
+            pairwise_dfs = {}
+            for sheet in pairwise_sheets:
+                print(f"\nProcessing sheet: {sheet}")
+                df_sheet = read_excel_file(dss_pairwise_file, sheet_name=sheet)
+                if df_sheet is not None:
+                    pairwise_dfs[sheet] = df_sheet
+                    #all_genes.update(get_genes_from_df(df))
 
+                original_graph_file = os.path.join(
+                    data_dir, "bipartite_graph_output_", f"{sheet}.txt"
+                )
+                bicliques_file = (
+                    os.path.join(
+                        data_dir,
+                        "bipartite_graph_output.txt.",
+                        f"{sheet}_bicluster",
+                    ),
+                )
+                timepoint_id=get_or_create_timepoint(session, sheet),
+                process_timepoint_data(session=session,timepoint_id=timepoint_id,df=df_sheet,gene_id_mapping)
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
-                    bicliques_file=os.path.join("data", "bicliques", "DSStimeseries_bicliques.txt"),
-                    df=df_DSS1,
+                    timepoint_id=timepoint_id,
+                    bicliques_file=bicliques_file,
+                    df=df_sheet,
                     gene_id_mapping=gene_id_mapping,
                 )
 
-            # Process pairwise timepoints
-            for sheet_name, df in pairwise_dfs.items():
-                process_bicliques_for_timepoint(
-                    session=session,
-                    timepoint_id=get_or_create_timepoint(session, sheet_name),
-                    bicliques_file=os.path.join(data_dir, "bicliques", f"{sheet_name}_bicliques.txt"),
-                    df=df,
-                    gene_id_mapping=gene_id_mapping,
-                )
-            # """
             print("\nDatabase initialization completed successfully")
 
     except Exception as e:
