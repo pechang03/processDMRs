@@ -385,7 +385,6 @@ def populate_core_genes(
     """Populate core gene data (symbols and master gene IDs)."""
     print("\nPopulating core gene tables...")
     print(f"Received {len(gene_id_mapping)} genes in mapping")
-    # Add some sample data logging
     sample_genes = list(gene_id_mapping.items())[:5]
     print(f"Sample genes: {sample_genes}")
 
@@ -393,13 +392,13 @@ def populate_core_genes(
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
         gene_symbol = str(gene_symbol).strip().lower()
+        
+        print(f"Processing gene: {gene_symbol} with ID: {gene_id}")  # Debug line
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if (
-            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
-            or not gene_symbol
-        ):
+        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+            print(f"Skipping invalid gene symbol: {gene_symbol}")  # Debug line
             continue
 
         # Check if master gene ID already exists
@@ -411,6 +410,7 @@ def populate_core_genes(
 
         if not existing:
             try:
+                print(f"Adding new master gene: {gene_symbol}")  # Debug line
                 master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
                 session.add(master_gene)
                 genes_added += 1
