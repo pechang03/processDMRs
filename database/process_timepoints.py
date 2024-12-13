@@ -118,7 +118,13 @@ def process_bicliques_for_timepoint(
     """Process bicliques for a timepoint and store results in database."""
     print(f"\nProcessing timepoint ID: {timepoint_id}")
     print(f"DataFrame shape: {df.shape}")
+    print(f"DataFrame columns: {df.columns}")
     print(f"Bicliques file: {bicliques_file}")
+    print(f"Number of genes in mapping: {len(gene_id_mapping)}")
+
+    if not os.path.exists(bicliques_file):
+        print(f"Warning: Bicliques file not found at {bicliques_file}")
+        return
 
     # First populate timepoint-specific gene data
     print("Populating timepoint-specific gene data...")
