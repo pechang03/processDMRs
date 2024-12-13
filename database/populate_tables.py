@@ -383,6 +383,10 @@ def populate_core_genes(
 ):
     """Populate core gene data (symbols and master gene IDs)."""
     print("\nPopulating core gene tables...")
+    print(f"Received {len(gene_id_mapping)} genes in mapping")
+    # Add some sample data logging
+    sample_genes = list(gene_id_mapping.items())[:5]
+    print(f"Sample genes: {sample_genes}")
 
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():

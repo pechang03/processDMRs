@@ -125,7 +125,7 @@ def main():
                 from database.process_timepoints import process_bicliques_for_timepoint
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=insert_timepoint(session, "DSStimeseries"),
+                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
                     bicliques_file="path/to/bicliques_file",
                     df=df_DSStimeseries,
                     gene_id_mapping=gene_id_mapping,
@@ -136,7 +136,7 @@ def main():
                 from database.process_timepoints import process_bicliques_for_timepoint
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=insert_timepoint(session, sheet_name),
+                    timepoint_id=get_or_create_timepoint(session, sheet_name),
                     bicliques_file=f"path/to/{sheet_name}_bicliques_file",
                     df=df,
                     gene_id_mapping=gene_id_mapping,
