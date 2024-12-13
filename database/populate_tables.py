@@ -571,7 +571,9 @@ def populate_genes(
 
         # Now populate additional gene information if DataFrame is provided
         if df_DSStimeseries is not None:
-            process_gene_sources(df_DSStimeseries, gene_id_mapping, session, timepoint_id=1)  # Replace 1 with the correct timepoint_id
+            process_gene_sources(
+                df_DSStimeseries, gene_id_mapping, session, timepoint_id=1
+            )  # Replace 1 with the correct timepoint_id
 
     except Exception as e:
         session.rollback()
@@ -585,7 +587,10 @@ def populate_genes(
 
 
 def process_gene_sources(
-    df: pd.DataFrame, gene_id_mapping: Dict[str, int], session: Session
+    df: pd.DataFrame,
+    gene_id_mapping: Dict[str, int],
+    session: Session,
+    timepoint_id: int,
 ):
     """
     Process genes from different sources and populate the gene table with metadata.
@@ -615,9 +620,17 @@ def process_gene_sources(
                         "node_type": "regular_gene",
                         "gene_type": "Nearby",
                         "interaction_source": "Gene_Symbol_Nearby",
-                        "degree": 0,
                     }
-                    insert_gene(session, **gene_data)
+                    inserted_gene_id = insert_gene(session, **gene_data)
+                    # Then update timepoint-specific annotation
+                    if inserted_gene_id:
+                        upsert_gene_timepoint_annotation(
+                            session=session,
+                            timepoint_id=timepoint_id,
+                            gene_id=inserted_gene_id,
+                            node_type="regular_gene",
+                            gene_type="Nearby",
+                        )
                     processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
@@ -643,13 +656,20 @@ def process_gene_sources(
                                 "symbol": gene_symbol,
                                 "description": row.get("Gene_Description", "N/A"),
                                 "master_gene_id": gene_id,
-                                "node_type": "regular_gene",
-                                "gene_type": "Enhancer",
-                                "promoter_info": promoter_info,
                                 "interaction_source": "ENCODE_Enhancer",
-                                "degree": 0,
+                                "promoter_info": promoter_info,
                             }
-                            insert_gene(session, **gene_data)
+                            inserted_gene_id = insert_gene(session, **gene_data)
+
+                            # Update timepoint-specific annotation
+                            if inserted_gene_id:
+                                upsert_gene_timepoint_annotation(
+                                    session=session,
+                                    timepoint_id=timepoint_id,
+                                    gene_id=inserted_gene_id,
+                                    node_type="regular_gene",
+                                    gene_type="Enhancer",
+                                )
                             processed_genes.add(gene_symbol)
 
         # Process promoter interactions
@@ -673,9 +693,18 @@ def process_gene_sources(
                                 "node_type": "regular_gene",
                                 "gene_type": "Promoter",
                                 "interaction_source": "ENCODE_Promoter",
-                                "degree": 0,
                             }
-                            insert_gene(session, **gene_data)
+                            insert_gene_id = insert_gene(session, **gene_data)
+                            # Update timepoint-specific annotation
+                            if inserted_gene_id:
+                                upsert_gene_timepoint_annotation(
+                                    session=session,
+                                    timepoint_id=timepoint_id,
+                                    gene_id=inserted_gene_id,
+                                    node_type="regular_gene",
+                                    gene_type="Promoter",
+                                )
+
                             processed_genes.add(gene_symbol)
 
     print(f"Processed {len(processed_genes)} unique genes")
@@ -745,14 +774,12 @@ def populate_bicliques(
         timepoint_id=timepoint_id,
         component_id=component_id,
         dmr_ids=list(dmr_nodes),
-        gene_ids=list(gene_nodes)
+        gene_ids=list(gene_nodes),
     )
 
     # Create the many-to-many relationship
     component_biclique = ComponentBiclique(
-        timepoint_id=timepoint_id,
-        component_id=component_id,
-        biclique_id=biclique_id
+        timepoint_id=timepoint_id, component_id=component_id, biclique_id=biclique_id
     )
     session.add(component_biclique)
     session.commit()
