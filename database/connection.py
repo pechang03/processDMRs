@@ -27,13 +27,11 @@ def get_db_engine():
             load_dotenv(env_file)
             break
             
-    # Set default configuration
+    # Set default configuration for SQLite
     db_url = os.getenv('DATABASE_URL', 'sqlite:///dmr_analysis.db')
     
-    if not database_exists(db_url):
-        create_database(db_url)
-
-    engine = create_engine(db_url, echo=True)
+    # For SQLite, we don't need to check if database exists
+    engine = create_engine(db_url)
     return engine
 
 from sqlalchemy.orm import sessionmaker
