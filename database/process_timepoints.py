@@ -46,7 +46,8 @@ from .operations import insert_component
 
 from database.populate_tables import (
     populate_timepoints,
-    populate_genes,
+    populate_core_genes,
+    populate_timepoint_genes,
     populate_dmrs,
     populate_dmr_annotations,
     populate_gene_annotations,
@@ -165,7 +166,8 @@ def process_bicliques_for_timepoint(
     for component in nx.connected_components(split_graph):
         comp_subgraph = split_graph.subgraph(component)
         comp_bicliques = [
-            b for b in bicliques_result["bicliques"]
+            b
+            for b in bicliques_result["bicliques"]
             if any(n in component for n in b[0] | b[1])
         ]
 
@@ -183,7 +185,7 @@ def process_bicliques_for_timepoint(
                 timepoint_id=timepoint_id,
                 component_id=comp_id,
                 dmr_nodes=biclique[0],
-                gene_nodes=biclique[1]
+                gene_nodes=biclique[1],
             )
 
             # Update DMR annotations
@@ -193,7 +195,7 @@ def process_bicliques_for_timepoint(
                     timepoint_id=timepoint_id,
                     dmr_id=dmr_id,
                     component_id=comp_id,
-                    biclique_ids=[biclique_id]  # Now using ArrayType
+                    biclique_ids=[biclique_id],  # Now using ArrayType
                 )
 
             # Update Gene annotations
@@ -203,5 +205,5 @@ def process_bicliques_for_timepoint(
                     timepoint_id=timepoint_id,
                     gene_id=gene_id,
                     component_id=comp_id,
-                    biclique_ids=[biclique_id]  # Now using ArrayType
+                    biclique_ids=[biclique_id],  # Now using ArrayType
                 )
