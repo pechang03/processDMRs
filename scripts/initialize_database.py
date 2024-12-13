@@ -81,8 +81,8 @@ def main():
             populate_core_genes(session, gene_id_mapping)
             session.commit()
 
-            ts_original_graph_file = os.path.join(data_dir, "bipartite_graph_output.txt")
-            ts_bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.bicluster")
+            ts_original_graph_file = os.path.join(data_dir, "bipartite_graph_output_DSS_overall.txt")
+            ts_bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.biclusters")
             print("\nProcessing DSS1 data...")                                                                    
             df_DSS1 = read_excel_file(dss1_file, sheet_name="DSS_Time_Series")
             if df_DSS1 is not None:                                                                               
@@ -122,8 +122,8 @@ def main():
                     df=df_sheet,
                     gene_id_mapping=gene_id_mapping
                 )
-                original_graph_file = os.path.join(data_dir, "graphs", f"{sheet}_original.txt")
-                bicliques_file = os.path.join(data_dir, "bicliques", f"{sheet}_bicliques.txt")
+                original_graph_file = os.path.join(data_dir, f"bipartite_graph_output_{sheet}.txt")
+                bicliques_file = os.path.join(data_dir, f"bipartite_graph_output_{sheet}.txt.biclusters")
                 
                 process_bicliques_for_timepoint(
                     session=session,
