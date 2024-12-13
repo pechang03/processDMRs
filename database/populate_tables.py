@@ -123,72 +123,6 @@ def insert_relationship(
     session.commit()
 
 
-def insert_gene(
-    session: Session,
-    symbol: str,
-    description: str = None,
-    master_gene_id: int = None,
-    interaction_source: str = None,
-    promoter_info: str = None,
-) -> int:
-    """Insert or update a gene in the database.
-    
-    Args:
-        session: Database session
-        symbol: Gene symbol (case-insensitive)
-        description: Optional gene description
-        master_gene_id: ID from MasterGeneID table (required for new genes)
-        interaction_source: Source of interaction data
-        promoter_info: Promoter information
-        
-    Returns:
-        Gene ID
-    """
-    if not symbol:
-        return None
-        
-    symbol = str(symbol).strip().lower()
-    
-    # Get existing gene
-    gene = session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
-    
-    if gene:
-        # Update non-null fields
-        if description is not None:
-            gene.description = description
-        if interaction_source is not None:
-            gene.interaction_source = interaction_source
-        if promoter_info is not None:
-            gene.promoter_info = promoter_info
-        try:
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            raise ValueError(f"Error updating gene {symbol}: {str(e)}")
-        return gene.id
-        
-    # For new genes, master_gene_id is required
-    if master_gene_id is None:
-        raise ValueError(f"master_gene_id is required to create new gene {symbol}")
-        
-    # Create new gene with ID from master_gene_id
-    try:
-        gene = Gene(
-            id=master_gene_id,
-            symbol=symbol,
-            description=description,
-            master_gene_id=master_gene_id,
-            interaction_source=interaction_source,
-            promoter_info=promoter_info,
-        )
-        session.add(gene)
-        session.commit()
-        return gene.id
-    except Exception as e:
-        session.rollback()
-        raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
-
-
 def upsert_dmr_timepoint_annotation(
     session: Session,
     timepoint_id: int,
@@ -449,17 +383,6 @@ def update_gene_metadata(
         if is_hub is not None:
             gene.is_hub = gene.is_hub or is_hub  # True if hub in any timepoint
         session.commit()
-
-
-def get_or_create_gene(
-    session: Session, symbol: str, description: str = None, master_gene_id: int = None
-) -> int:
-    """Get an existing gene or create a new one if it doesn't exist."""
-    gene = session.query(Gene).filter_by(symbol=symbol).first()
-    if gene:
-        return gene.id
-    else:
-        return insert_gene(session, symbol, description, master_gene_id)
 
 
 # Query functions
@@ -896,46 +819,51 @@ def populate_relationships(session: Session, relationships: list):
     """Populate relationships table."""
     for rel in relationships:
         insert_relationship(session, **rel)
+
+
 def populate_master_gene_ids(session: Session, gene_id_mapping: Dict[str, int]):
     """Populate MasterGeneID table and create core Gene entries.
-    
+
     Args:
         session: Database session
         gene_id_mapping: Dictionary mapping gene symbols to their IDs from master_gene_ids.csv
     """
     print("\nPopulating MasterGeneID and core Gene entries...")
     genes_added = 0
-    
+
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
         gene_symbol = str(gene_symbol).strip().lower()
-        
+
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if (
+            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
+            or not gene_symbol
+        ):
             continue
-            
+
         try:
             # Create MasterGeneID entry
             master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
             session.add(master_gene)
-            
+
             # Create corresponding core Gene entry with same ID
             gene = Gene(id=gene_id, symbol=gene_symbol, master_gene_id=gene_id)
             session.add(gene)
-            
+
             genes_added += 1
-            
+
             # Commit in batches
             if genes_added % 1000 == 0:
                 session.commit()
                 print(f"Added {genes_added} master gene IDs and core gene entries")
-                
+
         except Exception as e:
             session.rollback()
             print(f"Error adding master gene ID for {gene_symbol}: {str(e)}")
             continue
-            
+
     # Final commit
     try:
         session.commit()
