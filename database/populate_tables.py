@@ -377,16 +377,13 @@ def update_gene_hub_status(
             update_gene_metadata(session, gene_symbol, timepoint, is_hub=True)
 
 
-def populate_genes(
+def populate_core_genes(
     session: Session,
     gene_id_mapping: dict,
-    df_DSStimeseries: pd.DataFrame = None,
-    timepoint_id: int = None,
 ):
-    """Populate genes and master_gene_ids tables."""
-    print("\nPopulating gene tables...")
+    """Populate core gene data (symbols and master gene IDs)."""
+    print("\nPopulating core gene tables...")
 
-    # First populate master_gene_ids
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
@@ -394,10 +391,7 @@ def populate_genes(
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if (
-            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
-            or not gene_symbol
-        ):
+        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
             continue
 
         # Check if master gene ID already exists
@@ -417,7 +411,7 @@ def populate_genes(
                 gene = Gene(symbol=gene_symbol, master_gene_id=gene_id)
                 session.add(gene)
 
-                # Commit in smaller batches to avoid memory issues
+                # Commit in smaller batches
                 if genes_added % 1000 == 0:
                     session.commit()
                     print(f"Added {genes_added} master gene IDs")
@@ -428,20 +422,30 @@ def populate_genes(
                 continue
 
     try:
-        # Final commit for remaining genes
         session.commit()
         print(f"Added {genes_added} master gene IDs")
-
-        # Now populate additional gene information if DataFrame is provided
-        if df_DSStimeseries is not None and timepoint_id is not None:
-            process_gene_sources(
-                df_DSStimeseries, gene_id_mapping, session, timepoint_id=timepoint_id
-            )
-
+        return genes_added
     except Exception as e:
         session.rollback()
         print(f"Error adding master gene IDs: {str(e)}")
         raise
+
+def populate_timepoint_genes(
+    session: Session,
+    gene_id_mapping: dict,
+    df: pd.DataFrame,
+    timepoint_id: int,
+):
+    """Populate timepoint-specific gene data and annotations."""
+    if timepoint_id is None:
+        raise ValueError("timepoint_id must be provided")
+
+    # First ensure core gene entries exist
+    populate_core_genes(session, gene_id_mapping)
+
+    # Then process timepoint-specific data
+    if df is not None:
+        process_gene_sources(df, gene_id_mapping, session, timepoint_id)
 
 
 def process_gene_sources(
