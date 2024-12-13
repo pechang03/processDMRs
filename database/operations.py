@@ -22,6 +22,7 @@ from .models import (
     Relationship,
     MasterGeneID,
 )
+from utils.node_info import NodeInfo
 
 
 def insert_timepoint(session: Session, name: str, description: str = None):
@@ -595,6 +596,8 @@ def verify_relationships(session: Session):
         and len(dmr_annotations) > 0
         and len(gene_annotations) > 0
     )
+
+
 def get_or_create_gene(
     session: Session, symbol: str, description: str = None, master_gene_id: int = None
 ) -> int:
