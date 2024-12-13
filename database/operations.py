@@ -466,7 +466,7 @@ def upsert_gene_timepoint_annotation(
             return gene.id
         except Exception as e:
             session.rollback()
-            raise ValueError(f"Error creating gene: {str(e)}")
+            raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
 
     except Exception as e:
         session.rollback()
