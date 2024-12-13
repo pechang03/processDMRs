@@ -123,6 +123,7 @@ def main():
             # Process DSStimeseries timepoint
             if df_DSStimeseries is not None:
                 from database.process_timepoints import process_bicliques_for_timepoint
+                from database.operations import get_or_create_timepoint
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
@@ -134,6 +135,7 @@ def main():
             # Process pairwise timepoints
             for sheet_name, df in pairwise_dfs.items():
                 from database.process_timepoints import process_bicliques_for_timepoint
+                from database.operations import get_or_create_timepoint
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, sheet_name),
