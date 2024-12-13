@@ -193,7 +193,6 @@ def insert_gene(
     # Skip invalid gene symbols
     if not symbol:  # Handle None or empty string
         return None
-        return None
 
     # Clean and lowercase the symbol
     symbol = str(symbol).strip().lower()
