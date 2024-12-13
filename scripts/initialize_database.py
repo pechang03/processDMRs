@@ -90,24 +90,26 @@ def main():
 
             # First, define the mapping between file names and timepoint names
             TIMEPOINT_MAPPING = {
-                "DSS1": "DSStimeseries",  # Maps file/sheet name to database timepoint name
+                "DSS1": "DSStimeseries",  # Maps file name to sheet name
                 # Add other mappings as needed
             }
 
-            # Then modify the DSS1 processing section:
             print("\nProcessing DSS1 data...")
-            df_DSS1 = read_excel_file(constants.DSS1_FILE)
+            df_DSS1 = read_excel_file(constants.DSS1_FILE, sheet_name="DSStimeseries")  # Specify sheet name
             if df_DSS1 is not None:
                 print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")
-                timepoint_name = TIMEPOINT_MAPPING["DSS1"]  # Get the database timepoint name
                 all_genes.update(get_genes_from_df(df_DSS1))
                 max_dmr_id = len(df_DSS1) - 1
+
+                # Create gene ID mapping before processing timepoints
+                gene_id_mapping = create_gene_mapping(all_genes)
+                write_gene_mappings(gene_id_mapping, "master_gene_ids.csv", "All_Timepoints")
 
                 # Process the timepoint data
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=get_or_create_timepoint(session, timepoint_name),
-                    bicliques_file=f"path/to/bicliques/{timepoint_name}_bicliques.txt",  # Adjust path
+                    timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),  # Use sheet name as timepoint
+                    bicliques_file=os.path.join("data", "bicliques", "DSStimeseries_bicliques.txt"),
                     df=df_DSS1,
                     gene_id_mapping=gene_id_mapping,
                 )
