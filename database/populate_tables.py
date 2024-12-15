@@ -497,7 +497,7 @@ def process_gene_sources(
                     session,
                     gene_symbol,
                     interaction_source="Gene_Symbol_Nearby",
-                    description=row.get("Gene_Description")
+                    description=row.get("Gene_Description"),
                 )
                 processed_genes.add(gene_symbol)
 
@@ -506,36 +506,37 @@ def process_gene_sources(
             enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
             if isinstance(enhancer_info, str) and enhancer_info.strip():
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(enhancer_info)
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol:
-                        promoter_info = None
+                        enhancer_info = None
                         if "/" in enhancer_info:
-                            _, promoter_part = enhancer_info.split("/", 1)
-                            promoter_info = promoter_part.strip()
-                        
+                            _, enhancer_part = enhancer_info.split("/", 1)
+                            enhancer_info = enhancer_part.strip()
+
                         update_gene_source_metadata(
                             session,
                             gene_symbol,
                             interaction_source="ENCODE_Enhancer",
-                            promoter_info=promoter_info
+                            promoter_info=enhancer_info,
                         )
                         processed_genes.add(gene_symbol)
 
-        # Process promoter interactions
+        # Process promoter interaction
+        # TODO what if a gene is a promoter and an enhancer does this need many-to-many
         if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
             if isinstance(promoter_info, str) and promoter_info.strip():
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(promoter_info)
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol:
                         update_gene_source_metadata(
-                            session,
-                            gene_symbol,
-                            interaction_source="ENCODE_Promoter"
+                            session, gene_symbol, interaction_source="ENCODE_Promoter"
                         )
                         processed_genes.add(gene_symbol)
 
