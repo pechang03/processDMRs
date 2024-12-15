@@ -71,9 +71,30 @@ def insert_biclique(
     return biclique.id
 
 
-def insert_component(session: Session, timepoint_id: int, **kwargs):
+def insert_component(
+    session: Session, 
+    timepoint_id: int, 
+    graph_type: str,
+    category: str = None,
+    size: int = None,
+    dmr_count: int = None,
+    gene_count: int = None,
+    edge_count: int = None,
+    density: float = None,
+    encoding: str = None
+) -> int:
     """Insert a new component into the database."""
-    component = Component(timepoint_id=timepoint_id, **kwargs)
+    component = Component(
+        timepoint_id=timepoint_id,
+        graph_type=graph_type,
+        category=category,
+        size=size,
+        dmr_count=dmr_count,
+        gene_count=gene_count,
+        edge_count=edge_count,
+        density=density,
+        endcoding=encoding
+    )
     session.add(component)
     session.commit()
     return component.id
