@@ -1,23 +1,39 @@
 from typing import Set, Dict
 from utils.constants import START_GENE_ID
 
+# Cache for timepoint offsets
+_timepoint_offsets = {}
 
-def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
-    """Create a unique DMR ID for a specific timepoint."""
+def _init_timepoint_offsets():
+    """Initialize the timepoint offsets cache from database."""
     from database.models import Timepoint
     from database.connection import get_db_session, get_db_engine
     
-    # Get timepoint offset from database
-    engine = get_db_engine()
-    session = get_db_session(engine)
-    timepoint_obj = session.query(Timepoint).filter_by(name=timepoint).first()
+    global _timepoint_offsets
     
-    if timepoint_obj is None:
-        print(f"Warning: Timepoint {timepoint} not found in database")
+    if not _timepoint_offsets:  # Only load if cache is empty
+        engine = get_db_engine()
+        session = get_db_session(engine)
+        timepoints = session.query(Timepoint).all()
+        _timepoint_offsets = {tp.name: tp.dmr_id_offset for tp in timepoints}
+        session.close()
+
+def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
+    """Create a unique DMR ID for a specific timepoint."""
+    global _timepoint_offsets
+    
+    # Initialize cache if needed
+    if not _timepoint_offsets:
+        _init_timepoint_offsets()
+    
+    # Get offset from cache
+    offset = _timepoint_offsets.get(timepoint)
+    if offset is None:
+        print(f"Warning: Timepoint {timepoint} not found in cache")
         return dmr_num
         
     # Calculate DMR ID with offset
-    dmr_id = timepoint_obj.dmr_id_offset + dmr_num
+    dmr_id = offset + dmr_num
 
     # Ensure DMR ID is below first gene ID
     if first_gene_id > 0 and dmr_id >= first_gene_id:
@@ -26,8 +42,12 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         )
         dmr_id = dmr_num  # Fall back to original numbering
 
-    session.close()
     return dmr_id
+
+def clear_timepoint_cache():
+    """Clear the timepoint offsets cache."""
+    global _timepoint_offsets
+    _timepoint_offsets = {}
 
 
 def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, int]:
