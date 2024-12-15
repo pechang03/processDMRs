@@ -5,7 +5,7 @@ import pandas as pd
 
 # from utils import node_info, edge_info
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from .models import GeneTimepointAnnotation, DMRTimepointAnnotation
 from .models import TriconnectedComponent
 from sqlalchemy.orm import Session
@@ -84,20 +84,30 @@ def insert_component(
     encoding: str = None
 ) -> int:
     """Insert a new component into the database."""
-    component = Component(
-        timepoint_id=timepoint_id,
-        graph_type=graph_type,
-        category=category,
-        size=size,
-        dmr_count=dmr_count,
-        gene_count=gene_count,
-        edge_count=edge_count,
-        density=density,
-        endcoding=encoding
-    )
-    session.add(component)
-    session.commit()
-    return component.id
+    try:
+        # Get the next available ID
+        max_id = session.query(func.max(Component.id)).scalar()
+        next_id = 1 if max_id is None else max_id + 1
+        
+        component = Component(
+            id=next_id,  # Explicitly set the ID
+            timepoint_id=timepoint_id,
+            graph_type=graph_type,
+            category=category,
+            size=size,
+            dmr_count=dmr_count,
+            gene_count=gene_count,
+            edge_count=edge_count,
+            density=density,
+            endcoding=encoding
+        )
+        session.add(component)
+        session.commit()
+        return component.id
+    except Exception as e:
+        session.rollback()
+        print(f"Error inserting component: {str(e)}")
+        raise
 
 
 def insert_triconnected_component(
