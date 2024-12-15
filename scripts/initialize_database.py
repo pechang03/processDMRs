@@ -67,6 +67,9 @@ def main():
             
             print(f"Timeseries sheet: {timeseries_sheet}")
             print(f"Pairwise sheets: {pairwise_sheets}")
+
+            # Get start_gene_id from environment
+            start_gene_id = int(os.getenv("START_GENE_ID", "200000"))
             
             # Populate timepoints with both timeseries and pairwise sheets
             print("\nPopulating timepoints...")
@@ -93,7 +96,6 @@ def main():
             print("\nProcessing DSS1 data...")
             if df_DSS1 is not None:
                 print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")
-                all_genes.update(get_genes_from_df(df_DSS1))
                 max_dmr_id = len(df_DSS1) - 1
             else:
                 print(f"Unable to read DSS1 from path {dss1_file}")
