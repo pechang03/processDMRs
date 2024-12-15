@@ -392,11 +392,19 @@ def populate_core_genes(
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
         gene_symbol = str(gene_symbol).strip().lower()
-        
+
         print(f"Processing gene: {gene_symbol} with ID: {gene_id}")  # Debug line
 
         # Skip invalid symbols - now using exact matching
-        invalid_values = {"unnamed:", "nan", ".", "n/a", "", "none", "null"}  # Set of exact matches
+        invalid_values = {
+            "unnamed:",
+            "nan",
+            ".",
+            "n/a",
+            "",
+            "none",
+            "null",
+        }  # Set of exact matches
         if gene_symbol in invalid_values:
             print(f"Skipping invalid gene symbol: {gene_symbol}")
             continue
@@ -450,10 +458,11 @@ def populate_timepoint_genes(
         raise ValueError("timepoint_id must be provided")
 
     # First ensure core gene entries exist
-    populate_core_genes(session, gene_id_mapping)
+    # populate_core_genes(session, gene_id_mapping) (this should have been called before)
 
     # Then process timepoint-specific data
     if df is not None:
+        print("\nProcessing timepoint-specific gene data...")
         process_gene_sources(df, gene_id_mapping, session, timepoint_id)
 
 
