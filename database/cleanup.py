@@ -22,23 +22,13 @@ def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
     try:
-        # Delete data from all tables in correct order
-        session.query(GeneTimepointAnnotation).delete()
-        session.query(Gene).delete()
-        session.query(DMRTimepointAnnotation).delete()
-        session.query(DMR).delete()
-        session.query(TriconnectedComponent).delete()
-        session.query(ComponentBiclique).delete()
-        session.query(Component).delete()
-        session.query(Relationship).delete()
-        session.query(Metadata).delete()
-        session.query(Statistic).delete()
-        session.query(Biclique).delete()
-        session.query(Timepoint).delete()
-        session.query(MasterGeneID).delete()
+        # Drop all tables
+        Base.metadata.drop_all(session.bind)
+        # Recreate all tables
+        Base.metadata.create_all(session.bind)
         session.commit()
-        print("Database cleaned successfully")
+        print("Database cleaned and recreated successfully")
     except Exception as e:
         session.rollback()
-        print(f"Warning: Error cleaning existing data: {str(e)}")
+        print(f"Warning: Error cleaning database: {str(e)}")
         raise
