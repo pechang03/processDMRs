@@ -26,13 +26,35 @@ from utils.node_info import NodeInfo
 
 
 def get_or_create_timepoint(
-    session: Session, name: str, description: str = None
+    session: Session, 
+    name: str, 
+    description: str = None,
+    dmr_id_offset: int = None
 ) -> int:
     """Get existing timepoint or create if it doesn't exist."""
     timepoint = session.query(Timepoint).filter_by(name=name).first()
     if timepoint:
         return timepoint.id
-    new_timepoint = Timepoint(name=name, description=description)
+        
+    # Get default offset from the mapping if not provided
+    if dmr_id_offset is None:
+        timepoint_offsets = {
+            "P21-P28_TSS": 10000,
+            "P21-P40_TSS": 20000,
+            "P21-P60_TSS": 30000,
+            "P21-P180_TSS": 40000,
+            "TP28-TP180_TSS": 50000,
+            "TP40-TP180_TSS": 60000,
+            "TP60-TP180_TSS": 70000,
+            "DSStimeseries": 0,
+        }
+        dmr_id_offset = timepoint_offsets.get(name, 80000)
+        
+    new_timepoint = Timepoint(
+        name=name, 
+        description=description,
+        dmr_id_offset=dmr_id_offset
+    )
     session.add(new_timepoint)
     session.commit()
     return new_timepoint.id

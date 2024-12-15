@@ -116,7 +116,8 @@ def main():
             session.commit()
             process_bicliques_for_timepoint(
                 session=session,
-                timepoint_id=timepoint_id,  # get_or_create_timepoint(session, "DSStimeseries"),
+                timepoint_id=timepoint_id,
+                timepoint_name="DSStimeseries",
                 original_graph_file=ts_original_graph_file,
                 bicliques_file=ts_bicliques_file,
                 df=df_DSS1,
