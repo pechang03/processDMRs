@@ -425,17 +425,6 @@ def update_gene_metadata(
         session.commit()
 
 
-def get_or_create_gene(
-    session: Session, symbol: str, description: str = None, master_gene_id: int = None
-) -> int:
-    """Get an existing gene or create a new one if it doesn't exist."""
-    gene = session.query(Gene).filter_by(symbol=symbol).first()
-    if gene:
-        return gene.id
-    else:
-        return insert_gene(session, symbol, description, master_gene_id)
-
-
 # Query functions
 def query_timepoints(session: Session):
     """Query all timepoints."""
@@ -528,7 +517,7 @@ def update_gene_source_metadata(
     promoter_info: str = None,
 ):
     """Update gene source metadata.
-    
+
     Args:
         session: Database session
         gene_symbol: Gene symbol to update
@@ -536,7 +525,11 @@ def update_gene_source_metadata(
         description: Gene description
         promoter_info: Additional promoter information
     """
-    gene = session.query(Gene).filter(func.lower(Gene.symbol) == gene_symbol.lower()).first()
+    gene = (
+        session.query(Gene)
+        .filter(func.lower(Gene.symbol) == gene_symbol.lower())
+        .first()
+    )
     if gene:
         if interaction_source:
             gene.interaction_source = interaction_source
@@ -550,6 +543,7 @@ def update_gene_source_metadata(
             session.rollback()
             print(f"Error updating gene metadata for {gene_symbol}: {str(e)}")
             raise
+
 
 def get_or_create_gene(
     session: Session, symbol: str, description: str = None, master_gene_id: int = None

@@ -69,7 +69,11 @@ from .populate_tables import (
     process_gene_sources,
 )
 
-from .process_timepoints import process_bicliques_for_timepoint, get_genes_from_df
+from .process_timepoints import (
+    process_bicliques_for_timepoint,
+    get_genes_from_df,
+    process_timepoint_table_data,
+)
 
 __all__ = [
     # Classes
@@ -121,6 +125,7 @@ __all__ = [
     "populate_statistics",
     "populate_metadata",
     "populate_relationships",
+    "process_timepoint_table_data",
     "process_gene_sources",
     # Timepoint processing
     "process_bicliques_for_timepoint",

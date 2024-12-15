@@ -104,29 +104,31 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
 def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
     """
     Add nodes from original graph to split graph, preserving bipartite structure.
-    
+
     Args:
         original_graph: Source graph with bipartite node attributes
         split_graph: Target graph to add nodes to
-        
+
     Returns:
         Tuple[int, int]: Count of (dmr_nodes, gene_nodes) added
     """
     try:
         print("\nAdding nodes to split graph...")
-        
+
         # Get nodes by type using bipartite attribute
         dmr_nodes = set()
         gene_nodes = set()
-        
+
         for node, data in original_graph.nodes(data=True):
-            bipartite_value = data.get('bipartite')
+            bipartite_value = data.get("bipartite")
             if bipartite_value == 0:
                 dmr_nodes.add(node)
             elif bipartite_value == 1:
                 gene_nodes.add(node)
             else:
-                print(f"Warning: Node {node} has invalid bipartite value: {bipartite_value}")
+                print(
+                    f"Warning: Node {node} has invalid bipartite value: {bipartite_value}"
+                )
 
         # Add nodes with their attributes
         if dmr_nodes:
@@ -142,6 +144,7 @@ def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
         print(f"- Type: {type(e).__name__}")
         print(f"- Details: {str(e)}")
         import traceback
+
         print("- Stack trace:")
         traceback.print_exc()
         return 0, 0  # Return zeros to indicate failure
@@ -202,23 +205,12 @@ def process_bicliques_for_timepoint(
     if dmr_count == 0 and gene_count == 0:
         print("Warning: No nodes were added to split graph")
 
-    # Read bicliques and add edges to split graph
-    print("Loading biclique graph ...")
-    bicliques_result = reader.read_bicliques_file(
-        bicliques_file,
-        original_graph,
-        gene_id_mapping=gene_id_mapping,
-        file_format=file_format,
-    )
-
     add_split_graph_nodes(original_graph, split_graph)
     print(f"Split graph: {len(split_graph.nodes())} nodes")
 
     # Process bicliques
     print("Reading bicliques file...")
-    from biclique_analysis import reader
-
-    bicliques_result = reader.read_bicliques_file(
+    bicliques_result = read_bicliques_file(
         bicliques_file,
         original_graph,
         gene_id_mapping=gene_id_mapping,
