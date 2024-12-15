@@ -473,7 +473,8 @@ def process_gene_sources(
     timepoint_id: int,
 ):
     """
-    Process genes from different sources and populate the gene table with metadata.
+    Process genes from different sources and update their metadata.
+    Updates existing gene records with interaction sources and descriptions.
 
     Args:
         df: DataFrame containing gene information
@@ -481,27 +482,24 @@ def process_gene_sources(
         session: Database session
         timepoint_id: ID of the timepoint being processed
     """
-    print("\nProcessing genes from different sources...")
-
-    # Track processed genes to avoid duplicates
+    print("\nProcessing gene interaction sources...")
     processed_genes = set()
+
+    from .operations import update_gene_source_metadata
 
     # Process each row in the dataframe
     for _, row in df.iterrows():
         # Process nearby genes
         if "Gene_Symbol_Nearby" in df.columns and pd.notna(row["Gene_Symbol_Nearby"]):
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
-            if gene_symbol and gene_symbol not in processed_genes:
-                gene_id = gene_id_mapping.get(gene_symbol)
-                if gene_id:
-                    gene_data = {
-                        "symbol": gene_symbol,
-                        "description": row.get("Gene_Description", None),
-                        "master_gene_id": gene_id,
-                        "interaction_source": "Gene_Symbol_Nearby",
-                    }
-                    inserted_gene_id = insert_gene(session, **gene_data)
-                    processed_genes.add(gene_symbol)
+            if gene_symbol:
+                update_gene_source_metadata(
+                    session,
+                    gene_symbol,
+                    interaction_source="Gene_Symbol_Nearby",
+                    description=row.get("Gene_Description")
+                )
+                processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
         if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
@@ -509,26 +507,21 @@ def process_gene_sources(
             if isinstance(enhancer_info, str) and enhancer_info.strip():
                 from utils import process_enhancer_info
                 genes = process_enhancer_info(enhancer_info)
-                for gene in genes:
-                    gene_symbol = str(gene).strip().lower()
-                    if gene_symbol and gene_symbol not in processed_genes:
-                        gene_id = gene_id_mapping.get(gene_symbol)
-                        if gene_id:
-                            # Check if there's promoter info
-                            promoter_info = None
-                            if "/" in enhancer_info:
-                                _, promoter_part = enhancer_info.split("/", 1)
-                                promoter_info = promoter_part.strip()
-
-                            gene_data = {
-                                "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", None),
-                                "master_gene_id": gene_id,
-                                "interaction_source": "ENCODE_Enhancer",
-                                "promoter_info": promoter_info,
-                            }
-                            inserted_gene_id = insert_gene(session, **gene_data)
-                            processed_genes.add(gene_symbol)
+                for gene_symbol in genes:
+                    gene_symbol = str(gene_symbol).strip().lower()
+                    if gene_symbol:
+                        promoter_info = None
+                        if "/" in enhancer_info:
+                            _, promoter_part = enhancer_info.split("/", 1)
+                            promoter_info = promoter_part.strip()
+                        
+                        update_gene_source_metadata(
+                            session,
+                            gene_symbol,
+                            interaction_source="ENCODE_Enhancer",
+                            promoter_info=promoter_info
+                        )
+                        processed_genes.add(gene_symbol)
 
         # Process promoter interactions
         if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
@@ -536,21 +529,17 @@ def process_gene_sources(
             if isinstance(promoter_info, str) and promoter_info.strip():
                 from utils import process_enhancer_info
                 genes = process_enhancer_info(promoter_info)
-                for gene in genes:
-                    gene_symbol = str(gene).strip().lower()
-                    if gene_symbol and gene_symbol not in processed_genes:
-                        gene_id = gene_id_mapping.get(gene_symbol)
-                        if gene_id:
-                            gene_data = {
-                                "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", None),
-                                "master_gene_id": gene_id,
-                                "interaction_source": "ENCODE_Promoter",
-                            }
-                            inserted_gene_id = insert_gene(session, **gene_data)
-                            processed_genes.add(gene_symbol)
+                for gene_symbol in genes:
+                    gene_symbol = str(gene_symbol).strip().lower()
+                    if gene_symbol:
+                        update_gene_source_metadata(
+                            session,
+                            gene_symbol,
+                            interaction_source="ENCODE_Promoter"
+                        )
+                        processed_genes.add(gene_symbol)
 
-    print(f"Processed {len(processed_genes)} unique genes")
+    print(f"Updated interaction sources for {len(processed_genes)} genes")
 
 
 def populate_dmrs(

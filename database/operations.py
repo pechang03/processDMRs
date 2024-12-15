@@ -520,6 +520,37 @@ def verify_relationships(session: Session):
     )
 
 
+def update_gene_source_metadata(
+    session: Session,
+    gene_symbol: str,
+    interaction_source: str = None,
+    description: str = None,
+    promoter_info: str = None,
+):
+    """Update gene source metadata.
+    
+    Args:
+        session: Database session
+        gene_symbol: Gene symbol to update
+        interaction_source: Source of the gene interaction
+        description: Gene description
+        promoter_info: Additional promoter information
+    """
+    gene = session.query(Gene).filter(func.lower(Gene.symbol) == gene_symbol.lower()).first()
+    if gene:
+        if interaction_source:
+            gene.interaction_source = interaction_source
+        if description:
+            gene.description = description
+        if promoter_info:
+            gene.promoter_info = promoter_info
+        try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating gene metadata for {gene_symbol}: {str(e)}")
+            raise
+
 def get_or_create_gene(
     session: Session, symbol: str, description: str = None, master_gene_id: int = None
 ) -> int:
