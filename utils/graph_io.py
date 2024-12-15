@@ -1,6 +1,7 @@
 import networkx as nx
 import csv
 from typing import Dict, Tuple, Set, List
+from .id_mapping import create_dmr_id
 
 
 def read_bipartite_graph(
@@ -26,7 +27,6 @@ def read_bipartite_graph(
             for line in f:
                 dmr_id, gene_id = map(int, line.strip().split())
                 # Map the DMR ID to its timepoint-specific range
-                from .id_mapping import create_dmr_id
 
                 actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id)
                 # Add nodes with proper bipartite attributes

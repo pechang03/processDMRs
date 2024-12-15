@@ -16,12 +16,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from database.operations import insert_component
 from utils import id_mapping, constants
 from utils import node_info, edge_info
-from utils.graph_io import write_gene_mappings
+from utils.graph_io import read_bipartite_graph, write_gene_mappings
 from utils import process_enhancer_info
 from data_loader import create_bipartite_graph
 
 # from biclique_analysis import process_timepoint_data
-# from biclique_analysis import reader
+from biclique_analysis import reader
+from biclique_analysis.reader import read_bicliques_file
+
 # from biclique_analysis.processor import create_node_metadata
 from biclique_analysis.component_analyzer import ComponentAnalyzer
 # from biclique_analysis.classifier import classify_component
@@ -43,6 +45,7 @@ from database.models import (
     Timepoint,
 )
 from .operations import insert_component
+from . import operations
 
 from database.populate_tables import (
     populate_timepoints,
@@ -108,7 +111,7 @@ def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
     ## We don't add the edge yet as the are not the same between original and split graphs
 
 
-def process_timepoint_data(
+def process_timepoint_table_data(
     session: Session, timepoint_id: int, df: pd.DataFrame, gene_id_mapping: dict
 ):
     """Process file data for a timepoint and store results in database."""
@@ -118,6 +121,9 @@ def process_timepoint_data(
     print(f"DataFrame shape: {df.shape}")
     print(f"DataFrame columns: {df.columns}")
     populate_timepoint_genes(session, gene_id_mapping, df, timepoint_id)
+    populate_dmrs(
+        session, df, timepoint_id=timepoint_id, gene_id_mapping=gene_id_mapping
+    )
 
 
 def process_bicliques_for_timepoint(
@@ -127,6 +133,7 @@ def process_bicliques_for_timepoint(
     bicliques_file: str,
     df: pd.DataFrame,
     gene_id_mapping: dict,
+    file_format: str = "gene_name",
 ):
     """Process bicliques for a timepoint and store results in database."""
     print("Populating timepoint-specific graph data...")
@@ -143,14 +150,22 @@ def process_bicliques_for_timepoint(
         return
 
     # Create graphs
-    print("Creating original graph...")
-    original_graph = create_bipartite_graph(df, gene_id_mapping)
+    # print("Creating original graph...")
+    # original_graph = create_bipartite_graph(df, gene_id_mapping)
+    # AI we don't need the original graph as we have the graph already
+    # AI we just need to read it in from this file
+    original_graph = read_bipartite_graph(original_graph_file, timepoint_id)
     print(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
 
     print("Creating split graph...")
     split_graph = nx.Graph()
+
+    split_graph = read_bicliques_file(
+        bicliques_file, original_graph, gene_id_mapping, file_format
+    )
+
     add_split_graph_nodes(original_graph, split_graph)
     print(f"Split graph: {len(split_graph.nodes())} nodes")
 
@@ -207,8 +222,6 @@ def process_bicliques_for_timepoint(
             if any(n in component for n in b[0] | b[1])
         ]
 
-        from . import operations
-
         comp_id = operations.insert_component(
             session,
             timepoint_id=timepoint_id,
@@ -228,8 +241,6 @@ def process_bicliques_for_timepoint(
 
             # Update DMR annotations
             for dmr_id in biclique[0]:
-                from . import operations
-
                 operations.upsert_dmr_timepoint_annotation(
                     session,
                     timepoint_id=timepoint_id,
@@ -240,8 +251,6 @@ def process_bicliques_for_timepoint(
 
             # Update Gene annotations
             for gene_id in biclique[1]:
-                from . import operations
-
                 operations.upsert_gene_timepoint_annotation(
                     session,
                     timepoint_id=timepoint_id,
