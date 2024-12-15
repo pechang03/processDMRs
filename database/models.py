@@ -70,7 +70,7 @@ class GeneTimepointAnnotation(Base):
     degree = Column(Integer, nullable=True)
     node_type = Column(String(30), nullable=True)
     gene_type = Column(String(30), nullable=True)
-    is_issolate = Column(Boolean, default=False)
+    is_isolate = Column(Boolean, default=False)
     biclique_ids = Column(ArrayType, nullable=True)
 
 
@@ -126,7 +126,7 @@ class DMRTimepointAnnotation(Base):
     degree = Column(Integer, nullable=True)
     node_type = Column(String(30), nullable=True)
     gene_type = Column(String(30), nullable=True)
-    is_issolate = Column(Boolean, default=False)
+    is_isolate = Column(Boolean, default=False)
     biclique_ids = Column(ArrayType, nullable=True)
 
 
