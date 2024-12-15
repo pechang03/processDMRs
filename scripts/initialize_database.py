@@ -64,6 +64,7 @@ def main():
             # Read sheets from pairwise file
             pairwise_sheets = get_excel_sheets(dss_pairwise_file)
             all_genes = set()
+            start_gene_id = int(os.getenv("START_GENE_ID", "200000"))
             # Create and write gene mapping
             # AI NO NO NO do not write the gene mappings
             # write_gene_mappings(
