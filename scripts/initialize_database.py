@@ -31,7 +31,7 @@ from database.populate_tables import (
 from database.process_timepoints import (
     process_bicliques_for_timepoint,
     get_genes_from_df,
-    process_timepoint_data,
+    process_timepoint_table_data,
 )
 
 Base = declarative_base()
@@ -109,7 +109,10 @@ def main():
             )
             print(ts_original_graph_file)
             timepoint_id = get_or_create_timepoint(session, "DSStimeseries")
-            process_timepoint_data(session, timepoint_id, df_DSS1, gene_id_mapping)
+            process_timepoint_table_data(
+                session, timepoint_id, df_DSS1, gene_id_mapping
+            )
+            session.commit()
             process_bicliques_for_timepoint(
                 session=session,
                 timepoint_id=timepoint_id,  # get_or_create_timepoint(session, "DSStimeseries"),
@@ -117,6 +120,7 @@ def main():
                 bicliques_file=ts_bicliques_file,
                 df=df_DSS1,
                 gene_id_mapping=gene_id_mapping,
+                file_format="gene_name",
             )
             session.commit()
             # Process pairwise sheets
@@ -134,7 +138,7 @@ def main():
                 )
                 bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.", f"{sheet}_bicluster")
                 timepoint_id = get_or_create_timepoint(session, sheet)
-                process_timepoint_data(
+                process_timepoint_table_data(
                     session=session,
                     timepoint_id=timepoint_id,
                     df=df_sheet,
