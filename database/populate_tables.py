@@ -583,8 +583,22 @@ def populate_dmrs(
         insert_dmr(session, timepoint_id, **dmr_data)
 
 
-def populate_timepoints(session: Session, pairwise_sheets: List[str]):
-    """Populate timepoints table with names and DMR ID offsets."""
+def populate_timepoints(session: Session, pairwise_sheets: List[str], start_gene_id: int):
+    """
+    Populate timepoints table with names and DMR ID offsets.
+    
+    Args:
+        session: Database session
+        pairwise_sheets: List of sheet names from pairwise file
+        start_gene_id: Minimum ID value for genes (DMR IDs must be below this)
+        
+    Raises:
+        ValueError: If any DMR ID offset would exceed or equal start_gene_id
+    """
+    # Validate start_gene_id
+    if start_gene_id <= 0:
+        raise ValueError(f"start_gene_id must be positive, got {start_gene_id}")
+    
     # Define base timepoint data
     timepoint_data = {
         "DSStimeseries": {
@@ -602,7 +616,22 @@ def populate_timepoints(session: Session, pairwise_sheets: List[str]):
         }
         offset += 10000  # Increment by 10000 for each sheet
     
+    # Validate that all offsets are safely below start_gene_id
+    max_offset = max(data["offset"] for data in timepoint_data.values())
+    max_possible_dmr_id = max_offset + 10000  # Account for DMRs within each timepoint
+    
+    if max_possible_dmr_id >= start_gene_id:
+        raise ValueError(
+            f"Maximum possible DMR ID ({max_possible_dmr_id}) would exceed or equal "
+            f"start_gene_id ({start_gene_id}). Please increase start_gene_id in configuration "
+            f"to at least {max_possible_dmr_id + 10000} for safety."
+        )
+    
     print("\nPopulating timepoints table...")
+    print(f"Using start_gene_id: {start_gene_id}")
+    print(f"Maximum DMR ID offset: {max_offset}")
+    print(f"Maximum possible DMR ID: {max_possible_dmr_id}")
+    
     for name, data in timepoint_data.items():
         get_or_create_timepoint(
             session, 
