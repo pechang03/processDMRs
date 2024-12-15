@@ -14,8 +14,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from data_loader import (
     get_excel_sheets,
     read_excel_file,
+    read_gene_mapping,
     create_bipartite_graph,
-    create_gene_mapping,
+    # create_gene_mapping, NO No NO
 )
 
 from database import models, connection, operations, clean_database
@@ -23,6 +24,7 @@ from database.models import Base
 from database.operations import get_or_create_timepoint
 from database.populate_tables import (
     populate_timepoints,
+    populate_master_gene_ids,
     populate_core_genes,
 )
 
@@ -73,29 +75,44 @@ def main():
             print("\nPopulating timepoints...")
             populate_timepoints(session)
             session.commit()
-            
-            gene_id_mapping = create_gene_mapping(all_genes)
-                
+
+            gene_id_mapping = read_gene_mapping(
+                os.path.join(data_dir, "master_gene_ids.csv")
+            )
+
+            populate_master_gene_ids(session, gene_id_mapping)
+
             # Populate genes with initial data
             print("\nPopulating genes table...")
             populate_core_genes(session, gene_id_mapping)
             session.commit()
+            print(f"Debug: timeseries spreadshet file {dss1_file} ")
 
-            ts_original_graph_file = os.path.join(data_dir, "bipartite_graph_output_DSS_overall.txt")
-            ts_bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.biclusters")
-            print("\nProcessing DSS1 data...")                                                                    
+            if not os.path.exists(dss1_file):
+                print(f"Warning: timeseries spreadshet file {dss1_file} not found")
+                raise Exception("DSS1 file not found")
             df_DSS1 = read_excel_file(dss1_file, sheet_name="DSS_Time_Series")
-            if df_DSS1 is not None:                                                                               
-                 print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")                                    
-                 all_genes.update(get_genes_from_df(df_DSS1))                                                      
-                 max_dmr_id = len(df_DSS1) - 1
+            max_dmr_id = 0
+            print("\nProcessing DSS1 data...")
+            if df_DSS1 is not None:
+                print(f"Successfully read DSS1 data with {len(df_DSS1)} rows")
+                all_genes.update(get_genes_from_df(df_DSS1))
+                max_dmr_id = len(df_DSS1) - 1
             else:
                 print(f"Unable to read DSS1 from path {dss1_file}")
-                raise Exception("Unable to read DSS1 data") 
-
+                raise Exception("Unable to read DSS1 data")
+            ts_original_graph_file = os.path.join(
+                data_dir, "bipartite_graph_output_DSS_overall.txt"
+            )
+            ts_bicliques_file = os.path.join(
+                data_dir, "bipartite_graph_output.txt.biclusters"
+            )
+            print(ts_original_graph_file)
+            timepoint_id = get_or_create_timepoint(session, "DSStimeseries")
+            process_timepoint_data(session, timepoint_id, df_DSS1, gene_id_mapping)
             process_bicliques_for_timepoint(
                 session=session,
-                timepoint_id=get_or_create_timepoint(session, "DSStimeseries"),
+                timepoint_id=timepoint_id,  # get_or_create_timepoint(session, "DSStimeseries"),
                 original_graph_file=ts_original_graph_file,
                 bicliques_file=ts_bicliques_file,
                 df=df_DSS1,
@@ -103,6 +120,7 @@ def main():
             )
             session.commit()
             # Process pairwise sheets
+            """
             pairwise_dfs = {}
             for sheet in pairwise_sheets:
                 print(f"\nProcessing sheet: {sheet}")
@@ -133,7 +151,8 @@ def main():
                     df=df_sheet,
                     gene_id_mapping=gene_id_mapping,
                 )
-
+            session.commit()
+            """
             print("\nDatabase initialization completed successfully")
 
     except Exception as e:
