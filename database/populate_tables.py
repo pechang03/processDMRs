@@ -583,44 +583,25 @@ def populate_dmrs(
         insert_dmr(session, timepoint_id, **dmr_data)
 
 
-def populate_timepoints(session: Session):
+def populate_timepoints(session: Session, pairwise_sheets: List[str]):
     """Populate timepoints table with names and DMR ID offsets."""
-    # Define timepoints with their offsets
+    # Define base timepoint data
     timepoint_data = {
         "DSStimeseries": {
             "offset": 0,
             "description": "DSS time series analysis"
-        },
-        "P21-P28_TSS": {
-            "offset": 10000,
-            "description": "P21 to P28 comparison"
-        },
-        "P21-P40_TSS": {
-            "offset": 20000,
-            "description": "P21 to P40 comparison"
-        },
-        "P21-P60_TSS": {
-            "offset": 30000,
-            "description": "P21 to P60 comparison"
-        },
-        "P21-P180_TSS": {
-            "offset": 40000,
-            "description": "P21 to P180 comparison"
-        },
-        "TP28-TP180_TSS": {
-            "offset": 50000,
-            "description": "TP28 to TP180 comparison"
-        },
-        "TP40-TP180_TSS": {
-            "offset": 60000,
-            "description": "TP40 to TP180 comparison"
-        },
-        "TP60-TP180_TSS": {
-            "offset": 70000,
-            "description": "TP60 to TP180 comparison"
         }
     }
-
+    
+    # Add pairwise timepoints with sequential offsets
+    offset = 10000  # Start pairwise offsets at 10000
+    for sheet in pairwise_sheets:
+        timepoint_data[sheet] = {
+            "offset": offset,
+            "description": f"Pairwise comparison from {sheet}"
+        }
+        offset += 10000  # Increment by 10000 for each sheet
+    
     print("\nPopulating timepoints table...")
     for name, data in timepoint_data.items():
         get_or_create_timepoint(
@@ -632,6 +613,9 @@ def populate_timepoints(session: Session):
     
     session.commit()
     print("Timepoints populated successfully")
+    print("\nTimepoint offsets:")
+    for name, data in timepoint_data.items():
+        print(f"  {name}: {data['offset']}")
 
 
 def populate_bicliques(

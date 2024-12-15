@@ -72,9 +72,12 @@ def main():
             #    "All_Timepoints",
             # )
 
-            # Populate timepoints
+            # Read sheets from pairwise file
+            pairwise_sheets = get_excel_sheets(dss_pairwise_file)
+            
+            # Populate timepoints with sheets
             print("\nPopulating timepoints...")
-            populate_timepoints(session)
+            populate_timepoints(session, pairwise_sheets)
             session.commit()
 
             gene_id_mapping = read_gene_mapping(
