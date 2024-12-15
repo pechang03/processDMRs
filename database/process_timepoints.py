@@ -102,13 +102,49 @@ def get_genes_from_df(df: pd.DataFrame) -> Set[str]:
 
 
 def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
-    """Split graph into DMRs and genes."""
-    # For a given timepoint the dmr_nodes and gene_nodes are the same.
-    dmr_nodes = [node for node in original_graph.nodes if node in original_graph[0]]
-    gene_nodes = [node for node in original_graph.nodes if node in original_graph[1]]
-    split_graph.add_nodes_from(dmr_nodes, bipartite=0)
-    split_graph.add_nodes_from(gene_nodes, bipartite=1)
-    ## We don't add the edge yet as the are not the same between original and split graphs
+    """
+    Add nodes from original graph to split graph, preserving bipartite structure.
+    
+    Args:
+        original_graph: Source graph with bipartite node attributes
+        split_graph: Target graph to add nodes to
+        
+    Returns:
+        Tuple[int, int]: Count of (dmr_nodes, gene_nodes) added
+    """
+    try:
+        print("\nAdding nodes to split graph...")
+        
+        # Get nodes by type using bipartite attribute
+        dmr_nodes = set()
+        gene_nodes = set()
+        
+        for node, data in original_graph.nodes(data=True):
+            bipartite_value = data.get('bipartite')
+            if bipartite_value == 0:
+                dmr_nodes.add(node)
+            elif bipartite_value == 1:
+                gene_nodes.add(node)
+            else:
+                print(f"Warning: Node {node} has invalid bipartite value: {bipartite_value}")
+
+        # Add nodes with their attributes
+        if dmr_nodes:
+            split_graph.add_nodes_from(dmr_nodes, bipartite=0)
+        if gene_nodes:
+            split_graph.add_nodes_from(gene_nodes, bipartite=1)
+
+        print(f"Added {len(dmr_nodes)} DMR nodes and {len(gene_nodes)} gene nodes")
+        return len(dmr_nodes), len(gene_nodes)
+
+    except Exception as e:
+        print(f"Error adding nodes to split graph:")
+        print(f"- Type: {type(e).__name__}")
+        print(f"- Details: {str(e)}")
+        import traceback
+        print("- Stack trace:")
+        traceback.print_exc()
+        return 0, 0  # Return zeros to indicate failure
 
 
 def process_timepoint_table_data(
@@ -161,8 +197,10 @@ def process_bicliques_for_timepoint(
 
     # Create split graph from bicliques file
     split_graph = nx.Graph()
-    print("inserting splitgraph nodes ...")
-    add_split_graph_nodes(original_graph, split_graph)
+    print("Inserting splitgraph nodes...")
+    dmr_count, gene_count = add_split_graph_nodes(original_graph, split_graph)
+    if dmr_count == 0 and gene_count == 0:
+        print("Warning: No nodes were added to split graph")
 
     # Read bicliques and add edges to split graph
     print("Loading biclique graph ...")
