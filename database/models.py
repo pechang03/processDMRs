@@ -44,6 +44,7 @@ class Timepoint(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
+    dmr_id_offset = Column(Integer, default=0)
     bicliques = relationship("Biclique", back_populates="timepoint")
 
 

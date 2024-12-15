@@ -168,7 +168,8 @@ def process_timepoint_table_data(
 def process_bicliques_for_timepoint(
     session: Session,
     timepoint_id: int,
-    original_graph_file: str,  # Add parameter for original graph file
+    timepoint_name: str,
+    original_graph_file: str,
     bicliques_file: str,
     df: pd.DataFrame,
     gene_id_mapping: dict,
@@ -190,9 +191,8 @@ def process_bicliques_for_timepoint(
 
     # Create graphs
     print("Loading original graph...")
-    # original_graph = create_bipartite_graph(df, gene_id_mapping)
     original_graph = read_bipartite_graph(
-        original_graph_file, timepoint=str(timepoint_id)
+        original_graph_file, timepoint=timepoint_name
     )
     print(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
