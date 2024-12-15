@@ -277,10 +277,10 @@ def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, in
         # Convert to dictionary
         gene_mapping = {}
         for _, row in df.iterrows():
-            if "gene_symbol" in df.columns and "id" in df.columns:
-                symbol = str(row["gene_symbol"]).strip().lower()
+            if "Gene" in df.columns and "ID" in df.columns:
+                symbol = str(row["Gene"]).strip().lower()
                 if symbol and symbol != "nan":
-                    gene_mapping[symbol] = int(row["id"])
+                    gene_mapping[symbol] = int(row["ID"])
 
         print(f"Read {len(gene_mapping)} gene mappings from {mapping_file}")
         return gene_mapping
