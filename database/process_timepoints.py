@@ -150,26 +150,27 @@ def process_bicliques_for_timepoint(
         return
 
     # Create graphs
-    # print("Creating original graph...")
+    print("Loading original graph...")
     # original_graph = create_bipartite_graph(df, gene_id_mapping)
-    original_graph = read_bipartite_graph(original_graph_file, timepoint=str(timepoint_id))
+    original_graph = read_bipartite_graph(
+        original_graph_file, timepoint=str(timepoint_id)
+    )
     print(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
 
-    print("Creating split graph...")
-    split_graph = nx.Graph()
-
     # Create split graph from bicliques file
     split_graph = nx.Graph()
+    print("inserting splitgraph nodes ...")
     add_split_graph_nodes(original_graph, split_graph)
-    
+
     # Read bicliques and add edges to split graph
+    print("Loading biclique graph ...")
     bicliques_result = reader.read_bicliques_file(
         bicliques_file,
         original_graph,
         gene_id_mapping=gene_id_mapping,
-        file_format=file_format
+        file_format=file_format,
     )
 
     add_split_graph_nodes(original_graph, split_graph)
