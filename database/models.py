@@ -147,11 +147,9 @@ class Biclique(Base):
 
 class Component(Base):
     __tablename__ = "components"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
-    graph_type = Column(
-        Integer, primary_key=True
-    )  # original or split_graph AI or instead of int we can use enum
+    graph_type = Column(String(50), nullable=False)  # 'original' or 'split'
     category = Column(String(50))
     size = Column(Integer)
     dmr_count = Column(Integer)
