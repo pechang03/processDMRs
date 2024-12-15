@@ -152,9 +152,7 @@ def process_bicliques_for_timepoint(
     # Create graphs
     # print("Creating original graph...")
     # original_graph = create_bipartite_graph(df, gene_id_mapping)
-    # AI we don't need the original graph as we have the graph already
-    # AI we just need to read it in from this file
-    original_graph = read_bipartite_graph(original_graph_file, timepoint_id)
+    original_graph = read_bipartite_graph(original_graph_file, timepoint=str(timepoint_id))
     print(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
@@ -162,8 +160,16 @@ def process_bicliques_for_timepoint(
     print("Creating split graph...")
     split_graph = nx.Graph()
 
-    split_graph = read_bicliques_file(
-        bicliques_file, original_graph, gene_id_mapping, file_format
+    # Create split graph from bicliques file
+    split_graph = nx.Graph()
+    add_split_graph_nodes(original_graph, split_graph)
+    
+    # Read bicliques and add edges to split graph
+    bicliques_result = reader.read_bicliques_file(
+        bicliques_file,
+        original_graph,
+        gene_id_mapping=gene_id_mapping,
+        file_format=file_format
     )
 
     add_split_graph_nodes(original_graph, split_graph)
