@@ -584,19 +584,54 @@ def populate_dmrs(
 
 
 def populate_timepoints(session: Session):
-    """Populate timepoints table."""
-    timepoints = [
-        "DSStimeseries",  # Changed from DSStimeseries to DSS1 to match Excel sheet name
-        "P21-P28_TSS",
-        "P21-P40_TSS",
-        "P21-P60_TSS",
-        "P21-P180_TSS",
-        "TP28-TP180_TSS",
-        "TP40-TP180_TSS",
-        "TP60-TP180_TSS",
-    ]
-    for tp in timepoints:
-        get_or_create_timepoint(session, tp)
+    """Populate timepoints table with names and DMR ID offsets."""
+    # Define timepoints with their offsets
+    timepoint_data = {
+        "DSStimeseries": {
+            "offset": 0,
+            "description": "DSS time series analysis"
+        },
+        "P21-P28_TSS": {
+            "offset": 10000,
+            "description": "P21 to P28 comparison"
+        },
+        "P21-P40_TSS": {
+            "offset": 20000,
+            "description": "P21 to P40 comparison"
+        },
+        "P21-P60_TSS": {
+            "offset": 30000,
+            "description": "P21 to P60 comparison"
+        },
+        "P21-P180_TSS": {
+            "offset": 40000,
+            "description": "P21 to P180 comparison"
+        },
+        "TP28-TP180_TSS": {
+            "offset": 50000,
+            "description": "TP28 to TP180 comparison"
+        },
+        "TP40-TP180_TSS": {
+            "offset": 60000,
+            "description": "TP40 to TP180 comparison"
+        },
+        "TP60-TP180_TSS": {
+            "offset": 70000,
+            "description": "TP60 to TP180 comparison"
+        }
+    }
+
+    print("\nPopulating timepoints table...")
+    for name, data in timepoint_data.items():
+        get_or_create_timepoint(
+            session, 
+            name=name,
+            description=data["description"],
+            dmr_id_offset=data["offset"]
+        )
+    
+    session.commit()
+    print("Timepoints populated successfully")
 
 
 def populate_bicliques(
