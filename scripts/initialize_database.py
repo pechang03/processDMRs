@@ -50,12 +50,13 @@ def main():
         dss_pairwise_file = os.getenv(
             "DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
         )
+        # Create engine and ensure tables exist
         engine = connection.get_db_engine()
-        Base.metadata.create_all(engine)
-        models.create_tables(engine)
-
+        models.Base.metadata.drop_all(engine)  # Drop all existing tables
+        models.Base.metadata.create_all(engine)  # Create fresh tables
+        
         with Session(engine) as session:
-            # Clean and recreate database
+            # Clean database (this will now just clear data, not schema)
             clean_database(session)
 
             print("\nCollecting all unique genes across timepoints...")
