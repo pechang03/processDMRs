@@ -479,6 +479,7 @@ def process_gene_sources(
         df: DataFrame containing gene information
         gene_id_mapping: Mapping of gene symbols to IDs
         session: Database session
+        timepoint_id: ID of the timepoint being processed
     """
     print("\nProcessing genes from different sources...")
 
@@ -495,36 +496,25 @@ def process_gene_sources(
                 if gene_id:
                     gene_data = {
                         "symbol": gene_symbol,
-                        "description": row.get("Gene_Description", "N/A"),
+                        "description": row.get("Gene_Description", None),
                         "master_gene_id": gene_id,
                         "interaction_source": "Gene_Symbol_Nearby",
                     }
                     inserted_gene_id = insert_gene(session, **gene_data)
-                    # Then update timepoint-specific annotation
-                    if inserted_gene_id:
-                        upsert_gene_timepoint_annotation(
-                            session=session,
-                            timepoint_id=timepoint_id,
-                            gene_id=inserted_gene_id,
-                            node_type="regular_gene",
-                            gene_type="Nearby",
-                        )
                     processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
         if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
             enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
             if pd.notna(enhancer_info):
-                # Split enhancer info on '/' to get gene name and promoter info
                 from utils import process_enhancer_info
-
                 genes = process_enhancer_info(enhancer_info)
                 for gene in genes:
                     gene_symbol = str(gene).strip().lower()
                     if gene_symbol and gene_symbol not in processed_genes:
                         gene_id = gene_id_mapping.get(gene_symbol)
                         if gene_id:
-                            # Check if there's promoter info (after '/')
+                            # Check if there's promoter info
                             promoter_info = None
                             if "/" in str(enhancer_info):
                                 _, promoter_part = str(enhancer_info).split("/", 1)
@@ -532,22 +522,12 @@ def process_gene_sources(
 
                             gene_data = {
                                 "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", "N/A"),
+                                "description": row.get("Gene_Description", None),
                                 "master_gene_id": gene_id,
                                 "interaction_source": "ENCODE_Enhancer",
                                 "promoter_info": promoter_info,
                             }
                             inserted_gene_id = insert_gene(session, **gene_data)
-
-                            # Update timepoint-specific annotation
-                            if inserted_gene_id:
-                                upsert_gene_timepoint_annotation(
-                                    session=session,
-                                    timepoint_id=timepoint_id,
-                                    gene_id=inserted_gene_id,
-                                    node_type="regular_gene",
-                                    gene_type="Enhancer",
-                                )
                             processed_genes.add(gene_symbol)
 
         # Process promoter interactions
@@ -555,10 +535,7 @@ def process_gene_sources(
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
             if pd.notna(promoter_info):
                 from utils import process_enhancer_info
-
-                genes = process_enhancer_info(
-                    promoter_info
-                )  # Reuse enhancer processing
+                genes = process_enhancer_info(promoter_info)
                 for gene in genes:
                     gene_symbol = str(gene).strip().lower()
                     if gene_symbol and gene_symbol not in processed_genes:
@@ -566,21 +543,11 @@ def process_gene_sources(
                         if gene_id:
                             gene_data = {
                                 "symbol": gene_symbol,
-                                "description": row.get("Gene_Description", "N/A"),
+                                "description": row.get("Gene_Description", None),
                                 "master_gene_id": gene_id,
                                 "interaction_source": "ENCODE_Promoter",
                             }
-                            insert_gene_id = insert_gene(session, **gene_data)
-                            # Update timepoint-specific annotation
-                            if inserted_gene_id:
-                                upsert_gene_timepoint_annotation(
-                                    session=session,
-                                    timepoint_id=timepoint_id,
-                                    gene_id=inserted_gene_id,
-                                    node_type="regular_gene",
-                                    gene_type="Promoter",
-                                )
-
+                            inserted_gene_id = insert_gene(session, **gene_data)
                             processed_genes.add(gene_symbol)
 
     print(f"Processed {len(processed_genes)} unique genes")
