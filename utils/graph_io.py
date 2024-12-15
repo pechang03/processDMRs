@@ -4,30 +4,29 @@ from typing import Dict, Tuple, Set, List
 from .id_mapping import create_dmr_id
 
 
-def read_bipartite_graph(
-    filepath: str, timepoint: str = "DSS1"
-) -> Tuple[nx.Graph, int]:
+def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> nx.Graph:
     """
-    Read a bipartite graph from file, including the first gene ID.
-    NOTE this doesn't create it from a speradsheet so the labels are not read in
-
+    Read a bipartite graph from file.
+    First line contains: <num_dmrs> <num_genes> <first_gene_id>
+    
+    Args:
+        filepath: Path to graph file
+        timepoint: Timepoint identifier
+        
     Returns:
-        Tuple of (graph, first_gene_id)
+        NetworkX bipartite graph
     """
     try:
         B = nx.Graph()
 
         with open(filepath, "r") as f:
-            # Read header
-            n_dmrs, n_genes = map(int, f.readline().strip().split())
-            # Read first gene ID
-            first_gene_id = int(f.readline().strip())
+            # Read header: num_dmrs num_genes first_gene_id
+            n_dmrs, n_genes, first_gene_id = map(int, f.readline().strip().split())
 
             # Read edges
             for line in f:
                 dmr_id, gene_id = map(int, line.strip().split())
                 # Map the DMR ID to its timepoint-specific range
-
                 actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id)
                 # Add nodes with proper bipartite attributes
                 B.add_node(actual_dmr_id, bipartite=0, timepoint=timepoint)
@@ -41,7 +40,7 @@ def read_bipartite_graph(
         print(f"First Gene ID: {first_gene_id}")
         print(f"Edges: {B.number_of_edges()}")
 
-        return B, first_gene_id
+        return B
 
     except Exception as e:
         print(f"Error reading graph from {filepath}: {e}")
