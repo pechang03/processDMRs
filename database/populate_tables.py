@@ -506,7 +506,7 @@ def process_gene_sources(
         # Process enhancer interactions
         if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
             enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            if pd.notna(enhancer_info):
+            if isinstance(enhancer_info, str) and enhancer_info.strip():
                 from utils import process_enhancer_info
                 genes = process_enhancer_info(enhancer_info)
                 for gene in genes:
@@ -516,8 +516,8 @@ def process_gene_sources(
                         if gene_id:
                             # Check if there's promoter info
                             promoter_info = None
-                            if "/" in str(enhancer_info):
-                                _, promoter_part = str(enhancer_info).split("/", 1)
+                            if "/" in enhancer_info:
+                                _, promoter_part = enhancer_info.split("/", 1)
                                 promoter_info = promoter_part.strip()
 
                             gene_data = {
@@ -533,7 +533,7 @@ def process_gene_sources(
         # Process promoter interactions
         if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if pd.notna(promoter_info):
+            if isinstance(promoter_info, str) and promoter_info.strip():
                 from utils import process_enhancer_info
                 genes = process_enhancer_info(promoter_info)
                 for gene in genes:
