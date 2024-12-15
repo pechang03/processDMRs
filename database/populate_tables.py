@@ -583,12 +583,13 @@ def populate_dmrs(
         insert_dmr(session, timepoint_id, **dmr_data)
 
 
-def populate_timepoints(session: Session, pairwise_sheets: List[str], start_gene_id: int):
+def populate_timepoints(session: Session, timeseries_sheet: str, pairwise_sheets: List[str], start_gene_id: int):
     """
     Populate timepoints table with names and DMR ID offsets.
     
     Args:
         session: Database session
+        timeseries_sheet: The timeseries sheet name (e.g. "DSS_Time_Series") 
         pairwise_sheets: List of sheet names from pairwise file
         start_gene_id: Minimum ID value for genes (DMR IDs must be below this)
         
@@ -599,7 +600,7 @@ def populate_timepoints(session: Session, pairwise_sheets: List[str], start_gene
     if start_gene_id <= 0:
         raise ValueError(f"start_gene_id must be positive, got {start_gene_id}")
     
-    # Define base timepoint data
+    # Define base timepoint data starting with timeseries
     timepoint_data = {
         "DSStimeseries": {
             "offset": 0,
@@ -610,9 +611,11 @@ def populate_timepoints(session: Session, pairwise_sheets: List[str], start_gene
     # Add pairwise timepoints with sequential offsets
     offset = 10000  # Start pairwise offsets at 10000
     for sheet in pairwise_sheets:
-        timepoint_data[sheet] = {
+        # Strip "_TSS" suffix if present
+        timepoint_name = sheet.replace("_TSS", "")
+        timepoint_data[timepoint_name] = {
             "offset": offset,
-            "description": f"Pairwise comparison from {sheet}"
+            "description": f"Pairwise comparison from {timepoint_name}"
         }
         offset += 10000  # Increment by 10000 for each sheet
     
