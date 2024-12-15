@@ -61,24 +61,16 @@ def main():
 
             print("\nCollecting all unique genes across timepoints...")
 
-            # Read sheets from pairwise file
-            pairwise_sheets = get_excel_sheets(dss_pairwise_file)
-            all_genes = set()
-            start_gene_id = int(os.getenv("START_GENE_ID", "200000"))
-            # Create and write gene mapping
-            # AI NO NO NO do not write the gene mappings
-            # write_gene_mappings(
-            #    gene_id_mapping,
-            #    os.path.join(data_dir, "master_gene_ids.csv"),
-            #    "All_Timepoints",
-            # )
-
-            # Read sheets from pairwise file
+            # Read sheets from both files
+            timeseries_sheet = "DSS_Time_Series"  # The sheet name from DSS1.xlsx
             pairwise_sheets = get_excel_sheets(dss_pairwise_file)
             
-            # Populate timepoints with sheets
+            print(f"Timeseries sheet: {timeseries_sheet}")
+            print(f"Pairwise sheets: {pairwise_sheets}")
+            
+            # Populate timepoints with both timeseries and pairwise sheets
             print("\nPopulating timepoints...")
-            populate_timepoints(session, pairwise_sheets)
+            populate_timepoints(session, timeseries_sheet, pairwise_sheets, start_gene_id)
             session.commit()
 
             gene_id_mapping = read_gene_mapping(
