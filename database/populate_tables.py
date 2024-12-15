@@ -474,10 +474,11 @@ def process_gene_sources(
 ):
     """
     Process genes from different sources and update their metadata.
-    Updates existing gene records with interaction sources and descriptions.
+    Each row represents a DMR, but contains gene information we can use
+    to update gene metadata if it hasn't been set.
 
     Args:
-        df: DataFrame containing gene information
+        df: DataFrame containing DMR and gene information
         gene_id_mapping: Mapping of gene symbols to IDs
         session: Database session
         timepoint_id: ID of the timepoint being processed
@@ -487,56 +488,61 @@ def process_gene_sources(
 
     from .operations import update_gene_source_metadata
 
-    # Process each row in the dataframe
+    # Process each DMR row in the dataframe
     for _, row in df.iterrows():
-        # Process nearby genes
+        # Process nearby genes - if Gene_Symbol_Nearby matches a gene, update its description
         if "Gene_Symbol_Nearby" in df.columns and pd.notna(row["Gene_Symbol_Nearby"]):
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
-            if gene_symbol:
-                update_gene_source_metadata(
-                    session,
-                    gene_symbol,
-                    interaction_source="Gene_Symbol_Nearby",
-                    description=row.get("Gene_Description"),
-                )
-                processed_genes.add(gene_symbol)
+            if gene_symbol and gene_symbol != ".":
+                gene_description = row.get("Gene_Description")
+                if gene_description and str(gene_description).strip() != ".":
+                    update_gene_source_metadata(
+                        session,
+                        gene_symbol,
+                        interaction_source="Gene_Symbol_Nearby",
+                        description=gene_description
+                    )
+                    processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
         if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
-            enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            if isinstance(enhancer_info, str) and enhancer_info.strip():
+            raw_enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
+            if isinstance(raw_enhancer_info, str) and raw_enhancer_info.strip() and raw_enhancer_info != ".":
                 from utils import process_enhancer_info
-
-                genes = process_enhancer_info(enhancer_info)
+                genes = process_enhancer_info(raw_enhancer_info)
+                
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
-                    if gene_symbol:
-                        enhancer_info = None
-                        if "/" in enhancer_info:
-                            _, enhancer_part = enhancer_info.split("/", 1)
-                            enhancer_info = enhancer_part.strip()
+                    if gene_symbol and gene_symbol != ".":
+                        enhancer_part = None
+                        if "/" in raw_enhancer_info:
+                            _, enhancer_part = raw_enhancer_info.split("/", 1)
+                            enhancer_part = enhancer_part.strip()
+                            if enhancer_part == ".":
+                                enhancer_part = None
 
                         update_gene_source_metadata(
                             session,
                             gene_symbol,
                             interaction_source="ENCODE_Enhancer",
-                            promoter_info=enhancer_info,
+                            promoter_info=enhancer_part
                         )
                         processed_genes.add(gene_symbol)
 
-        # Process promoter interaction
-        # TODO what if a gene is a promoter and an enhancer does this need many-to-many
+        # Process promoter interactions
         if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
-            promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if isinstance(promoter_info, str) and promoter_info.strip():
+            raw_promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
+            if isinstance(raw_promoter_info, str) and raw_promoter_info.strip() and raw_promoter_info != ".":
                 from utils import process_enhancer_info
-
-                genes = process_enhancer_info(promoter_info)
+                genes = process_enhancer_info(raw_promoter_info)
+                
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
-                    if gene_symbol:
+                    if gene_symbol and gene_symbol != ".":
                         update_gene_source_metadata(
-                            session, gene_symbol, interaction_source="ENCODE_Promoter"
+                            session,
+                            gene_symbol,
+                            interaction_source="ENCODE_Promoter"
                         )
                         processed_genes.add(gene_symbol)
 
