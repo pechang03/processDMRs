@@ -56,6 +56,108 @@ def create_views(engine):
     FROM dmrs d
     LEFT JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
     LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
+
+    -- New views for API support
+
+    -- Component summary view
+    CREATE OR REPLACE VIEW component_summary_view AS
+    SELECT 
+        c.id AS component_id,
+        t.name AS timepoint,
+        c.graph_type,
+        c.category,
+        c.size,
+        c.dmr_count,
+        c.gene_count,
+        c.edge_count,
+        c.density,
+        COUNT(DISTINCT cb.biclique_id) as biclique_count,
+        STRING_AGG(DISTINCT b.category, ', ') as biclique_categories
+    FROM components c
+    JOIN timepoints t ON c.timepoint_id = t.id
+    LEFT JOIN component_bicliques cb ON c.id = cb.component_id
+    LEFT JOIN bicliques b ON cb.biclique_id = b.id
+    GROUP BY c.id, t.name, c.graph_type, c.category, c.size, 
+             c.dmr_count, c.gene_count, c.edge_count, c.density;
+
+    -- Biclique details view
+    CREATE OR REPLACE VIEW biclique_details_view AS
+    SELECT 
+        b.id AS biclique_id,
+        t.name AS timepoint,
+        b.category,
+        c.id AS component_id,
+        c.graph_type,
+        array_length(b.dmr_ids, 1) as dmr_count,
+        array_length(b.gene_ids, 1) as gene_count,
+        b.dmr_ids,
+        b.gene_ids
+    FROM bicliques b
+    JOIN timepoints t ON b.timepoint_id = t.id
+    JOIN components c ON b.component_id = c.id;
+
+    -- Timepoint statistics view
+    CREATE OR REPLACE VIEW timepoint_stats_view AS
+    SELECT 
+        t.name AS timepoint,
+        COUNT(DISTINCT d.id) as total_dmrs,
+        COUNT(DISTINCT g.id) as total_genes,
+        COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) as hub_dmrs,
+        COUNT(DISTINCT b.id) as biclique_count,
+        COUNT(DISTINCT c.id) as component_count,
+        AVG(c.density) as avg_component_density
+    FROM timepoints t
+    LEFT JOIN dmrs d ON t.id = d.timepoint_id
+    LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
+    LEFT JOIN genes g ON gta.gene_id = g.id
+    LEFT JOIN bicliques b ON t.id = b.timepoint_id
+    LEFT JOIN components c ON t.id = c.timepoint_id
+    GROUP BY t.name;
+
+    -- Component node details view
+    CREATE OR REPLACE VIEW component_nodes_view AS
+    SELECT 
+        c.id AS component_id,
+        t.name AS timepoint,
+        c.graph_type,
+        json_agg(DISTINCT jsonb_build_object(
+            'dmr_id', d.id,
+            'dmr_number', d.dmr_number,
+            'area_stat', d.area_stat,
+            'is_hub', d.is_hub
+        )) as dmrs,
+        json_agg(DISTINCT jsonb_build_object(
+            'gene_id', g.id,
+            'symbol', g.symbol,
+            'interaction_source', g.interaction_source
+        )) as genes
+    FROM components c
+    JOIN timepoints t ON c.timepoint_id = t.id
+    LEFT JOIN dmr_timepoint_annotations dta ON c.id = dta.component_id
+    LEFT JOIN dmrs d ON dta.dmr_id = d.id
+    LEFT JOIN gene_timepoint_annotations gta ON c.id = gta.component_id
+    LEFT JOIN genes g ON gta.gene_id = g.id
+    GROUP BY c.id, t.name, c.graph_type;
+
+    -- Triconnected component view
+    CREATE OR REPLACE VIEW triconnected_component_view AS
+    SELECT 
+        tc.id AS triconnected_id,
+        t.name AS timepoint,
+        c.id AS component_id,
+        tc.size,
+        tc.dmr_count,
+        tc.gene_count,
+        tc.edge_count,
+        tc.density,
+        tc.catagory as category,
+        tc.nodes,
+        tc.separation_pairs,
+        tc.avg_dmrs,
+        tc.avg_genes
+    FROM triconnected_components tc
+    JOIN timepoints t ON tc.timepoint_id = t.id
+    JOIN components c ON tc.component_id = c.id;
     """
     
     try:
