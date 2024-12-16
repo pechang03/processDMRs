@@ -131,6 +131,15 @@ class DMRTimepointAnnotation(Base):
     biclique_ids = Column(ArrayType, nullable=True)
 
 
+class Metadata(Base):
+    __tablename__ = "metadata"
+    id = Column(Integer, primary_key=True)
+    entity_type = Column(String(50))
+    entity_id = Column(Integer, ForeignKey('bicliques.id'))  # Add the ForeignKey
+    key = Column(String(255))
+    value = Column(Text)
+
+
 class Biclique(Base):
     __tablename__ = "bicliques"
     id = Column(Integer, primary_key=True)
@@ -142,7 +151,6 @@ class Biclique(Base):
     encoding = Column(String(255))
     timepoint = relationship("Timepoint", back_populates="bicliques")
     component = relationship("Component", back_populates="bicliques")
-    # Add this line:
     component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
     biclique_metadata = relationship("Metadata", 
                                    backref="biclique",
@@ -213,15 +221,6 @@ class Statistic(Base):
     __tablename__ = "statistics"
     id = Column(Integer, primary_key=True)
     category = Column(String(50))
-    key = Column(String(255))
-    value = Column(Text)
-
-
-class Metadata(Base):
-    __tablename__ = "metadata"
-    id = Column(Integer, primary_key=True)
-    entity_type = Column(String(50))
-    entity_id = Column(Integer, ForeignKey('bicliques.id'))  # Add the ForeignKey
     key = Column(String(255))
     value = Column(Text)
 
