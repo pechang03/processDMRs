@@ -295,11 +295,13 @@ def process_triconnected_components(
             edge_count=tri_subgraph.number_of_edges(),
             density=2.0 * tri_subgraph.number_of_edges() / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0,
             category=category,
-            separation_pairs=list(separation_pairs) if separation_pairs else [],
-            nodes=list(nodes),
+            separation_pairs=separation_pairs_list,  # Now a list of lists
+            nodes=nodes_list,  # Now a simple list
             avg_dmrs=avg_dmrs,
             avg_genes=avg_genes,
-            is_simple=is_simple
+            is_simple=is_simple,
+            dmr_ids=dmr_ids_list,  # Add these fields
+            gene_ids=gene_ids_list
         )
 
         # Update node annotations with triconnected component ID
