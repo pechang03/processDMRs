@@ -48,7 +48,8 @@ def test_table_creation(engine):
         'master_gene_ids',
         'gene_timepoint_annotations',
         'dmr_timepoint_annotations',
-        'triconnected_components'
+        'triconnected_components',
+        'dominating_sets'
     }
     
     assert set(tables) == expected_tables
