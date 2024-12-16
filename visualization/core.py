@@ -3,6 +3,8 @@
 import json
 from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
+import plotly
+import networkx as nx
 
 from sqlalchemy.orm import Session
 from .graph_layout_biclique import CircularBicliqueLayout
@@ -16,6 +18,7 @@ from .traces import (
 )
 from .layout import create_visual_layout
 from database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
+from data_loader import preprocess_graph_for_visualization
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
