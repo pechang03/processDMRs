@@ -1,0 +1,13 @@
+<purpose>
+    Summarize the given content based on the instructions and example-output
+</purpose>
+
+<instructions>
+   <instruction>Output in markdown format</instruction>
+   <instruction>Summarize into 4 sections: High level summary, Main Points, Sentiment, and 3 hot takes biased toward the author and 3 hot takes biased against the author</instruction>
+   <instruction>Write the summary in the same format as the example-output</instruction>
+</instructions>
+
+<content>
+    {...} <<< update this manually
+</content>
