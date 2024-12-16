@@ -149,6 +149,7 @@ def upsert_dmr_timepoint_annotation(
         is_isolate: Whether the DMR is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
+    
     # Try to get existing annotation
     annotation = (
         session.query(DMRTimepointAnnotation)
@@ -160,6 +161,20 @@ def upsert_dmr_timepoint_annotation(
         )
         .first()
     )
+
+    def clean_biclique_ids(ids_str: str) -> str:
+        """Helper function to clean and deduplicate biclique IDs"""
+        if not ids_str:
+            return None
+        # Split string, convert to ints, deduplicate, sort, and convert back
+        try:
+            # Handle both quoted and unquoted strings
+            clean_str = ids_str.strip('"\'')
+            ids = {int(x.strip()) for x in clean_str.split(',')}
+            return ','.join(str(x) for x in sorted(ids))
+        except ValueError as e:
+            print(f"Error processing biclique IDs {ids_str}: {e}")
+            return None
 
     if annotation:
         # Update existing annotation
@@ -174,25 +189,17 @@ def upsert_dmr_timepoint_annotation(
         if is_isolate is not None:
             annotation.is_isolate = is_isolate
         if biclique_ids:
-            # Add new biclique IDs
-            if biclique_ids:
-                # Convert existing string to set of integers
-                existing_ids = set()
-                if annotation.biclique_ids:
-                    existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
-                
-                # Handle both single IDs and comma-separated strings
-                if "," in str(biclique_ids):  # If it's a comma-separated string
-                    new_ids = {int(x) for x in biclique_ids.split(",")}
-                else:  # If it's a single ID
-                    new_ids = {int(biclique_ids)}
-                    
-                existing_ids.update(new_ids)
-                
-                # Convert back to sorted string
-                annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
+            # Combine existing and new IDs
+            existing_ids = set()
+            if annotation.biclique_ids:
+                existing_ids.update(int(x) for x in clean_biclique_ids(annotation.biclique_ids).split(','))
+            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(',')}
+            existing_ids.update(new_ids)
+            
+            # Update with deduplicated string
+            annotation.biclique_ids = ','.join(str(x) for x in sorted(existing_ids))
     else:
-        # Create new annotation
+        # Create new annotation with cleaned biclique_ids
         annotation = DMRTimepointAnnotation(
             timepoint_id=timepoint_id,
             dmr_id=dmr_id,
@@ -201,7 +208,7 @@ def upsert_dmr_timepoint_annotation(
             degree=degree,
             node_type=node_type,
             is_isolate=is_isolate,
-            biclique_ids=str(biclique_ids) if biclique_ids else None,
+            biclique_ids=clean_biclique_ids(str(biclique_ids)) if biclique_ids else None,
         )
         session.add(annotation)
 
