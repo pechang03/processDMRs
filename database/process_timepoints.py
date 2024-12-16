@@ -176,27 +176,35 @@ def process_bicliques_for_timepoint(
     file_format: str = "gene_name",
 ):
     """Process bicliques for a timepoint and store results in database."""
-    print("Populating timepoint-specific graph data...")
+    print(f"\nProcessing bicliques for timepoint {timepoint_name}...")
     print(f"Original graph file: {original_graph_file}")
     print(f"Bicliques file: {bicliques_file}")
     print(f"Number of genes in mapping: {len(gene_id_mapping)}")
 
+    # Check for required files
     if not os.path.exists(bicliques_file):
         print(f"Warning: Bicliques file not found at {bicliques_file}")
-        return
+        print("Creating bipartite graph from DataFrame...")
+        # Create bipartite graph directly from DataFrame
+        bipartite_graph = create_bipartite_graph(
+            df=df,
+            gene_id_mapping=gene_id_mapping,
+            timepoint=timepoint_name
+        )
+        
+        # Write graph to file for future use
+        write_bipartite_graph(bipartite_graph, original_graph_file)
+        
+        # Use the graph we just created instead of reading from file
+        original_graph = bipartite_graph
+    else:
+        # Load original graph from file
+        print("Loading original graph...")
+        original_graph = read_bipartite_graph(original_graph_file, timepoint=timepoint_name)
 
-    if not os.path.exists(original_graph_file):
-        print(f"Warning: Original graph file not found at {original_graph_file}")
-        return
+    print(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
 
-    # Create graphs
-    print("Loading original graph...")
-    original_graph = read_bipartite_graph(original_graph_file, timepoint=timepoint_name)
-    print(
-        f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
-    )
-
-    # Process connected components in original graph first
+    # Process connected components in original graph
     print("\nProcessing connected components in original graph...")
     for comp_idx, component in enumerate(nx.connected_components(original_graph)):
         comp_subgraph = original_graph.subgraph(component)
@@ -217,7 +225,7 @@ def process_bicliques_for_timepoint(
         for node in component:
             original_graph.nodes[node]['component_id'] = comp_id
 
-        # Process triconnected components for this component
+        # Process triconnected components
         process_triconnected_components(
             session=session,
             timepoint_id=timepoint_id,
@@ -226,20 +234,24 @@ def process_bicliques_for_timepoint(
             df=df
         )
 
-    # Continue with biclique processing...
-    from database.biclique_processor import process_bicliques_db
-    bicliques_result = process_bicliques_db(
-        session=session,
-        timepoint_id=timepoint_id,
-        timepoint_name=timepoint_name,
-        original_graph=original_graph,
-        bicliques_file=bicliques_file,
-        df=df,
-        gene_id_mapping=gene_id_mapping,
-        file_format=file_format,
-    )
+    # Only process bicliques if we have the file
+    if os.path.exists(bicliques_file):
+        from database.biclique_processor import process_bicliques_db
+        bicliques_result = process_bicliques_db(
+            session=session,
+            timepoint_id=timepoint_id,
+            timepoint_name=timepoint_name,
+            original_graph=original_graph,
+            bicliques_file=bicliques_file,
+            df=df,
+            gene_id_mapping=gene_id_mapping,
+            file_format=file_format,
+        )
+        print(f"Processed {len(bicliques_result.get('bicliques', []))} bicliques")
+    else:
+        print("Skipping biclique processing - no bicliques file available")
 
-    print(f"Processed {len(bicliques_result.get('bicliques', []))} bicliques")
+    session.commit()
 def process_triconnected_components(
     session: Session,
     timepoint_id: int,
