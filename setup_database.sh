@@ -34,9 +34,9 @@ if not database_exists(engine.url):
 echo "Initializing database schema..."
 python scripts/initialize_database.py
 
-# Run database tests
-#echo "Running database tests..."
-#PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m pytest tests/database/ -v
+# Create database views
+echo "Creating database views..."
+python scripts/create_views.py
 
 echo "Database setup complete!"
 
