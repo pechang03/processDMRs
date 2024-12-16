@@ -88,8 +88,8 @@ class MasterGeneID(Base):
 
 __table_args__ = (
     Index('ix_master_gene_ids_gene_symbol_lower', 
-          func.lower(MasterGeneID.gene_symbol), 
-          sqlite_on_conflict='IGNORE'),
+          func.lower(gene_symbol), 
+          unique=True),
 )
 
 
