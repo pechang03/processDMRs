@@ -416,20 +416,19 @@ def populate_core_genes(
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
-        gene_symbol = str(gene_symbol).strip().lower()
-
-        print(f"Processing gene: {gene_symbol} with ID: {gene_id}")  # Debug line
+        gene_symbol = str(gene_symbol).strip()  # Keep original case for storage
+        gene_symbol_lower = gene_symbol.lower() # Lowercase for comparison
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
             continue
 
         try:
             # Check if gene already exists (case-insensitive)
             existing = (
                 session.query(MasterGeneID)
-                .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol)
+                .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol_lower)
                 .first()
             )
             
@@ -446,16 +445,27 @@ def populate_core_genes(
 
                 # Commit in batches
                 if genes_added % 1000 == 0:
-                    session.commit()
-                    print(f"Added {genes_added} master gene IDs and core gene entries")
+                    try:
+                        session.commit()
+                        print(f"Added {genes_added} master gene IDs and core gene entries")
+                    except Exception as e:
+                        session.rollback()
+                        print(f"Error in batch commit: {str(e)}")
+                        raise
 
+        except Exception as e:
+            session.rollback()
+            print(f"Error processing gene {gene_symbol}: {str(e)}")
+            continue
+
+    # Final commit for remaining records
     try:
         session.commit()
         print(f"Added {genes_added} master gene IDs")
         return genes_added
     except Exception as e:
         session.rollback()
-        print(f"Error committing master gene IDs: {str(e)}")
+        print(f"Error in final commit: {str(e)}")
         raise
 
 
@@ -799,54 +809,3 @@ def populate_relationships(session: Session, relationships: list):
         insert_relationship(session, **rel)
 
 
-def populate_master_gene_ids(session: Session, gene_id_mapping: Dict[str, int]):
-    """Populate MasterGeneID table and create core Gene entries.
-
-    Args:
-        session: Database session
-        gene_id_mapping: Dictionary mapping gene symbols to their IDs from master_gene_ids.csv
-    """
-    print("\nPopulating MasterGeneID and core Gene entries...")
-    genes_added = 0
-
-    for gene_symbol, gene_id in gene_id_mapping.items():
-        # Clean and lowercase the symbol
-        gene_symbol = str(gene_symbol).strip().lower()
-
-        # Skip invalid symbols
-        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if (
-            any(gene_symbol.startswith(pat) for pat in invalid_patterns)
-            or not gene_symbol
-        ):
-            continue
-
-        try:
-            # Create MasterGeneID entry
-            master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
-            session.add(master_gene)
-
-            # Create corresponding core Gene entry with same ID
-            gene = Gene(id=gene_id, symbol=gene_symbol, master_gene_id=gene_id)
-            session.add(gene)
-
-            genes_added += 1
-
-            # Commit in batches
-            if genes_added % 1000 == 0:
-                session.commit()
-                print(f"Added {genes_added} master gene IDs and core gene entries")
-
-        except Exception as e:
-            session.rollback()
-            print(f"Error adding master gene ID for {gene_symbol}: {str(e)}")
-            continue
-
-    # Final commit
-    try:
-        session.commit()
-        print(f"Added total of {genes_added} master gene IDs and core gene entries")
-    except Exception as e:
-        session.rollback()
-        print(f"Error in final commit: {str(e)}")
-        raise
