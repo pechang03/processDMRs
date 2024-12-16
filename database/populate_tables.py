@@ -420,47 +420,34 @@ def populate_core_genes(
 
         print(f"Processing gene: {gene_symbol} with ID: {gene_id}")  # Debug line
 
-        # Skip invalid symbols - now using exact matching
-        invalid_values = {
-            "unnamed:",
-            "nan",
-            ".",
-            "n/a",
-            "",
-            "none",
-            "null",
-        }  # Set of exact matches
-        if gene_symbol in invalid_values:
-            print(f"Skipping invalid gene symbol: {gene_symbol}")
+        # Skip invalid symbols
+        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
+        if any(gene_symbol.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
             continue
 
-        # Check if master gene ID already exists
-        existing = (
-            session.query(MasterGeneID)
-            .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol)
-            .first()
-        )
-
-        if not existing:
-            try:
-                print(f"Adding new master gene: {gene_symbol}")  # Debug line
+        try:
+            # Check if gene already exists (case-insensitive)
+            existing = (
+                session.query(MasterGeneID)
+                .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol)
+                .first()
+            )
+            
+            if not existing:
+                # Create MasterGeneID entry
                 master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
                 session.add(master_gene)
-                genes_added += 1
 
-                # Create corresponding gene entry
-                gene = Gene(symbol=gene_symbol, master_gene_id=gene_id)
+                # Create corresponding core Gene entry with same ID
+                gene = Gene(id=gene_id, symbol=gene_symbol, master_gene_id=gene_id)
                 session.add(gene)
 
-                # Commit in smaller batches
+                genes_added += 1
+
+                # Commit in batches
                 if genes_added % 1000 == 0:
                     session.commit()
-                    print(f"Added {genes_added} master gene IDs")
-
-            except Exception as e:
-                session.rollback()
-                print(f"Error adding master gene ID for {gene_symbol}: {str(e)}")
-                continue
+                    print(f"Added {genes_added} master gene IDs and core gene entries")
 
     try:
         session.commit()
