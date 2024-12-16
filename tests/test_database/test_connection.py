@@ -30,14 +30,14 @@ def test_get_db_session():
     session.close()
 
 @pytest.mark.parametrize("env_file", [
-    '.env',
-    '../.env',
-    '../../.env',
-    os.path.join(os.path.dirname(__file__), '.env')
+    'sample.env',
+    '../sample.env',
+    '../../sample.env',
+    os.path.join(os.path.dirname(__file__), 'sample.env')
 ])
 def test_env_file_loading(tmp_path, env_file):
     """Test loading environment variables from different locations."""
-    # Create temporary .env file
+    # Create temporary sample.env file
     env_content = "DATABASE_URL=sqlite:///custom_test.db"
     env_path = tmp_path / os.path.basename(env_file)
     env_path.parent.mkdir(parents=True, exist_ok=True)
