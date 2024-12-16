@@ -276,15 +276,21 @@ def process_triconnected_components(
         dmr_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 0}
         gene_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 1}
         
-        # Find separation pairs
+        # Find separation pairs and convert to list format
         from biclique_analysis.triconnected import find_separation_pairs
         separation_pairs = find_separation_pairs(tri_subgraph)
+        separation_pairs_list = [sorted(list(pair)) for pair in separation_pairs] if separation_pairs else []
+        
+        # Convert all sets to sorted lists for database storage
+        nodes_list = sorted(list(nodes))
+        dmr_ids_list = sorted(list(dmr_nodes))
+        gene_ids_list = sorted(list(gene_nodes))
         
         # Determine category based on composition
         from biclique_analysis.classifier import classify_component
         category = classify_component(dmr_nodes, gene_nodes, []).name.lower()
 
-        # Insert triconnected component
+        # Insert triconnected component with properly formatted data
         tri_id = insert_triconnected_component(
             session=session,
             timepoint_id=timepoint_id,
@@ -295,12 +301,12 @@ def process_triconnected_components(
             edge_count=tri_subgraph.number_of_edges(),
             density=2.0 * tri_subgraph.number_of_edges() / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0,
             category=category,
-            separation_pairs=separation_pairs_list,  # Now a list of lists
-            nodes=nodes_list,  # Now a simple list
+            separation_pairs=separation_pairs_list,
+            nodes=nodes_list,
             avg_dmrs=avg_dmrs,
             avg_genes=avg_genes,
             is_simple=is_simple,
-            dmr_ids=dmr_ids_list,  # Add these fields
+            dmr_ids=dmr_ids_list,
             gene_ids=gene_ids_list
         )
 
