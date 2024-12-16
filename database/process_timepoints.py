@@ -26,11 +26,11 @@ from biclique_analysis.reader import read_bicliques_file
 
 # from biclique_analysis.processor import create_node_metadata
 from biclique_analysis.component_analyzer import ComponentAnalyzer
-# from biclique_analysis.classifier import classify_component
-# from biclique_analysis.triconnected import (
-#    analyze_triconnected_components,
-#    find_separation_pairs,
-# )
+from biclique_analysis.classifier import classify_component
+from biclique_analysis.triconnected import (
+    analyze_triconnected_components,
+    find_separation_pairs,
+)
 # from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
 from database.models import (
@@ -191,9 +191,7 @@ def process_bicliques_for_timepoint(
 
     # Create graphs
     print("Loading original graph...")
-    original_graph = read_bipartite_graph(
-        original_graph_file, timepoint=timepoint_name
-    )
+    original_graph = read_bipartite_graph(original_graph_file, timepoint=timepoint_name)
     print(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
@@ -221,8 +219,6 @@ def process_bicliques_for_timepoint(
     # First pass: Process original graph components
     for component in nx.connected_components(original_graph):
         comp_subgraph = original_graph.subgraph(component)
-        from . import operations
-
         comp_id = operations.insert_component(
             session,
             timepoint_id=timepoint_id,
