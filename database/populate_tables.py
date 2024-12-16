@@ -403,6 +403,66 @@ def update_gene_hub_status(
             update_gene_metadata(session, gene_symbol, timepoint, is_hub=True)
 
 
+def populate_master_gene_ids(
+    session: Session,
+    gene_id_mapping: dict,
+):
+    """Populate MasterGeneID table with gene symbols and IDs."""
+    print("\nPopulating MasterGeneID table...")
+    print(f"Received {len(gene_id_mapping)} genes in mapping")
+    sample_genes = list(gene_id_mapping.items())[:5]
+    print(f"Sample genes: {sample_genes}")
+
+    genes_added = 0
+    for gene_symbol, gene_id in gene_id_mapping.items():
+        # Clean and lowercase the symbol
+        gene_symbol = str(gene_symbol).strip()  # Keep original case for storage
+        gene_symbol_lower = gene_symbol.lower()  # Lowercase for comparison
+
+        # Skip invalid symbols
+        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
+        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+            continue
+
+        try:
+            # Check if gene already exists (case-insensitive)
+            existing = (
+                session.query(MasterGeneID)
+                .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol_lower)
+                .first()
+            )
+            
+            if not existing:
+                # Create MasterGeneID entry
+                master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
+                session.add(master_gene)
+                genes_added += 1
+
+                # Commit in batches
+                if genes_added % 1000 == 0:
+                    try:
+                        session.commit()
+                        print(f"Added {genes_added} master gene IDs")
+                    except Exception as e:
+                        session.rollback()
+                        print(f"Error in batch commit: {str(e)}")
+                        raise
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error processing gene {gene_symbol}: {str(e)}")
+            continue
+
+    # Final commit for remaining records
+    try:
+        session.commit()
+        print(f"Added {genes_added} master gene IDs")
+        return genes_added
+    except Exception as e:
+        session.rollback()
+        print(f"Error in final commit: {str(e)}")
+        raise
+
 def populate_core_genes(
     session: Session,
     gene_id_mapping: dict,
