@@ -45,8 +45,12 @@ class Timepoint(Base):
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     dmr_id_offset = Column(Integer, default=0)
-    components = relationship("Component", cascade="all, delete-orphan", back_populates="timepoint")
-    bicliques = relationship("Biclique", cascade="all, delete-orphan", back_populates="timepoint")
+    components = relationship(
+        "Component", cascade="all, delete-orphan", back_populates="timepoint"
+    )
+    bicliques = relationship(
+        "Biclique", cascade="all, delete-orphan", back_populates="timepoint"
+    )
     dominating_set_dmrs = relationship("DominatingSet", back_populates="timepoint")
 
 
@@ -88,9 +92,9 @@ class MasterGeneID(Base):
     genes = relationship("Gene", back_populates="master_gene")
 
     __table_args__ = (
-        Index('ix_master_gene_ids_gene_symbol_lower', 
-              func.lower(gene_symbol), 
-              unique=True),
+        Index(
+            "ix_master_gene_ids_gene_symbol_lower", func.lower(gene_symbol), unique=True
+        ),
     )
 
 
@@ -137,7 +141,7 @@ class Metadata(Base):
     __tablename__ = "metadata"
     id = Column(Integer, primary_key=True)
     entity_type = Column(String(50))
-    entity_id = Column(Integer, ForeignKey('bicliques.id'))  # Add the ForeignKey
+    entity_id = Column(Integer, ForeignKey("bicliques.id"))  # Add the ForeignKey
     key = Column(String(255))
     value = Column(Text)
 
@@ -154,11 +158,13 @@ class Biclique(Base):
     timepoint = relationship("Timepoint", back_populates="bicliques")
     component = relationship("Component", back_populates="bicliques")
     component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
-    biclique_metadata = relationship("Metadata", 
-                                   backref="biclique",
-                                   foreign_keys=[Metadata.entity_id],
-                                   primaryjoin="and_(Metadata.entity_type=='biclique', "
-                                             "Metadata.entity_id==Biclique.id)")
+    biclique_metadata = relationship(
+        "Metadata",
+        backref="biclique",
+        foreign_keys=[Metadata.entity_id],
+        primaryjoin="and_(Metadata.entity_type=='biclique', "
+        "Metadata.entity_id==Biclique.id)",
+    )
 
 
 class Component(Base):
@@ -241,6 +247,7 @@ class Relationship(Base):
 
 from sqlalchemy import DateTime
 
+
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
@@ -248,8 +255,10 @@ class DominatingSet(Base):
     area_stat = Column(Float)  # Store the area statistic used in calculation
     utility_score = Column(Float)  # Store the utility score from the greedy algorithm
     dominated_gene_count = Column(Integer)  # Number of genes this DMR dominates
-    calculation_timestamp = Column(DateTime, default=func.now())  # When this was calculated
-    
+    calculation_timestamp = Column(
+        DateTime, default=func.now()
+    )  # When this was calculated
+
     # Relationships
     timepoint = relationship("Timepoint", back_populates="dominating_set_dmrs")
     dmr = relationship("DMR", back_populates="dominating_set_entries")
@@ -258,59 +267,3 @@ class DominatingSet(Base):
 def create_tables(engine):
     """Create all tables in the database."""
     Base.metadata.create_all(engine)
-
-def create_database_views(engine):
-    """Create useful database views for querying annotations."""
-    views_sql = """
-    -- View for genes with their timepoint annotations
-    CREATE VIEW IF NOT EXISTS gene_annotations_view AS
-    SELECT 
-        g.id AS gene_id,
-        g.symbol,
-        g.description,
-        g.master_gene_id,
-        g.interaction_source,
-        g.promoter_info,
-        t.name AS timepoint,
-        gta.component_id,
-        gta.triconnected_id,
-        gta.degree,
-        gta.node_type,
-        gta.gene_type,
-        gta.is_isolate,
-        gta.biclique_ids
-    FROM genes g
-    LEFT JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-    LEFT JOIN timepoints t ON gta.timepoint_id = t.id;
-
-    -- View for DMRs with their timepoint annotations
-    CREATE VIEW IF NOT EXISTS dmr_annotations_view AS
-    SELECT 
-        d.id AS dmr_id,
-        d.dmr_number,
-        d.area_stat,
-        d.description,
-        d.dmr_name,
-        d.gene_description,
-        d.chromosome,
-        d.start_position,
-        d.end_position,
-        d.strand,
-        d.p_value,
-        d.q_value,
-        d.mean_methylation,
-        d.is_hub,
-        t.name AS timepoint,
-        dta.component_id,
-        dta.triconnected_id,
-        dta.degree,
-        dta.node_type,
-        dta.is_isolate,
-        dta.biclique_ids
-    FROM dmrs d
-    LEFT JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
-    LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
-    """
-    
-    with engine.connect() as conn:
-        conn.execute(views_sql)
