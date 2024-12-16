@@ -277,12 +277,24 @@ def read_gene_mapping(mapping_file: str = "master_gene_ids.csv") -> Dict[str, in
         # Convert to dictionary
         gene_mapping = {}
         for _, row in df.iterrows():
-            if "Gene" in df.columns and "ID" in df.columns:
-                symbol = str(row["Gene"]).strip().lower()
-                if symbol and symbol != "nan":
-                    gene_mapping[symbol] = int(row["ID"])
+            if len(df.columns) >= 2:  # Ensure we have at least 2 columns
+                gene_col = df.columns[0]  # First column should be gene symbols
+                id_col = df.columns[1]   # Second column should be IDs
+            
+                for _, row in df.iterrows():
+                    symbol = str(row[gene_col]).strip().lower()
+                    if symbol and symbol != "nan":
+                        try:
+                            gene_mapping[symbol] = int(row[id_col])
+                        except ValueError:
+                            print(f"Warning: Invalid ID value for gene {symbol}: {row[id_col]}")
+                            continue
 
         print(f"Read {len(gene_mapping)} gene mappings from {mapping_file}")
+        if len(gene_mapping) < 5:
+            print("Warning: Very few gene mappings read!")
+        else:
+            print("Sample mappings:", list(gene_mapping.items())[:5])
         return gene_mapping
 
     except Exception as e:
