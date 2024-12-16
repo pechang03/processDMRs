@@ -210,6 +210,7 @@ class TriconnectedComponent(Base):
     density = Column(Float)
 
     # Classification
+    is_simple = Column(Boolean, default=False)
 
     # Component structure
     nodes = Column(ArrayType)  # Store actual nodes in component
