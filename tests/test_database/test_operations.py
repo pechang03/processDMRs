@@ -68,9 +68,6 @@ def master_gene(session):
     session.commit()
     return master_gene
     
-    # Test valid gene with master_gene_id
-    gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)
-    assert gene_id is not None
     assert gene_id >= 100000  # Verify ID is at least START_GENE_ID
     
     # Test duplicate gene (case insensitive)
