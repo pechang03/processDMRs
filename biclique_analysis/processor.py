@@ -13,11 +13,6 @@ from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
 from database import operations
-from database.populate_tables import (
-    populate_dmr_annotations,
-    populate_gene_annotations,
-    populate_bicliques,
-    insert_metadata,
 
 
 def _get_dmr_details(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
