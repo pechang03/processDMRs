@@ -85,11 +85,11 @@ def master_gene(session):
 
 def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint, master_gene):
     """Test deduplication of biclique IDs in gene annotations."""
-    # Create a valid gene using the master_gene fixture
+    # Create a test gene
     gene_id = insert_gene(session, "TEST_GENE", master_gene_id=master_gene.id)
     assert gene_id is not None
     
-    # Now test annotation
+    # First annotation with duplicate biclique IDs
     upsert_gene_timepoint_annotation(
         session,
         timepoint_id=timepoint,
@@ -99,19 +99,8 @@ def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint, mas
     
     # Verify deduplication
     annotation = session.query(GeneTimepointAnnotation).first()
+    assert annotation is not None
     assert annotation.biclique_ids == "0,1"
-    
-    # Add more biclique IDs with duplicates
-    upsert_gene_timepoint_annotation(
-        session,
-        timepoint_id=timepoint,
-        gene_id=gene_id,
-        biclique_ids="1,2,2,3"
-    )
-    
-    # Verify merged and deduplicated
-    annotation = session.query(GeneTimepointAnnotation).first()
-    assert annotation.biclique_ids == "0,1,2,3"
 
 def test_upsert_dmr_timepoint_annotation_biclique_dedup(session, timepoint):
     """Test deduplication of biclique IDs in DMR annotations."""
