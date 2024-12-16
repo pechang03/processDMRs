@@ -135,36 +135,30 @@ from sqlalchemy.orm import Session
 from database.operations import get_dominating_set, store_dominating_set
 
 
-def calculate_dominating_sets(
-    graph: nx.Graph,
-    df: pd.DataFrame,
-    timepoint: str,
-    session: Session,
-    timepoint_id: int,
-) -> Set[int]:
+def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str, session: Session, timepoint_id: int) -> Set[int]:
     """Calculate and store RB dominating set for the graph."""
-    print(f"Calculating dominating set for {timepoint}")
-
+    print(f"\nCalculating dominating set for {timepoint}")
+    
     # Calculate new dominating set
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
-
+    
     # Prepare metadata for storage
     area_stats = {}
     utility_scores = {}
     dominated_counts = {}
-
+    
     for dmr in dominating_set:
         # Get area stat if available
         try:
             area_stats[dmr] = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
         except (KeyError, IndexError):
             area_stats[dmr] = 1.0
-
+            
         # Calculate utility scores and dominated counts
         neighbors = list(graph.neighbors(dmr))
         utility_scores[dmr] = len(neighbors)
         dominated_counts[dmr] = len(neighbors)
-
+    
     # Store in database
     store_dominating_set(
         session,
@@ -172,9 +166,9 @@ def calculate_dominating_sets(
         dominating_set,
         area_stats,
         utility_scores,
-        dominated_counts,
+        dominated_counts
     )
-
+    
     print(f"Stored dominating set of size {len(dominating_set)} for {timepoint}")
     return dominating_set
 
