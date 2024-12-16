@@ -433,15 +433,15 @@ def populate_master_gene_ids(
             session.add(master_gene)
             genes_added += 1
 
-                # Commit in batches
-                if genes_added % 1000 == 0:
-                    try:
-                        session.commit()
-                        print(f"Added {genes_added} master gene IDs")
-                    except Exception as e:
-                        session.rollback()
-                        print(f"Error in batch commit: {str(e)}")
-                        raise
+            # Commit in batches
+            if genes_added % 1000 == 0:
+                try:
+                    session.commit()
+                    print(f"Added {genes_added} master gene IDs")
+                except Exception as e:
+                    session.rollback()
+                    print(f"Error in batch commit: {str(e)}")
+                    raise
 
         except Exception as e:
             session.rollback()
