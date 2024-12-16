@@ -643,7 +643,13 @@ def populate_dmrs(
     # Calculate dominating set
     from rb_domination import calculate_dominating_sets
 
-    dominating_set = calculate_dominating_sets(bipartite_graph, df, "DSStimeseries")
+    dominating_set = calculate_dominating_sets(
+        bipartite_graph, 
+        df, 
+        "DSStimeseries",  # timepoint name
+        session,          # database session
+        timepoint_id      # timepoint ID
+    )
 
     for _, row in df.iterrows():
         dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
