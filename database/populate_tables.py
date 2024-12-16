@@ -415,13 +415,17 @@ def populate_master_gene_ids(
 
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():
-        # Clean and lowercase the symbol
+        # Skip None or empty symbols
+        if not gene_symbol:
+            continue
+            
+        # Clean and lowercase the symbol for comparison
         gene_symbol = str(gene_symbol).strip()  # Keep original case for storage
         gene_symbol_lower = gene_symbol.lower()  # Lowercase for comparison
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol_lower:
             continue
 
         try:
@@ -456,7 +460,7 @@ def populate_master_gene_ids(
     # Final commit for remaining records
     try:
         session.commit()
-        print(f"Added {genes_added} master gene IDs")
+        print(f"Total master gene IDs added: {genes_added}")
         return genes_added
     except Exception as e:
         session.rollback()
