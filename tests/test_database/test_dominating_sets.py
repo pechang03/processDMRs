@@ -12,6 +12,11 @@ class TestDominatingSetStorage(unittest.TestCase):
     def setUp(self):
         """Set up test database and sample data."""
         self.engine = get_db_engine()
+        
+        # Create all tables before starting tests
+        from database.models import Base
+        Base.metadata.create_all(self.engine)
+        
         self.session = Session(self.engine)
         
         # Create test timepoint
@@ -30,6 +35,10 @@ class TestDominatingSetStorage(unittest.TestCase):
         self.session.query(DominatingSet).delete()
         self.session.query(Timepoint).delete()
         self.session.commit()
+        
+        # Drop all tables after tests
+        Base.metadata.drop_all(self.engine)
+        
         self.session.close()
 
     def test_store_dominating_set(self):
