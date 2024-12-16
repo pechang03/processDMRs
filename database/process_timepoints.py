@@ -211,3 +211,83 @@ def process_bicliques_for_timepoint(
     )
 
     print(f"Processed {len(bicliques_result.get('bicliques', []))} bicliques")
+def process_triconnected_components(
+    session: Session,
+    timepoint_id: int,
+    original_graph: nx.Graph,
+    component_id: int,
+    df: pd.DataFrame
+) -> None:
+    """Process and store triconnected components for the original graph."""
+    from biclique_analysis.triconnected import analyze_triconnected_components
+    from biclique_analysis.edge_classification import classify_edges
+    from .operations import insert_triconnected_component
+
+    print(f"\nAnalyzing triconnected components for component {component_id}...")
+    
+    # Get component subgraph
+    component_nodes = {
+        node for node in original_graph.nodes() 
+        if original_graph.nodes[node].get('component_id') == component_id
+    }
+    subgraph = original_graph.subgraph(component_nodes)
+    
+    # Analyze triconnected components
+    tricomps, stats, avg_dmrs, avg_genes, is_simple = analyze_triconnected_components(subgraph)
+    
+    print(f"Found {len(tricomps)} triconnected components")
+    print(f"Stats: {stats}")
+
+    # Process each triconnected component
+    for idx, nodes in enumerate(tricomps):
+        # Get component subgraph
+        tri_subgraph = original_graph.subgraph(nodes)
+        
+        # Calculate basic metrics
+        dmr_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 0}
+        gene_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 1}
+        
+        # Find separation pairs
+        from biclique_analysis.triconnected import find_separation_pairs
+        separation_pairs = find_separation_pairs(tri_subgraph)
+        
+        # Determine category based on composition
+        from biclique_analysis.classifier import classify_component
+        category = classify_component(dmr_nodes, gene_nodes, []).name.lower()
+
+        # Insert triconnected component
+        tri_id = insert_triconnected_component(
+            session=session,
+            timepoint_id=timepoint_id,
+            component_id=component_id,
+            size=len(nodes),
+            dmr_count=len(dmr_nodes),
+            gene_count=len(gene_nodes),
+            edge_count=tri_subgraph.number_of_edges(),
+            density=2.0 * tri_subgraph.number_of_edges() / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0,
+            category=category,
+            separation_pairs=list(separation_pairs) if separation_pairs else [],
+            nodes=list(nodes),
+            avg_dmrs=avg_dmrs,
+            avg_genes=avg_genes,
+            is_simple=is_simple
+        )
+
+        # Update node annotations with triconnected component ID
+        for node in nodes:
+            if original_graph.nodes[node]['bipartite'] == 0:
+                upsert_dmr_timepoint_annotation(
+                    session=session,
+                    timepoint_id=timepoint_id,
+                    dmr_id=node,
+                    triconnected_id=tri_id
+                )
+            else:
+                upsert_gene_timepoint_annotation(
+                    session=session,
+                    timepoint_id=timepoint_id,
+                    gene_id=node,
+                    triconnected_id=tri_id
+                )
+
+    session.commit()
