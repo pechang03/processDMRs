@@ -94,7 +94,9 @@ SELECT
     COUNT(DISTINCT b.id) as biclique_count,
     COUNT(DISTINCT c.id) as component_count,
     AVG(CAST(c.density AS FLOAT)) as avg_component_density,
-    AVG(CAST(c.size AS FLOAT)) as avg_component_size
+    AVG(CAST(c.size AS FLOAT)) as avg_component_size,
+    AVG(CAST(c.dmr_count AS FLOAT)) as avg_dmr_count,
+    AVG(CAST(c.gene_count AS FLOAT)) as avg_gene_count
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
