@@ -86,11 +86,11 @@ class MasterGeneID(Base):
     gene_symbol = Column(String(255), nullable=False)
     genes = relationship("Gene", back_populates="master_gene")
 
-__table_args__ = (
-    Index('ix_master_gene_ids_gene_symbol_lower', 
-          func.lower(MasterGeneID.gene_symbol), 
-          unique=True),
-)
+    __table_args__ = (
+        Index('ix_master_gene_ids_gene_symbol_lower', 
+              func.lower(gene_symbol), 
+              unique=True),
+    )
 
 
 class DMR(Base):
