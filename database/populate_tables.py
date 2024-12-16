@@ -175,13 +175,17 @@ def upsert_dmr_timepoint_annotation(
             annotation.is_isolate = is_isolate
         if biclique_ids:
             # Append new biclique ID to existing list
-            existing_ids = (
-                set(annotation.biclique_ids.split(","))
-                if annotation.biclique_ids
-                else set()
-            )
-            existing_ids.add(str(biclique_ids))
-            annotation.biclique_ids = ",".join(sorted(existing_ids))
+            # Convert existing string to set of integers
+            existing_ids = set()
+            if annotation.biclique_ids:
+                existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
+            
+            # Add new biclique ID (converting to int first)
+            new_id = int(biclique_ids)
+            existing_ids.add(new_id)
+            
+            # Convert back to sorted string
+            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = DMRTimepointAnnotation(
@@ -265,13 +269,17 @@ def upsert_gene_timepoint_annotation(
             annotation.is_isolate = is_isolate
         if biclique_ids:
             # Append new biclique ID to existing list
-            existing_ids = (
-                set(annotation.biclique_ids.split(","))
-                if annotation.biclique_ids
-                else set()
-            )
-            existing_ids.add(str(biclique_ids))
-            annotation.biclique_ids = ",".join(sorted(existing_ids))
+            # Convert existing string to set of integers
+            existing_ids = set()
+            if annotation.biclique_ids:
+                existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
+            
+            # Add new biclique ID (converting to int first)
+            new_id = int(biclique_ids)
+            existing_ids.add(new_id)
+            
+            # Convert back to sorted string
+            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = GeneTimepointAnnotation(
