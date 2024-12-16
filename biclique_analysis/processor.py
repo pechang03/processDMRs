@@ -13,7 +13,12 @@ from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
 from database import operations
-from database.populate_tables import populate_dmr_annotations, populate_gene_annotations, populate_bicliques, insert_metadata
+from database.populate_tables import (
+    populate_dmr_annotations,
+    populate_gene_annotations,
+    populate_bicliques,
+    insert_metadata,
+)
 import json
 from .classifier import BicliqueSizeCategory, classify_biclique, classify_component
 
@@ -32,7 +37,7 @@ def process_bicliques(
     2. [process_bicliques] (YOU ARE HERE)
     3. read_bicliques_file
     4. process_components
-    
+
     Process bicliques and add detailed information.
     """
     print(f"\nProcessing bicliques for {dataset_name}")
@@ -338,8 +343,8 @@ def create_biclique_metadata(
             "id": idx,
             "size": {"total": size, "dmrs": len(dmr_nodes), "genes": len(gene_nodes)},
             "nodes": {
-                "dmrs": sorted(str(n) for n in dmr_nodes), 
-                "genes": sorted(str(n) for n in gene_nodes)
+                "dmrs": sorted(str(n) for n in dmr_nodes),
+                "genes": sorted(str(n) for n in gene_nodes),
             },
             "metrics": {
                 "density": density,
@@ -371,3 +376,17 @@ def create_biclique_metadata(
                 "genes": {
                     "types": [
                         node_info.get_node_type(n) if node_info else "gene"
+                        for n in gene_nodes
+                    ],
+                    "degrees": [
+                        node_info.get_node_degree(n) if node_info else 0
+                        for n in gene_nodes
+                    ],
+                },
+            },
+        }
+
+        metadata.append(biclique_metadata)
+
+        # Convert to JSON-safe format
+        return convert_for_json(metadata)
