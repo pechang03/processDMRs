@@ -167,6 +167,37 @@ class TestGraphStatistics(unittest.TestCase):
         }
         bicliques = [(dmr_nodes, gene_nodes), (second_dmr_nodes, second_gene_nodes)]
         self.assertTrue(is_complex(bicliques))
+        
+    def test_dominating_set_calculation(self):
+        """Test calculation of dominating sets"""
+        from rb_domination import calculate_dominating_sets
+        from sqlalchemy.orm import Session
+        from database.connection import get_db_engine
+        
+        # Create test session
+        engine = get_db_engine()
+        session = Session(engine)
+        
+        # Calculate dominating set
+        dominating_set = calculate_dominating_sets(
+            self.bipartite_graph,
+            self.df,
+            "test_timepoint",
+            session,
+            1  # test timepoint_id
+        )
+        
+        # Basic validation
+        self.assertIsNotNone(dominating_set)
+        self.assertTrue(len(dominating_set) > 0)
+        
+        # Verify coverage
+        gene_nodes = {n for n, d in self.bipartite_graph.nodes(data=True) if d["bipartite"] == 1}
+        dominated_genes = set()
+        for dmr in dominating_set:
+            dominated_genes.update(self.bipartite_graph.neighbors(dmr))
+        
+        self.assertEqual(dominated_genes, gene_nodes, "All genes should be dominated")
 
     def test_component_analyzer(self):
         """Test ComponentAnalyzer functionality"""
