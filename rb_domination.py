@@ -272,3 +272,61 @@ def copy_dominating_set(
         raise ValueError("Some dominating set nodes not found in target graph")
 
     return dominating_set
+import networkx as nx
+from typing import Set, Dict, Tuple
+
+def calculate_dominating_set(graph: nx.Graph, area_stats: Dict[int, float]) -> Tuple[Set[int], Dict[int, float], Dict[int, float], Dict[int, int]]:
+    """
+    Calculate a dominating set for the given graph using a greedy algorithm.
+
+    Args:
+        graph: NetworkX graph representing the DMR-gene interactions
+        area_stats: Dictionary mapping DMR IDs to their area statistics
+
+    Returns:
+        Tuple containing:
+        - Set of DMR IDs in the dominating set
+        - Dictionary of utility scores for each DMR in the dominating set
+        - Dictionary of area statistics for each DMR in the dominating set
+        - Dictionary of dominated gene counts for each DMR in the dominating set
+    """
+    dominating_set = set()
+    utility_scores = {}
+    dominated_genes = set()
+    dominated_counts = {}
+
+    # Sort DMRs by area statistic in descending order
+    sorted_dmrs = sorted(area_stats.keys(), key=lambda dmr: area_stats[dmr], reverse=True)
+
+    for dmr in sorted_dmrs:
+        if dmr not in dominating_set:
+            # Calculate utility score
+            utility_score = calculate_utility_score(graph, dmr, dominated_genes)
+            
+            if utility_score > 0:
+                dominating_set.add(dmr)
+                utility_scores[dmr] = utility_score
+                dominated_counts[dmr] = 0  # Initialize count
+
+                # Update dominated genes
+                for gene in graph.neighbors(dmr):
+                    if gene not in dominated_genes:
+                        dominated_genes.add(gene)
+                        dominated_counts[dmr] += 1
+
+    return dominating_set, utility_scores, {dmr: area_stats[dmr] for dmr in dominating_set}, dominated_counts
+
+def calculate_utility_score(graph: nx.Graph, dmr: int, dominated_genes: Set[int]) -> float:
+    """
+    Calculate the utility score for a DMR based on the number of new genes it would dominate.
+
+    Args:
+        graph: NetworkX graph representing the DMR-gene interactions
+        dmr: DMR ID to calculate utility for
+        dominated_genes: Set of genes already dominated by the current dominating set
+
+    Returns:
+        Utility score for the DMR
+    """
+    new_genes_dominated = set(graph.neighbors(dmr)) - dominated_genes
+    return len(new_genes_dominated)
