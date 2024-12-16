@@ -144,7 +144,7 @@ class Biclique(Base):
     component = relationship("Component", back_populates="bicliques")
     # Add this line:
     component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
-    metadata = relationship("Metadata", backref="biclique", foreign_keys="[Metadata.entity_id]")
+    biclique_metadata = relationship("Metadata", backref="biclique", foreign_keys="[Metadata.entity_id]")
 
 
 class Component(Base):
