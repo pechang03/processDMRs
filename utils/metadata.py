@@ -3,12 +3,14 @@
 from typing import Dict, List, Tuple, Set
 import pandas as pd
 from utils.node_info import NodeInfo
+import networkx as nx
+
 
 def create_node_labels_and_metadata(
     df: pd.DataFrame,
     gene_id_mapping: Dict[str, int],
     node_biclique_map: Dict[int, List[int]],
-    graph: nx.Graph = None
+    graph: nx.Graph = None,
 ) -> Tuple[Dict, Dict, Dict]:
     """Create node labels and metadata for visualization."""
     # Create node info if graph is provided
@@ -64,6 +66,7 @@ def create_node_labels_and_metadata(
 
     return node_labels, dmr_metadata, gene_metadata
 
+
 def get_dmr_details(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
     """Get detailed information for DMR nodes."""
     dmr_details = []
@@ -80,10 +83,9 @@ def get_dmr_details(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
         )
     return dmr_details
 
+
 def get_gene_details(
-    gene_nodes: Set[int], 
-    df: pd.DataFrame, 
-    gene_id_mapping: Dict
+    gene_nodes: Set[int], df: pd.DataFrame, gene_id_mapping: Dict
 ) -> List[Dict]:
     """Get detailed information for gene nodes."""
     gene_details = []
