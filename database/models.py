@@ -87,7 +87,10 @@ class MasterGeneID(Base):
     genes = relationship("Gene", back_populates="master_gene")
 
     __table_args__ = (
-        Index('ix_master_gene_ids_gene_symbol_lower', func.lower(gene_symbol), unique=True),
+        Index('ix_master_gene_ids_gene_symbol_lower', 
+              func.lower(gene_symbol), 
+              unique=True,
+              sqlite_on_conflict='IGNORE'),  # Add this for SQLite
     )
 
 

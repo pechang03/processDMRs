@@ -286,8 +286,6 @@ def insert_gene(
             promoter_info=promoter_info,
         )
         session.add(gene)
-        session.add(gene)
-        session.commit()
         session.commit()
         return gene.id
 
