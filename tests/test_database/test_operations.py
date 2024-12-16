@@ -142,7 +142,7 @@ def test_upsert_annotations_with_component_info(session, timepoint):
     session.commit()
     
     # Create a valid gene
-    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100001)
+    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=master_gene.id)
     assert gene_id is not None
     
     # Test gene annotation
@@ -157,7 +157,9 @@ def test_upsert_annotations_with_component_info(session, timepoint):
         is_isolate=False
     )
     
+    # Verify annotation
     gene_annot = session.query(GeneTimepointAnnotation).first()
+    assert gene_annot is not None
     assert gene_annot.component_id == 1
     assert gene_annot.degree == 3
     assert gene_annot.node_type == "split_gene"
