@@ -8,25 +8,27 @@ from sqlalchemy.orm import Session
 
 from database.connection import get_db_engine
 from database.models import (
-    Component, 
-    Biclique, 
-    DMRTimepointAnnotation, 
+    Component,
+    Biclique,
+    DMRTimepointAnnotation,
     GeneTimepointAnnotation,
-    Timepoint
+    Timepoint,
 )
 from visualization.core import create_component_visualization
 from routes import register_blueprints
 
 # Version constant
-__version__ = "0.0.3-alpha"
+__version__ = "0.0.5-alpha"
 
 # Initialize Flask app
 app = Flask(__name__)
+
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):
     """Serve static files."""
     return send_from_directory(app.static_folder, filename)
+
 
 @app.route("/api/timepoints")
 def get_timepoints():
@@ -34,11 +36,13 @@ def get_timepoints():
     engine = get_db_engine()
     with Session(engine) as session:
         timepoints = session.query(Timepoint).all()
-        return jsonify([{
-            'id': t.id,
-            'name': t.name,
-            'description': t.description
-        } for t in timepoints])
+        return jsonify(
+            [
+                {"id": t.id, "name": t.name, "description": t.description}
+                for t in timepoints
+            ]
+        )
+
 
 @app.route("/api/timepoint/<int:timepoint_id>/components")
 def get_timepoint_components(timepoint_id):
@@ -46,16 +50,22 @@ def get_timepoint_components(timepoint_id):
     engine = get_db_engine()
     with Session(engine) as session:
         components = session.query(Component).filter_by(timepoint_id=timepoint_id).all()
-        return jsonify([{
-            'id': c.id,
-            'graph_type': c.graph_type,
-            'category': c.category,
-            'size': c.size,
-            'dmr_count': c.dmr_count,
-            'gene_count': c.gene_count,
-            'edge_count': c.edge_count,
-            'density': c.density
-        } for c in components])
+        return jsonify(
+            [
+                {
+                    "id": c.id,
+                    "graph_type": c.graph_type,
+                    "category": c.category,
+                    "size": c.size,
+                    "dmr_count": c.dmr_count,
+                    "gene_count": c.gene_count,
+                    "edge_count": c.edge_count,
+                    "density": c.density,
+                }
+                for c in components
+            ]
+        )
+
 
 @app.route("/api/component/<int:component_id>")
 def get_component(component_id):
@@ -64,26 +74,32 @@ def get_component(component_id):
     with Session(engine) as session:
         component = session.query(Component).get(component_id)
         if not component:
-            return jsonify({'error': 'Component not found'}), 404
-            
+            return jsonify({"error": "Component not found"}), 404
+
         bicliques = session.query(Biclique).filter_by(component_id=component_id).all()
-        
-        return jsonify({
-            'id': component.id,
-            'graph_type': component.graph_type,
-            'category': component.category,
-            'size': component.size,
-            'dmr_count': component.dmr_count,
-            'gene_count': component.gene_count,
-            'edge_count': component.edge_count,
-            'density': component.density,
-            'bicliques': [{
-                'id': b.id,
-                'category': b.category,
-                'dmr_count': len(b.dmr_ids),
-                'gene_count': len(b.gene_ids)
-            } for b in bicliques]
-        })
+
+        return jsonify(
+            {
+                "id": component.id,
+                "graph_type": component.graph_type,
+                "category": component.category,
+                "size": component.size,
+                "dmr_count": component.dmr_count,
+                "gene_count": component.gene_count,
+                "edge_count": component.edge_count,
+                "density": component.density,
+                "bicliques": [
+                    {
+                        "id": b.id,
+                        "category": b.category,
+                        "dmr_count": len(b.dmr_ids),
+                        "gene_count": len(b.gene_ids),
+                    }
+                    for b in bicliques
+                ],
+            }
+        )
+
 
 @app.route("/api/component/<int:component_id>/visualization")
 def get_component_visualization(component_id):
@@ -94,11 +110,12 @@ def get_component_visualization(component_id):
             vis_data = create_component_visualization(
                 component_id=component_id,
                 session=session,
-                layout_type="circular"  # Could make this configurable via query param
+                layout_type="circular",  # Could make this configurable via query param
             )
-            return jsonify({'visualization': vis_data})
+            return jsonify({"visualization": vis_data})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -107,22 +124,14 @@ def parse_arguments():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--version", 
-        action="version", 
-        version=f"%(prog)s {__version__}"
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument(
-        "--port", 
-        type=int, 
-        default=5000, 
-        help="Port to run the web server on"
+        "--port", type=int, default=5000, help="Port to run the web server on"
     )
-    parser.add_argument(
-        "--debug", 
-        action="store_true", 
-        help="Run in debug mode"
-    )
+    parser.add_argument("--debug", action="store_true", help="Run in debug mode")
     return parser.parse_args()
+
 
 def configure_app(app):
     """Configure Flask application."""
@@ -151,8 +160,12 @@ def configure_app(app):
     # Set data file paths from environment variables
     data_dir = os.getenv("DATA_DIR", "./data")
     app.config["DATA_DIR"] = data_dir
-    app.config["DSS1_FILE"] = os.getenv("DSS1_FILE", os.path.join(data_dir, "DSS1.xlsx"))
-    app.config["DSS_PAIRWISE_FILE"] = os.getenv("DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx"))
+    app.config["DSS1_FILE"] = os.getenv(
+        "DSS1_FILE", os.path.join(data_dir, "DSS1.xlsx")
+    )
+    app.config["DSS_PAIRWISE_FILE"] = os.getenv(
+        "DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
+    )
 
     # Configure static files path
     app.static_folder = os.path.join(
@@ -160,10 +173,8 @@ def configure_app(app):
     )
 
     # Add MIME type handling
-    app.config["MIME_TYPES"] = {
-        ".css": "text/css", 
-        ".js": "application/javascript"
-    }
+    app.config["MIME_TYPES"] = {".css": "text/css", ".js": "application/javascript"}
+
 
 def main():
     """Main entry point for the application."""
@@ -183,6 +194,7 @@ def main():
     # Run the Flask app
     app.run(debug=args.debug, port=args.port)
     return 0
+
 
 if __name__ == "__main__":
     exit(main())
