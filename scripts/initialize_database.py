@@ -127,39 +127,48 @@ def main():
             )
             session.commit()
             # Process pairwise sheets
-            """
+
             pairwise_dfs = {}
             for sheet in pairwise_sheets:
                 print(f"\nProcessing sheet: {sheet}")
                 df_sheet = read_excel_file(dss_pairwise_file, sheet_name=sheet)
                 if df_sheet is not None:
                     pairwise_dfs[sheet] = df_sheet
-                    #all_genes.update(get_genes_from_df(df))
+                    # all_genes.update(get_genes_from_df(df))
 
                 original_graph_file = os.path.join(
                     data_dir, "bipartite_graph_output_", f"{sheet}.txt"
                 )
-                bicliques_file = os.path.join(data_dir, "bipartite_graph_output.txt.", f"{sheet}_bicluster")
+                bicliques_file = os.path.join(
+                    data_dir, "bipartite_graph_output.txt.", f"{sheet}_bicluster"
+                )
                 timepoint_id = get_or_create_timepoint(session, sheet)
                 process_timepoint_table_data(
                     session=session,
                     timepoint_id=timepoint_id,
                     df=df_sheet,
-                    gene_id_mapping=gene_id_mapping
+                    gene_id_mapping=gene_id_mapping,
                 )
-                original_graph_file = os.path.join(data_dir, f"bipartite_graph_output_{sheet}.txt")
-                bicliques_file = os.path.join(data_dir, f"bipartite_graph_output_{sheet}.txt.biclusters")
-                
+                original_graph_file = os.path.join(
+                    data_dir, f"bipartite_graph_output_{sheet}.txt"
+                )
+                bicliques_file = os.path.join(
+                    data_dir, f"bipartite_graph_output_{sheet}.txt.biclusters"
+                )
+                timepoint_name = sheet  # AI we want to remove the _TSS from the end
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, sheet),
+                    timepoint_name=sheet,
                     original_graph_file=original_graph_file,
                     bicliques_file=bicliques_file,
                     df=df_sheet,
                     gene_id_mapping=gene_id_mapping,
+                    file_format="gene_name",
                 )
+                session.commit()
             session.commit()
-            """
+
             print("\nDatabase initialization completed successfully")
 
     except Exception as e:
