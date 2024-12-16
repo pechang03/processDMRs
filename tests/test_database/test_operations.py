@@ -55,18 +55,18 @@ def test_get_or_create_timepoint(session):
     assert timepoint.description == "Test Description"
     assert timepoint.dmr_id_offset == 1000
 
-def test_insert_gene(session):
-    """Test inserting genes with various cases."""
-    import os
-    os.environ['START_GENE_ID'] = '100000'  # Set start ID for testing
-    
 @pytest.fixture(scope="function")
 def master_gene(session):
     """Create a test master gene entry."""
     master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
     session.add(master_gene)
-    session.commit()
+    session.commit() 
     return master_gene
+
+def test_insert_gene(session):
+    """Test inserting genes with various cases."""
+    import os
+    os.environ['START_GENE_ID'] = '100000'  # Set start ID for testing
     
     # Test valid gene with master_gene_id
     gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)

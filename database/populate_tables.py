@@ -483,11 +483,10 @@ def populate_core_genes(
         gene_symbol_lower = gene_symbol.lower()  # Lowercase for comparison
 
         # Skip invalid symbols
-        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if (
-            any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns)
-            or not gene_symbol
-        ):
+        invalid_patterns = ["unnamed:", "nan", "n/a", ""]
+        # any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns)
+        # or not gene_symbol
+        if gene_symbol in invalid_patterns:
             print(f"Warning invalid symbol: {gene_symbol}")
             continue
 
