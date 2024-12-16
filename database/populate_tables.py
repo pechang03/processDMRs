@@ -174,18 +174,23 @@ def upsert_dmr_timepoint_annotation(
         if is_isolate is not None:
             annotation.is_isolate = is_isolate
         if biclique_ids:
-            # Append new biclique ID to existing list
-            # Convert existing string to set of integers
-            existing_ids = set()
-            if annotation.biclique_ids:
-                existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
-            
-            # Add new biclique ID (converting to int first)
-            new_id = int(biclique_ids)
-            existing_ids.add(new_id)
-            
-            # Convert back to sorted string
-            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
+            # Add new biclique IDs
+            if biclique_ids:
+                # Convert existing string to set of integers
+                existing_ids = set()
+                if annotation.biclique_ids:
+                    existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
+                
+                # Handle both single IDs and comma-separated strings
+                if "," in str(biclique_ids):  # If it's a comma-separated string
+                    new_ids = {int(x) for x in biclique_ids.split(",")}
+                else:  # If it's a single ID
+                    new_ids = {int(biclique_ids)}
+                    
+                existing_ids.update(new_ids)
+                
+                # Convert back to sorted string
+                annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = DMRTimepointAnnotation(
@@ -268,18 +273,23 @@ def upsert_gene_timepoint_annotation(
         if is_isolate is not None:
             annotation.is_isolate = is_isolate
         if biclique_ids:
-            # Append new biclique ID to existing list
-            # Convert existing string to set of integers
-            existing_ids = set()
-            if annotation.biclique_ids:
-                existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
-            
-            # Add new biclique ID (converting to int first)
-            new_id = int(biclique_ids)
-            existing_ids.add(new_id)
-            
-            # Convert back to sorted string
-            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
+            # Add new biclique IDs
+            if biclique_ids:
+                # Convert existing string to set of integers
+                existing_ids = set()
+                if annotation.biclique_ids:
+                    existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
+                
+                # Handle both single IDs and comma-separated strings
+                if "," in str(biclique_ids):  # If it's a comma-separated string
+                    new_ids = {int(x) for x in biclique_ids.split(",")}
+                else:  # If it's a single ID
+                    new_ids = {int(biclique_ids)}
+                    
+                existing_ids.update(new_ids)
+                
+                # Convert back to sorted string
+                annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = GeneTimepointAnnotation(
