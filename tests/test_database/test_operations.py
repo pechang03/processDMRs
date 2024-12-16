@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import networkx as nx
-from database.models import Base, Gene, DMR, Timepoint, GeneTimepointAnnotation, DMRTimepointAnnotation
+from database.models import Base, Gene, DMR, Timepoint, GeneTimepointAnnotation, DMRTimepointAnnotation, MasterGeneID
 from database.operations import (
     get_or_create_timepoint,
     insert_gene,
@@ -83,12 +83,10 @@ def master_gene(session):
     assert insert_gene(session, "nan") is None
     assert insert_gene(session, ".") is None
 
-def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint):
+def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint, master_gene):
     """Test deduplication of biclique IDs in gene annotations."""
-    master_gene = master_gene  # Use the fixture instead of creating a new entry
-    
-    # Create a valid gene
-    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100001)
+    # Create a valid gene using the master_gene fixture
+    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=master_gene.id)
     assert gene_id is not None
     
     # Now test annotation
