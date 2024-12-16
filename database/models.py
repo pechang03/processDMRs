@@ -138,12 +138,13 @@ class Biclique(Base):
     component_id = Column(Integer, ForeignKey("components.id"))
     dmr_ids = Column(ArrayType)
     gene_ids = Column(ArrayType)
-    catagory = Column(String(50))
-    endcoding = Column(String(255))
+    category = Column(String(50))
+    encoding = Column(String(255))
     timepoint = relationship("Timepoint", back_populates="bicliques")
     component = relationship("Component", back_populates="bicliques")
     # Add this line:
     component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
+    metadata = relationship("Metadata", backref="biclique", foreign_keys="[Metadata.entity_id]")
 
 
 class Component(Base):
