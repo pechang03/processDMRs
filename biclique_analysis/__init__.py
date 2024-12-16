@@ -51,3 +51,27 @@ __all__ = list(
         ]
     )
 )
+def process_bicliques(
+    original_graph,
+    biclique_file,
+    timepoint,
+    gene_id_mapping=None,
+    file_format="gene-name",
+    biclique_graph=None,
+):
+    """Process bicliques from file."""
+    result = read_bicliques_file(
+        biclique_file,
+        original_graph,
+        gene_id_mapping=gene_id_mapping,
+        file_format=file_format
+    )
+    
+    # If a biclique graph was provided, populate it
+    if biclique_graph is not None and result and "bicliques" in result:
+        for dmr_nodes, gene_nodes in result["bicliques"]:
+            biclique_graph.add_nodes_from(dmr_nodes, bipartite=0)
+            biclique_graph.add_nodes_from(gene_nodes, bipartite=1)
+            biclique_graph.add_edges_from((d, g) for d in dmr_nodes for g in gene_nodes)
+    
+    return result
