@@ -185,14 +185,6 @@ def create_views(engine):
             conn.commit()
         print("Database views created successfully")
     
-    try:
-        with engine.connect() as conn:
-            conn.execute(text(views_sql))
-            conn.commit()
-        print("Database views created successfully")
-    except Exception as e:
-        print(f"Error creating database views: {str(e)}")
-        sys.exit(1)
 
 def main():
     """Main entry point for creating database views."""
