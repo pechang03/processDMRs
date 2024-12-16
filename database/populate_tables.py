@@ -573,12 +573,14 @@ def process_gene_sources(
     """
     print("\nProcessing gene interaction sources...")
     processed_genes = set()
+    promoter_info_map = defaultdict(set)  # Track promoter info per gene
 
-    from .operations import update_gene_source_metadata
+    from .operations import update_gene_source_metadata, upsert_gene_timepoint_annotation
+    from collections import defaultdict
 
     # Process each DMR row in the dataframe
     for _, row in df.iterrows():
-        # Process nearby genes - if Gene_Symbol_Nearby matches a gene, update its description
+        # Process nearby genes
         if "Gene_Symbol_Nearby" in df.columns and pd.notna(row["Gene_Symbol_Nearby"]):
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
             if gene_symbol and gene_symbol != ".":
@@ -590,6 +592,14 @@ def process_gene_sources(
                         interaction_source="Gene_Symbol_Nearby",
                         description=gene_description,
                     )
+                    # Add gene type annotation
+                    if gene_symbol in gene_id_mapping:
+                        upsert_gene_timepoint_annotation(
+                            session,
+                            timepoint_id=timepoint_id,
+                            gene_id=gene_id_mapping[gene_symbol],
+                            gene_type="Nearby"
+                        )
                     processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
@@ -601,25 +611,24 @@ def process_gene_sources(
                 and raw_enhancer_info != "."
             ):
                 from utils import process_enhancer_info
-
                 genes = process_enhancer_info(raw_enhancer_info)
-
+                
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
-                        enhancer_part = None
-                        if "/" in raw_enhancer_info:
-                            _, enhancer_part = raw_enhancer_info.split("/", 1)
-                            enhancer_part = enhancer_part.strip()
-                            if enhancer_part == ".":
-                                enhancer_part = None
-
                         update_gene_source_metadata(
                             session,
                             gene_symbol,
                             interaction_source="ENCODE_Enhancer",
-                            promoter_info=enhancer_part,
                         )
+                        # Add gene type annotation
+                        if gene_symbol in gene_id_mapping:
+                            upsert_gene_timepoint_annotation(
+                                session,
+                                timepoint_id=timepoint_id,
+                                gene_id=gene_id_mapping[gene_symbol],
+                                gene_type="Enhancer"
+                            )
                         processed_genes.add(gene_symbol)
 
         # Process promoter interactions
@@ -631,16 +640,40 @@ def process_gene_sources(
                 and raw_promoter_info != "."
             ):
                 from utils import process_enhancer_info
-
                 genes = process_enhancer_info(raw_promoter_info)
-
+                
+                # Extract and store unique promoter info
+                if "/" in raw_promoter_info:
+                    promoter_parts = raw_promoter_info.split("/")
+                    for part in promoter_parts:
+                        if ";" in part:
+                            enhancer_id, gene = part.split(";", 1)
+                            gene = gene.strip().lower()
+                            if gene in gene_id_mapping:
+                                promoter_info_map[gene].add(enhancer_id.strip())
+                
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
-                        update_gene_source_metadata(
-                            session, gene_symbol, interaction_source="ENCODE_Promoter"
-                        )
+                        # Add gene type annotation
+                        if gene_symbol in gene_id_mapping:
+                            upsert_gene_timepoint_annotation(
+                                session,
+                                timepoint_id=timepoint_id,
+                                gene_id=gene_id_mapping[gene_symbol],
+                                gene_type="Promoter"
+                            )
                         processed_genes.add(gene_symbol)
+
+    # Update gene metadata with deduplicated promoter info
+    for gene_symbol, promoter_ids in promoter_info_map.items():
+        deduplicated_info = "/".join(sorted(promoter_ids))
+        update_gene_source_metadata(
+            session,
+            gene_symbol,
+            interaction_source="ENCODE_Promoter",
+            promoter_info=deduplicated_info
+        )
 
     print(f"Updated interaction sources for {len(processed_genes)} genes")
 
