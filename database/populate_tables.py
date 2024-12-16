@@ -449,14 +449,9 @@ def populate_core_genes(
                     session.commit()
                     print(f"Added {genes_added} master gene IDs and core gene entries")
 
-    try:
-        session.commit()
-        print(f"Added {genes_added} master gene IDs")
-        return genes_added
-    except Exception as e:
-        session.rollback()
-        print(f"Error adding master gene IDs: {str(e)}")
-        raise
+    session.commit()
+    print(f"Added {genes_added} master gene IDs")
+    return genes_added
 
 
 def populate_timepoint_genes(
