@@ -199,7 +199,7 @@ class TriconnectedComponent(Base):
     component_id = Column(Integer, ForeignKey("components.id"))
     dmr_ids = Column(ArrayType)
     gene_ids = Column(ArrayType)
-    catagory = Column(String(50))
+    category = Column(String(50))
     endcoding = Column(String(255))
 
     # Basic metrics
