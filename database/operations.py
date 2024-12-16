@@ -593,6 +593,31 @@ def verify_relationships(session: Session):
     )
 
 
+def get_component_data(session: Session, component_id: int) -> Dict:
+    """Get all data needed for component visualization."""
+    from .models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
+    
+    component = session.query(Component).get(component_id)
+    if not component:
+        raise ValueError(f"Component {component_id} not found")
+        
+    bicliques = session.query(Biclique).filter_by(component_id=component_id).all()
+    
+    # Get all node IDs
+    dmr_nodes = set()
+    gene_nodes = set()
+    for biclique in bicliques:
+        dmr_nodes.update(biclique.dmr_ids)
+        gene_nodes.update(biclique.gene_ids)
+        
+    return {
+        "component": component,
+        "bicliques": bicliques,
+        "dmr_nodes": dmr_nodes,
+        "gene_nodes": gene_nodes
+    }
+
+
 def update_gene_source_metadata(
     session: Session,
     gene_symbol: str,
