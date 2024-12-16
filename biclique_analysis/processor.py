@@ -5,6 +5,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 import pandas as pd
 from collections import defaultdict
+from sqlalchemy.orm import Session
 
 # Removed data_loader import
 from utils.node_info import NodeInfo
