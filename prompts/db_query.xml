@@ -1,0 +1,54 @@
+<purpose>
+    Generate SQL queries for the DMR analysis database based on natural language descriptions
+</purpose>
+
+<instructions>
+   <instruction>Output valid SQL that works with PostgreSQL</instruction>
+   <instruction>Include helpful comments explaining the query</instruction>
+   <instruction>Format the SQL for readability</instruction>
+   <instruction>Use the correct table and view names from the schema</instruction>
+</instructions>
+
+<schema>
+    -- Main views:
+    gene_annotations_view
+    dmr_annotations_view
+    
+    -- Core tables:
+    genes
+    dmrs
+    timepoints
+    bicliques
+    components
+    
+    -- Junction tables:
+    gene_timepoint_annotations
+    dmr_timepoint_annotations
+    component_bicliques
+</schema>
+
+<example-input>
+    Show me all genes that appear in more than 3 bicliques in the DSS1 timepoint
+</example-input>
+
+<example-output>
+    -- Find genes participating in multiple bicliques for DSS1
+    SELECT 
+        g.symbol,
+        g.description,
+        gv.timepoint,
+        gv.biclique_ids,
+        -- Count number of bicliques by splitting the biclique_ids string
+        array_length(string_to_array(gv.biclique_ids, ','), 1) as biclique_count
+    FROM gene_annotations_view gv
+    JOIN genes g ON g.id = gv.gene_id
+    WHERE 
+        gv.timepoint = 'DSS1'
+        AND gv.biclique_ids IS NOT NULL
+        AND array_length(string_to_array(gv.biclique_ids, ','), 1) > 3
+    ORDER BY biclique_count DESC;
+</example-output>
+
+<content>
+    {{query_request}} <<< update this dynamically with code
+</content>
