@@ -80,9 +80,7 @@ def main():
             )
             session.commit()
             gene_mapping_path = os.path.join(data_dir, "master_gene_ids.csv")
-            gene_id_mapping = read_gene_mapping(
-                os.path.join(data_dir, gene_mapping_path)
-            )
+            gene_id_mapping = read_gene_mapping(gene_mapping_path)
             if gene_id_mapping is None or gene_id_mapping == {}:
                 raise Exception(f"Unable to read gene mapping at {gene_mapping_path}")
             populate_master_gene_ids(session, gene_id_mapping)
