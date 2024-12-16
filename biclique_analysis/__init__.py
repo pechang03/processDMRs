@@ -10,13 +10,11 @@ from .statistics import (
     calculate_size_distribution,
 )
 from .reporting import print_bicliques_summary, print_bicliques_detail
-from .processor import (
-    process_bicliques,
-    process_dataset,
-    create_node_metadata,
-)
+from .analyzer import analyze_bicliques
+from .processor import process_dataset
 from .edge_classification import classify_edges
 from .writer import write_bicliques, write_analysis_results, write_component_details
+from utils.metadata import create_node_labels_and_metadata
 
 # Use a set to ensure uniqueness and then convert back to a list
 __all__ = list(
@@ -24,10 +22,10 @@ __all__ = list(
         [
             # Reader exports
             "read_bicliques_file",
+            # Analyzer exports
+            "analyze_bicliques",
             # Processor exports
-            "process_bicliques",
             "process_dataset",
-            "create_node_metadata",
             # Component exports
             "process_components",
             # Classifier exports
@@ -46,6 +44,8 @@ __all__ = list(
             "write_bicliques",
             "write_analysis_results",
             "write_component_details",
+            # Metadata exports
+            "create_node_labels_and_metadata",
             # Timepoint processing
             "process_timepoint",
         ]
