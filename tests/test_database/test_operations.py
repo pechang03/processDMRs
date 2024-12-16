@@ -75,9 +75,11 @@ def test_insert_gene(session):
 
 def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint):
     """Test deduplication of biclique IDs in gene annotations."""
-    gene_id = insert_gene(session, "TEST_GENE")
+    # First create a valid gene
+    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100000)
+    assert gene_id is not None
     
-    # First insertion with duplicate biclique IDs
+    # Now test annotation
     upsert_gene_timepoint_annotation(
         session,
         timepoint_id=timepoint,

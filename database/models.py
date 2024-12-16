@@ -45,7 +45,8 @@ class Timepoint(Base):
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     dmr_id_offset = Column(Integer, default=0)
-    bicliques = relationship("Biclique", back_populates="timepoint")
+    components = relationship("Component", cascade="all, delete-orphan", back_populates="timepoint")
+    bicliques = relationship("Biclique", cascade="all, delete-orphan", back_populates="timepoint")
 
 
 class Gene(Base):
@@ -85,11 +86,11 @@ class MasterGeneID(Base):
     gene_symbol = Column(String(255), nullable=False)
     genes = relationship("Gene", back_populates="master_gene")
 
-    # Create case-insensitive unique index
     __table_args__ = (
-        Index(
-            "ix_master_gene_ids_gene_symbol_lower", func.lower(gene_symbol), unique=True
-        ),
+        Index('ix_master_gene_ids_gene_symbol_lower', 
+              func.lower(gene_symbol), 
+              unique=True,
+              sqlite_on_conflict='IGNORE'),
     )
 
 
@@ -173,6 +174,7 @@ class Component(Base):
     endcoding = Column(String(255))
     bicliques = relationship("Biclique", back_populates="component")
     component_bicliques = relationship("ComponentBiclique", back_populates="component")
+    timepoint = relationship("Timepoint", back_populates="components")
 
 
 # AI there are two different graphs the original graph and the biconnected graph
