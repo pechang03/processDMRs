@@ -88,7 +88,7 @@ class MasterGeneID(Base):
 
 __table_args__ = (
     Index('ix_master_gene_ids_gene_symbol_lower', 
-          func.lower(gene_symbol), 
+          func.lower(MasterGeneID.gene_symbol), 
           unique=True),
 )
 
