@@ -162,22 +162,28 @@ from sqlalchemy.orm import Session
 from database.operations import get_dominating_set, store_dominating_set
 
 def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str, session: Session, timepoint_id: int) -> Set[int]:
-    """Calculate or load cached RB dominating set for the graph."""
-    # Try to load from database first
-    cached_set, metadata = get_dominating_set(session, timepoint_id)
-    if cached_set is not None:
-        print(f"Using cached RB dominating set for {timepoint}")
-        return cached_set
+    """Calculate and store RB dominating set for the graph."""
+    print(f"Calculating dominating set for {timepoint}")
     
     # Calculate new dominating set
-    print(f"Calculating new RB dominating set for {timepoint}")
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
     
     # Prepare metadata for storage
-    area_stats = {dmr: df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0] 
-                 for dmr in dominating_set}
-    utility_scores = {dmr: len(list(graph.neighbors(dmr))) for dmr in dominating_set}
-    dominated_counts = {dmr: len(list(graph.neighbors(dmr))) for dmr in dominating_set}
+    area_stats = {}
+    utility_scores = {}
+    dominated_counts = {}
+    
+    for dmr in dominating_set:
+        # Get area stat if available
+        try:
+            area_stats[dmr] = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
+        except (KeyError, IndexError):
+            area_stats[dmr] = 1.0
+            
+        # Calculate utility scores and dominated counts
+        neighbors = list(graph.neighbors(dmr))
+        utility_scores[dmr] = len(neighbors)
+        dominated_counts[dmr] = len(neighbors)
     
     # Store in database
     store_dominating_set(
@@ -189,6 +195,7 @@ def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str,
         dominated_counts
     )
     
+    print(f"Stored dominating set of size {len(dominating_set)} for {timepoint}")
     return dominating_set
 
 
