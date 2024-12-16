@@ -238,6 +238,8 @@ class Relationship(Base):
     relationship_type = Column(String(50))
 
 
+from sqlalchemy import DateTime
+
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)

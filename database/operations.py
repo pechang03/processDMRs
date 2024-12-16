@@ -633,6 +633,8 @@ def get_or_create_gene(
         return insert_gene(session, symbol, description, master_gene_id)
 
 
+from .models import DominatingSet
+
 def store_dominating_set(
     session: Session,
     timepoint_id: int,

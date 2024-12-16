@@ -158,6 +158,9 @@ def greedy_rb_domination(graph, df, area_col=None):
     return minimal_dominating_set
 
 
+from sqlalchemy.orm import Session
+from database.operations import get_dominating_set, store_dominating_set
+
 def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str, session: Session, timepoint_id: int) -> Set[int]:
     """Calculate or load cached RB dominating set for the graph."""
     # Try to load from database first
