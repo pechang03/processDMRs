@@ -1,0 +1,1 @@
+in xml:count to 10 then back to 0
