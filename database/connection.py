@@ -16,10 +16,10 @@ def get_db_engine():
     """Create and return a database engine."""
     # Try multiple .env locations
     env_files = [
-        '.env',  # Root directory
-        '../.env',  # One level up
-        '../../.env',  # Two levels up
-        os.path.join(os.path.dirname(__file__), '.env'),  # Same directory as this file
+        'sample.env',  # Root directory
+        '../sample.env',  # One level up
+        '../../sample.env',  # Two levels up
+        os.path.join(os.path.dirname(__file__), 'sample.env'),  # Same directory as this file
     ]
     
     for env_file in env_files:
