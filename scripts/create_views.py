@@ -194,6 +194,8 @@ def main():
     except Exception as e:
         print(f"Error: {str(e)}")
         sys.exit(1)
+    finally:
+        pass
 
 if __name__ == "__main__":
     main()
