@@ -15,6 +15,12 @@ class TestGraphStatistics(unittest.TestCase):
     def setUp(self):
         """Set up test graph with proper K_{2,2} structure and correct ID ranges"""
         from utils.constants import START_GENE_ID
+        from database.models import Base
+        from database.connection import get_db_engine
+    
+        # Initialize test database
+        engine = get_db_engine()
+        Base.metadata.create_all(engine)  # Create all tables including DominatingSet
 
         # Sample DataFrame setup for testing - creating two overlapping K_{3,3} bicliques
         data = {
@@ -63,6 +69,14 @@ class TestGraphStatistics(unittest.TestCase):
         print(f"Gene mapping: {self.gene_id_mapping}")
         print(f"Edges: {list(self.bipartite_graph.edges())}")
         print(f"First gene ID: {min(self.gene_id_mapping.values())}")
+
+    def tearDown(self):
+        """Clean up test database"""
+        from database.models import Base
+        from database.connection import get_db_engine
+    
+        engine = get_db_engine()
+        Base.metadata.drop_all(engine)
 
     def test_min_degree(self):
         """Test minimum degree in the graph"""
