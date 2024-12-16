@@ -59,6 +59,10 @@ def main():
             # Clean database (this will now just clear data, not schema)
             clean_database(session)
 
+            # Create views after all tables are populated
+            from database.operations import create_database_views
+            create_database_views(engine)
+
             print("\nCollecting all unique genes across timepoints...")
 
             # Read sheets from both files
