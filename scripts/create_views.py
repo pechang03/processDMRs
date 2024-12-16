@@ -7,9 +7,21 @@ from database.connection import get_db_engine
 
 def create_views(engine):
     """Create all database views."""
-    views_sql = """
+    # First drop existing views
+    drop_views_sql = """
+    DROP VIEW IF EXISTS gene_annotations_view;
+    DROP VIEW IF EXISTS dmr_annotations_view;
+    DROP VIEW IF EXISTS component_summary_view;
+    DROP VIEW IF EXISTS biclique_details_view;
+    DROP VIEW IF EXISTS timepoint_stats_view;
+    DROP VIEW IF EXISTS component_nodes_view;
+    DROP VIEW IF EXISTS triconnected_component_view;
+    """
+
+    # Then create new views
+    create_views_sql = """
     -- View for genes with their timepoint annotations
-    CREATE OR REPLACE VIEW gene_annotations_view AS
+    CREATE VIEW gene_annotations_view AS
     SELECT 
         g.id AS gene_id,
         g.symbol,
@@ -30,7 +42,7 @@ def create_views(engine):
     LEFT JOIN timepoints t ON gta.timepoint_id = t.id;
 
     -- View for DMRs with their timepoint annotations
-    CREATE OR REPLACE VIEW dmr_annotations_view AS
+    CREATE VIEW dmr_annotations_view AS
     SELECT 
         d.id AS dmr_id,
         d.dmr_number,
@@ -57,10 +69,8 @@ def create_views(engine):
     LEFT JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
     LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
 
-    -- New views for API support
-
     -- Component summary view
-    CREATE OR REPLACE VIEW component_summary_view AS
+    CREATE VIEW component_summary_view AS
     SELECT 
         c.id AS component_id,
         t.name AS timepoint,
@@ -72,7 +82,7 @@ def create_views(engine):
         c.edge_count,
         c.density,
         COUNT(DISTINCT cb.biclique_id) as biclique_count,
-        STRING_AGG(DISTINCT b.category, ', ') as biclique_categories
+        GROUP_CONCAT(DISTINCT b.category) as biclique_categories
     FROM components c
     JOIN timepoints t ON c.timepoint_id = t.id
     LEFT JOIN component_bicliques cb ON c.id = cb.component_id
@@ -81,15 +91,15 @@ def create_views(engine):
              c.dmr_count, c.gene_count, c.edge_count, c.density;
 
     -- Biclique details view
-    CREATE OR REPLACE VIEW biclique_details_view AS
+    CREATE VIEW biclique_details_view AS
     SELECT 
         b.id AS biclique_id,
         t.name AS timepoint,
         b.category,
         c.id AS component_id,
         c.graph_type,
-        array_length(b.dmr_ids, 1) as dmr_count,
-        array_length(b.gene_ids, 1) as gene_count,
+        length(b.dmr_ids) - length(replace(b.dmr_ids, ',', '')) + 1 as dmr_count,
+        length(b.gene_ids) - length(replace(b.gene_ids, ',', '')) + 1 as gene_count,
         b.dmr_ids,
         b.gene_ids
     FROM bicliques b
@@ -97,7 +107,7 @@ def create_views(engine):
     JOIN components c ON b.component_id = c.id;
 
     -- Timepoint statistics view
-    CREATE OR REPLACE VIEW timepoint_stats_view AS
+    CREATE VIEW timepoint_stats_view AS
     SELECT 
         t.name AS timepoint,
         COUNT(DISTINCT d.id) as total_dmrs,
@@ -105,7 +115,7 @@ def create_views(engine):
         COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) as hub_dmrs,
         COUNT(DISTINCT b.id) as biclique_count,
         COUNT(DISTINCT c.id) as component_count,
-        AVG(c.density) as avg_component_density
+        AVG(CAST(c.density AS FLOAT)) as avg_component_density
     FROM timepoints t
     LEFT JOIN dmrs d ON t.id = d.timepoint_id
     LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
@@ -115,18 +125,18 @@ def create_views(engine):
     GROUP BY t.name;
 
     -- Component node details view
-    CREATE OR REPLACE VIEW component_nodes_view AS
+    CREATE VIEW component_nodes_view AS
     SELECT 
         c.id AS component_id,
         t.name AS timepoint,
         c.graph_type,
-        json_agg(DISTINCT jsonb_build_object(
+        GROUP_CONCAT(DISTINCT json_object(
             'dmr_id', d.id,
             'dmr_number', d.dmr_number,
             'area_stat', d.area_stat,
             'is_hub', d.is_hub
         )) as dmrs,
-        json_agg(DISTINCT jsonb_build_object(
+        GROUP_CONCAT(DISTINCT json_object(
             'gene_id', g.id,
             'symbol', g.symbol,
             'interaction_source', g.interaction_source
@@ -140,7 +150,7 @@ def create_views(engine):
     GROUP BY c.id, t.name, c.graph_type;
 
     -- Triconnected component view
-    CREATE OR REPLACE VIEW triconnected_component_view AS
+    CREATE VIEW triconnected_component_view AS
     SELECT 
         tc.id AS triconnected_id,
         t.name AS timepoint,
@@ -159,6 +169,21 @@ def create_views(engine):
     JOIN timepoints t ON tc.timepoint_id = t.id
     JOIN components c ON tc.component_id = c.id;
     """
+    
+    try:
+        with engine.connect() as conn:
+            # First drop existing views
+            for statement in drop_views_sql.split(';'):
+                if statement.strip():
+                    conn.execute(text(statement))
+            
+            # Then create new views
+            for statement in create_views_sql.split(';'):
+                if statement.strip():
+                    conn.execute(text(statement))
+            
+            conn.commit()
+        print("Database views created successfully")
     
     try:
         with engine.connect() as conn:
