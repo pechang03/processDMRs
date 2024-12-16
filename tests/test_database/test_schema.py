@@ -274,7 +274,7 @@ def test_triconnected_component_schema(engine):
     # Check required columns
     required_columns = {
         'id', 'timepoint_id', 'component_id', 'dmr_ids', 'gene_ids',
-        'catagory', 'size', 'dmr_count', 'gene_count', 'edge_count',
+        'category', 'size', 'dmr_count', 'gene_count', 'edge_count',
         'density', 'nodes', 'separation_pairs', 'avg_dmrs', 'avg_genes'
     }
     assert all(col in columns for col in required_columns)
