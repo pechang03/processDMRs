@@ -413,32 +413,23 @@ def populate_master_gene_ids(
     sample_genes = list(gene_id_mapping.items())[:5]
     print(f"Sample genes: {sample_genes}")
 
+    # First convert all keys to lowercase in the mapping
+    gene_id_mapping = {k.lower(): v for k, v in gene_id_mapping.items() if k}
+
     genes_added = 0
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Skip None or empty symbols
         if not gene_symbol:
             continue
             
-        # Clean and lowercase the symbol for comparison
-        gene_symbol = str(gene_symbol).strip()  # Keep original case for storage
-        gene_symbol_lower = gene_symbol.lower()  # Lowercase for comparison
-
-        # Skip invalid symbols
-        invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol_lower:
+        # Clean symbol and ensure lowercase
+        gene_symbol = str(gene_symbol).strip().lower()
+        if not gene_symbol:  # Skip if empty after stripping
             continue
 
         try:
-            # Check if gene already exists (case-insensitive)
-            existing = (
-                session.query(MasterGeneID)
-                .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol_lower)
-                .first()
-            )
-            
-            if not existing:
-                # Create MasterGeneID entry
-                master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
+            # Create MasterGeneID entry - don't check for existing since table should be empty
+            master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
                 session.add(master_gene)
                 genes_added += 1
 
@@ -460,8 +451,28 @@ def populate_master_gene_ids(
     # Final commit for remaining records
     try:
         session.commit()
+        session.add(master_gene)
+        genes_added += 1
+
+        # Commit in batches
+        if genes_added % 1000 == 0:
+            try:
+                session.commit()
+                print(f"Added {genes_added} master gene IDs")
+            except Exception as e:
+                session.rollback()
+                print(f"Error in batch commit: {str(e)}")
+                raise
+
+    # Final commit for remaining records
+    try:
+        session.commit()
         print(f"Total master gene IDs added: {genes_added}")
         return genes_added
+    except Exception as e:
+        session.rollback()
+        print(f"Error in final commit: {str(e)}")
+        raise
     except Exception as e:
         session.rollback()
         print(f"Error in final commit: {str(e)}")
