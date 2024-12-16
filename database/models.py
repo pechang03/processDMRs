@@ -41,7 +41,7 @@ class ArrayType(TypeDecorator):
 
 class Timepoint(Base):
     __tablename__ = "timepoints"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
     dmr_id_offset = Column(Integer, default=0)
