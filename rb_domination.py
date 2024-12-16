@@ -158,12 +158,10 @@ def greedy_rb_domination(graph, df, area_col=None):
     return minimal_dominating_set
 
 
-def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str = "DSStimeseries") -> Set[int]:
+def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str, session: Session, timepoint_id: int) -> Set[int]:
     """Calculate or load cached RB dominating set for the graph."""
-    cache = RBDominationCache()
-    
-    # Try to load from cache first
-    cached_set = cache.load_dominating_set(timepoint)
+    # Try to load from database first
+    cached_set, metadata = get_dominating_set(session, timepoint_id)
     if cached_set is not None:
         print(f"Using cached RB dominating set for {timepoint}")
         return cached_set
@@ -172,8 +170,21 @@ def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str 
     print(f"Calculating new RB dominating set for {timepoint}")
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
     
-    # Cache the result
-    cache.save_dominating_set(timepoint, dominating_set)
+    # Prepare metadata for storage
+    area_stats = {dmr: df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0] 
+                 for dmr in dominating_set}
+    utility_scores = {dmr: len(list(graph.neighbors(dmr))) for dmr in dominating_set}
+    dominated_counts = {dmr: len(list(graph.neighbors(dmr))) for dmr in dominating_set}
+    
+    # Store in database
+    store_dominating_set(
+        session,
+        timepoint_id,
+        dominating_set,
+        area_stats,
+        utility_scores,
+        dominated_counts
+    )
     
     return dominating_set
 

@@ -47,6 +47,7 @@ class Timepoint(Base):
     dmr_id_offset = Column(Integer, default=0)
     components = relationship("Component", cascade="all, delete-orphan", back_populates="timepoint")
     bicliques = relationship("Biclique", cascade="all, delete-orphan", back_populates="timepoint")
+    dominating_set_dmrs = relationship("DominatingSet", back_populates="timepoint")
 
 
 class Gene(Base):
@@ -110,6 +111,7 @@ class DMR(Base):
     q_value = Column(Float)
     mean_methylation = Column(Float)
     is_hub = Column(Boolean, default=False)  # Single definition
+    dominating_set_entries = relationship("DominatingSet", back_populates="dmr")
 
     __table_args__ = (
         UniqueConstraint("timepoint_id", "dmr_number", name="uq_dmrs_timepoint_dmr"),
@@ -234,6 +236,20 @@ class Relationship(Base):
     target_entity_type = Column(String(50))
     target_entity_id = Column(Integer)
     relationship_type = Column(String(50))
+
+
+class DominatingSet(Base):
+    __tablename__ = "dominating_sets"
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
+    dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
+    area_stat = Column(Float)  # Store the area statistic used in calculation
+    utility_score = Column(Float)  # Store the utility score from the greedy algorithm
+    dominated_gene_count = Column(Integer)  # Number of genes this DMR dominates
+    calculation_timestamp = Column(DateTime, default=func.now())  # When this was calculated
+    
+    # Relationships
+    timepoint = relationship("Timepoint", back_populates="dominating_set_dmrs")
+    dmr = relationship("DMR", back_populates="dominating_set_entries")
 
 
 def create_tables(engine):
