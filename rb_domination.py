@@ -7,37 +7,6 @@ import networkx as nx
 from heapq import heapify, heappush, heappop
 import pandas as pd
 
-class RBDominationCache:
-    def __init__(self, cache_dir: str = "cache/rb_domination"):
-        self.cache_dir = cache_dir
-        os.makedirs(cache_dir, exist_ok=True)
-    
-    def get_cache_path(self, timepoint: str) -> str:
-        """Get cache file path for a timepoint's RB dominating set."""
-        return os.path.join(self.cache_dir, f"rb_dominating_set_{timepoint}.json")
-    
-    def load_dominating_set(self, timepoint: str) -> Set[int]:
-        """Load cached RB dominating set for timepoint."""
-        cache_path = self.get_cache_path(timepoint)
-        try:
-            if os.path.exists(cache_path):
-                print(f"Loading cached RB dominating set for {timepoint}")
-                with open(cache_path, 'r') as f:
-                    return set(json.load(f))
-        except Exception as e:
-            print(f"Error loading RB dominating set cache for {timepoint}: {e}")
-        return None
-    
-    def save_dominating_set(self, timepoint: str, dominating_set: Set[int]):
-        """Save RB dominating set to cache."""
-        cache_path = self.get_cache_path(timepoint)
-        try:
-            print(f"Caching RB dominating set for {timepoint}")
-            with open(cache_path, 'w') as f:
-                json.dump(list(dominating_set), f)
-        except Exception as e:
-            print(f"Error saving RB dominating set cache for {timepoint}: {e}")
-
 
 def greedy_rb_domination(graph, df, area_col=None):
     """Calculate a red-blue dominating set using a greedy approach with heap"""
@@ -78,7 +47,11 @@ def greedy_rb_domination(graph, df, area_col=None):
             if new_genes:  # Only consider DMRs that would dominate new genes
                 # Try to get area statistic, default to 1.0 if not available
                 try:
-                    area = df.loc[df["DMR_No."] == dmr + 1, area_col].iloc[0] if area_col and area_col in df.columns else 1.0
+                    area = (
+                        df.loc[df["DMR_No."] == dmr + 1, area_col].iloc[0]
+                        if area_col and area_col in df.columns
+                        else 1.0
+                    )
                 except (KeyError, IndexError):
                     area = 1.0
                 utility = len(new_genes)
@@ -161,30 +134,37 @@ def greedy_rb_domination(graph, df, area_col=None):
 from sqlalchemy.orm import Session
 from database.operations import get_dominating_set, store_dominating_set
 
-def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str, session: Session, timepoint_id: int) -> Set[int]:
+
+def calculate_dominating_sets(
+    graph: nx.Graph,
+    df: pd.DataFrame,
+    timepoint: str,
+    session: Session,
+    timepoint_id: int,
+) -> Set[int]:
     """Calculate and store RB dominating set for the graph."""
     print(f"Calculating dominating set for {timepoint}")
-    
+
     # Calculate new dominating set
     dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
-    
+
     # Prepare metadata for storage
     area_stats = {}
     utility_scores = {}
     dominated_counts = {}
-    
+
     for dmr in dominating_set:
         # Get area stat if available
         try:
             area_stats[dmr] = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
         except (KeyError, IndexError):
             area_stats[dmr] = 1.0
-            
+
         # Calculate utility scores and dominated counts
         neighbors = list(graph.neighbors(dmr))
         utility_scores[dmr] = len(neighbors)
         dominated_counts[dmr] = len(neighbors)
-    
+
     # Store in database
     store_dominating_set(
         session,
@@ -192,9 +172,9 @@ def calculate_dominating_sets(graph: nx.Graph, df: pd.DataFrame, timepoint: str,
         dominating_set,
         area_stats,
         utility_scores,
-        dominated_counts
+        dominated_counts,
     )
-    
+
     print(f"Stored dominating set of size {len(dominating_set)} for {timepoint}")
     return dominating_set
 
