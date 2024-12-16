@@ -639,7 +639,6 @@ def process_gene_sources(
                 and raw_promoter_info.strip()
                 and raw_promoter_info != "."
             ):
-                from utils import process_enhancer_info
                 genes = process_enhancer_info(raw_promoter_info)
                 
                 # Extract and store unique promoter info
