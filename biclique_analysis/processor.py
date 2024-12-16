@@ -12,7 +12,10 @@ from utils.node_info import NodeInfo
 from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
-from .classifier import BicliqueSizeCategory, classify_biclique
+from database import operations
+from database.populate_tables import populate_dmr_annotations, populate_gene_annotations, populate_bicliques
+import json
+from .classifier import BicliqueSizeCategory, classify_biclique, classify_component
 
 
 def process_bicliques(
