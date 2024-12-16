@@ -52,7 +52,7 @@ def get_timepoint_components(timepoint_id):
             'category': c.category,
             'size': c.size,
             'dmr_count': c.dmr_count,
-            'gene_count': c.gene_count,
+            'gene_count': component.gene_count,
             'edge_count': c.edge_count,
             'density': c.density
         } for c in components])
