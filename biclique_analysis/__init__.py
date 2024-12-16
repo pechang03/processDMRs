@@ -26,11 +26,13 @@ __all__ = list(
             "analyze_bicliques",
             # Processor exports
             "process_dataset",
+            "process_bicliques",
             # Component exports
             "process_components",
             # Classifier exports
             "classify_biclique",
             "classify_biclique_types",
+            "BicliqueSizeCategory",
             # Statistics exports
             "calculate_biclique_statistics",
             "calculate_coverage_statistics",
@@ -46,8 +48,6 @@ __all__ = list(
             "write_component_details",
             # Metadata exports
             "create_node_labels_and_metadata",
-            # Timepoint processing
-            "process_timepoint",
         ]
     )
 )
