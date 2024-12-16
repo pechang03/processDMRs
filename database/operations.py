@@ -321,6 +321,20 @@ def upsert_dmr_timepoint_annotation(
         is_isolate: Whether the DMR is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
+    def clean_biclique_ids(ids_str: str) -> str:
+        """Helper function to clean and deduplicate biclique IDs"""
+        if not ids_str:
+            return None
+        # Split string, convert to ints, deduplicate, sort, and convert back
+        try:
+            # Handle both quoted and unquoted strings
+            clean_str = ids_str.strip('"\'')
+            ids = {int(x.strip()) for x in clean_str.split(',')}
+            return ','.join(str(x) for x in sorted(ids))
+        except ValueError as e:
+            print(f"Error processing biclique IDs {ids_str}: {e}")
+            return None
+
     # Try to get existing annotation
     annotation = (
         session.query(DMRTimepointAnnotation)
@@ -346,14 +360,15 @@ def upsert_dmr_timepoint_annotation(
         if is_isolate is not None:
             annotation.is_isolate = is_isolate
         if biclique_ids:
-            # Append new biclique ID to existing list
-            existing_ids = (
-                set(annotation.biclique_ids.split(","))
-                if annotation.biclique_ids
-                else set()
-            )
-            existing_ids.add(str(biclique_ids))
-            annotation.biclique_ids = ",".join(sorted(existing_ids))
+            # Combine existing and new IDs
+            existing_ids = set()
+            if annotation.biclique_ids:
+                existing_ids.update(int(x) for x in clean_biclique_ids(annotation.biclique_ids).split(','))
+            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(',')}
+            existing_ids.update(new_ids)
+        
+            # Update with deduplicated string
+            annotation.biclique_ids = ','.join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = DMRTimepointAnnotation(
@@ -364,7 +379,7 @@ def upsert_dmr_timepoint_annotation(
             degree=degree,
             node_type=node_type,
             is_isolate=is_isolate,
-            biclique_ids=str(biclique_ids) if biclique_ids else None,
+            biclique_ids=clean_biclique_ids(str(biclique_ids)) if biclique_ids else None,
         )
         session.add(annotation)
 
