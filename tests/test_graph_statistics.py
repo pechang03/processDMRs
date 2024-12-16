@@ -36,6 +36,7 @@ class TestGraphStatistics(unittest.TestCase):
                 "genee;genef",
             ],
             "Gene_Description": ["Desc1", "Desc2", "Desc3", "Desc4", "Desc5", "Desc6"],
+            "Area_Stat": [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],  # Add Area_Stat column
         }
         self.df = pd.DataFrame(data)
         self.df["Processed_Enhancer_Info"] = self.df[

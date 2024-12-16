@@ -76,11 +76,11 @@ def greedy_rb_domination(graph, df, area_col=None):
         if data["bipartite"] == 0 and dmr not in dominating_set:
             new_genes = set(graph.neighbors(dmr)) - dominated_genes
             if new_genes:  # Only consider DMRs that would dominate new genes
-                area = (
-                    df.loc[df["DMR_No."] == dmr + 1, area_col].iloc[0]
-                    if area_col
-                    else 1.0
-                )
+                # Try to get area statistic, default to 1.0 if not available
+                try:
+                    area = df.loc[df["DMR_No."] == dmr + 1, area_col].iloc[0] if area_col and area_col in df.columns else 1.0
+                except (KeyError, IndexError):
+                    area = 1.0
                 utility = len(new_genes)
                 entry = (-utility, -area, dmr)
                 utility_map[dmr] = entry
