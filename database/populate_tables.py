@@ -571,12 +571,13 @@ def process_gene_sources(
         session: Database session
         timepoint_id: ID of the timepoint being processed
     """
+    from collections import defaultdict
+    from .operations import update_gene_source_metadata, upsert_gene_timepoint_annotation
+    from utils import process_enhancer_info
+
     print("\nProcessing gene interaction sources...")
     processed_genes = set()
     promoter_info_map = defaultdict(set)  # Track promoter info per gene
-
-    from .operations import update_gene_source_metadata, upsert_gene_timepoint_annotation
-    from collections import defaultdict
 
     # Process each DMR row in the dataframe
     for _, row in df.iterrows():
