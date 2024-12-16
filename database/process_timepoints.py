@@ -303,6 +303,7 @@ def process_triconnected_components(
         )
 
         # Update node annotations with triconnected component ID
+        from database.operations import upsert_dmr_timepoint_annotation, upsert_gene_timepoint_annotation
         for node in nodes:
             if original_graph.nodes[node]['bipartite'] == 0:
                 upsert_dmr_timepoint_annotation(
