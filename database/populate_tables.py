@@ -430,8 +430,8 @@ def populate_master_gene_ids(
         try:
             # Create MasterGeneID entry - don't check for existing since table should be empty
             master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
-                session.add(master_gene)
-                genes_added += 1
+            session.add(master_gene)
+            genes_added += 1
 
                 # Commit in batches
                 if genes_added % 1000 == 0:
@@ -451,30 +451,12 @@ def populate_master_gene_ids(
     # Final commit for remaining records
     try:
         session.commit()
-        session.add(master_gene)
-        genes_added += 1
-
-        # Commit in batches
-        if genes_added % 1000 == 0:
-            try:
-                session.commit()
-                print(f"Added {genes_added} master gene IDs")
-            except Exception as e:
-                session.rollback()
-                print(f"Error in batch commit: {str(e)}")
-                raise
-
-    # Final commit for remaining records
-    try:
-        session.commit()
         print(f"Total master gene IDs added: {genes_added}")
         return genes_added
     except Exception as e:
         session.rollback()
         print(f"Error in final commit: {str(e)}")
         raise
-    except Exception as e:
-        session.rollback()
         print(f"Error in final commit: {str(e)}")
         raise
 
