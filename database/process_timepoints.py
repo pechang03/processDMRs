@@ -196,98 +196,18 @@ def process_bicliques_for_timepoint(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
 
-    # Create split graph from bicliques file
-    split_graph = nx.Graph()
-    print("Inserting splitgraph nodes...")
-    dmr_count, gene_count = add_split_graph_nodes(original_graph, split_graph)
-    if dmr_count == 0 and gene_count == 0:
-        print("Warning: No nodes were added to split graph")
+    # Process bicliques using new function
+    from biclique_analysis.processor import process_bicliques_db
 
-    add_split_graph_nodes(original_graph, split_graph)
-    print(f"Split graph: {len(split_graph.nodes())} nodes")
-
-    # Process bicliques
-    print("Reading bicliques file...")
-    bicliques_result = read_bicliques_file(
-        bicliques_file,
-        original_graph,
+    bicliques_result = process_bicliques_db(
+        session=session,
+        timepoint_id=timepoint_id,
+        timepoint_name=timepoint_name,
+        original_graph=original_graph,
+        bicliques_file=bicliques_file,
+        df=df,
         gene_id_mapping=gene_id_mapping,
-        file_format="gene_name",
+        file_format=file_format,
     )
-    print(f"Found {len(bicliques_result['bicliques'])} bicliques")
 
-    # First pass: Process original graph components
-    for component in nx.connected_components(original_graph):
-        comp_subgraph = original_graph.subgraph(component)
-        comp_id = operations.insert_component(
-            session,
-            timepoint_id=timepoint_id,
-            graph_type="original",
-            # ... other component fields ...
-        )
-
-        # Populate annotations for this component
-        populate_dmr_annotations(
-            session=session,
-            timepoint_id=timepoint_id,
-            component_id=comp_id,
-            graph=comp_subgraph,
-            df=df,
-            is_original=True,
-        )
-
-        # Now populate_gene_annotations will only update annotations, not create genes
-        populate_gene_annotations(
-            session=session,
-            timepoint_id=timepoint_id,
-            component_id=comp_id,
-            graph=comp_subgraph,
-            df=df,
-            is_original=True,
-        )
-
-    # Second pass: Process split graph components and bicliques
-    for component in nx.connected_components(split_graph):
-        comp_subgraph = split_graph.subgraph(component)
-        comp_bicliques = [
-            b
-            for b in bicliques_result["bicliques"]
-            if any(n in component for n in b[0] | b[1])
-        ]
-
-        comp_id = operations.insert_component(
-            session,
-            timepoint_id=timepoint_id,
-            graph_type="split",
-            # ... other component fields ...
-        )
-
-        # Populate bicliques for this component
-        for biclique in comp_bicliques:
-            biclique_id = populate_bicliques(
-                session,
-                timepoint_id=timepoint_id,
-                component_id=comp_id,
-                dmr_nodes=biclique[0],
-                gene_nodes=biclique[1],
-            )
-
-            # Update DMR annotations
-            for dmr_id in biclique[0]:
-                operations.upsert_dmr_timepoint_annotation(
-                    session,
-                    timepoint_id=timepoint_id,
-                    dmr_id=dmr_id,
-                    component_id=comp_id,
-                    biclique_ids=[biclique_id],  # Now using ArrayType
-                )
-
-            # Update Gene annotations
-            for gene_id in biclique[1]:
-                operations.upsert_gene_timepoint_annotation(
-                    session,
-                    timepoint_id=timepoint_id,
-                    gene_id=gene_id,
-                    component_id=comp_id,
-                    biclique_ids=[biclique_id],  # Now using ArrayType
-                )
+    print(f"Processed {len(bicliques_result.get('bicliques', []))} bicliques")
