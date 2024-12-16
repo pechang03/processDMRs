@@ -240,10 +240,13 @@ def test_master_gene_id_schema(engine):
     
     # Check for case-insensitive index
     indexes = inspector.get_indexes('master_gene_ids')
-    assert any(
-        index['name'] == 'ix_master_gene_ids_gene_symbol_lower' 
-        for index in indexes
-    )
+    has_case_insensitive_index = False
+    for index in indexes:
+        if index['name'] == 'ix_master_gene_ids_gene_symbol_lower':
+            has_case_insensitive_index = True
+            break
+    
+    assert has_case_insensitive_index, "Case-insensitive index not found"
 
 def test_annotation_schemas(engine):
     """Test gene and DMR annotation table schemas."""

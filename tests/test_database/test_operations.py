@@ -35,8 +35,10 @@ def session(engine):
 @pytest.fixture(scope="function")
 def timepoint(session):
     """Create a test timepoint."""
-    timepoint = get_or_create_timepoint(session, "test_timepoint", "Test Description", 0)
-    return timepoint
+    timepoint = Timepoint(name="test_timepoint", description="Test Description")
+    session.add(timepoint)
+    session.commit()
+    return timepoint.id  # Return the ID instead of the object
 
 def test_get_or_create_timepoint(session):
     """Test creating and retrieving a timepoint."""
@@ -58,11 +60,13 @@ def test_insert_gene(session):
     import os
     os.environ['START_GENE_ID'] = '100000'  # Set start ID for testing
     
-    # First create a master gene ID entry
-    from database.models import MasterGeneID
-    master_gene = MasterGeneID(id=100001, gene_symbol="GENE1")
+@pytest.fixture(scope="function")
+def master_gene(session):
+    """Create a test master gene entry."""
+    master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
     session.add(master_gene)
     session.commit()
+    return master_gene
     
     # Test valid gene with master_gene_id
     gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)
@@ -81,11 +85,7 @@ def test_insert_gene(session):
 
 def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint):
     """Test deduplication of biclique IDs in gene annotations."""
-    # First create a master gene ID entry
-    from database.models import MasterGeneID
-    master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
-    session.add(master_gene)
-    session.commit()
+    master_gene = master_gene  # Use the fixture instead of creating a new entry
     
     # Create a valid gene
     gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100001)
