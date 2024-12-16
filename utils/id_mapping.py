@@ -2,36 +2,26 @@ from typing import Set, Dict
 from utils.constants import START_GENE_ID
 
 # Cache for timepoint offsets
-_timepoint_offsets = {}
-
-def _init_timepoint_offsets():
-    """Initialize the timepoint offsets cache from database."""
-    from database.models import Timepoint
-    from database.connection import get_db_session, get_db_engine
-    
-    global _timepoint_offsets
-    
-    if not _timepoint_offsets:  # Only load if cache is empty
-        engine = get_db_engine()
-        session = get_db_session(engine)
-        timepoints = session.query(Timepoint).all()
-        _timepoint_offsets = {tp.name: tp.dmr_id_offset for tp in timepoints}
-        session.close()
-
 def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint."""
-    global _timepoint_offsets
+    # Define fixed offsets for each timepoint
+    timepoint_offsets = {
+        "DSStimeseries": 0,
+        "P21-P28": 10000,
+        "P21-P40": 20000,
+        "P21-P60": 30000,
+        "P21-P180": 40000,
+        "TP28-TP180": 50000,
+        "TP40-TP180": 60000,
+        "TP60-TP180": 70000
+    }
     
-    # Initialize cache if needed
-    if not _timepoint_offsets:
-        _init_timepoint_offsets()
+    # Remove _TSS suffix if present for matching
+    timepoint_clean = timepoint.replace("_TSS", "")
     
-    # Get offset from cache
-    offset = _timepoint_offsets.get(timepoint)
-    if offset is None:
-        print(f"Warning: Timepoint {timepoint} not found in cache")
-        return dmr_num
-        
+    # Get offset for this timepoint
+    offset = timepoint_offsets.get(timepoint_clean, 80000)  # Default offset for unknown timepoints
+    
     # Calculate DMR ID with offset
     dmr_id = offset + dmr_num
 
@@ -43,11 +33,6 @@ def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
         dmr_id = dmr_num  # Fall back to original numbering
 
     return dmr_id
-
-def clear_timepoint_cache():
-    """Clear the timepoint offsets cache."""
-    global _timepoint_offsets
-    _timepoint_offsets = {}
 
 
 def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, int]:
