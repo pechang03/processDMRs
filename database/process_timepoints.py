@@ -196,9 +196,38 @@ def process_bicliques_for_timepoint(
         f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
     )
 
-    # Process bicliques using new function
-    from database.biclique_processor import process_bicliques_db
+    # Process connected components in original graph first
+    print("\nProcessing connected components in original graph...")
+    for comp_idx, component in enumerate(nx.connected_components(original_graph)):
+        comp_subgraph = original_graph.subgraph(component)
+        
+        # Insert component
+        comp_id = insert_component(
+            session=session,
+            timepoint_id=timepoint_id,
+            graph_type='original',
+            size=len(component),
+            dmr_count=len([n for n in component if original_graph.nodes[n]['bipartite'] == 0]),
+            gene_count=len([n for n in component if original_graph.nodes[n]['bipartite'] == 1]),
+            edge_count=comp_subgraph.number_of_edges(),
+            density=2.0 * comp_subgraph.number_of_edges() / (len(component) * (len(component) - 1)) if len(component) > 1 else 0
+        )
 
+        # Tag nodes with component ID
+        for node in component:
+            original_graph.nodes[node]['component_id'] = comp_id
+
+        # Process triconnected components for this component
+        process_triconnected_components(
+            session=session,
+            timepoint_id=timepoint_id,
+            original_graph=original_graph,
+            component_id=comp_id,
+            df=df
+        )
+
+    # Continue with biclique processing...
+    from database.biclique_processor import process_bicliques_db
     bicliques_result = process_bicliques_db(
         session=session,
         timepoint_id=timepoint_id,
