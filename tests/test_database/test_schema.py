@@ -228,3 +228,191 @@ def test_cascade_behavior(session):
     
     assert session.query(Component).count() == 0
     assert session.query(Biclique).count() == 0
+
+def test_master_gene_id_schema(engine):
+    """Test MasterGeneID table schema and case-insensitive index."""
+    inspector = inspect(engine)
+    columns = {col['name']: col for col in inspector.get_columns('master_gene_ids')}
+    
+    assert 'id' in columns
+    assert 'gene_symbol' in columns
+    assert columns['gene_symbol']['nullable'] is False
+    
+    # Check for case-insensitive index
+    indexes = inspector.get_indexes('master_gene_ids')
+    assert any(
+        index['name'] == 'ix_master_gene_ids_gene_symbol_lower' 
+        for index in indexes
+    )
+
+def test_annotation_schemas(engine):
+    """Test gene and DMR annotation table schemas."""
+    inspector = inspect(engine)
+    
+    # Test gene annotation columns
+    gene_cols = {col['name']: col for col in inspector.get_columns('gene_timepoint_annotations')}
+    assert all(col in gene_cols for col in [
+        'timepoint_id', 'gene_id', 'component_id', 'triconnected_id',
+        'degree', 'node_type', 'gene_type', 'is_isolate', 'biclique_ids'
+    ])
+    
+    # Test DMR annotation columns
+    dmr_cols = {col['name']: col for col in inspector.get_columns('dmr_timepoint_annotations')}
+    assert all(col in dmr_cols for col in [
+        'timepoint_id', 'dmr_id', 'component_id', 'triconnected_id',
+        'degree', 'node_type', 'is_isolate', 'biclique_ids'
+    ])
+
+def test_triconnected_component_schema(engine):
+    """Test TriconnectedComponent table schema."""
+    inspector = inspect(engine)
+    columns = {col['name']: col for col in inspector.get_columns('triconnected_components')}
+    
+    # Check required columns
+    required_columns = {
+        'id', 'timepoint_id', 'component_id', 'dmr_ids', 'gene_ids',
+        'catagory', 'size', 'dmr_count', 'gene_count', 'edge_count',
+        'density', 'nodes', 'separation_pairs', 'avg_dmrs', 'avg_genes'
+    }
+    assert all(col in columns for col in required_columns)
+
+def test_component_relationships(session):
+    """Test relationships between components and other entities."""
+    # Create test data
+    timepoint = Timepoint(name="test_timepoint")
+    session.add(timepoint)
+    session.flush()
+    
+    # Create original component
+    orig_component = Component(
+        timepoint_id=timepoint.id,
+        graph_type='original',
+        size=5,
+        dmr_count=2,
+        gene_count=3
+    )
+    session.add(orig_component)
+    
+    # Create split component
+    split_component = Component(
+        timepoint_id=timepoint.id,
+        graph_type='split',
+        size=7,
+        dmr_count=3,
+        gene_count=4
+    )
+    session.add(split_component)
+    session.flush()
+    
+    # Create bicliques for split component
+    biclique1 = Biclique(
+        timepoint_id=timepoint.id,
+        component_id=split_component.id,
+        dmr_ids=[1, 2],
+        gene_ids=[1, 2]
+    )
+    biclique2 = Biclique(
+        timepoint_id=timepoint.id,
+        component_id=split_component.id,
+        dmr_ids=[2, 3],
+        gene_ids=[3, 4]
+    )
+    session.add_all([biclique1, biclique2])
+    session.flush()
+    
+    # Test relationships
+    assert len(split_component.bicliques) == 2
+    assert all(b.component_id == split_component.id for b in split_component.bicliques)
+    assert len(orig_component.bicliques) == 0
+
+def test_annotation_relationships(session):
+    """Test relationships between annotations and their related entities."""
+    # Create base data
+    timepoint = Timepoint(name="test_timepoint")
+    session.add(timepoint)
+    session.flush()
+    
+    # Create gene and DMR
+    gene = Gene(symbol="TEST1")
+    dmr = DMR(timepoint_id=timepoint.id, dmr_number=1)
+    session.add_all([gene, dmr])
+    session.flush()
+    
+    # Create annotations
+    gene_annotation = GeneTimepointAnnotation(
+        timepoint_id=timepoint.id,
+        gene_id=gene.id,
+        degree=3,
+        node_type='regular_gene',
+        gene_type='Nearby',
+        is_isolate=False,
+        biclique_ids="1,2,3"
+    )
+    
+    dmr_annotation = DMRTimepointAnnotation(
+        timepoint_id=timepoint.id,
+        dmr_id=dmr.id,
+        degree=2,
+        node_type='regular',
+        is_isolate=False,
+        biclique_ids="1,2"
+    )
+    
+    session.add_all([gene_annotation, dmr_annotation])
+    session.commit()
+    
+    # Test retrieval and relationships
+    loaded_gene_annot = session.query(GeneTimepointAnnotation).first()
+    assert loaded_gene_annot.gene_id == gene.id
+    assert loaded_gene_annot.degree == 3
+    assert loaded_gene_annot.biclique_ids == "1,2,3"
+    
+    loaded_dmr_annot = session.query(DMRTimepointAnnotation).first()
+    assert loaded_dmr_annot.dmr_id == dmr.id
+    assert loaded_dmr_annot.degree == 2
+    assert loaded_dmr_annot.biclique_ids == "1,2"
+
+def test_metadata_and_statistics(session):
+    """Test metadata and statistics tables."""
+    # Create test data
+    timepoint = Timepoint(name="test_timepoint")
+    session.add(timepoint)
+    session.flush()
+    
+    # Add statistics
+    stat1 = Statistic(
+        category="graph_metrics",
+        key="total_nodes",
+        value="100"
+    )
+    stat2 = Statistic(
+        category="component_metrics",
+        key="avg_size",
+        value="5.5"
+    )
+    session.add_all([stat1, stat2])
+    
+    # Add metadata
+    meta1 = Metadata(
+        entity_type="biclique",
+        entity_id=1,
+        key="density",
+        value="0.75"
+    )
+    meta2 = Metadata(
+        entity_type="component",
+        entity_id=1,
+        key="classification",
+        value="complex"
+    )
+    session.add_all([meta1, meta2])
+    session.commit()
+    
+    # Test queries
+    graph_stats = session.query(Statistic).filter_by(category="graph_metrics").all()
+    assert len(graph_stats) == 1
+    assert graph_stats[0].value == "100"
+    
+    biclique_meta = session.query(Metadata).filter_by(entity_type="biclique").all()
+    assert len(biclique_meta) == 1
+    assert biclique_meta[0].value == "0.75"
