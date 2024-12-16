@@ -37,6 +37,7 @@ class TestDominatingSetStorage(unittest.TestCase):
         self.session.commit()
         
         # Drop all tables after tests
+        from database.models import Base
         Base.metadata.drop_all(self.engine)
         
         self.session.close()
