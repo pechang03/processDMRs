@@ -147,6 +147,8 @@ def insert_triconnected_component(
     avg_dmrs: float = None,
     avg_genes: float = None,
     is_simple: bool = None,
+    dmr_ids: List[int] = None,
+    gene_ids: List[int] = None,
 ) -> int:
     """Insert a new triconnected component into the database."""
     component = TriconnectedComponent(
@@ -163,6 +165,8 @@ def insert_triconnected_component(
         avg_dmrs=avg_dmrs,
         avg_genes=avg_genes,
         is_simple=is_simple,
+        dmr_ids=dmr_ids,
+        gene_ids=gene_ids,
     )
     session.add(component)
     session.commit()
