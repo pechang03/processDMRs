@@ -135,6 +135,7 @@ def insert_component(
 def insert_triconnected_component(
     session: Session,
     timepoint_id: int,
+    component_id: int,
     size: int,
     dmr_count: int,
     gene_count: int,
@@ -150,6 +151,7 @@ def insert_triconnected_component(
     """Insert a new triconnected component into the database."""
     component = TriconnectedComponent(
         timepoint_id=timepoint_id,
+        component_id=component_id,
         size=size,
         dmr_count=dmr_count,
         gene_count=gene_count,
