@@ -88,19 +88,20 @@ def test_session_transaction_handling():
         # Start transaction
         session.begin()
         # Simulate some database operations
-        session.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)")
-        session.execute("INSERT INTO test (id) VALUES (1)")
+        from sqlalchemy import text
+        session.execute(text("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)"))
+        session.execute(text("INSERT INTO test (id) VALUES (1)"))
         # Commit transaction
         session.commit()
         
         # Verify data was committed
-        result = session.execute("SELECT * FROM test").fetchall()
+        result = session.execute(text("SELECT * FROM test")).fetchall()
         assert len(result) == 1
         assert result[0][0] == 1
         
     finally:
         # Clean up
-        session.execute("DROP TABLE IF EXISTS test")
+        session.execute(text("DROP TABLE IF EXISTS test"))
         session.commit()
         session.close()
 
@@ -109,24 +110,25 @@ def test_session_rollback():
     engine = get_db_engine()
     session = get_db_session(engine)
     
+    from sqlalchemy import text
     # Create test table
-    session.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)")
+    session.execute(text("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)"))
     session.commit()
     
     try:
         # Start transaction
         session.begin()
         # Insert data
-        session.execute("INSERT INTO test (id) VALUES (1)")
+        session.execute(text("INSERT INTO test (id) VALUES (1)"))
         # Rollback transaction
         session.rollback()
         
         # Verify data was not committed
-        result = session.execute("SELECT * FROM test").fetchall()
+        result = session.execute(text("SELECT * FROM test")).fetchall()
         assert len(result) == 0
         
     finally:
         # Clean up
-        session.execute("DROP TABLE IF EXISTS test")
+        session.execute(text("DROP TABLE IF EXISTS test"))
         session.commit()
         session.close()
