@@ -259,17 +259,18 @@ def insert_gene(
         return None
 
     # Clean and lowercase the symbol
-    symbol = str(symbol).strip().lower()
+    original_symbol = str(symbol).strip()
+    lookup_symbol = original_symbol.lower()
 
     # Extended validation for unnamed columns and invalid symbols
     # invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""] TODO check unnamed is invalid
     invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-    if any(symbol.startswith(pat) for pat in invalid_patterns) or not symbol:
+    if any(lookup_symbol.startswith(pat) for pat in invalid_patterns) or not lookup_symbol:
         return None  # Skip invalid symbols instead of raising error
 
     # Check for duplicate gene symbols (case-insensitive)
     existing_gene = (
-        session.query(Gene).filter(func.lower(Gene.symbol) == symbol).first()
+        session.query(Gene).filter(func.lower(Gene.symbol) == lookup_symbol).first()
     )
     if existing_gene:
         return existing_gene.id
@@ -285,7 +286,7 @@ def insert_gene(
 
         gene = Gene(
             id=new_id,
-            symbol=symbol,
+            symbol=original_symbol,
             description=description,
             master_gene_id=master_gene_id,
             interaction_source=interaction_source,
@@ -297,7 +298,7 @@ def insert_gene(
 
     except Exception as e:
         session.rollback()
-        raise ValueError(f"Error inserting gene {symbol}: {str(e)}")
+        raise ValueError(f"Error inserting gene {original_symbol}: {str(e)}")
 
 
 def upsert_dmr_timepoint_annotation(
