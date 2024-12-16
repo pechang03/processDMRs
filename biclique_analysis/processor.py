@@ -13,7 +13,7 @@ from utils import process_enhancer_info
 from .reader import read_bicliques_file
 from .components import process_components
 from database import operations
-from database.populate_tables import populate_dmr_annotations, populate_gene_annotations, populate_bicliques
+from database.populate_tables import populate_dmr_annotations, populate_gene_annotations, populate_bicliques, insert_metadata
 import json
 from .classifier import BicliqueSizeCategory, classify_biclique, classify_component
 
