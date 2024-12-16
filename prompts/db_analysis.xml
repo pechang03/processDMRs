@@ -1,0 +1,54 @@
+<purpose>
+    Generate analysis queries and explanations for the DMR analysis database
+</purpose>
+
+<instructions>
+   <instruction>Output both SQL queries and explanatory text</instruction>
+   <instruction>Include visualizations suggestions where appropriate</instruction>
+   <instruction>Explain biological significance of the analysis</instruction>
+   <instruction>Suggest follow-up analyses</instruction>
+</instructions>
+
+<example-input>
+    Analyze the relationship between DMR area statistics and their participation in bicliques
+</example-input>
+
+<example-output>
+    # DMR Area vs Biclique Participation Analysis
+
+    ## Primary Query
+    ```sql
+    -- Get DMR area stats grouped by biclique participation
+    SELECT 
+        CASE 
+            WHEN biclique_ids IS NULL THEN 'No bicliques'
+            WHEN array_length(string_to_array(biclique_ids, ','), 1) = 1 THEN 'Single biclique'
+            ELSE 'Multiple bicliques'
+        END as participation_type,
+        COUNT(*) as dmr_count,
+        AVG(area_stat) as avg_area,
+        STDDEV(area_stat) as area_stddev
+    FROM dmr_annotations_view
+    GROUP BY participation_type
+    ORDER BY avg_area DESC;
+    ```
+
+    ## Biological Significance
+    This analysis helps understand if DMRs with larger affected areas tend to participate 
+    in more bicliques, which could indicate their role as regulatory hubs.
+
+    ## Visualization Suggestions
+    - Box plot of area statistics by participation type
+    - Scatter plot of area vs number of bicliques
+    
+    ## Follow-up Analyses
+    1. Examine correlation with gene expression data
+    2. Look for timepoint-specific patterns
+    3. Analyze chromosome distribution of high-area DMRs
+
+    ## Additional Queries...
+</example-output>
+
+<content>
+    {{analysis_request}} <<< update this dynamically with code
+</content>

@@ -1,0 +1,48 @@
+<purpose>
+    Generate comprehensive database reports combining multiple analyses
+</purpose>
+
+<instructions>
+   <instruction>Create a markdown report with multiple sections</instruction>
+   <instruction>Include SQL queries, charts, and biological interpretation</instruction>
+   <instruction>Focus on patterns and relationships in the data</instruction>
+   <instruction>Suggest hypotheses and future research directions</instruction>
+</instructions>
+
+<example-input>
+    Generate a comprehensive report on hub DMRs and their gene interactions
+</example-input>
+
+<example-output>
+    # Hub DMR Analysis Report
+
+    ## Overview
+    This report analyzes DMRs classified as hubs and their interactions with genes
+    across different timepoints.
+
+    ## Key Metrics
+    ```sql
+    -- Get hub DMR statistics
+    SELECT 
+        timepoint,
+        COUNT(*) as total_dmrs,
+        SUM(CASE WHEN is_hub THEN 1 ELSE 0 END) as hub_count,
+        AVG(CASE WHEN is_hub THEN area_stat ELSE NULL END) as avg_hub_area
+    FROM dmr_annotations_view
+    GROUP BY timepoint
+    ORDER BY hub_count DESC;
+    ```
+
+    ## Detailed Analyses
+    [Multiple sections with queries and interpretations...]
+
+    ## Biological Implications
+    [Discussion of findings...]
+
+    ## Future Directions
+    [Research suggestions...]
+</example-output>
+
+<content>
+    {{report_type}} <<< update this dynamically with code
+</content>
