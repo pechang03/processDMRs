@@ -5,7 +5,7 @@
 from flask import render_template, jsonify, request
 import json
 from . import main_bp
-from process_data import process_data
+from analysis.timepoint_processor import process_timepoint
 from utils.json_utils import convert_for_json, convert_dict_keys_to_str
 from visualization.triconnected_visualization import TriconnectedVisualization
 from visualization.graph_layout_original import OriginalGraphLayout

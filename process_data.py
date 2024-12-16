@@ -91,7 +91,7 @@ from data_loader import (
     read_gene_mapping,
 )
 
-from routes.timepoint_data import process_timepoint
+from analysis.timepoint_processor import process_timepoint
 from database.connection import get_db_session
 from database.operations import insert_metadata
 
