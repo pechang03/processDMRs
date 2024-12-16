@@ -322,3 +322,14 @@ class TestTimepointData(unittest.TestCase):
             self.assertTrue(
                 all(gene_id >= START_GENE_ID for gene_id in comp["split_genes"])
             )
+import unittest
+from unittest.mock import patch
+from routes.timepoint_data import process_data
+
+class TestTimepointData(unittest.TestCase):
+    @patch('routes.timepoint_data.process_data')
+    def test_process_data(self, mock_process_data):
+        mock_process_data.return_value = {'timepoint_id': 1, 'processed': ['processed_data']}
+        result = process_data(1, {'raw_data': ['raw_data']})
+        self.assertEqual(result, {'timepoint_id': 1, 'processed': ['processed_data']})
+        mock_process_data.assert_called_once_with(1, {'raw_data': ['raw_data']})
