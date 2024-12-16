@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import networkx as nx
 from routes.timepoint_data import process_timepoint
-from biclique_analysis.processor import process_bicliques
+from biclique_analysis import process_bicliques
 from biclique_analysis.components import process_components
 from utils.json_utils import convert_for_json
 from utils.constants import START_GENE_ID
