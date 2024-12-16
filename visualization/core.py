@@ -4,21 +4,18 @@ import json
 from typing import Dict, List, Set, Tuple
 from plotly.utils import PlotlyJSONEncoder
 
-# import plotly.graph_objs as go
-import plotly.colors
-import networkx as nx
-
+from sqlalchemy.orm import Session
+from .graph_layout_biclique import CircularBicliqueLayout
+from .graph_original_spring import SpringLogicalLayout
 from utils.node_info import NodeInfo
 from utils.edge_info import EdgeInfo
-from utils.graph_io import preprocess_graph_for_visualization
-
 from .traces import (
     create_node_traces,
     create_edge_traces,
     create_biclique_boxes,
 )
-
 from .layout import create_visual_layout
+from database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
@@ -35,11 +32,11 @@ def create_biclique_visualization(
     node_positions: Dict[int, Tuple[float, float]],
     node_biclique_map: Dict[int, List[int]],
     edge_classifications: Dict[str, List[EdgeInfo]],
-    original_graph: nx.Graph,  # Required parameter moved up
-    bipartite_graph: nx.Graph,  # Also make this required since it's needed
+    original_graph: nx.Graph,
+    bipartite_graph: nx.Graph,
     original_node_positions: Dict[
         int, Tuple[float, float]
-    ] = None,  # Optional parameters start here
+    ] = None,
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
@@ -137,3 +134,121 @@ def create_biclique_visualization(
 
     print(f"Created visualization with {len(traces)} traces")  # Debug logging
     return json.dumps(fig, cls=PlotlyJSONEncoder)
+
+
+def create_component_visualization(
+    component_id: int,
+    session: Session,
+    node_positions: Dict[int, Tuple[float, float]] = None,
+    layout_type: str = "circular"
+) -> str:
+    """Create visualization for a specific component.
+    
+    Args:
+        component_id: Database ID of the component
+        session: Database session
+        node_positions: Optional pre-calculated node positions
+        layout_type: Type of layout to use ('circular' or 'spring')
+        
+    Returns:
+        JSON string containing Plotly visualization data
+    """
+    from database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
+    
+    # Get component data from database
+    component = session.query(Component).get(component_id)
+    if not component:
+        raise ValueError(f"Component {component_id} not found")
+        
+    # Get bicliques for this component
+    bicliques = session.query(Biclique).filter_by(component_id=component_id).all()
+    
+    # Create node sets
+    dmr_nodes = set()
+    gene_nodes = set()
+    for biclique in bicliques:
+        dmr_nodes.update(biclique.dmr_ids)
+        gene_nodes.update(biclique.gene_ids)
+        
+    # Get node metadata
+    dmr_metadata = {}
+    gene_metadata = {}
+    
+    dmr_annotations = session.query(DMRTimepointAnnotation).filter(
+        DMRTimepointAnnotation.dmr_id.in_(dmr_nodes),
+        DMRTimepointAnnotation.timepoint_id == component.timepoint_id
+    ).all()
+    
+    gene_annotations = session.query(GeneTimepointAnnotation).filter(
+        GeneTimepointAnnotation.gene_id.in_(gene_nodes),
+        GeneTimepointAnnotation.timepoint_id == component.timepoint_id
+    ).all()
+    
+    # Create node labels
+    node_labels = {}
+    for dmr in dmr_annotations:
+        node_labels[dmr.dmr_id] = f"DMR_{dmr.dmr_id}"
+        dmr_metadata[dmr.dmr_id] = {
+            "degree": dmr.degree,
+            "type": dmr.node_type,
+            "bicliques": dmr.biclique_ids
+        }
+        
+    for gene in gene_annotations:
+        node_labels[gene.gene_id] = f"Gene_{gene.gene_id}"
+        gene_metadata[gene.gene_id] = {
+            "degree": gene.degree,
+            "type": gene.node_type,
+            "gene_type": gene.gene_type,
+            "bicliques": gene.biclique_ids
+        }
+    
+    # Create node biclique map
+    node_biclique_map = {}
+    for idx, biclique in enumerate(bicliques):
+        for dmr_id in biclique.dmr_ids:
+            if dmr_id not in node_biclique_map:
+                node_biclique_map[dmr_id] = []
+            node_biclique_map[dmr_id].append(idx)
+            
+        for gene_id in biclique.gene_ids:
+            if gene_id not in node_biclique_map:
+                node_biclique_map[gene_id] = []
+            node_biclique_map[gene_id].append(idx)
+    
+    # Calculate positions if not provided
+    if not node_positions:
+        if layout_type == "circular":
+            layout = CircularBicliqueLayout()
+        else:
+            layout = SpringLogicalLayout()
+            
+        node_info = NodeInfo(
+            all_nodes=dmr_nodes | gene_nodes,
+            dmr_nodes=dmr_nodes,
+            regular_genes={g for g in gene_nodes if len(node_biclique_map.get(g, [])) <= 1},
+            split_genes={g for g in gene_nodes if len(node_biclique_map.get(g, [])) > 1},
+            node_degrees={n: len(node_biclique_map.get(n, [])) for n in (dmr_nodes | gene_nodes)},
+            min_gene_id=min(gene_nodes) if gene_nodes else 0
+        )
+        
+        node_positions = layout.calculate_positions(
+            graph=nx.Graph(),  # Empty graph since we have node sets
+            node_info=node_info
+        )
+    
+    # Generate colors for bicliques
+    biclique_colors = generate_biclique_colors(len(bicliques))
+    
+    # Create visualization
+    return create_biclique_visualization(
+        bicliques=[(set(b.dmr_ids), set(b.gene_ids)) for b in bicliques],
+        node_labels=node_labels,
+        node_positions=node_positions,
+        node_biclique_map=node_biclique_map,
+        edge_classifications={},  # Add edge classifications if needed
+        original_graph=nx.Graph(),  # Add actual graph if needed
+        bipartite_graph=nx.Graph(),  # Add actual graph if needed
+        dmr_metadata=dmr_metadata,
+        gene_metadata=gene_metadata
+    )
