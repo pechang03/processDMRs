@@ -147,8 +147,6 @@ class Biclique(Base):
     id = Column(Integer, primary_key=True)
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"))
     component_id = Column(Integer, ForeignKey("components.id"))
-    dmr_ids = Column(ArrayType)
-    gene_ids = Column(ArrayType)
     category = Column(String(50))
     encoding = Column(String(255))
     timepoint = relationship("Timepoint", back_populates="bicliques")
