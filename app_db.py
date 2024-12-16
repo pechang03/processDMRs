@@ -127,17 +127,19 @@ def parse_arguments():
 def configure_app(app):
     """Configure Flask application."""
     # Try multiple .env locations
-    env_files = [".env", "../.env", "../../.env"]
+    # First try sample.env, then fall back to .env files
+    env_files = ["sample.env", ".env", "../.env", "../../.env"]
     env_loaded = False
 
     for env_file in env_files:
         if os.path.exists(env_file):
+            print(f"Loading configuration from {env_file}")
             load_dotenv(env_file)
             env_loaded = True
             break
 
     if not env_loaded:
-        print("Warning: No .env file found")
+        print("Warning: No environment file found, using defaults")
 
     # Set default configuration
     app.config.setdefault("DATABASE_URL", "sqlite:///dmr_analysis.db")
