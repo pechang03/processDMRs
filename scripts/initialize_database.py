@@ -54,7 +54,7 @@ def main():
         engine = connection.get_db_engine()
         models.Base.metadata.drop_all(engine)  # Drop all existing tables
         models.Base.metadata.create_all(engine)  # Create fresh tables
-        
+
         with Session(engine) as session:
             # Clean database (this will now just clear data, not schema)
             clean_database(session)
@@ -66,22 +66,25 @@ def main():
             # Read sheets from both files
             timeseries_sheet = "DSS_Time_Series"  # The sheet name from DSS1.xlsx
             pairwise_sheets = get_excel_sheets(dss_pairwise_file)
-            
+
             print(f"Timeseries sheet: {timeseries_sheet}")
             print(f"Pairwise sheets: {pairwise_sheets}")
 
             # Get start_gene_id from environment
-            start_gene_id = int(os.getenv("START_GENE_ID", "200000"))
-            
+            start_gene_id = int(os.getenv("START_GENE_ID", "100000"))
+
             # Populate timepoints with both timeseries and pairwise sheets
             print("\nPopulating timepoints...")
-            populate_timepoints(session, timeseries_sheet, pairwise_sheets, start_gene_id)
-            session.commit()
-
-            gene_id_mapping = read_gene_mapping(
-                os.path.join(data_dir, "master_gene_ids.csv")
+            populate_timepoints(
+                session, timeseries_sheet, pairwise_sheets, start_gene_id
             )
-
+            session.commit()
+            gene_mapping_path = os.path.join(data_dir, "master_gene_ids.csv")
+            gene_id_mapping = read_gene_mapping(
+                os.path.join(data_dir, gene_mapping_path)
+            )
+            if gene_id_mapping is None or gene_id_mapping == {}:
+                raise Exception(f"Unable to read gene mapping at {gene_mapping_path}")
             populate_master_gene_ids(session, gene_id_mapping)
 
             # Populate genes with initial data
