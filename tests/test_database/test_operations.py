@@ -55,9 +55,13 @@ def test_get_or_create_timepoint(session):
 
 def test_insert_gene(session):
     """Test inserting genes with various cases."""
+    import os
+    os.environ['START_GENE_ID'] = '100000'  # Set start ID for testing
+    
     # Test valid gene
     gene_id = insert_gene(session, "GENE1", "Test Gene")
     assert gene_id is not None
+    assert gene_id >= 100000  # Verify ID is at least START_GENE_ID
     
     # Test duplicate gene (case insensitive)
     dup_id = insert_gene(session, "gene1", "Duplicate Gene")

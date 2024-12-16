@@ -269,7 +269,16 @@ def insert_gene(
         return existing_gene.id
 
     try:
+        # Get START_GENE_ID from environment, default to 100000
+        from os import environ
+        start_gene_id = int(environ.get('START_GENE_ID', '100000'))
+    
+        # Get the maximum existing gene ID
+        max_id = session.query(func.max(Gene.id)).scalar()
+        new_id = start_gene_id if max_id is None else max(max_id + 1, start_gene_id)
+
         gene = Gene(
+            id=new_id,
             symbol=symbol,
             description=description,
             master_gene_id=master_gene_id,
