@@ -149,7 +149,7 @@ def upsert_dmr_timepoint_annotation(
         is_isolate: Whether the DMR is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
-    
+
     # Try to get existing annotation
     annotation = (
         session.query(DMRTimepointAnnotation)
@@ -169,9 +169,9 @@ def upsert_dmr_timepoint_annotation(
         # Split string, convert to ints, deduplicate, sort, and convert back
         try:
             # Handle both quoted and unquoted strings
-            clean_str = ids_str.strip('"\'')
-            ids = {int(x.strip()) for x in clean_str.split(',')}
-            return ','.join(str(x) for x in sorted(ids))
+            clean_str = ids_str.strip("\"'")
+            ids = {int(x.strip()) for x in clean_str.split(",")}
+            return ",".join(str(x) for x in sorted(ids))
         except ValueError as e:
             print(f"Error processing biclique IDs {ids_str}: {e}")
             return None
@@ -192,12 +192,15 @@ def upsert_dmr_timepoint_annotation(
             # Combine existing and new IDs
             existing_ids = set()
             if annotation.biclique_ids:
-                existing_ids.update(int(x) for x in clean_biclique_ids(annotation.biclique_ids).split(','))
-            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(',')}
+                existing_ids.update(
+                    int(x)
+                    for x in clean_biclique_ids(annotation.biclique_ids).split(",")
+                )
+            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(",")}
             existing_ids.update(new_ids)
-            
+
             # Update with deduplicated string
-            annotation.biclique_ids = ','.join(str(x) for x in sorted(existing_ids))
+            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation with cleaned biclique_ids
         annotation = DMRTimepointAnnotation(
@@ -208,7 +211,9 @@ def upsert_dmr_timepoint_annotation(
             degree=degree,
             node_type=node_type,
             is_isolate=is_isolate,
-            biclique_ids=clean_biclique_ids(str(biclique_ids)) if biclique_ids else None,
+            biclique_ids=clean_biclique_ids(str(biclique_ids))
+            if biclique_ids
+            else None,
         )
         session.add(annotation)
 
@@ -286,15 +291,15 @@ def upsert_gene_timepoint_annotation(
                 existing_ids = set()
                 if annotation.biclique_ids:
                     existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
-                
+
                 # Handle both single IDs and comma-separated strings
                 if "," in str(biclique_ids):  # If it's a comma-separated string
                     new_ids = {int(x) for x in biclique_ids.split(",")}
                 else:  # If it's a single ID
                     new_ids = {int(biclique_ids)}
-                    
+
                 existing_ids.update(new_ids)
-                
+
                 # Convert back to sorted string
                 annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
@@ -421,7 +426,7 @@ def populate_master_gene_ids(
         # Skip None or empty symbols
         if not gene_symbol:
             continue
-            
+
         # Clean symbol and ensure lowercase
         gene_symbol = str(gene_symbol).strip().lower()
         if not gene_symbol:  # Skip if empty after stripping
@@ -460,12 +465,13 @@ def populate_master_gene_ids(
         print(f"Error in final commit: {str(e)}")
         raise
 
+
 def populate_core_genes(
     session: Session,
     gene_id_mapping: dict,
 ):
     """Populate core gene data (symbols and master gene IDs)."""
-    print("\nPopulating core gene tables...")
+    print("\nPopulating core gene tables...in func")
     print(f"Received {len(gene_id_mapping)} genes in mapping")
     sample_genes = list(gene_id_mapping.items())[:5]
     print(f"Sample genes: {sample_genes}")
@@ -474,11 +480,15 @@ def populate_core_genes(
     for gene_symbol, gene_id in gene_id_mapping.items():
         # Clean and lowercase the symbol
         gene_symbol = str(gene_symbol).strip()  # Keep original case for storage
-        gene_symbol_lower = gene_symbol.lower() # Lowercase for comparison
+        gene_symbol_lower = gene_symbol.lower()  # Lowercase for comparison
 
         # Skip invalid symbols
         invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-        if any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns) or not gene_symbol:
+        if (
+            any(gene_symbol_lower.startswith(pat) for pat in invalid_patterns)
+            or not gene_symbol
+        ):
+            print(f"Warning invalid symbol: {gene_symbol}")
             continue
 
         try:
@@ -488,27 +498,27 @@ def populate_core_genes(
                 .filter(func.lower(MasterGeneID.gene_symbol) == gene_symbol_lower)
                 .first()
             )
-            
+
             if not existing:
                 # Create MasterGeneID entry
                 master_gene = MasterGeneID(id=gene_id, gene_symbol=gene_symbol)
                 session.add(master_gene)
 
-                # Create corresponding core Gene entry with same ID
-                gene = Gene(id=gene_id, symbol=gene_symbol, master_gene_id=gene_id)
-                session.add(gene)
+            # Create corresponding core Gene entry with same ID
+            gene = Gene(id=gene_id, symbol=gene_symbol, master_gene_id=gene_id)
+            session.add(gene)
 
-                genes_added += 1
+            genes_added += 1
 
-                # Commit in batches
-                if genes_added % 1000 == 0:
-                    try:
-                        session.commit()
-                        print(f"Added {genes_added} master gene IDs and core gene entries")
-                    except Exception as e:
-                        session.rollback()
-                        print(f"Error in batch commit: {str(e)}")
-                        raise
+            # Commit in batches
+            if genes_added % 1000 == 0:
+                try:
+                    session.commit()
+                    print(f"Added {genes_added} master gene IDs and core gene entries")
+                except Exception as e:
+                    session.rollback()
+                    print(f"Error in batch commit: {str(e)}")
+                    raise
 
         except Exception as e:
             session.rollback()
@@ -579,17 +589,22 @@ def process_gene_sources(
                         session,
                         gene_symbol,
                         interaction_source="Gene_Symbol_Nearby",
-                        description=gene_description
+                        description=gene_description,
                     )
                     processed_genes.add(gene_symbol)
 
         # Process enhancer interactions
         if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
             raw_enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            if isinstance(raw_enhancer_info, str) and raw_enhancer_info.strip() and raw_enhancer_info != ".":
+            if (
+                isinstance(raw_enhancer_info, str)
+                and raw_enhancer_info.strip()
+                and raw_enhancer_info != "."
+            ):
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(raw_enhancer_info)
-                
+
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
@@ -604,24 +619,27 @@ def process_gene_sources(
                             session,
                             gene_symbol,
                             interaction_source="ENCODE_Enhancer",
-                            promoter_info=enhancer_part
+                            promoter_info=enhancer_part,
                         )
                         processed_genes.add(gene_symbol)
 
         # Process promoter interactions
         if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
             raw_promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if isinstance(raw_promoter_info, str) and raw_promoter_info.strip() and raw_promoter_info != ".":
+            if (
+                isinstance(raw_promoter_info, str)
+                and raw_promoter_info.strip()
+                and raw_promoter_info != "."
+            ):
                 from utils import process_enhancer_info
+
                 genes = process_enhancer_info(raw_promoter_info)
-                
+
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
                         update_gene_source_metadata(
-                            session,
-                            gene_symbol,
-                            interaction_source="ENCODE_Promoter"
+                            session, gene_symbol, interaction_source="ENCODE_Promoter"
                         )
                         processed_genes.add(gene_symbol)
 
@@ -641,11 +659,11 @@ def populate_dmrs(
     from rb_domination import calculate_dominating_sets
 
     dominating_set = calculate_dominating_sets(
-        bipartite_graph, 
-        df, 
+        bipartite_graph,
+        df,
         "DSStimeseries",  # timepoint name
-        session,          # database session
-        timepoint_id      # timepoint ID
+        session,  # database session
+        timepoint_id,  # timepoint ID
     )
 
     for _, row in df.iterrows():
@@ -668,31 +686,33 @@ def populate_dmrs(
         insert_dmr(session, timepoint_id, **dmr_data)
 
 
-def populate_timepoints(session: Session, timeseries_sheet: str, pairwise_sheets: List[str], start_gene_id: int):
+def populate_timepoints(
+    session: Session,
+    timeseries_sheet: str,
+    pairwise_sheets: List[str],
+    start_gene_id: int,
+):
     """
     Populate timepoints table with names and DMR ID offsets.
-    
+
     Args:
         session: Database session
-        timeseries_sheet: The timeseries sheet name (e.g. "DSS_Time_Series") 
+        timeseries_sheet: The timeseries sheet name (e.g. "DSS_Time_Series")
         pairwise_sheets: List of sheet names from pairwise file
         start_gene_id: Minimum ID value for genes (DMR IDs must be below this)
-        
+
     Raises:
         ValueError: If any DMR ID offset would exceed or equal start_gene_id
     """
     # Validate start_gene_id
     if start_gene_id <= 0:
         raise ValueError(f"start_gene_id must be positive, got {start_gene_id}")
-    
+
     # Define base timepoint data starting with timeseries
     timepoint_data = {
-        "DSStimeseries": {
-            "offset": 0,
-            "description": "DSS time series analysis"
-        }
+        "DSStimeseries": {"offset": 0, "description": "DSS time series analysis"}
     }
-    
+
     # Add pairwise timepoints with sequential offsets
     offset = 10000  # Start pairwise offsets at 10000
     for sheet in pairwise_sheets:
@@ -700,34 +720,34 @@ def populate_timepoints(session: Session, timeseries_sheet: str, pairwise_sheets
         timepoint_name = sheet.replace("_TSS", "")
         timepoint_data[timepoint_name] = {
             "offset": offset,
-            "description": f"Pairwise comparison from {timepoint_name}"
+            "description": f"Pairwise comparison from {timepoint_name}",
         }
         offset += 10000  # Increment by 10000 for each sheet
-    
+
     # Validate that all offsets are safely below start_gene_id
     max_offset = max(data["offset"] for data in timepoint_data.values())
     max_possible_dmr_id = max_offset + 10000  # Account for DMRs within each timepoint
-    
+
     if max_possible_dmr_id >= start_gene_id:
         raise ValueError(
             f"Maximum possible DMR ID ({max_possible_dmr_id}) would exceed or equal "
             f"start_gene_id ({start_gene_id}). Please increase start_gene_id in configuration "
             f"to at least {max_possible_dmr_id + 10000} for safety."
         )
-    
+
     print("\nPopulating timepoints table...")
     print(f"Using start_gene_id: {start_gene_id}")
     print(f"Maximum DMR ID offset: {max_offset}")
     print(f"Maximum possible DMR ID: {max_possible_dmr_id}")
-    
+
     for name, data in timepoint_data.items():
         get_or_create_timepoint(
-            session, 
+            session,
             name=name,
             description=data["description"],
-            dmr_id_offset=data["offset"]
+            dmr_id_offset=data["offset"],
         )
-    
+
     session.commit()
     print("Timepoints populated successfully")
     print("\nTimepoint offsets:")
@@ -870,5 +890,3 @@ def populate_relationships(session: Session, relationships: list):
     """Populate relationships table."""
     for rel in relationships:
         insert_relationship(session, **rel)
-
-
