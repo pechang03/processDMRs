@@ -86,7 +86,7 @@ def main():
             populate_master_gene_ids(session, gene_id_mapping)
 
             # Populate genes with initial data
-            print("\nPopulating genes table...")
+            print("\nPopulating core genes table...")
             populate_core_genes(session, gene_id_mapping)
             session.commit()
             print(f"Debug: timeseries spreadshet file {dss1_file} ")
