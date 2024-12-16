@@ -197,7 +197,7 @@ def process_bicliques_for_timepoint(
     )
 
     # Process bicliques using new function
-    from biclique_analysis.processor import process_bicliques_db
+    from database.biclique_processor import process_bicliques_db
 
     bicliques_result = process_bicliques_db(
         session=session,
