@@ -152,20 +152,21 @@ def configure_app(app):
     # Set default configuration
     app.config.setdefault("DATABASE_URL", "sqlite:///dmr_analysis.db")
     app.config.setdefault("FLASK_ENV", "development")
+    app.config.setdefault("DATA_DIR", "./data")
 
     # Override with environment variables if they exist
     app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", app.config["DATABASE_URL"])
     app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", app.config["FLASK_ENV"])
+    app.config["DATA_DIR"] = os.getenv("DATA_DIR", app.config["DATA_DIR"])
 
-    # Set data file paths from environment variables
-    data_dir = os.getenv("DATA_DIR", "./data")
-    app.config["DATA_DIR"] = data_dir
-    app.config["DSS1_FILE"] = os.getenv(
-        "DSS1_FILE", os.path.join(data_dir, "DSS1.xlsx")
-    )
-    app.config["DSS_PAIRWISE_FILE"] = os.getenv(
-        "DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx")
-    )
+    # Set data file paths from environment variables, using DATA_DIR
+    data_dir = app.config["DATA_DIR"]
+    app.config["DSS1_FILE"] = os.getenv("DSS1_FILE", os.path.join(data_dir, "DSS1.xlsx"))
+    app.config["DSS_PAIRWISE_FILE"] = os.getenv("DSS_PAIRWISE_FILE", os.path.join(data_dir, "DSS_PAIRWISE.xlsx"))
+
+    print(f"Configured data files:")
+    print(f"DSS1_FILE: {app.config['DSS1_FILE']}")
+    print(f"DSS_PAIRWISE_FILE: {app.config['DSS_PAIRWISE_FILE']}")
 
     # Configure static files path
     app.static_folder = os.path.join(
