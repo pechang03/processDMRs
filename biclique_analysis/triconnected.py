@@ -3,7 +3,7 @@ from typing import Tuple, List, Set, Dict
 import networkx as nx
 from .classifier import BicliqueSizeCategory, classify_component
 
-def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
+def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict, float, float, bool]:
     """
     Find and analyze triconnected components of a graph.
     
@@ -14,6 +14,9 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
         Tuple of:
         - List[Set]: Sets of nodes forming triconnected components
         - Dict: Statistics about the components
+        - float: Average number of DMRs per interesting component
+        - float: Average number of genes per interesting component
+        - bool: Whether the component is simple
     """
     # First get connected components
     connected_components = list(nx.connected_components(graph))
@@ -31,6 +34,7 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
     
     total_dmrs = 0
     total_genes = 0
+    is_simple = True  # Default to True, set to False if we find complex structure
     
     for component in connected_components:
         subgraph = graph.subgraph(component)
@@ -45,9 +49,9 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
             
         # For non-simple components, find separation pairs
         if len(component) > 3:  # Only process if enough nodes
+            is_simple = False  # Found a non-simple component
             try:
                 # Use NetworkX's implementation for now
-                # In future could implement Hopcroft-Tarjan algorithm
                 tricomps = find_separation_pairs(subgraph)
                 
                 for tricomp in tricomps:
@@ -74,9 +78,12 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict]:
                 continue
     
     # Calculate averages
-    if stats["interesting"] > 0:
-        stats["avg_dmrs"] = total_dmrs / stats["interesting"]
-        stats["avg_genes"] = total_genes / stats["interesting"]
+    avg_dmrs = total_dmrs / stats["interesting"] if stats["interesting"] > 0 else 0
+    avg_genes = total_genes / stats["interesting"] if stats["interesting"] > 0 else 0
+    
+    # Update stats with averages
+    stats["avg_dmrs"] = avg_dmrs
+    stats["avg_genes"] = avg_genes
     
     return triconnected_components, stats, avg_dmrs, avg_genes, is_simple
 
