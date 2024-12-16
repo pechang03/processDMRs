@@ -144,7 +144,11 @@ class Biclique(Base):
     component = relationship("Component", back_populates="bicliques")
     # Add this line:
     component_bicliques = relationship("ComponentBiclique", back_populates="biclique")
-    biclique_metadata = relationship("Metadata", backref="biclique", foreign_keys="[Metadata.entity_id]")
+    biclique_metadata = relationship("Metadata", 
+                                   backref="biclique",
+                                   foreign_keys=[Metadata.entity_id],
+                                   primaryjoin="and_(Metadata.entity_type=='biclique', "
+                                             "Metadata.entity_id==Biclique.id)")
 
 
 class Component(Base):
@@ -217,7 +221,7 @@ class Metadata(Base):
     __tablename__ = "metadata"
     id = Column(Integer, primary_key=True)
     entity_type = Column(String(50))
-    entity_id = Column(Integer)
+    entity_id = Column(Integer, ForeignKey('bicliques.id'))  # Add the ForeignKey
     key = Column(String(255))
     value = Column(Text)
 
