@@ -58,13 +58,19 @@ def test_insert_gene(session):
     import os
     os.environ['START_GENE_ID'] = '100000'  # Set start ID for testing
     
-    # Test valid gene
-    gene_id = insert_gene(session, "GENE1", "Test Gene")
+    # First create a master gene ID entry
+    from database.models import MasterGeneID
+    master_gene = MasterGeneID(id=100001, gene_symbol="GENE1")
+    session.add(master_gene)
+    session.commit()
+    
+    # Test valid gene with master_gene_id
+    gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)
     assert gene_id is not None
     assert gene_id >= 100000  # Verify ID is at least START_GENE_ID
     
     # Test duplicate gene (case insensitive)
-    dup_id = insert_gene(session, "gene1", "Duplicate Gene")
+    dup_id = insert_gene(session, "gene1", "Duplicate Gene", master_gene_id=100001)
     assert dup_id == gene_id
     
     # Test invalid gene symbols
@@ -75,8 +81,14 @@ def test_insert_gene(session):
 
 def test_upsert_gene_timepoint_annotation_biclique_dedup(session, timepoint):
     """Test deduplication of biclique IDs in gene annotations."""
-    # First create a valid gene
-    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100000)
+    # First create a master gene ID entry
+    from database.models import MasterGeneID
+    master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
+    session.add(master_gene)
+    session.commit()
+    
+    # Create a valid gene
+    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100001)
     assert gene_id is not None
     
     # Now test annotation
@@ -136,7 +148,15 @@ def test_upsert_dmr_timepoint_annotation_biclique_dedup(session, timepoint):
 
 def test_upsert_annotations_with_component_info(session, timepoint):
     """Test updating annotations with component information."""
-    gene_id = insert_gene(session, "TEST_GENE")
+    # First create a master gene ID entry
+    from database.models import MasterGeneID
+    master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
+    session.add(master_gene)
+    session.commit()
+    
+    # Create a valid gene
+    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=100001)
+    assert gene_id is not None
     
     # Test gene annotation
     upsert_gene_timepoint_annotation(
