@@ -68,115 +68,6 @@ def index_route():
         )
     except Exception as e:
         import traceback
-
-        traceback.print_exc()
-        return render_template("error.html", message=str(e))
-
-        data = results[timepoint]
-        if isinstance(data, dict) and "error" not in data:
-            # Create a copy and remove the full graph
-            timepoint_data = data.copy()
-            graph = timepoint_data.pop("bipartite_graph", None)
-
-            # If there are specific components selected, process only those
-            selected_components = request.args.get("components", "").split(",")
-            if selected_components and selected_components[0]:
-                # Extract only the requested component subgraphs
-                component_graphs = {}
-                for comp_id in selected_components:
-                    # Find the component in interesting or complex components
-                    comp = next(
-                        (
-                            c
-                            for c in timepoint_data.get("interesting_components", [])
-                            + timepoint_data.get("complex_components", [])
-                            if c.get("id") == int(comp_id)
-                        ),
-                        None,
-                    )
-
-                    if comp and graph:
-                        # Get nodes for this component
-                        all_nodes = set()
-                        for dmrs, genes in comp.get("raw_bicliques", []):
-                            all_nodes.update(dmrs)
-                            all_nodes.update(genes)
-
-                        # Create subgraph
-                        subgraph = graph.subgraph(all_nodes)
-
-                        # Create visualization
-                        component_graphs[comp_id] = create_biclique_visualization(
-                            comp["raw_bicliques"],
-                            timepoint_data.get("node_labels", {}),
-                            None,  # Let visualization handle positions
-                            None,  # Node biclique map
-                            timepoint_data.get("edge_classifications", {}),
-                            graph,
-                            subgraph,
-                            dmr_metadata=timepoint_data.get("dmr_metadata", {}),
-                            gene_metadata=timepoint_data.get("gene_metadata", {}),
-                        )
-
-                timepoint_data["component_graphs"] = component_graphs
-
-            return jsonify(
-                {"status": "success", "data": convert_for_json(timepoint_data)}
-            )
-
-        return jsonify(
-            {"status": "error", "message": data.get("message", "Unknown error")}
-        )
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-    # Remove this entire method, as it's now handled by stats_routes
-    """Handle statistics page."""
-    print("DEBUG: Hit statistics route")  # Debug print
-    try:
-        results = process_data()
-        if "error" in results:
-            return render_template("error.html", message=results["error"])
-
-        # Process timepoint data
-        timepoint_info = {}
-
-        for timepoint, data in results.items():
-            if isinstance(data, dict) and "error" not in data:
-                # Extract stats directly from the timepoint data
-                timepoint_info[timepoint] = {
-                    "status": "success",
-                    "stats": {
-                        "coverage": data.get("stats", {}).get("coverage", {}),
-                        "edge_coverage": data.get("stats", {}).get("edge_coverage", {}),
-                        "components": data.get("stats", {}).get("components", {}),
-                        "bicliques_summary": data.get("stats", {}).get(
-                            "bicliques_summary", {}
-                        ),
-                    },
-                    "message": "",
-                }
-
-                # Debug print for DSStimeseries
-                if timepoint == "DSStimeseries":
-                    print("\nDEBUG: DSStimeseries Stats:")
-                    print(json.dumps(timepoint_info[timepoint]["stats"], indent=2))
-            else:
-                timepoint_info[timepoint] = {
-                    "status": "error",
-                    "message": data.get("message", "Unknown error"),
-                    "stats": {},
-                }
-
-        # Convert to JSON-safe format before sending to template
-        safe_timepoint_info = convert_for_json(timepoint_info)
-
-        return render_template("statistics.html", timepoint_info=safe_timepoint_info)
-
-    except Exception as e:
-        import traceback
-
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
@@ -280,6 +171,7 @@ def component_detail_route(component_id, type="biclique"):
             layout=layout,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
+            timepoint="DSStimeseries"  # Add timepoint context
         )
     except Exception as e:
         import traceback
