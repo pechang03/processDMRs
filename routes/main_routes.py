@@ -172,7 +172,7 @@ def component_detail_route(component_id, type="biclique"):
             layout=layout,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            timepoint="DSStimeseries",  # Add timepoint context
+            timepoint=request.args.get("timepoint", "DSStimeseries"),  # Add timepoint context from query parameter
         )
     except Exception as e:
         import traceback
