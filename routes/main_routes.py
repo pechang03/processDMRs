@@ -68,6 +68,7 @@ def index_route():
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template("error.html", message=str(e))
 
@@ -171,7 +172,7 @@ def component_detail_route(component_id, type="biclique"):
             layout=layout,
             dmr_metadata=results.get("dmr_metadata", {}),
             gene_metadata=results.get("gene_metadata", {}),
-            timepoint="DSStimeseries"  # Add timepoint context
+            timepoint="DSStimeseries",  # Add timepoint context
         )
     except Exception as e:
         import traceback
