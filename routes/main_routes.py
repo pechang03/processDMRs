@@ -2,7 +2,7 @@
 # Author : Peter Shaw
 # Created on : 27 Nov 2024
 
-from flask import render_template, jsonify, request
+from flask import render_template, jsonify, request, current_app
 import json
 from . import main_bp
 from process_data import process_data
@@ -20,7 +20,17 @@ import networkx as nx
 def index_route():
     """Handle main index page."""
     try:
-        results = process_data()
+        # Get paths from app config
+        gene_mapping_file = current_app.config.get('GENE_MAPPING_FILE', './data/master_gene_ids.csv')
+        dss1_path = current_app.config.get('DSS1_FILE')
+        pairwise_path = current_app.config.get('DSS_PAIRWISE_FILE')
+
+        # Call process_data with configuration
+        results = process_data(
+            gene_mapping_file=gene_mapping_file,
+            dss1_path=dss1_path,
+            pairwise_path=pairwise_path
+        )
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
@@ -78,7 +88,17 @@ def index_route():
 def component_detail_route(component_id, type="biclique"):
     """Handle component detail page with optional type."""
     try:
-        results = process_data()
+        # Get paths from app config
+        gene_mapping_file = current_app.config.get('GENE_MAPPING_FILE', './data/master_gene_ids.csv')
+        dss1_path = current_app.config.get('DSS1_FILE')
+        pairwise_path = current_app.config.get('DSS_PAIRWISE_FILE')
+
+        # Call process_data with configuration
+        results = process_data(
+            gene_mapping_file=gene_mapping_file,
+            dss1_path=dss1_path,
+            pairwise_path=pairwise_path
+        )
         if "error" in results:
             return render_template("error.html", message=results["error"])
 
