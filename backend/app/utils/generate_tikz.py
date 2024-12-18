@@ -11,15 +11,15 @@ from typing import Dict, List, Set, Tuple
 import pandas as pd
 import numpy as np  # Add this import for np.linspace
 
-from visualization.graph_layout import calculate_node_positions
-from biclique_analysis.reader import read_bicliques_file
-from biclique_analysis.classifier import classify_biclique
-from biclique_analysis.edge_classification import classify_edges
-from visualization.core import create_biclique_visualization
+from backend.app.visualization.graph_layout import calculate_node_positions
+from backend.app.biclique_analysis.reader import read_bicliques_file
+from backend.app.biclique_analysis.classifier import classify_biclique
+from backend.app.biclique_analysis.edge_classification import classify_edges
+from backend.app.visualization.core import create_biclique_visualization
 from processDMR import read_excel_file
 from proces_data import create_bipartite_graph
-from biclique_analysis.processor import process_enhancer_info
-from visualization.graph_visualize import create_node_biclique_map
+from backend.app.biclique_analysis.processor import process_enhancer_info
+from backend.app.visualization.graph_visualize import create_node_biclique_map
 
 
 def create_tikz_visualization(
