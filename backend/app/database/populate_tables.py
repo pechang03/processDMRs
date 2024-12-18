@@ -5,6 +5,17 @@ import networkx as nx
 from typing import Dict, List, Set, Tuple
 import pandas as pd
 
+from collections import defaultdict
+from .operations import (
+    update_gene_source_metadata,
+    upsert_gene_timepoint_annotation,
+)
+from backend.app.utils.data_processing import process_enhancer_info
+from backend.app.biclique_analysis.classifier import (
+    classify_biclique,
+    BicliqueSizeCategory,
+)
+
 # from utils import node_info, edge_info
 from .operations import (
     get_or_create_timepoint,
@@ -50,6 +61,8 @@ from .models import (
     Relationship,
     MasterGeneID,
 )
+from backend.app.core.data_loader import create_bipartite_graph
+from backend.app.core.rb_domination import calculate_dominating_sets
 
 
 def update_biclique_category(
@@ -64,7 +77,6 @@ def update_biclique_category(
         dmr_ids: List of DMR IDs in the biclique
         gene_ids: List of gene IDs in the biclique
     """
-    from biclique_analysis.classifier import classify_biclique, BicliqueSizeCategory
 
     # Get the biclique
     biclique = session.query(Biclique).get(biclique_id)
@@ -571,9 +583,6 @@ def process_gene_sources(
         session: Database session
         timepoint_id: ID of the timepoint being processed
     """
-    from collections import defaultdict
-    from .operations import update_gene_source_metadata, upsert_gene_timepoint_annotation
-    from backend.app.utils.data_processing import process_enhancer_info
 
     print("\nProcessing gene interaction sources...")
     processed_genes = set()
@@ -599,7 +608,7 @@ def process_gene_sources(
                             session,
                             timepoint_id=timepoint_id,
                             gene_id=gene_id_mapping[gene_symbol],
-                            gene_type="Nearby"
+                            gene_type="Nearby",
                         )
                     processed_genes.add(gene_symbol)
 
@@ -611,9 +620,8 @@ def process_gene_sources(
                 and raw_enhancer_info.strip()
                 and raw_enhancer_info != "."
             ):
-                from backend.app.utils.data_processing import process_enhancer_info
                 genes = process_enhancer_info(raw_enhancer_info)
-                
+
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
@@ -628,7 +636,7 @@ def process_gene_sources(
                                 session,
                                 timepoint_id=timepoint_id,
                                 gene_id=gene_id_mapping[gene_symbol],
-                                gene_type="Enhancer"
+                                gene_type="Enhancer",
                             )
                         processed_genes.add(gene_symbol)
 
@@ -641,7 +649,7 @@ def process_gene_sources(
                 and raw_promoter_info != "."
             ):
                 genes = process_enhancer_info(raw_promoter_info)
-                
+
                 # Extract and store unique promoter info
                 if "/" in raw_promoter_info:
                     promoter_parts = raw_promoter_info.split("/")
@@ -651,7 +659,7 @@ def process_gene_sources(
                             gene = gene.strip().lower()
                             if gene in gene_id_mapping:
                                 promoter_info_map[gene].add(enhancer_id.strip())
-                
+
                 for gene_symbol in genes:
                     gene_symbol = str(gene_symbol).strip().lower()
                     if gene_symbol and gene_symbol != ".":
@@ -661,7 +669,7 @@ def process_gene_sources(
                                 session,
                                 timepoint_id=timepoint_id,
                                 gene_id=gene_id_mapping[gene_symbol],
-                                gene_type="Promoter"
+                                gene_type="Promoter",
                             )
                         processed_genes.add(gene_symbol)
 
@@ -672,7 +680,7 @@ def process_gene_sources(
             session,
             gene_symbol,
             interaction_source="ENCODE_Promoter",
-            promoter_info=deduplicated_info
+            promoter_info=deduplicated_info,
         )
 
     print(f"Updated interaction sources for {len(processed_genes)} genes")
@@ -683,12 +691,10 @@ def populate_dmrs(
 ):
     """Populate DMRs table with dominating set information."""
     # Create bipartite graph
-    from data_loader import create_bipartite_graph
 
     bipartite_graph = create_bipartite_graph(df, gene_id_mapping, "DSStimeseries")
 
     # Calculate dominating set
-    from rb_domination import calculate_dominating_sets
 
     dominating_set = calculate_dominating_sets(
         bipartite_graph,
@@ -743,7 +749,7 @@ def populate_timepoints(
         "DSS_Time_Series": {
             "name": "DSStimeseries",
             "offset": 0,
-            "description": "DSS time series analysis"
+            "description": "DSS time series analysis",
         },
         # Pairwise mappings
         "P21-P28_TSS": {"name": "P21-P28", "offset": 10000},
@@ -777,7 +783,7 @@ def populate_timepoints(
         sheet_name=timeseries_sheet,
         name=timepoint_data[timeseries_sheet]["name"],
         description=timepoint_data[timeseries_sheet]["description"],
-        dmr_id_offset=timepoint_data[timeseries_sheet]["offset"]
+        dmr_id_offset=timepoint_data[timeseries_sheet]["offset"],
     )
 
     # Add pairwise timepoints
@@ -787,7 +793,7 @@ def populate_timepoints(
                 session,
                 sheet_name=sheet,
                 name=timepoint_data[sheet]["name"],
-                dmr_id_offset=timepoint_data[sheet]["offset"]
+                dmr_id_offset=timepoint_data[sheet]["offset"],
             )
         else:
             print(f"Warning: Unknown sheet name {sheet}, skipping...")
