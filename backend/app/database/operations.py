@@ -769,3 +769,4 @@ def get_dominating_set(
     }
     
     return dominating_set, metadata
+from backend.app.core.rb_domination import store_dominating_set

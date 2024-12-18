@@ -140,4 +140,6 @@ __all__ = [
     "query_relationships",
     # Utility operations
     "get_or_create_gene",
+    "store_dominating_set",
+    "get_dominating_set",
 ]
