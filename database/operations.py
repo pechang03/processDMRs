@@ -27,12 +27,18 @@ from utils.node_info import NodeInfo
 
 def get_or_create_timepoint(
     session: Session, 
-    name: str, 
+    sheet_name: str,
+    name: str = None,
     description: str = None,
     dmr_id_offset: int = None
 ) -> int:
     """Get existing timepoint or create if it doesn't exist."""
-    timepoint = session.query(Timepoint).filter_by(name=name).first()
+    # Clean up name if not provided
+    if name is None:
+        name = sheet_name.replace("_TSS", "")
+    
+    # Try to find by sheet_name first
+    timepoint = session.query(Timepoint).filter_by(sheet_name=sheet_name).first()
     if timepoint:
         return timepoint.id
         
@@ -46,12 +52,21 @@ def get_or_create_timepoint(
             "TP28-TP180_TSS": 50000,
             "TP40-TP180_TSS": 60000,
             "TP60-TP180_TSS": 70000,
-            "DSStimeseries": 0,
+            "DSS_Time_Series": 0,
         }
-        dmr_id_offset = timepoint_offsets.get(name, 80000)
+        dmr_id_offset = timepoint_offsets.get(sheet_name, 80000)
+
+    # Generate description if not provided
+    if description is None:
+        if "DSS_Time_Series" in sheet_name:
+            description = "DSS time series analysis"
+        else:
+            clean_name = name.replace("-", " to ")
+            description = f"Pairwise comparison from {clean_name}"
         
     new_timepoint = Timepoint(
-        name=name, 
+        name=name,
+        sheet_name=sheet_name,
         description=description,
         dmr_id_offset=dmr_id_offset
     )

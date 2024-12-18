@@ -142,7 +142,7 @@ def main():
                 bicliques_file = os.path.join(
                     data_dir, "bipartite_graph_output.txt.", f"{sheet}_bicluster"
                 )
-                timepoint_id = get_or_create_timepoint(session, sheet)
+                timepoint_id = get_or_create_timepoint(session, sheet_name=sheet)
                 process_timepoint_table_data(
                     session=session,
                     timepoint_id=timepoint_id,
@@ -161,7 +161,7 @@ def main():
                 )
                 process_bicliques_for_timepoint(
                     session=session,
-                    timepoint_id=get_or_create_timepoint(session, timepoint_name),
+                    timepoint_id=get_or_create_timepoint(session, sheet_name=sheet),
                     timepoint_name=timepoint_name,
                     original_graph_file=original_graph_file,
                     bicliques_file=bicliques_file,
