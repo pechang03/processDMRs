@@ -61,10 +61,12 @@ def test_timepoint_schema(engine):
     
     assert 'id' in columns
     assert 'name' in columns
-    assert 'description' in columns
     assert 'dmr_id_offset' in columns
-    
+    assert 'sheet_name' in columns
+
     assert columns['name']['nullable'] is False
+    assert columns['sheet_name']['nullable'] is False
+    assert columns['dmr_id_offset']['nullable'] is True
     assert columns['dmr_id_offset']['nullable'] is True
 
 def test_gene_schema(engine):
@@ -141,7 +143,7 @@ def test_unique_constraints(engine):
 def test_relationship_creation(session):
     """Test creating related records."""
     # Create a timepoint
-    timepoint = Timepoint(name="test_timepoint", description="Test Description")
+    timepoint = Timepoint(name="test_timepoint", description="Test Description", sheet_name="test_sheet")
     session.add(timepoint)
     session.flush()
     
@@ -185,7 +187,7 @@ def test_relationship_creation(session):
 def test_array_type_handling(session):
     """Test handling of array types in models."""
     # Create a biclique with array data
-    timepoint = Timepoint(name="test_timepoint")
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
     session.add(timepoint)
     session.flush()
     
@@ -205,7 +207,7 @@ def test_array_type_handling(session):
 def test_cascade_behavior(session):
     """Test cascade behavior on delete."""
     # Create related records
-    timepoint = Timepoint(name="test_timepoint")
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
     session.add(timepoint)
     session.flush()
     
@@ -283,7 +285,7 @@ def test_triconnected_component_schema(engine):
 def test_component_relationships(session):
     """Test relationships between components and other entities."""
     # Create test data
-    timepoint = Timepoint(name="test_timepoint")
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
     session.add(timepoint)
     session.flush()
     
@@ -379,7 +381,7 @@ def test_annotation_relationships(session):
 def test_metadata_and_statistics(session):
     """Test metadata and statistics tables."""
     # Create test data
-    timepoint = Timepoint(name="test_timepoint")
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
     session.add(timepoint)
     session.flush()
     
