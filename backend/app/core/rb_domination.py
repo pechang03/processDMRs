@@ -8,7 +8,6 @@ from heapq import heapify, heappush, heappop
 import pandas as pd
 from sqlalchemy.orm import Session
 from backend.app.database.dominating_sets import store_dominating_set
-from backend.app.database.operations import get_dominating_set
 
 
 def greedy_rb_domination(graph, df, area_col=None):
