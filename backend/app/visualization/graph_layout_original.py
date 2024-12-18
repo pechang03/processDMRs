@@ -5,8 +5,8 @@
 from typing import Dict, Tuple, Set
 import networkx as nx
 from .base_layout import BaseLayout
-from utils.node_info import NodeInfo
-from utils.edge_info import EdgeInfo
+from backend.app.utils.node_info import NodeInfo
+from backend.app.utils.edge_info import EdgeInfo
 
 
 class OriginalGraphLayout(BaseLayout):

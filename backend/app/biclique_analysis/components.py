@@ -3,8 +3,8 @@ import networkx as nx
 import networkx as nx
 import json
 
-from utils.node_info import NodeInfo
-from biclique_analysis.statistics import (
+from backend.app.utils.node_info import NodeInfo
+from backend.app.biclique_analysis.statistics import (
     calculate_biclique_statistics,
     calculate_edge_coverage,
     calculate_node_participation,
@@ -12,13 +12,13 @@ from biclique_analysis.statistics import (
     calculate_size_distribution,
     calculate_coverage_statistics,
 )
-from utils.json_utils import (
+from backend.app.utils.json_utils import (
     convert_stats_for_json,
     convert_all_for_json,
     convert_sets_to_lists,
 )
-from biclique_analysis.edge_classification import classify_edges
-from biclique_analysis.classifier import (
+from backend.app.biclique_analysis.edge_classification import classify_edges
+from backend.app.biclique_analysis.classifier import (
     BicliqueSizeCategory,
     classify_biclique,
     classify_component,

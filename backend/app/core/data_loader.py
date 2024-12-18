@@ -8,15 +8,15 @@ import os
 
 from pandas.core.arrays.period import DIFFERENT_FREQ
 
-from utils.id_mapping import create_dmr_id, create_gene_mapping, validate_gene_mapping
-from utils.data_processing import process_enhancer_info
-from utils.graph_io import (
+from backend.app.utils.id_mapping import create_dmr_id, create_gene_mapping, validate_gene_mapping
+from backend.app.utils.data_processing import process_enhancer_info
+from backend.app.utils.graph_io import (
     read_bipartite_graph,
     write_bipartite_graph,
     remove_isolated_nodes,
     preprocess_graph_for_visualization,
 )
-from utils.constants import (
+from backend.app.utils.constants import (
     DATA_DIR,
     DSS1_FILE,
     DSS_PAIRWISE_FILE,

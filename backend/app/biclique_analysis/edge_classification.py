@@ -5,8 +5,8 @@ from typing import Dict, List, Tuple, Set
 from collections import defaultdict
 import networkx as nx
 
-from utils.edge_info import EdgeInfo
-from biclique_analysis.classifier import BicliqueSizeCategory
+from backend.app.utils.edge_info import EdgeInfo
+from backend.app.biclique_analysis.classifier import BicliqueSizeCategory
 
 
 def analyze_bridge_edges(

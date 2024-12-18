@@ -22,7 +22,7 @@ from .models import (
     Relationship,
     MasterGeneID,
 )
-from utils.node_info import NodeInfo
+from backend.app.utils.node_info import NodeInfo
 
 
 def get_or_create_timepoint(

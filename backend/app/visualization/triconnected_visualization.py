@@ -2,7 +2,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 import plotly.graph_objects as go
 from .base import GraphVisualization
-from utils.node_info import NodeInfo
+from backend.app.utils.node_info import NodeInfo
 
 
 class TriconnectedVisualization(GraphVisualization):

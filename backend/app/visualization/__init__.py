@@ -11,8 +11,8 @@ from .layout import create_visual_layout, create_axis_layout, calculate_plot_hei
 from .graph_layout_logical import calculate_node_positions
 from .biconnected_visualization import BiconnectedVisualization
 from .triconnected_visualization import TriconnectedVisualization
-from utils.node_info import NodeInfo
-from utils.edge_info import EdgeInfo
+from backend.app.utils.node_info import NodeInfo
+from backend.app.utils.edge_info import EdgeInfo
 
 __all__ = [
     "create_biclique_visualization",

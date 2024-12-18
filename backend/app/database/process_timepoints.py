@@ -13,37 +13,37 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 
 # from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
-from database.operations import insert_component
+from backend.app.database.operations import insert_component
 
 # from utils import id_mapping, constants
 # from utils import node_info, edge_info
-from utils.graph_io import read_bipartite_graph, write_gene_mappings
+from backend.app.utils.graph_io import read_bipartite_graph, write_gene_mappings
 from utils import process_enhancer_info
 from data_loader import create_bipartite_graph
 
 # from biclique_analysis import process_timepoint_data
 from biclique_analysis import reader
-from biclique_analysis.reader import read_bicliques_file
+from backend.app.biclique_analysis.reader import read_bicliques_file
 
 # from biclique_analysis.processor import create_node_metadata
-from biclique_analysis.component_analyzer import ComponentAnalyzer
-from biclique_analysis.classifier import classify_component
-from biclique_analysis.triconnected import (
+from backend.app.biclique_analysis.component_analyzer import ComponentAnalyzer
+from backend.app.biclique_analysis.classifier import classify_component
+from backend.app.biclique_analysis.triconnected import (
     analyze_triconnected_components,
     find_separation_pairs,
 )
-from database.biclique_processor import process_bicliques_db
+from backend.app.database.biclique_processor import process_bicliques_db
 # from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
 # from biclique_analysis.edge_classification import classify_edges
 from .operations import insert_triconnected_component
-from database.operations import (
+from backend.app.database.operations import (
     upsert_dmr_timepoint_annotation,
     upsert_gene_timepoint_annotation,
 )
 
 
-from database.populate_tables import (
+from backend.app.database.populate_tables import (
     populate_timepoint_genes,
     populate_dmrs,
 )

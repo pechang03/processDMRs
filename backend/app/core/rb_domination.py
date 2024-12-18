@@ -132,7 +132,7 @@ def greedy_rb_domination(graph, df, area_col=None):
 
 
 from sqlalchemy.orm import Session
-from database.operations import get_dominating_set, store_dominating_set
+from backend.app.database.operations import get_dominating_set, store_dominating_set
 
 
 def calculate_dominating_sets(

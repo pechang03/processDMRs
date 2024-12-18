@@ -14,7 +14,7 @@ from .analyzer import analyze_bicliques
 from .processor import process_dataset
 from .edge_classification import classify_edges
 from .writer import write_bicliques, write_analysis_results, write_component_details
-from utils.metadata import create_node_labels_and_metadata
+from backend.app.utils.metadata import create_node_labels_and_metadata
 
 # Use a set to ensure uniqueness and then convert back to a list
 __all__ = list(

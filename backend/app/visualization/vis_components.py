@@ -11,9 +11,9 @@ from .traces import (
 )
 from .layout import create_plot_layout
 from .core import generate_biclique_colors
-from utils.node_info import NodeInfo
-from biclique_analysis.classifier import classify_biclique
-from biclique_analysis.classifier import classify_biclique
+from backend.app.utils.node_info import NodeInfo
+from backend.app.biclique_analysis.classifier import classify_biclique
+from backend.app.biclique_analysis.classifier import classify_biclique
 
 def create_component_visualization(
     component: Dict,

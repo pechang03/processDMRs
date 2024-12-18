@@ -4,7 +4,7 @@ import json
 import csv
 from typing import Dict, List, Tuple, Set
 from pathlib import Path
-from utils.json_utils import convert_for_json
+from backend.app.utils.json_utils import convert_for_json
 
 def write_bicliques(
     bicliques: List[Tuple[Set[int], Set[int]]],

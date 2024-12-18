@@ -236,7 +236,7 @@ def create_node_labels_and_metadata(df: pd.DataFrame,
     return node_labels, dmr_metadata, gene_metadata
 
 
-from utils.edge_info import EdgeInfo
+from backend.app.utils.edge_info import EdgeInfo
 
 def create_statistics_summary(
     bicliques_result: Dict,

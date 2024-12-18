@@ -7,7 +7,7 @@ from collections import defaultdict
 from .statistics import analyze_components
 from .edge_classification import classify_edges
 from .classifier import BicliqueSizeCategory, classify_component
-from utils.edge_info import EdgeInfo
+from backend.app.utils.edge_info import EdgeInfo
 
 
 class ComponentAnalyzer:

@@ -27,13 +27,13 @@ import networkx as nx
 from flask import current_app
 import pandas as pd
 
-from utils.constants import (
+from backend.app.utils.constants import (
     START_GENE_ID,
 )
-from utils.id_mapping import create_gene_mapping
+from backend.app.utils.id_mapping import create_gene_mapping
 from utils import process_enhancer_info
 
-from utils.json_utils import (
+from backend.app.utils.json_utils import (
     #    convert_dict_keys_to_str,
     convert_for_json,
     # convert_sets_to_lists,
@@ -51,8 +51,8 @@ from data_loader import (
 )
 
 from analysis.timepoint_processor import process_timepoint
-from database.connection import get_db_session
-from database.operations import insert_metadata
+from backend.app.database.connection import get_db_session
+from backend.app.database.operations import insert_metadata
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

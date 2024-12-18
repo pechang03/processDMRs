@@ -6,10 +6,10 @@
 
 import os
 from typing import Dict, List, Set, Tuple
-from utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
+from backend.app.utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
-from utils.node_info import NodeInfo
+from backend.app.utils.node_info import NodeInfo
 # from utils import get_node_position  # Add this import
 
 

@@ -9,15 +9,15 @@ import networkx as nx
 from sqlalchemy.orm import Session
 from .graph_layout_biclique import CircularBicliqueLayout
 from .graph_original_spring import SpringLogicalLayout
-from utils.node_info import NodeInfo
-from utils.edge_info import EdgeInfo
+from backend.app.utils.node_info import NodeInfo
+from backend.app.utils.edge_info import EdgeInfo
 from .traces import (
     create_node_traces,
     create_edge_traces,
     create_biclique_boxes,
 )
 from .layout import create_visual_layout
-from database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
+from backend.app.database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
 from data_loader import preprocess_graph_for_visualization
 
 
