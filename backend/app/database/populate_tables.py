@@ -13,6 +13,7 @@ from .operations import (
     upsert_gene_timepoint_annotation,
     get_or_create_timepoint,
     insert_dmr,
+    insert_biclique,
 )
 from .models import (
     Biclique,
