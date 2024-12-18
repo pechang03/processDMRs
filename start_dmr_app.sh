@@ -87,7 +87,7 @@ export FLASK_PORT=5555
 python -m flask run --host=0.0.0.0 --port=5555 &
 
 # Wait for backend to start
-echo "Waiting for backend to start..."
+echo "Backend will be available at: http://localhost:5555"
 sleep 5
 
 # Start frontend
