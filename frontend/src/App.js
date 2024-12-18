@@ -23,7 +23,7 @@ function App() {
   const [backendStatus, setBackendStatus] = React.useState(null);
 
   React.useEffect(() => {
-    fetch('http://localhost:5000/api/health')
+    fetch('http://localhost:5555/api/health')
       .then(res => res.json())
       .then(data => setBackendStatus(data.status))
       .catch(err => setBackendStatus('offline'));

@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
 
 @app.route('/api/health')
 def health_check():
@@ -18,6 +18,10 @@ def not_found(e):
 def server_error(e):
     return jsonify({"error": "Internal server error"}), 500
 
+@app.route('/')
+def root():
+    return jsonify({"message": "DMR Analysis API"}), 200
+
 if __name__ == '__main__':
-    port = int(os.environ.get('FLASK_PORT', 5000))
+    port = int(os.environ.get('FLASK_PORT', 5555))
     app.run(host='0.0.0.0', port=port, debug=True)
