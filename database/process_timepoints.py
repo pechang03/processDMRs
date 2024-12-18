@@ -14,8 +14,9 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # from utils.constants import DSS1_FILE, DSS_PAIRWISE_FILE, BIPARTITE_GRAPH_TEMPLATE
 from database.operations import insert_component
-from utils import id_mapping, constants
-from utils import node_info, edge_info
+
+# from utils import id_mapping, constants
+# from utils import node_info, edge_info
 from utils.graph_io import read_bipartite_graph, write_gene_mappings
 from utils import process_enhancer_info
 from data_loader import create_bipartite_graph
@@ -31,30 +32,20 @@ from biclique_analysis.triconnected import (
     analyze_triconnected_components,
     find_separation_pairs,
 )
+from database.biclique_processor import process_bicliques_db
 # from biclique_analysis.component_analyzer import Analyzer, ComponentAnalyzer
 
-from database.models import (
-    ComponentBiclique,
-    Relationship,
-    Metadata,
-    Statistic,
-    Biclique,
-    Component,
-    DMR,
-    Gene,
-    Timepoint,
+# from biclique_analysis.edge_classification import classify_edges
+from .operations import insert_triconnected_component
+from database.operations import (
+    upsert_dmr_timepoint_annotation,
+    upsert_gene_timepoint_annotation,
 )
-from .operations import insert_component
-from . import operations
+
 
 from database.populate_tables import (
-    populate_timepoints,
-    populate_core_genes,
     populate_timepoint_genes,
     populate_dmrs,
-    populate_dmr_annotations,
-    populate_gene_annotations,
-    populate_bicliques,
 )
 
 
@@ -140,7 +131,7 @@ def add_split_graph_nodes(original_graph: nx.Graph, split_graph: nx.Graph):
         return len(dmr_nodes), len(gene_nodes)
 
     except Exception as e:
-        print(f"Error adding nodes to split graph:")
+        print("Error adding nodes to split graph:")
         print(f"- Type: {type(e).__name__}")
         print(f"- Details: {str(e)}")
         import traceback
@@ -184,46 +175,64 @@ def process_bicliques_for_timepoint(
     # Check for required files
     if not os.path.exists(bicliques_file):
         print(f"Warning: Bicliques file not found at {bicliques_file}")
-        print("Creating bipartite graph from DataFrame...")
+        return None
+    original_graph = None
+    split_graph = None
+    # Load original graph
+    if not os.path.exists(original_graph_file):
+        print("Error: Original graph file not found at {original_graph_file}")
+        return None
+        # print("Creating bipartite graph from DataFrame...")
         # Create bipartite graph directly from DataFrame
-        bipartite_graph = create_bipartite_graph(
-            df=df,
-            gene_id_mapping=gene_id_mapping,
-            timepoint=timepoint_name
-        )
-        
+        # bipartite_graph = create_bipartite_graph(
+        #    df=df, gene_id_mapping=gene_id_mapping, timepoint=timepoint_name
+        # )
+
         # Write graph to file for future use
-        write_bipartite_graph(bipartite_graph, original_graph_file)
-        
+        # write_bipartite_graph(bipartite_graph, original_graph_file)
+        # NO NO WE DON"T WANT TO WRITE ANYTHING"
+
         # Use the graph we just created instead of reading from file
-        original_graph = bipartite_graph
+        # original_graph = bipartite_graph
     else:
         # Load original graph from file
         print("Loading original graph...")
-        original_graph = read_bipartite_graph(original_graph_file, timepoint=timepoint_name)
+        original_graph = read_bipartite_graph(
+            original_graph_file, timepoint=timepoint_name
+        )
 
-    print(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
+    print(
+        f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
+    )
 
     # Process connected components in original graph
     print("\nProcessing connected components in original graph...")
     for comp_idx, component in enumerate(nx.connected_components(original_graph)):
         comp_subgraph = original_graph.subgraph(component)
-        
+
         # Insert component
         comp_id = insert_component(
             session=session,
             timepoint_id=timepoint_id,
-            graph_type='original',
+            graph_type="original",
             size=len(component),
-            dmr_count=len([n for n in component if original_graph.nodes[n]['bipartite'] == 0]),
-            gene_count=len([n for n in component if original_graph.nodes[n]['bipartite'] == 1]),
+            dmr_count=len(
+                [n for n in component if original_graph.nodes[n]["bipartite"] == 0]
+            ),
+            gene_count=len(
+                [n for n in component if original_graph.nodes[n]["bipartite"] == 1]
+            ),
             edge_count=comp_subgraph.number_of_edges(),
-            density=2.0 * comp_subgraph.number_of_edges() / (len(component) * (len(component) - 1)) if len(component) > 1 else 0
+            density=2.0
+            * comp_subgraph.number_of_edges()
+            / (len(component) * (len(component) - 1))
+            if len(component) > 1
+            else 0,
         )
 
         # Tag nodes with component ID
         for node in component:
-            original_graph.nodes[node]['component_id'] = comp_id
+            original_graph.nodes[node]["component_id"] = comp_id
 
         # Process triconnected components
         process_triconnected_components(
@@ -231,12 +240,11 @@ def process_bicliques_for_timepoint(
             timepoint_id=timepoint_id,
             original_graph=original_graph,
             component_id=comp_id,
-            df=df
+            df=df,
         )
 
     # Only process bicliques if we have the file
     if os.path.exists(bicliques_file):
-        from database.biclique_processor import process_bicliques_db
         bicliques_result = process_bicliques_db(
             session=session,
             timepoint_id=timepoint_id,
@@ -252,30 +260,32 @@ def process_bicliques_for_timepoint(
         print("Skipping biclique processing - no bicliques file available")
 
     session.commit()
+
+
 def process_triconnected_components(
     session: Session,
     timepoint_id: int,
     original_graph: nx.Graph,
     component_id: int,
-    df: pd.DataFrame
+    df: pd.DataFrame,
 ) -> None:
     """Process and store triconnected components for the original graph."""
-    from biclique_analysis.triconnected import analyze_triconnected_components
-    from biclique_analysis.edge_classification import classify_edges
-    from .operations import insert_triconnected_component
 
     print(f"\nAnalyzing triconnected components for component {component_id}...")
-    
+
     # Get component subgraph
     component_nodes = {
-        node for node in original_graph.nodes() 
-        if original_graph.nodes[node].get('component_id') == component_id
+        node
+        for node in original_graph.nodes()
+        if original_graph.nodes[node].get("component_id") == component_id
     }
     subgraph = original_graph.subgraph(component_nodes)
-    
+
     # Analyze triconnected components
-    tricomps, stats, avg_dmrs, avg_genes, is_simple = analyze_triconnected_components(subgraph)
-    
+    tricomps, stats, avg_dmrs, avg_genes, is_simple = analyze_triconnected_components(
+        subgraph
+    )
+
     print(f"Found {len(tricomps)} triconnected components")
     print(f"Stats: {stats}")
 
@@ -283,23 +293,27 @@ def process_triconnected_components(
     for idx, nodes in enumerate(tricomps):
         # Get component subgraph
         tri_subgraph = original_graph.subgraph(nodes)
-        
+
         # Calculate basic metrics
-        dmr_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 0}
-        gene_nodes = {n for n in nodes if original_graph.nodes[n]['bipartite'] == 1}
-        
+        dmr_nodes = {n for n in nodes if original_graph.nodes[n]["bipartite"] == 0}
+        gene_nodes = {n for n in nodes if original_graph.nodes[n]["bipartite"] == 1}
+
         # Find separation pairs and convert to list format
-        from biclique_analysis.triconnected import find_separation_pairs
+
         separation_pairs = find_separation_pairs(tri_subgraph)
-        separation_pairs_list = [sorted(list(pair)) for pair in separation_pairs] if separation_pairs else []
-        
+        separation_pairs_list = (
+            [sorted(list(pair)) for pair in separation_pairs]
+            if separation_pairs
+            else []
+        )
+
         # Convert all sets to sorted lists for database storage
         nodes_list = sorted(list(nodes))
         dmr_ids_list = sorted(list(dmr_nodes))
         gene_ids_list = sorted(list(gene_nodes))
-        
+
         # Determine category based on composition
-        from biclique_analysis.classifier import classify_component
+
         category = classify_component(dmr_nodes, gene_nodes, []).name.lower()
 
         # Insert triconnected component with properly formatted data
@@ -311,7 +325,11 @@ def process_triconnected_components(
             dmr_count=len(dmr_nodes),
             gene_count=len(gene_nodes),
             edge_count=tri_subgraph.number_of_edges(),
-            density=2.0 * tri_subgraph.number_of_edges() / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0,
+            density=2.0
+            * tri_subgraph.number_of_edges()
+            / (len(nodes) * (len(nodes) - 1))
+            if len(nodes) > 1
+            else 0,
             category=category,
             separation_pairs=separation_pairs_list,
             nodes=nodes_list,
@@ -319,25 +337,24 @@ def process_triconnected_components(
             avg_genes=avg_genes,
             is_simple=is_simple,
             dmr_ids=dmr_ids_list,
-            gene_ids=gene_ids_list
+            gene_ids=gene_ids_list,
         )
 
         # Update node annotations with triconnected component ID
-        from database.operations import upsert_dmr_timepoint_annotation, upsert_gene_timepoint_annotation
         for node in nodes:
-            if original_graph.nodes[node]['bipartite'] == 0:
+            if original_graph.nodes[node]["bipartite"] == 0:
                 upsert_dmr_timepoint_annotation(
                     session=session,
                     timepoint_id=timepoint_id,
                     dmr_id=node,
-                    triconnected_id=tri_id
+                    triconnected_id=tri_id,
                 )
             else:
                 upsert_gene_timepoint_annotation(
                     session=session,
                     timepoint_id=timepoint_id,
                     gene_id=node,
-                    triconnected_id=tri_id
+                    triconnected_id=tri_id,
                 )
 
     session.commit()

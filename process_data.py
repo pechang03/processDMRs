@@ -19,11 +19,12 @@
 
 import os
 import json
+
+# from extensions import app
 import logging
 from typing import Dict, List, Set, Tuple
 import networkx as nx
 from flask import current_app
-from extensions import app
 import pandas as pd
 
 from utils.constants import (
@@ -37,48 +38,6 @@ from utils.json_utils import (
     convert_for_json,
     # convert_sets_to_lists,
 )
-
-# from biclique_analysis import (
-#    process_bicliques,
-#    create_node_metadata,
-#    process_components,
-#    reporting,
-# )
-from biclique_analysis.edge_classification import classify_edges
-# from biclique_analysis.classifier import (
-#    BicliqueSizeCategory,
-#    classify_biclique,
-#    classify_component,
-#    classify_biclique_types,
-# )
-
-# from biclique_analysis.embeddings import (
-#    generate_triconnected_embeddings,
-#    generate_biclique_embeddings,
-# )
-
-# from biclique_analysis.processor import (
-#    create_biclique_metadata,
-# )
-
-# Add missing imports and placeholder functions
-
-# from biclique_analysis.statistics import (
-#    analyze_components,
-#    calculate_edge_coverage,
-#    # calculate_biclique_statistics,
-#    calculate_coverage_statistics,
-#    calculate_component_statistics,
-#    analyze_biconnected_components,
-# )
-
-from biclique_analysis.triconnected import analyze_triconnected_components
-# from rb_domination import (
-#    greedy_rb_domination,
-#    calculate_dominating_sets,
-#    print_domination_statistics,
-#    copy_dominating_set,
-# )
 
 
 # from visualization import create_node_biclique_map, CircularBicliqueLayout
@@ -99,9 +58,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # _cached_data = None
-
-
-# Removed: convert_dict_keys_to_str function (now imported from utils.json_utils)
 
 
 def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
@@ -231,7 +187,11 @@ def update_gene_metadata(
         raise
 
 
-def process_data():
+def process_data(
+    gene_mapping_file: str = "./data/master_gene_ids.csv",
+    dss1_path: str = "./data/DSS1.xlsx",
+    pairwise_path: str = "./data/DSS_PAIRWISE.xlsx",
+):
     """Process all timepoints including DSStimeseries with configurable layouts"""
     try:
         # Read existing gene mapping first
@@ -239,9 +199,10 @@ def process_data():
 
         # If no existing mapping, create new one
         if not gene_id_mapping:
-            print("No existing gene mapping found, creating new mapping...")
-            df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
-            gene_id_mapping = create_master_gene_mapping(df_DSStimeseries)
+            print(
+                f"Error: No existing gene mapping found, creating new mapping...{gene_mapping_file}"
+            )
+            return
 
         # Define layout options for different timepoint types
         layout_options = {
@@ -259,10 +220,14 @@ def process_data():
 
         # Initialize timepoint data dictionary
         timepoint_data = {}
+        if dss1_path is None:
+            print(f"Warning: No existing DSS1 file..{dss1_path}")
+            exit()
 
         # Process DSStimeseries timepoint first
         print("\nProcessing DSStimeseries timepoint...", flush=True)
-        df_DSStimeseries = read_excel_file(app.config["DSS1_FILE"])
+        print(f"Reading spreadsheat {dss1_path}")
+        df_DSStimeseries = read_excel_file(dss1_path)
 
         # Process DSStimeseries timepoint (no longer using "overall")
         timepoint_data["DSStimeseries"] = process_timepoint(
@@ -273,14 +238,17 @@ def process_data():
         )
 
         # Process pairwise timepoints
-        pairwise_file = app.config["DSS_PAIRWISE_FILE"]
-        xl = pd.ExcelFile(pairwise_file)
+        if pairwise_path is None:
+            print("Warning: No existing pairwise file..{pairwise_path}")
+            exit()
+            # pairwise_path = app.config["PAIRWISE_FILE"]
+        xl = pd.ExcelFile(pairwise_path)
 
         for sheet_name in xl.sheet_names:
             print(f"\nProcessing pairwise timepoint: {sheet_name}", flush=True)
             try:
                 # Read each sheet directly into a DataFrame
-                df = pd.read_excel(pairwise_file, sheet_name=sheet_name)
+                df = pd.read_excel(pairwise_path, sheet_name=sheet_name)
                 if not df.empty:
                     # Process the timepoint with the DataFrame
                     timepoint_data[sheet_name] = process_timepoint(

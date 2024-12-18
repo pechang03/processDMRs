@@ -1,15 +1,17 @@
-
 from typing import Tuple, List, Set, Dict
 import networkx as nx
 from .classifier import BicliqueSizeCategory, classify_component
 
-def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict, float, float, bool]:
+
+def analyze_triconnected_components(
+    graph: nx.Graph,
+) -> Tuple[List[Set], Dict, float, float, bool]:
     """
     Find and analyze triconnected components of a graph.
-    
+
     Args:
         graph: NetworkX graph to analyze
-        
+
     Returns:
         Tuple of:
         - List[Set]: Sets of nodes forming triconnected components
@@ -20,7 +22,7 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict, f
     """
     # First get connected components
     connected_components = list(nx.connected_components(graph))
-    
+
     triconnected_components = []
     stats = {
         "total": 0,
@@ -29,38 +31,40 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict, f
         "interesting": 0,
         "avg_dmrs": 0,
         "avg_genes": 0,
-        "skipped_simple": 0  # Track components we skip
+        "skipped_simple": 0,  # Track components we skip
     }
-    
+
     total_dmrs = 0
     total_genes = 0
     is_simple = True  # Default to True, set to False if we find complex structure
-    
+
     for component in connected_components:
         subgraph = graph.subgraph(component)
-        
+
         # Skip if component is simple (star-like with single DMR)
-        dmr_nodes = {n for n in component if graph.nodes[n]['bipartite'] == 0}
-        gene_nodes = {n for n in component if graph.nodes[n]['bipartite'] == 1}
-        
+        dmr_nodes = {n for n in component if graph.nodes[n]["bipartite"] == 0}
+        gene_nodes = {n for n in component if graph.nodes[n]["bipartite"] == 1}
+
         if len(dmr_nodes) == 1:  # Star-like component
             stats["skipped_simple"] += 1
             continue
-            
+
         # For non-simple components, find separation pairs
-        if len(component) > 3:  # Only process if enough nodes
+        if (
+            len(component) >= 5
+        ):  # Only process if enough nodes for bicliques we need > $K_{2,3} fir 3 paths
             is_simple = False  # Found a non-simple component
             try:
                 # Use NetworkX's implementation for now
                 tricomps = find_separation_pairs(subgraph)
-                
+
                 for tricomp in tricomps:
                     triconnected_components.append(tricomp)
-                    
+
                     # Classify component
-                    tri_dmrs = {n for n in tricomp if graph.nodes[n]['bipartite'] == 0}
-                    tri_genes = {n for n in tricomp if graph.nodes[n]['bipartite'] == 1}
-                    
+                    tri_dmrs = {n for n in tricomp if graph.nodes[n]["bipartite"] == 0}
+                    tri_genes = {n for n in tricomp if graph.nodes[n]["bipartite"] == 1}
+
                     if len(tricomp) == 1:
                         stats["single_node"] += 1
                     elif len(tri_dmrs) <= 1 or len(tri_genes) <= 1:
@@ -69,35 +73,36 @@ def analyze_triconnected_components(graph: nx.Graph) -> Tuple[List[Set], Dict, f
                         stats["interesting"] += 1
                         total_dmrs += len(tri_dmrs)
                         total_genes += len(tri_genes)
-                        
+
                 stats["total"] += len(tricomps)
-                
+
             except nx.NetworkXError:
                 # Handle case where triconnected decomposition fails
                 stats["skipped_simple"] += 1
                 continue
-    
+
     # Calculate averages
     avg_dmrs = total_dmrs / stats["interesting"] if stats["interesting"] > 0 else 0
     avg_genes = total_genes / stats["interesting"] if stats["interesting"] > 0 else 0
-    
+
     # Update stats with averages
     stats["avg_dmrs"] = avg_dmrs
     stats["avg_genes"] = avg_genes
-    
+
     return triconnected_components, stats, avg_dmrs, avg_genes, is_simple
+
 
 def find_separation_pairs(graph: nx.Graph) -> List[Set]:
     """
     Find separation pairs (vertices whose removal disconnects graph).
-    
+
     This is a placeholder implementation using NetworkX's biconnected components.
     Future implementation should use Hopcroft-Tarjan algorithm.
     """
     # For now, use biconnected components as approximation
     # Real implementation would find actual separation pairs
     bicomps = list(nx.biconnected_components(graph))
-    
+
     # Further break down large bicomponents
     tricomps = []
     for bicomp in bicomps:
@@ -105,7 +110,7 @@ def find_separation_pairs(graph: nx.Graph) -> List[Set]:
             # Find articulation points within bicomponent
             subgraph = graph.subgraph(bicomp)
             cut_vertices = list(nx.articulation_points(subgraph))
-            
+
             if cut_vertices:
                 # Use cut vertices to split component
                 remaining = set(bicomp)
@@ -120,5 +125,5 @@ def find_separation_pairs(graph: nx.Graph) -> List[Set]:
                 tricomps.append(bicomp)
         else:
             tricomps.append(bicomp)
-            
+
     return tricomps

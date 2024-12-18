@@ -6,6 +6,7 @@ import argparse
 import os
 from flask import send_from_directory
 from extensions import app
+from dotenv import load_dotenv
 from routes import register_blueprints  # Import from routes instead of utils
 
 
@@ -14,7 +15,7 @@ from routes import register_blueprints  # Import from routes instead of utils
 # from data_loader import get_excel_sheets
 
 # Version constant
-__version__ = "0.0.3-alpha"
+__version__ = "0.0.5-alpha"
 
 
 @app.route("/static/<path:filename>")
@@ -77,13 +78,10 @@ def configure_data_paths(data_dir: str):
     app.config["DATA_DIR"] = data_dir
 
 
-from dotenv import load_dotenv
-
-
 def configure_app(app):
     """Configure Flask application."""
     # Try multiple .env locations
-    env_files = [".env", "../.env", "../../.env"]
+    env_files = ["processDMR.env", "sample.env", "../.env", "../../.env"]
     env_loaded = False
 
     for env_file in env_files:
@@ -99,6 +97,7 @@ def configure_app(app):
     # Override with environment variables if they exist
     app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", app.config["DATABASE_URL"])
     app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", app.config["FLASK_ENV"])
+    return env_loaded
 
 
 def main():

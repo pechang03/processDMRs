@@ -1,5 +1,6 @@
 """Timepoint processing functionality."""
 
+import os
 from typing import Dict
 import networkx as nx
 import pandas as pd
@@ -20,6 +21,7 @@ from data_loader import create_bipartite_graph
 
 from utils.constants import BIPARTITE_GRAPH_OVERALL, BIPARTITE_GRAPH_TEMPLATE
 from biclique_analysis.statistics import analyze_components
+
 
 def process_timepoint(
     df: pd.DataFrame,
