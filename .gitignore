@@ -4,3 +4,9 @@
 .env
 *.env
 !sample.env
+
+# Environment files with secrets
+env_*
+claud_xai_env
+*env_claude*
+*openai_env
