@@ -60,3 +60,41 @@ echo -e "${GREEN}Both servers are starting...${NC}"
 echo "Backend will be available at: http://localhost:5000"
 echo "Frontend will be available at: http://localhost:3000"
 
+#!/bin/bash
+
+# Kill any existing processes on ports 3000 and 5000
+kill_port() {
+    local port=$1
+    pid=$(lsof -t -i:$port)
+    if [ ! -z "$pid" ]; then
+        echo "Killing process on port $port"
+        kill -9 $pid
+    fi
+}
+
+kill_port 3000
+kill_port 5000
+
+# Start backend
+echo "Starting Flask backend..."
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+export FLASK_APP=app/app.py
+export FLASK_ENV=development
+export FLASK_PORT=5000
+python -m flask run --host=0.0.0.0 --port=5000 &
+
+# Wait for backend to start
+echo "Waiting for backend to start..."
+sleep 5
+
+# Start frontend
+echo "Starting React frontend..."
+cd ../frontend
+npm install
+npm start &
+
+# Wait for both processes
+wait
