@@ -5,11 +5,14 @@ import networkx as nx
 from typing import Dict, List, Set, Tuple
 import pandas as pd
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, func
 
 from collections import defaultdict
 from .operations import (
     update_gene_source_metadata,
     upsert_gene_timepoint_annotation,
+    get_or_create_timepoint,
+    insert_dmr,
 )
 from backend.app.utils.data_processing import process_enhancer_info
 from backend.app.biclique_analysis.classifier import (
