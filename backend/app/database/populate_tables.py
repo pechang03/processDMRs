@@ -17,7 +17,7 @@ from backend.app.biclique_analysis.classifier import (
 )
 
 # from utils import node_info, edge_info
-from backend.app.database.dominating_sets import calculate_dominating_sets
+from backend.app.core.rb_domination import calculate_dominating_sets
 
 
 def update_biclique_category(

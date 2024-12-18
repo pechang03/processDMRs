@@ -308,3 +308,42 @@ def calculate_utility_score(
     """
     new_genes_dominated = set(graph.neighbors(dmr)) - dominated_genes
     return len(new_genes_dominated)
+def calculate_dominating_sets(
+    graph: nx.Graph,
+    df: pd.DataFrame,
+    timepoint: str,
+    session: Session,
+    timepoint_id: int,
+) -> Set[int]:
+    """Calculate dominating set for the graph."""
+    print(f"\nCalculating dominating set for {timepoint}")
+
+    # Calculate new dominating set
+    dominating_set = greedy_rb_domination(graph, df, area_col="Area_Stat")
+
+    # Prepare metadata for storage
+    area_stats = {}
+    utility_scores = {}
+    dominated_counts = {}
+
+    for dmr in dominating_set:
+        try:
+            area_stats[dmr] = df.loc[df["DMR_No."] == dmr + 1, "Area_Stat"].iloc[0]
+        except (KeyError, IndexError):
+            area_stats[dmr] = 1.0
+
+        neighbors = list(graph.neighbors(dmr))
+        utility_scores[dmr] = len(neighbors)
+        dominated_counts[dmr] = len(neighbors)
+
+    store_dominating_set(
+        session,
+        timepoint_id,
+        dominating_set,
+        area_stats,
+        utility_scores,
+        dominated_counts,
+    )
+
+    print(f"Stored dominating set of size {len(dominating_set)} for {timepoint}")
+    return dominating_set
