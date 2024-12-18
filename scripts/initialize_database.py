@@ -110,7 +110,7 @@ def main():
                 data_dir, "bipartite_graph_output.txt.biclusters"
             )
             print(ts_original_graph_file)
-            timepoint_id = get_or_create_timepoint(session, "DSStimeseries")
+            timepoint_id = get_or_create_timepoint(session, sheet_name="DSS_Time_Series")
             process_timepoint_table_data(
                 session, timepoint_id, df_DSS1, gene_id_mapping
             )
