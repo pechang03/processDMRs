@@ -42,7 +42,8 @@ class ArrayType(TypeDecorator):
 class Timepoint(Base):
     __tablename__ = "timepoints"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), unique=True, nullable=False)
+    name = Column(String(255), unique=True, nullable=False)  # Display name without _TSS
+    sheet_name = Column(String(255), unique=True, nullable=False)  # Original sheet name
     description = Column(Text)
     dmr_id_offset = Column(Integer, default=0)
     components = relationship(

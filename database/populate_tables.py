@@ -732,33 +732,32 @@ def populate_timepoints(
         timeseries_sheet: The timeseries sheet name (e.g. "DSS_Time_Series")
         pairwise_sheets: List of sheet names from pairwise file
         start_gene_id: Minimum ID value for genes (DMR IDs must be below this)
-
-    Raises:
-        ValueError: If any DMR ID offset would exceed or equal start_gene_id
     """
     # Validate start_gene_id
     if start_gene_id <= 0:
         raise ValueError(f"start_gene_id must be positive, got {start_gene_id}")
 
-    # Define base timepoint data starting with timeseries
+    # Define timepoint mappings
     timepoint_data = {
-        "DSStimeseries": {"offset": 0, "description": "DSS time series analysis"}
+        # Timeseries
+        "DSS_Time_Series": {
+            "name": "DSStimeseries",
+            "offset": 0,
+            "description": "DSS time series analysis"
+        },
+        # Pairwise mappings
+        "P21-P28_TSS": {"name": "P21-P28", "offset": 10000},
+        "P21-P40_TSS": {"name": "P21-P40", "offset": 20000},
+        "P21-P60_TSS": {"name": "P21-P60", "offset": 30000},
+        "P21-P180_TSS": {"name": "P21-P180", "offset": 40000},
+        "TP28-TP180_TSS": {"name": "TP28-TP180", "offset": 50000},
+        "TP40-TP180_TSS": {"name": "TP40-TP180", "offset": 60000},
+        "TP60-TP180_TSS": {"name": "TP60-TP180", "offset": 70000},
     }
 
-    # Add pairwise timepoints with sequential offsets
-    offset = 10000  # Start pairwise offsets at 10000
-    for sheet in pairwise_sheets:
-        # Strip "_TSS" suffix if present
-        timepoint_name = sheet.replace("_TSS", "")
-        timepoint_data[timepoint_name] = {
-            "offset": offset,
-            "description": f"Pairwise comparison from {timepoint_name}",
-        }
-        offset += 10000  # Increment by 10000 for each sheet
-
-    # Validate that all offsets are safely below start_gene_id
+    # Validate offsets against start_gene_id
     max_offset = max(data["offset"] for data in timepoint_data.values())
-    max_possible_dmr_id = max_offset + 10000  # Account for DMRs within each timepoint
+    max_possible_dmr_id = max_offset + 10000
 
     if max_possible_dmr_id >= start_gene_id:
         raise ValueError(
@@ -772,19 +771,32 @@ def populate_timepoints(
     print(f"Maximum DMR ID offset: {max_offset}")
     print(f"Maximum possible DMR ID: {max_possible_dmr_id}")
 
-    for name, data in timepoint_data.items():
-        get_or_create_timepoint(
-            session,
-            name=name,
-            description=data["description"],
-            dmr_id_offset=data["offset"],
-        )
+    # Add timeseries timepoint
+    get_or_create_timepoint(
+        session,
+        sheet_name=timeseries_sheet,
+        name=timepoint_data[timeseries_sheet]["name"],
+        description=timepoint_data[timeseries_sheet]["description"],
+        dmr_id_offset=timepoint_data[timeseries_sheet]["offset"]
+    )
+
+    # Add pairwise timepoints
+    for sheet in pairwise_sheets:
+        if sheet in timepoint_data:
+            get_or_create_timepoint(
+                session,
+                sheet_name=sheet,
+                name=timepoint_data[sheet]["name"],
+                dmr_id_offset=timepoint_data[sheet]["offset"]
+            )
+        else:
+            print(f"Warning: Unknown sheet name {sheet}, skipping...")
 
     session.commit()
     print("Timepoints populated successfully")
-    print("\nTimepoint offsets:")
-    for name, data in timepoint_data.items():
-        print(f"  {name}: {data['offset']}")
+    print("\nTimepoint mappings:")
+    for sheet_name, data in timepoint_data.items():
+        print(f"  {sheet_name} -> {data['name']}: offset {data['offset']}")
 
 
 def populate_bicliques(
