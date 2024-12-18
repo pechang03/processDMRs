@@ -15,6 +15,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import BicliqueDetailView from './components/BicliqueDetailView';
 
 const theme = createTheme({
   palette: {
@@ -193,64 +194,12 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
               </Paper>
             </Grid>
             {selectedTimepoint && (
-            <Grid item xs={12}>
-                <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    Timepoint Details
-                </Typography>
-                {detailsLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                    <CircularProgress />
-                    </Box>
-                ) : detailsError ? (
-                    <Alert severity="error" sx={{ width: '100%' }}>{detailsError}</Alert>
-                ) : timepointDetails ? (
-                    <Box>
-                        <Typography variant="h6">Timepoint {timepointDetails?.bicliques?.[0]?.timepoint || ''}</Typography>
-                        <Grid container spacing={2} sx={{ mt: 2 }}>
-                            <Grid item xs={12} md={4}>
-                                <Paper elevation={2} sx={{ p: 2 }}>
-                                    <Typography variant="subtitle1">Biclique Statistics</Typography>
-                                    <Typography>Total Bicliques: {timepointDetails?.stats?.totalBicliques || 0}</Typography>
-                                    <Typography>Active Components: {timepointDetails?.stats?.components?.size || 0}</Typography>
-                                    <Typography>Category Distribution:</Typography>
-                                    {timepointDetails?.stats?.categories && 
-                                        Object.entries(timepointDetails.stats.categories).map(([category, count]) => (
-                                            <Typography key={category} sx={{ pl: 2 }}>
-                                                {category}: {count} bicliques
-                                            </Typography>
-                                        ))}
-                                </Paper>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Paper elevation={2} sx={{ p: 2 }}>
-                                    <Typography variant="subtitle1">Gene Statistics</Typography>
-                                    <Typography>Total Genes: {timepointDetails?.stats?.totalGenes || 0}</Typography>
-                                    <Typography>Average Genes per Biclique: {timepointDetails?.stats?.totalBicliques ? 
-                                        Math.round(timepointDetails.stats.totalGenes / timepointDetails.stats.totalBicliques) : 0}
-                                    </Typography>
-                                </Paper>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Paper elevation={2} sx={{ p: 2 }}>
-                                    <Typography variant="subtitle1">DMR Statistics</Typography>
-                                    <Typography>Total DMRs: {timepointDetails?.stats?.totalDMRs || 0}</Typography>
-                                    <Typography>Graph Type Distribution:</Typography>
-                                    {timepointDetails?.stats?.graphTypes &&
-                                        Object.entries(timepointDetails.stats.graphTypes).map(([type, count]) => (
-                                            <Typography key={type} sx={{ pl: 2 }}>
-                                                {type}: {count} bicliques
-                                            </Typography>
-                                        ))}
-                                </Paper>
-                            </Grid>
-                        </Grid>
-                    </Box>
-                ) : (
-                    <Typography>No details available</Typography>
-                )}
-                </Paper>
-            </Grid>
+                <Grid item xs={12}>
+                    <BicliqueDetailView 
+                        timepointId={selectedTimepoint}
+                        timepointDetails={timepointDetails}
+                    />
+                </Grid>
             )}
         </Grid>
         </Box>
