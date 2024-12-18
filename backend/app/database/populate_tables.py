@@ -573,7 +573,7 @@ def process_gene_sources(
     """
     from collections import defaultdict
     from .operations import update_gene_source_metadata, upsert_gene_timepoint_annotation
-    from utils import process_enhancer_info
+    from backend.app.utils.data_processing import process_enhancer_info
 
     print("\nProcessing gene interaction sources...")
     processed_genes = set()
@@ -611,7 +611,7 @@ def process_gene_sources(
                 and raw_enhancer_info.strip()
                 and raw_enhancer_info != "."
             ):
-                from utils import process_enhancer_info
+                from backend.app.utils.data_processing import process_enhancer_info
                 genes = process_enhancer_info(raw_enhancer_info)
                 
                 for gene_symbol in genes:
