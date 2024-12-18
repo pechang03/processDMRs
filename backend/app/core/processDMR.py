@@ -30,9 +30,9 @@ from backend.app.utils.graph_io import write_bipartite_graph, write_gene_mapping
 from backend.app.utils.id_mapping import create_gene_mapping
 from backend.app.core.rb_domination import (
     greedy_rb_domination,
-    calculate_dominating_sets,  # Changed name
+    calculate_dominating_set,  # Changed name
     print_domination_statistics,
-    copy_dominating_set,  # Add new function
+    copy_dominating_set,
 )
 
 # Add version constant at top of file
