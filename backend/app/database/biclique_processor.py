@@ -24,7 +24,7 @@ def process_bicliques_db(
     file_format: str = "gene_name",
 ) -> Dict:
     """Process bicliques with database integration."""
-    from biclique_analysis.reader import read_bicliques_file
+    from backend.app.biclique_analysis.reader import read_bicliques_file
 
     # Read bicliques
     bicliques_result = read_bicliques_file(
