@@ -80,8 +80,7 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
         }
         return res.json();
     })
-    .then(data => {
-        const bicliques = data;
+    .then(bicliques => {
         console.log("Received bicliques:", bicliques);
         const stats = bicliques.reduce((acc, biclique) => {
             // Increment biclique count
@@ -94,14 +93,14 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
             // Track unique components
             acc.components.add(biclique.component_id);
             
-            // Count graph types and add to mapping
+            // Count graph types
             if (biclique.graph_type === 'split') {
                 acc.methylatedRegions++;
             }
 
             // Track categories and significant genes
             if (biclique.category === 'complex') {
-                acc.significantGenes += biclique.gene_count;
+                acc.significantGenes += parseInt(biclique.gene_count);
             }
             
             return acc;
@@ -113,22 +112,22 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
             methylatedRegions: 0,
             significantGenes: 0
         });
-
         console.log("Calculated stats:", stats);
         
         // Convert Set to array for component count
         stats.componentCount = stats.components.size;
 
-        setTimepointDetails({ 
-            bicliques, 
+        setTimepointDetails({
+            bicliques,
             stats: {
                 totalBicliques: stats.totalBicliques,
                 totalDMRs: stats.totalDMRs,
                 totalGenes: stats.totalGenes,
-                componentCount: stats.componentCount,
-                categories: stats.categories,
-                graphTypes: stats.graphTypes
+                componentCount: stats.components.size,
+                methylatedRegions: stats.methylatedRegions,
+                significantGenes: stats.significantGenes
             }
+        });
         });
         
         setDetailsLoading(false);
@@ -231,8 +230,78 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
             </Grid>
             {selectedTimepoint && (
                 <Grid item xs={12}>
-                    <BicliqueDetailView 
-                        timepointId={selectedTimepoint}
+                    <Paper elevation={3} sx={{ p: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Timepoint Analysis Results
+                        </Typography>
+                        {detailsError ? (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {detailsError}
+                            </Alert>
+                        ) : detailsLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : timepointDetails ? (
+                        <Typography variant="h6" gutterBottom>
+                            Biclique Summary
+                        </Typography>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={4}>
+                                <Paper elevation={1} sx={{ p: 2 }}>
+                                    <Typography variant="subtitle1">Biclique Statistics</Typography>
+                                    <Typography>Total Bicliques: {timepointDetails?.stats?.totalBicliques || 0}</Typography>
+                                    <Typography>Active Components: {timepointDetails?.stats?.componentCount || 0}</Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <Paper elevation={1} sx={{ p: 2 }}>
+                                    <Typography variant="subtitle1">Gene Statistics</Typography>
+                                    <Typography>Total Genes: {timepointDetails?.stats?.totalGenes || 0}</Typography>
+                                    <Typography>Significant Genes: {timepointDetails?.stats?.significantGenes || 0}</Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <Paper elevation={1} sx={{ p: 2 }}>
+                                    <Typography variant="subtitle1">DMR Statistics</Typography>
+                                    <Typography>Total DMRs: {timepointDetails?.stats?.totalDMRs || 0}</Typography>
+                                    <Typography>Methylated Regions: {timepointDetails?.stats?.methylatedRegions || 0}</Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Paper>
+                    <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Biclique Details
+                        </Typography>
+                        <TableContainer>
+                            <Table sx={{ minWidth: 650 }} aria-label="biclique details">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>ID</TableCell>
+                                        <TableCell>Category</TableCell>
+                                        <TableCell>Component</TableCell>
+                                        <TableCell>Graph Type</TableCell>
+                                        <TableCell>DMR Count</TableCell>
+                                        <TableCell>Gene Count</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {timepointDetails?.bicliques.map((biclique) => (
+                                        <TableRow key={biclique.biclique_id}>
+                                            <TableCell>{biclique.biclique_id}</TableCell>
+                                            <TableCell>{biclique.category}</TableCell>
+                                            <TableCell>{biclique.component_id}</TableCell>
+                                            <TableCell>{biclique.graph_type}</TableCell>
+                                            <TableCell>{biclique.dmr_count}</TableCell>
+                                            <TableCell>{biclique.gene_count}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                </Grid>
                         timepointDetails={timepointDetails}
                     />
                 </Grid>
