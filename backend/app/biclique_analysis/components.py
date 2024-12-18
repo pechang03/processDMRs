@@ -24,7 +24,7 @@ from backend.app.biclique_analysis.classifier import (
     classify_component,
     classify_biclique_types,
 )
-from visualization import (
+from backend.app.visualization import (
     create_node_biclique_map,
     create_biclique_visualization,
     CircularBicliqueLayout,
