@@ -14,6 +14,7 @@ from visualization.core import create_biclique_visualization
 from visualization.graph_layout_biclique import CircularBicliqueLayout
 from visualization import create_node_biclique_map
 import networkx as nx
+from extensions import app
 
 
 @main_bp.route("/")
@@ -21,15 +22,23 @@ def index_route():
     """Handle main index page."""
     try:
         # Get paths from app config
-        gene_mapping_file = current_app.config.get('GENE_MAPPING_FILE', './data/master_gene_ids.csv')
-        dss1_path = current_app.config.get('DSS1_FILE')
-        pairwise_path = current_app.config.get('DSS_PAIRWISE_FILE')
+        gene_mapping_file = app.config.get(
+            "GENE_MAPPING_FILE", "./data/master_gene_ids.csv"
+        )
+        dss1_path = app.config.get("DSS1_FILE", "./data/DSS1.xlsx")
+        pairwise_path = app.config.get("DSS_PAIRWISE_FILE", "./data/DSS_PAIRWISE.xlsx")
+        if gene_mapping_file is None:
+            print("No gene mapping file found")
+        if dss1_path is None:
+            print("No DSS1 file found")
+        if pairwise_path is None:
+            print("No pairwise file found")
 
         # Call process_data with configuration
         results = process_data(
             gene_mapping_file=gene_mapping_file,
             dss1_path=dss1_path,
-            pairwise_path=pairwise_path
+            pairwise_path=pairwise_path,
         )
         if "error" in results:
             return render_template("error.html", message=results["error"])
@@ -89,15 +98,17 @@ def component_detail_route(component_id, type="biclique"):
     """Handle component detail page with optional type."""
     try:
         # Get paths from app config
-        gene_mapping_file = current_app.config.get('GENE_MAPPING_FILE', './data/master_gene_ids.csv')
-        dss1_path = current_app.config.get('DSS1_FILE')
-        pairwise_path = current_app.config.get('DSS_PAIRWISE_FILE')
+        gene_mapping_file = current_app.config.get(
+            "GENE_MAPPING_FILE", "./data/master_gene_ids.csv"
+        )
+        dss1_path = current_app.config.get("DSS1_FILE")
+        pairwise_path = current_app.config.get("DSS_PAIRWISE_FILE")
 
         # Call process_data with configuration
         results = process_data(
             gene_mapping_file=gene_mapping_file,
             dss1_path=dss1_path,
-            pairwise_path=pairwise_path
+            pairwise_path=pairwise_path,
         )
         if "error" in results:
             return render_template("error.html", message=results["error"])

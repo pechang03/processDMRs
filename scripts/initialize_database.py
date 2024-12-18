@@ -156,7 +156,9 @@ def main():
                     data_dir, f"bipartite_graph_output_{sheet}.txt.biclusters"
                 )
                 # Remove _TSS from the end of sheet name for timepoint_name
-                timepoint_name = sheet.replace('_TSS', '') if sheet.endswith('_TSS') else sheet
+                timepoint_name = (
+                    sheet.replace("_TSS", "") if sheet.endswith("_TSS") else sheet
+                )
                 process_bicliques_for_timepoint(
                     session=session,
                     timepoint_id=get_or_create_timepoint(session, timepoint_name),
