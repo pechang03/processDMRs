@@ -103,8 +103,6 @@ function App() {
                       <TableHead>
                         <TableRow>
                           <TableCell>Name</TableCell>
-                          <TableCell>Description</TableCell>
-                          <TableCell>Sheet Name</TableCell>
                           <TableCell>Action</TableCell>
                         </TableRow>
                       </TableHead>
@@ -112,8 +110,6 @@ function App() {
                         {timepoints.map((timepoint) => (
                           <TableRow key={timepoint.id}>
                             <TableCell>{timepoint.name}</TableCell>
-                            <TableCell>{timepoint.description}</TableCell>
-                            <TableCell>{timepoint.sheet_name}</TableCell>
                             <TableCell>
                               <Button
                                 variant="contained"
