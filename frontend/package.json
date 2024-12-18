@@ -503,7 +503,7 @@
     "yocto-queue": "^1.1.1"
   },
 "scripts": {
-"start": "webpack serve --mode development --open",
+"start": "webpack serve --mode development --open --port 3000",
 "build": "webpack --mode production",
 "dev": "npm start",
 "test": "echo \"Error: no test specified\" && exit 1"
