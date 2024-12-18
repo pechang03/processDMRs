@@ -23,7 +23,7 @@ from backend.app.core.data_loader import (
     read_gene_mapping
 )
 import pandas as pd
-from utils import create_dmr_id, process_enhancer_info
+from backend.app.utils import create_dmr_id, process_enhancer_info
 from backend.app.utils.constants import START_GENE_ID
 from backend.app.utils.graph_io import write_bipartite_graph, write_gene_mappings
 from backend.app.utils.id_mapping import create_gene_mapping

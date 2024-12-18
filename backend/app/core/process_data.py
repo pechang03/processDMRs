@@ -31,7 +31,7 @@ from backend.app.utils.constants import (
     START_GENE_ID,
 )
 from backend.app.utils.id_mapping import create_gene_mapping
-from utils import process_enhancer_info
+from backend.app.utils import process_enhancer_info
 
 from backend.app.utils.json_utils import (
     #    convert_dict_keys_to_str,

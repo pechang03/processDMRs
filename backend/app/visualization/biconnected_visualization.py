@@ -2,7 +2,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 import plotly.graph_objects as go
 from .base import GraphVisualization
-from utils import get_node_position  # Change to use package-relative import
+from backend.app.utils import get_node_position  # Change to use package-relative import
 
 
 class BiconnectedVisualization(GraphVisualization):

@@ -1,7 +1,7 @@
 """Visualization package for biclique analysis"""
 
 from .core import create_biclique_visualization, generate_biclique_colors
-from utils import create_node_biclique_map
+from backend.app.utils import create_node_biclique_map
 from .graph_layout_original import OriginalGraphLayout
 from .graph_original_spring import SpringLogicalLayout
 from .graph_layout_biclique import CircularBicliqueLayout
