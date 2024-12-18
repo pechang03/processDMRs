@@ -3,22 +3,24 @@ import os
 from app.utils.extensions import app
 from dotenv import load_dotenv
 
-@app.route('/')
-def root():
-    return jsonify({"message": "DMR Analysis API"}), 200
+from flask import jsonify
+import os
+from app.utils.extensions import app
+from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+from app.database.connection import get_db_engine
+from app.database.models import Timepoint
 
-@app.route('/api/health')
-def health_check():
-    return jsonify({"status": "running"}), 200
-
-# Add basic error handlers
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "Not found"}), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return jsonify({"error": "Internal server error"}), 500
+@app.route('/api/timepoints')
+def get_timepoints():
+    """Get all timepoint names from the database."""
+    engine = get_db_engine()
+    with Session(engine) as session:
+        timepoints = session.query(Timepoint.id, Timepoint.name).all()
+        return jsonify([{
+            'id': t.id,
+            'name': t.name
+        } for t in timepoints])
 
 def configure_app(app):
     # Look for processDMR.env in current and parent directories
