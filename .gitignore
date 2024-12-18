@@ -5,3 +5,10 @@ __pycache__/
 .env
 claude_xai_env/
 
+*.env
+*_env
+claude_xai_env/
+old_config/
+.env*
+.aider*
+
