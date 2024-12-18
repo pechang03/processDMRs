@@ -3,10 +3,22 @@
 import sys
 from sqlalchemy import text
 from backend.app.database.connection import get_db_engine
-from backend.app.config import get_view_sql_path
+import os
+
+def get_view_sql_path(filename):
+    """Read SQL from a file in the backend/app/database/sql/views directory."""
+    # Add .sql extension if not present
+    if not filename.endswith('.sql'):
+        filename = f"{filename}.sql"
+    
+    # SQL files are stored in backend/app/database/sql/views
+    sql_dir = os.path.join(os.path.dirname(__file__), '..', 'sql', 'views')
+    file_path = os.path.join(sql_dir, filename)
+    
+    return file_path
 
 def read_sql_file(filename):
-    """Read SQL from a file in the sql/views directory."""
+    """Read SQL from a file in the backend/app/database/sql/views directory."""
     # Add .sql extension if not present
     if not filename.endswith('.sql'):
         filename = f"{filename}.sql"
