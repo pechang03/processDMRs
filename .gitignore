@@ -23,6 +23,24 @@ references/*
 sample.env
 data/
 data_wit/
+databack/
+backup/
+Archive.zip
+dmr_analysis.db
+dmr_analysis.egg-info/
+
 
 cache/
 data_wip/
+*.pyc
+__pycache__/
+*.db
+*.sqlite
+node_modules/
+.env
+.DS_Store
+backend/venv/
+*.log
+.pytest_cache/
+htmlcov/
+.coverage

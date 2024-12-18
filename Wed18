@@ -1,0 +1,9 @@
+/drop
+/add       backend/app/database/models.py
+/add       backend/app/database/operations.py
+/add       frontend/babel.config.js
+/add       frontend/package.json
+/add       frontend/public/index.html
+/add       frontend/src/App.js
+/add       frontend/src/index.js
+/add       frontend/webpack.config.js
