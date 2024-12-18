@@ -25,7 +25,7 @@ from .cleanup import clean_database
 
 from .operations import (
     # Core insert operations
-    # insert_timepoint, depricated
+    # insert_timepoint, deprecated
     get_or_create_timepoint,
     insert_gene,
     insert_dmr,
@@ -53,6 +53,8 @@ from .operations import (
     query_relationships,
     # Utility operations
     get_or_create_gene,
+    store_dominating_set,
+    get_dominating_set,
 )
 
 from .populate_tables import (
