@@ -15,6 +15,7 @@ from .models import (
     GeneTimepointAnnotation,
     DMRTimepointAnnotation,
     TriconnectedComponent,
+    DominatingSet,
     create_tables,
 )
 
