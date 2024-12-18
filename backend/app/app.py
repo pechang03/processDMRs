@@ -23,30 +23,22 @@ def get_timepoints():
         } for t in timepoints])
 
 def configure_app(app):
-    # Look for processDMR.env in current and parent directories
-    env_file = "processDMR.env"
-    env_paths = [
-        env_file,
-        os.path.join("..", env_file),
-        os.path.join("..", "..", env_file)
-    ]
-    
-    env_loaded = False
-    for path in env_paths:
-        if os.path.exists(path):
-            load_dotenv(path)
-            print(f"Loaded environment from {path}")
-            env_loaded = True
-            break
-    
-    if not env_loaded:
-        print("Warning: processDMR.env not found")
-
     # Get the project root directory (three levels up from app.py)
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     
-    # Construct database path relative to project root
-    db_path = os.path.join(project_root, "dmr_analysis.db")
+    # Look for processDMR.env in project root
+    env_file = os.path.join(project_root, "processDMR.env")
+    
+    if os.path.exists(env_file):
+        load_dotenv(env_file)
+        print(f"Loaded environment from {env_file}")
+        env_loaded = True
+    else:
+        print(f"Warning: processDMR.env not found at {env_file}")
+        env_loaded = False
+
+    # Get database path from environment or use default in project root
+    db_path = os.getenv("DATABASE_PATH", os.path.join(project_root, "dmr_analysis.db"))
     database_url = f"sqlite:///{db_path}"
 
     # Set configuration
