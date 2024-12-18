@@ -16,34 +16,7 @@ from .graph_io import read_bipartite_graph, write_bipartite_graph
 from .id_mapping import create_dmr_id
 
 
-def process_enhancer_info(enhancer_str):
-    """
-    Process enhancer interaction string and return set of gene names.
-
-    Args:
-        enhancer_str (str): Raw enhancer interaction string
-
-    Returns:
-        set: Set of unique gene names
-    """
-    if pd.isna(enhancer_str) or not isinstance(enhancer_str, str):
-        return set()
-
-    # Split by semicolon first, then handle potential gene/number pairs
-    genes = set()
-    for entry in str(enhancer_str).strip().split(";"):
-        entry = entry.strip()
-        if entry:
-            # Split on / and take only the gene part
-            if "/" in entry:
-                gene = entry.split("/")[0].strip()
-            else:
-                gene = entry.strip()
-            if gene:  # Only add non-empty genes
-                genes.add(gene)
-
-    return genes
-
+from .data_processing import process_enhancer_info
 
 __all__ = [
     "EdgeInfo",

@@ -9,7 +9,7 @@ from collections import defaultdict
 # Removed data_loader import
 from backend.app.utils.json_utils import convert_for_json
 from backend.app.utils.node_info import NodeInfo
-from backend.app.utils.json_utils import process_enhancer_info
+from backend.app.utils.data_processing import process_enhancer_info
 from .classifier import BicliqueSizeCategory
 from .classifier import classify_biclique
 
