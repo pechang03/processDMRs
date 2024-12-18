@@ -42,10 +42,11 @@ def configure_app(app):
     database_url = f"sqlite:///{db_path}"
 
     # Set configuration
-    app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", database_url)
+    app.config["DATABASE_URL"] = database_url
     app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", "development")
     
     # Print the configuration being used
+    print(f"Project root: {project_root}")
     print(f"Using database: {app.config['DATABASE_URL']}")
     print(f"Environment: {app.config['FLASK_ENV']}")
     
