@@ -11,7 +11,7 @@ from backend.app.utils.graph_io import write_gene_mappings
 from typing import Dict, Tuple, Set
 import json
 
-from data_loader import (
+from backend.app.core.data_loader import (
     get_excel_sheets,
     #   DSS1_FILE,
     #   DSS_PAIRWISE_FILE,
@@ -66,7 +66,7 @@ def parse_arguments():
 
 
 # Removed: create_dmr_id() and write_bipartite_graph()
-# These functions are now imported from data_loader
+# These functions are now imported from backend.app.core.data_loader
 
 
 def process_single_dataset(df, output_file, args, gene_id_mapping=None, timepoint=None):

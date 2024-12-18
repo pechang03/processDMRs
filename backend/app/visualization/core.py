@@ -18,7 +18,7 @@ from .traces import (
 )
 from .layout import create_visual_layout
 from backend.app.database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
-from data_loader import preprocess_graph_for_visualization
+from backend.app.core.data_loader import preprocess_graph_for_visualization
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:

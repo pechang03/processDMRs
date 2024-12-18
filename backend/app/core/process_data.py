@@ -42,7 +42,7 @@ from backend.app.utils.json_utils import (
 
 # from visualization import create_node_biclique_map, CircularBicliqueLayout
 
-from data_loader import (
+from backend.app.core.data_loader import (
     # get_excel_sheets,
     read_excel_file,
     #    create_bipartite_graph,
