@@ -11,6 +11,7 @@ from .populate_tables import (
     populate_gene_annotations,
     populate_bicliques,
 )
+from backend.app.biclique_analysis.reader import read_bicliques_file
 
 
 def process_bicliques_db(
@@ -24,7 +25,6 @@ def process_bicliques_db(
     file_format: str = "gene_name",
 ) -> Dict:
     """Process bicliques with database integration."""
-    from backend.app.biclique_analysis.reader import read_bicliques_file
 
     # Read bicliques
     bicliques_result = read_bicliques_file(
