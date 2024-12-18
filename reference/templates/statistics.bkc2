@@ -1,0 +1,26 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}DMR Analysis Statistics{% endblock %}
+
+{% block content %}
+  {% include 'components/overall_stats.html' %}
+
+  <div class="card mb-4">
+    <div class="card-header">
+      {% include 'components/stats/timepoint_tabs.html' %}
+    </div>
+    <div class="card-body">
+      <div class="tab-content">
+        <!-- Overall Statistics Tab -->
+        <div class="tab-pane fade show active" id="overall" role="tabpanel">
+          {% include 'components/graph_components.html' %}
+        </div>
+
+        <!-- Timepoint-specific tabs -->
+        {% for timepoint, data in timepoint_info.items() %}
+          {% include 'components/stats/timepoint_tab.html' %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

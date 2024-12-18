@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Component Details</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <!-- Navigation -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('index_route') }}">Home</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Component {{ component.id }}
+          </li>
+        </ol>
+      </nav>
+
+      <h1>Component Details</h1>
+
+      {% if component %}
+      <!-- Component Summary -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2>Component {{ component.id }}</h2>
+        </div>
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Total Bicliques</th>
+                <th>Total DMRs</th>
+                <th>Total Genes</th>
+                <th>Total Edges</th>
+                <th>Split Genes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ component.raw_bicliques|length }}</td>
+                <td>{{ component.dmrs }}</td>
+                <td>{{ component.genes }}</td>
+                <td>{{ component.total_edges }}</td>
+                <td>{{ component.split_genes|length }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Visualization Section -->
+      {% if component.plotly_graph %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Visualization</h3>
+        </div>
+        <div class="card-body">
+          <div id="plotly-graph-{{ component.id }}" class="plotly-graph"></div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log("DOM loaded, initializing visualization...");
+
+                // Get the container element
+                var container = document.getElementById('plotly-graph-{{ component.id }}');
+                console.log("Container element:", container);
+
+                try {
+                    // Get the graph data
+                    var graphData = {{ component.plotly_graph|tojson|safe }};
+                    console.log("Graph data structure:", {
+                        hasData: Boolean(graphData && graphData.data),
+                        hasLayout: Boolean(graphData && graphData.layout),
+                        numTraces: graphData && graphData.data ? graphData.data.length : 0,
+                        dataKeys: graphData ? Object.keys(graphData) : [],
+                        layoutKeys: graphData && graphData.layout ? Object.keys(graphData.layout) : []
+                    });
+
+                    if (!graphData || !graphData.data || !graphData.layout) {
+                        console.error("Invalid graph data structure:", graphData);
+                        return;
+                    }
+
+                    // Ensure minimum dimensions
+                    container.style.height = '600px';
+                    container.style.width = '100%';
+
+                    // Create the plot
+                    Plotly.newPlot(container,
+                        graphData.data,
+                        {
+                            ...graphData.layout,
+                            height: 600,  // Force minimum height
+                            width: null,  // Allow responsive width
+                            autosize: true
+                        },
+                        {
+                            responsive: true,
+                            displayModeBar: true,
+                            scrollZoom: true,
+                            displaylogo: false,
+                            modeBarButtonsToAdd: ['select2d', 'lasso2d']
+                        }
+                    ).then(function() {
+                        console.log("Plot successfully created");
+                    }).catch(function(err) {
+                        console.error("Error in plot creation:", err);
+                    });
+
+                } catch (error) {
+                    console.error("Error in visualization creation:", error);
+                    console.error("Error stack:", error.stack);
+                }
+            });
+          </script>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Split Genes Section -->
+      {% if component.split_genes %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Split Genes</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Gene Name</th>
+                  <th>Description</th>
+                  <th>Bicliques</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for gene in component.split_genes %}
+                <tr>
+                  <td>{{ gene.gene_name }}</td>
+                  <td>{{ gene.description if gene.description != "N/A" else "" }}</td>
+                  <td>{{ gene.type }}</td>
+                  <td>{{ gene.bicliques|join(', ') }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Bicliques Section -->
+      {% if component.bicliques %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Bicliques</h3>
+        </div>
+        <div class="card-body">
+          {% for biclique in component.bicliques %}
+          <div class="card mb-3">
+            <div class="card-header">
+              <h4>
+                Biclique {{ biclique.id + 1 }} ({{ biclique.details.dmrs|length
+                }} DMRs, {{ biclique.details.genes|length }} genes)
+              </h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <!-- DMRs Column -->
+                <div class="col-md-6">
+                  <h5>DMRs</h5>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Area</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for dmr in biclique.details.dmrs %}
+                        <tr>
+                          <td>{{ dmr.id }}</td>
+                          <td>{{ dmr.area }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- Genes Column -->
+                <div class="col-md-6">
+                  <h5>Genes</h5>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Description</th>
+                          <th>Type</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for gene in biclique.details.genes %}
+                        <tr>
+                          <td>{{ gene.name }}</td>
+                          <td>
+                            {{ gene.description if gene.description != "N/A"
+                            else "" }}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %} {% else %}
+      <div class="alert alert-warning">No component data available.</div>
+      {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

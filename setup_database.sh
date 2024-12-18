@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Change to the project root directory
 cd "$SCRIPT_DIR"
 
-# Add project root to PYTHONPATH
-export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+# Add backend directory to PYTHONPATH
+export PYTHONPATH="$SCRIPT_DIR/backend:$PYTHONPATH"
 
 echo "Setting up DMR Analysis Database..."
 
@@ -24,7 +24,7 @@ fi
 echo "Creating database..."
 python -c "
 from sqlalchemy_utils import create_database, database_exists
-from database.connection import get_db_engine
+from app.database.connection import get_db_engine
 engine = get_db_engine()
 if not database_exists(engine.url):
     create_database(engine.url)
@@ -32,11 +32,11 @@ if not database_exists(engine.url):
 
 # Initialize database schema
 echo "Initializing database schema..."
-python scripts/initialize_database.py
+python backend/app/database/scripts/initialize_database.py
 
 # Create database views
 echo "Creating database views..."
-python scripts/create_views.py
+python backend/app/database/scripts/create_views.py
 
 echo "Database setup complete!"
 

@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Run the test suite with coverage reporting
-PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m coverage run -m unittest discover -s tests -p 'test_*.py' -v
+PYTHONPATH="$SCRIPT_DIR/backend:$PYTHONPATH" python -m coverage run -m unittest discover -s backend/tests -p 'test_*.py' -v
 
 # Generate coverage report
 coverage report

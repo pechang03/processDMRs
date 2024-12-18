@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}DMR Analysis{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"/>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="container-fluid mt-4">
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index_route') }}">Home</a>
+          </li>
+          {% block breadcrumb %}{% endblock %}
+        </ol>
+      </nav>
+
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to load timepoint data
+        function loadTimepointData(timepoint) {
+            const tabContent = document.querySelector(`#${timepoint}`);
+            if (!tabContent.dataset.loaded) {
+                const loadingIndicator = tabContent.querySelector('.loading-indicator');
+                const statsContainer = tabContent.querySelector('.stats-container');
+            
+                if (loadingIndicator) loadingIndicator.style.display = 'block';
+                if (statsContainer) statsContainer.style.display = 'none';
+
+                fetch(`/statistics/timepoint/${timepoint}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Update the tab content with the new data
+                            updateTimepointContent(timepoint, data.data);
+                            tabContent.dataset.loaded = 'true';
+                        
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            if (statsContainer) statsContainer.style.display = 'block';
+                        } else {
+                            console.error('Error loading timepoint data:', data.message);
+                            if (loadingIndicator) {
+                                loadingIndicator.textContent = 'Error loading data: ' + data.message;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (loadingIndicator) {
+                            loadingIndicator.textContent = 'Network error: ' + error.message;
+                        }
+                    });
+            }
+        }
+
+        // Function to update timepoint content
+        function updateTimepointContent(timepoint, data) {
+            const tabContent = document.querySelector(`#${timepoint}`);
+        
+            // Update component statistics tables
+            updateComponentStats(tabContent, data.stats);
+        
+            // If there are component graphs, create visualizations
+            if (data.component_graphs) {
+                const visContainer = tabContent.querySelector('.components-visualization');
+                if (visContainer) {
+                    // Clear previous visualizations
+                    visContainer.innerHTML = '';
+                
+                    Object.entries(data.component_graphs).forEach(([compId, graphData]) => {
+                        // Create a container for this component's graph
+                        const container = document.createElement('div');
+                        container.id = `component-${compId}`;
+                        container.classList.add('plotly-graph', 'mb-4');
+                        visContainer.appendChild(container);
+                    
+                        // Render Plotly graph
+                        Plotly.newPlot(container, graphData.data, graphData.layout, {
+                            responsive: true,
+                            displayModeBar: true,
+                            scrollZoom: true,
+                            displaylogo: false
+                        });
+                    });
+                }
+            }
+        }
+
+        // Function to update component statistics tables
+        function updateComponentStats(tabContent, stats) {
+            // Update original graph components table
+            const originalCompTable = tabContent.querySelector('#original-components-table');
+            if (originalCompTable) {
+                const originalStats = stats.components.original;
+                updateComponentStatsTable(originalCompTable, originalStats);
+            }
+
+            // Update biclique graph components table
+            const bicliqueCompTable = tabContent.querySelector('#biclique-components-table');
+            if (bicliqueCompTable) {
+                const bicliquesStats = stats.components.biclique;
+                updateComponentStatsTable(bicliquesStats);
+            }
+        }
+
+        // Helper function to update component stats table
+        function updateComponentStatsTable(tableElement, stats) {
+            // Implement logic to update table rows with stats
+            // This will depend on your exact table structure
+            // Example:
+            const connectedRow = tableElement.querySelector('.connected-row');
+            if (connectedRow) {
+                connectedRow.querySelector('.total-cell').textContent = stats.connected.total;
+                connectedRow.querySelector('.single-node-cell').textContent = stats.connected.single_node;
+                // Add more cells as needed
+            }
+        }
+
+        // Add click handlers to tabs
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (event) {
+                const timepoint = event.target.getAttribute('href').substring(1);
+                loadTimepointData(timepoint);
+            });
+        });
+
+        // Load initial tab data
+        const activeTab = document.querySelector('.nav-link.active');
+        if (activeTab) {
+            const timepoint = activeTab.getAttribute('href').substring(1);
+            loadTimepointData(timepoint);
+        }
+    });
+    </script>
+    {% endblock %}
+  </body>
+</html>

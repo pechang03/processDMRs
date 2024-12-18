@@ -1,0 +1,28 @@
+Metadata-Version: 2.1
+Name: dmr_analysis
+Version: 0.0.4a0
+Summary: DMR Analysis System
+Author: Peter Shaw
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: flask>=2.0.0
+Requires-Dist: networkx>=2.6.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: plotly>=5.3.0
+Requires-Dist: scikit-learn>=0.24.0
+Requires-Dist: openpyxl>=3.0.0
+Requires-Dist: xlrd>=2.0.0
+Requires-Dist: sqlalchemy>=1.4.0
+Requires-Dist: sqlalchemy-utils>=0.38.0
+Requires-Dist: psycopg2-binary>=2.9.0
+Requires-Dist: alembic>=1.7.0
+Requires-Dist: python-dotenv>=0.19.0
+Provides-Extra: test
+Requires-Dist: pytest>=6.0.0; extra == "test"
+Requires-Dist: pytest-cov>=2.0.0; extra == "test"
+Requires-Dist: pytest-postgresql>=3.1.0; extra == "test"
+Requires-Dist: factory-boy>=3.2.0; extra == "test"
+Requires-Dist: black>=21.0.0; extra == "test"
+Requires-Dist: flake8>=3.9.0; extra == "test"
+Requires-Dist: mypy>=0.910; extra == "test"
