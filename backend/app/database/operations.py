@@ -1,3 +1,10 @@
+def clean_database():
+    """
+    Cleans the database by removing all existing records.
+    This function should be implemented based on specific cleanup requirements.
+    """
+    pass  # Implement database cleaning logic here
+
 """Core database operations for DMR analysis system."""
 
 from typing import Set, Dict, List, Tuple
@@ -26,13 +33,24 @@ from backend.app.utils.node_info import NodeInfo
 
 
 def get_or_create_timepoint(
-    session: Session, 
+    session: Session,
     sheet_name: str,
-    name: str = None,
+    name: str = None, 
     description: str = None,
     dmr_id_offset: int = None
 ) -> int:
-    """Get existing timepoint or create if it doesn't exist."""
+    """Get existing timepoint or create if it doesn't exist.
+    
+    Args:
+        session: SQLAlchemy session
+        sheet_name: The exact sheet name used in Excel file (e.g. "P21-P28_TSS") 
+        name: Display name, defaults to sheet_name without _TSS suffix
+        description: Optional description of the timepoint
+        dmr_id_offset: Starting ID for DMRs in this timepoint
+    
+    Returns:
+        int: ID of existing or newly created timepoint
+    """
     # Clean up name if not provided by stripping _TSS from sheet_name
     if name is None:
         name = sheet_name[:-4] if sheet_name.endswith("_TSS") else sheet_name

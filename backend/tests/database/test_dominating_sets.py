@@ -20,7 +20,7 @@ class TestDominatingSetStorage(unittest.TestCase):
         self.session = Session(self.engine)
         
         # Create test timepoint
-        self.timepoint = Timepoint(name="test_timepoint", sheet_name="test_timepoint_TSS", description="Test timepoint")
+        self.timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet", description="Test timepoint")
         self.session.add(self.timepoint)
         self.session.commit()
         

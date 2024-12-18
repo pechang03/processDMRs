@@ -22,4 +22,9 @@ def db_session(db_engine):
     session.close()
     transaction.rollback()
     timepoint = Timepoint(name="test_timepoint", sheet_name="test_timepoint_TSS", description="Test Description")
-timepoint = Timepoint(name="test_timepoint", sheet_name="Sheet1", description="Test Description")
+    session.add(timepoint)
+    session.commit()
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()

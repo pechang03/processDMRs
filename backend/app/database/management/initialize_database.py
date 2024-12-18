@@ -15,12 +15,11 @@ from backend.app.core.data_loader import (
     get_excel_sheets,
     read_excel_file,
     read_gene_mapping,
-    create_bipartite_graph,
 )
 
-from backend.app.database import models, connection, operations
-from backend.app.database.models import Base
-from backend.app.database.operations import get_or_create_timepoint, clean_database
+from backend.app.database import models, connection
+from backend.app.database.operations import get_or_create_timepoint
+from backend.app.database.cleanup import clean_database
 from backend.app.database.populate_tables import (
     populate_timepoints,
     populate_master_gene_ids,
@@ -29,7 +28,6 @@ from backend.app.database.populate_tables import (
 
 from backend.app.database.process_timepoints import (
     process_bicliques_for_timepoint,
-    get_genes_from_df,
     process_timepoint_table_data,
 )
 
@@ -109,7 +107,9 @@ def main():
                 data_dir, "bipartite_graph_output.txt.biclusters"
             )
             print(ts_original_graph_file)
-            timepoint_id = get_or_create_timepoint(session, sheet_name="DSS_Time_Series")
+            timepoint_id = get_or_create_timepoint(
+                session, sheet_name="DSS_Time_Series"
+            )
             process_timepoint_table_data(
                 session, timepoint_id, df_DSS1, gene_id_mapping
             )

@@ -143,7 +143,7 @@ def test_unique_constraints(engine):
 def test_relationship_creation(session):
     """Test creating related records."""
     # Create a timepoint
-    timepoint = Timepoint(name="test_timepoint", description="Test Description", sheet_name="test_sheet")
+    timepoint = Timepoint(name="test_timepoint", description="Test Description", sheet_name="test_timepoint_TSS")
     session.add(timepoint)
     session.flush()
     
@@ -187,7 +187,7 @@ def test_relationship_creation(session):
 def test_array_type_handling(session):
     """Test handling of array types in models."""
     # Create a biclique with array data
-    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_timepoint_TSS")
     session.add(timepoint)
     session.flush()
     
@@ -208,7 +208,7 @@ def test_cascade_behavior(session):
     """Test cascade behavior on delete."""
     # Create related records
     timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
-    session.add(timepoint)
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_timepoint_TSS")
     session.flush()
     
     component = Component(
