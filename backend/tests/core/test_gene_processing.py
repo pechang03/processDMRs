@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from biclique_analysis.processor import process_enhancer_info
+from backend.app.biclique_analysis.processor import process_enhancer_info
 
 class TestGeneProcessing(unittest.TestCase):
     def test_gene_name_processing(self):
