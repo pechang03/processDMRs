@@ -12,14 +12,27 @@ palette: {
 });
 
 function App() {
+const [data, setData] = React.useState(null);
+
+React.useEffect(() => {
+    fetch('http://localhost:5000/api/health')
+    .then(res => res.json())
+    .then(data => setData(data));
+}, []);
+
 return (
     <ThemeProvider theme={theme}>
     <CssBaseline />
     <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-            Welcome to React App
+            DMR Analysis Dashboard
         </Typography>
+        {data && (
+            <Typography>
+            Backend Status: {data.status}
+            </Typography>
+        )}
         </Box>
     </Container>
     </ThemeProvider>
