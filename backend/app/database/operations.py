@@ -28,6 +28,18 @@ from .models import (
     MasterGeneID,
     DominatingSet,
 )
+from sqlalchemy import create_engine
+import os
+from app.utils.extensions import app
+
+def get_db_engine():
+    """Get SQLAlchemy engine instance."""
+    # Get database URL from Flask app config
+    database_url = app.config.get("DATABASE_URL", "sqlite:///dmr_analysis.db")
+    
+    print(f"Connecting to database at: {database_url}")  # Debug print
+    
+    return create_engine(database_url)
 
 
 def get_or_create_timepoint(
