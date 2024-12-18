@@ -1,6 +1,6 @@
 from typing import Tuple, List, Set, Dict
 import networkx as nx
-from .classifier import BicliqueSizeCategory, classify_component
+# from .classifier import BicliqueSizeCategory, classify_component
 
 
 def analyze_triconnected_components(

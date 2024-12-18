@@ -5,29 +5,31 @@ from sqlalchemy import text
 from backend.app.database.connection import get_db_engine
 import os
 
+
 def get_view_sql_path(filename):
     """Read SQL from a file in the backend/app/database/sql/views directory."""
     # Add .sql extension if not present
-    if not filename.endswith('.sql'):
+    if not filename.endswith(".sql"):
         filename = f"{filename}.sql"
-    
+
     # SQL files are stored in backend/app/database/sql/views
-    sql_dir = os.path.join(os.path.dirname(__file__), '..', 'sql', 'views')
+    sql_dir = os.path.join(os.path.dirname(__file__), "sql", "views")
     file_path = os.path.join(sql_dir, filename)
-    
+
     return file_path
+
 
 def read_sql_file(filename):
     """Read SQL from a file in the backend/app/database/sql/views directory."""
     # Add .sql extension if not present
-    if not filename.endswith('.sql'):
+    if not filename.endswith(".sql"):
         filename = f"{filename}.sql"
-    
+
     file_path = get_view_sql_path(filename)
     print(f"Attempting to read SQL file from: {file_path}")
-    
+
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             return f.read()
     except FileNotFoundError:
         print(f"SQL file not found: {file_path}")
@@ -36,12 +38,13 @@ def read_sql_file(filename):
         print(f"Error reading SQL file {filename}: {e}")
         return None
 
+
 def create_views(engine):
     """Create all database views."""
     try:
         # Read SQL files
-        drop_views_sql = read_sql_file('drop_views.sql')
-        create_views_sql = read_sql_file('create_views.sql')
+        drop_views_sql = read_sql_file("drop_views.sql")
+        create_views_sql = read_sql_file("create_views.sql")
 
         if not drop_views_sql or not create_views_sql:
             raise Exception("Failed to read SQL files")
@@ -49,7 +52,7 @@ def create_views(engine):
         with engine.connect() as conn:
             print("Dropping existing views...")
             # Execute drop statements
-            for statement in drop_views_sql.split(';'):
+            for statement in drop_views_sql.split(";"):
                 if statement.strip():
                     try:
                         conn.execute(text(statement))
@@ -58,7 +61,7 @@ def create_views(engine):
 
             print("Creating new views...")
             # Execute create statements
-            for statement in create_views_sql.split(';'):
+            for statement in create_views_sql.split(";"):
                 if statement.strip():
                     try:
                         conn.execute(text(statement))
@@ -74,7 +77,7 @@ def create_views(engine):
     except Exception as e:
         print(f"Error creating views: {e}")
         raise
-    
+
 
 def main():
     """Main entry point for creating database views."""
@@ -86,6 +89,7 @@ def main():
         sys.exit(1)
     finally:
         pass
+
 
 if __name__ == "__main__":
     main()

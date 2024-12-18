@@ -1,20 +1,18 @@
-def clean_database():
-    """
-    Cleans the database by removing all existing records.
-    This function should be implemented based on specific cleanup requirements.
-    """
-    pass  # Implement database cleaning logic here
-
 """Core database operations for DMR analysis system."""
 
 from typing import Set, Dict, List, Tuple
-import pandas as pd
-
-# from utils import node_info, edge_info
-
+from os import environ
 from sqlalchemy import and_, func
+from backend.app.biclique_analysis.classifier import classify_biclique
 from .models import GeneTimepointAnnotation, DMRTimepointAnnotation
 from .models import TriconnectedComponent
+from .models import (
+    Component,
+    Biclique,
+    DMRTimepointAnnotation,
+    GeneTimepointAnnotation,
+)
+
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from .models import (
@@ -28,38 +26,38 @@ from .models import (
     Metadata,
     Relationship,
     MasterGeneID,
+    DominatingSet,
 )
-from backend.app.utils.node_info import NodeInfo
 
 
 def get_or_create_timepoint(
     session: Session,
     sheet_name: str,
-    name: str = None, 
+    name: str = None,
     description: str = None,
-    dmr_id_offset: int = None
+    dmr_id_offset: int = None,
 ) -> int:
     """Get existing timepoint or create if it doesn't exist.
-    
+
     Args:
         session: SQLAlchemy session
-        sheet_name: The exact sheet name used in Excel file (e.g. "P21-P28_TSS") 
+        sheet_name: The exact sheet name used in Excel file (e.g. "P21-P28_TSS")
         name: Display name, defaults to sheet_name without _TSS suffix
         description: Optional description of the timepoint
         dmr_id_offset: Starting ID for DMRs in this timepoint
-    
+
     Returns:
         int: ID of existing or newly created timepoint
     """
     # Clean up name if not provided by stripping _TSS from sheet_name
     if name is None:
         name = sheet_name[:-4] if sheet_name.endswith("_TSS") else sheet_name
-    
+
     # Try to find by sheet_name first
     timepoint = session.query(Timepoint).filter_by(sheet_name=sheet_name).first()
     if timepoint:
         return timepoint.id
-        
+
     # Also try finding by name as it might exist with different sheet_name
     timepoint = session.query(Timepoint).filter_by(name=name).first()
     if timepoint:
@@ -68,9 +66,9 @@ def get_or_create_timepoint(
             timepoint.sheet_name = sheet_name
             session.commit()
         return timepoint.id
-        
+
     # Get default offset from the mapping if not provided
-    if dmr_id_offset is None:
+    if dmr_id_offset is None or dmr_id_offset < 0:
         timepoint_offsets = {
             "P21-P28_TSS": 10000,
             "P21-P40_TSS": 20000,
@@ -90,12 +88,12 @@ def get_or_create_timepoint(
         else:
             clean_name = name.replace("-", " to ")
             description = f"Pairwise comparison from {clean_name}"
-        
+
     new_timepoint = Timepoint(
         name=name,
         sheet_name=sheet_name,
         description=description,
-        dmr_id_offset=dmr_id_offset
+        dmr_id_offset=dmr_id_offset,
     )
     session.add(new_timepoint)
     session.commit()
@@ -118,7 +116,6 @@ def insert_biclique(
     gene_ids: list,
 ):
     """Insert a new biclique into the database."""
-    from biclique_analysis.classifier import classify_biclique
 
     # Classify the biclique
     category = classify_biclique(set(dmr_ids), set(gene_ids))
@@ -136,8 +133,8 @@ def insert_biclique(
 
 
 def insert_component(
-    session: Session, 
-    timepoint_id: int, 
+    session: Session,
+    timepoint_id: int,
     graph_type: str,
     category: str = None,
     size: int = None,
@@ -145,14 +142,14 @@ def insert_component(
     gene_count: int = None,
     edge_count: int = None,
     density: float = None,
-    encoding: str = None
+    encoding: str = None,
 ) -> int:
     """Insert a new component into the database."""
     try:
         # Get the next available ID
         max_id = session.query(func.max(Component.id)).scalar()
         next_id = 1 if max_id is None else max_id + 1
-        
+
         component = Component(
             id=next_id,  # Explicitly set the ID
             timepoint_id=timepoint_id,
@@ -163,7 +160,7 @@ def insert_component(
             gene_count=gene_count,
             edge_count=edge_count,
             density=density,
-            endcoding=encoding
+            endcoding=encoding,
         )
         session.add(component)
         session.commit()
@@ -227,7 +224,6 @@ def update_biclique_category(
         dmr_ids: List of DMR IDs in the biclique
         gene_ids: List of gene IDs in the biclique
     """
-    from biclique_analysis.classifier import classify_biclique, BicliqueSizeCategory
 
     # Get the biclique
     biclique = session.query(Biclique).get(biclique_id)
@@ -307,7 +303,10 @@ def insert_gene(
     # Extended validation for unnamed columns and invalid symbols
     # invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""] TODO check unnamed is invalid
     invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-    if any(lookup_symbol.startswith(pat) for pat in invalid_patterns) or not lookup_symbol:
+    if (
+        any(lookup_symbol.startswith(pat) for pat in invalid_patterns)
+        or not lookup_symbol
+    ):
         return None  # Skip invalid symbols instead of raising error
 
     # Check for duplicate gene symbols (case-insensitive)
@@ -319,9 +318,9 @@ def insert_gene(
 
     try:
         # Get START_GENE_ID from environment, default to 100000
-        from os import environ
-        start_gene_id = int(environ.get('START_GENE_ID', '100000'))
-    
+
+        start_gene_id = int(environ.get("START_GENE_ID", "100000"))
+
         # Get the maximum existing gene ID
         max_id = session.query(func.max(Gene.id)).scalar()
         new_id = start_gene_id if max_id is None else max(max_id + 1, start_gene_id)
@@ -368,6 +367,7 @@ def upsert_dmr_timepoint_annotation(
         is_isolate: Whether the DMR is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
+
     def clean_biclique_ids(ids_str: str) -> str:
         """Helper function to clean and deduplicate biclique IDs"""
         if not ids_str:
@@ -375,9 +375,9 @@ def upsert_dmr_timepoint_annotation(
         # Split string, convert to ints, deduplicate, sort, and convert back
         try:
             # Handle both quoted and unquoted strings
-            clean_str = ids_str.strip('"\'')
-            ids = {int(x.strip()) for x in clean_str.split(',')}
-            return ','.join(str(x) for x in sorted(ids))
+            clean_str = ids_str.strip("\"'")
+            ids = {int(x.strip()) for x in clean_str.split(",")}
+            return ",".join(str(x) for x in sorted(ids))
         except ValueError as e:
             print(f"Error processing biclique IDs {ids_str}: {e}")
             return None
@@ -410,12 +410,15 @@ def upsert_dmr_timepoint_annotation(
             # Combine existing and new IDs
             existing_ids = set()
             if annotation.biclique_ids:
-                existing_ids.update(int(x) for x in clean_biclique_ids(annotation.biclique_ids).split(','))
-            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(',')}
+                existing_ids.update(
+                    int(x)
+                    for x in clean_biclique_ids(annotation.biclique_ids).split(",")
+                )
+            new_ids = {int(x) for x in clean_biclique_ids(str(biclique_ids)).split(",")}
             existing_ids.update(new_ids)
-        
+
             # Update with deduplicated string
-            annotation.biclique_ids = ','.join(str(x) for x in sorted(existing_ids))
+            annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = DMRTimepointAnnotation(
@@ -426,7 +429,9 @@ def upsert_dmr_timepoint_annotation(
             degree=degree,
             node_type=node_type,
             is_isolate=is_isolate,
-            biclique_ids=clean_biclique_ids(str(biclique_ids)) if biclique_ids else None,
+            biclique_ids=clean_biclique_ids(str(biclique_ids))
+            if biclique_ids
+            else None,
         )
         session.add(annotation)
 
@@ -637,26 +642,24 @@ def verify_relationships(session: Session):
 
 def get_component_data(session: Session, component_id: int) -> Dict:
     """Get all data needed for component visualization."""
-    from .models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
-    
     component = session.query(Component).get(component_id)
     if not component:
         raise ValueError(f"Component {component_id} not found")
-        
+
     bicliques = session.query(Biclique).filter_by(component_id=component_id).all()
-    
+
     # Get all node IDs
     dmr_nodes = set()
     gene_nodes = set()
     for biclique in bicliques:
         dmr_nodes.update(biclique.dmr_ids)
         gene_nodes.update(biclique.gene_ids)
-        
+
     return {
         "component": component,
         "bicliques": bicliques,
         "dmr_nodes": dmr_nodes,
-        "gene_nodes": gene_nodes
+        "gene_nodes": gene_nodes,
     }
 
 
@@ -707,18 +710,16 @@ def get_or_create_gene(
         return insert_gene(session, symbol, description, master_gene_id)
 
 
-from .models import DominatingSet
-
 def store_dominating_set(
     session: Session,
     timepoint_id: int,
     dominating_set: Set[int],
     area_stats: Dict[int, float],
     utility_scores: Dict[int, float],
-    dominated_counts: Dict[int, int]
+    dominated_counts: Dict[int, int],
 ):
     """Store a computed dominating set in the database.
-    
+
     Args:
         session: Database session
         timepoint_id: ID of the timepoint
@@ -729,7 +730,7 @@ def store_dominating_set(
     """
     # First remove any existing entries for this timepoint
     session.query(DominatingSet).filter_by(timepoint_id=timepoint_id).delete()
-    
+
     # Add new entries
     for dmr_id in dominating_set:
         ds_entry = DominatingSet(
@@ -737,36 +738,36 @@ def store_dominating_set(
             dmr_id=dmr_id,
             area_stat=area_stats.get(dmr_id),
             utility_score=utility_scores.get(dmr_id),
-            dominated_gene_count=dominated_counts.get(dmr_id)
+            dominated_gene_count=dominated_counts.get(dmr_id),
         )
         session.add(ds_entry)
-    
+
     session.commit()
 
 
 def get_dominating_set(
-    session: Session,
-    timepoint_id: int
+    session: Session, timepoint_id: int
 ) -> Tuple[Set[int], Dict[str, Dict]]:
     """Retrieve the dominating set for a timepoint.
-    
+
     Returns:
         Tuple containing:
         - Set of DMR IDs in the dominating set
         - Dictionary of metadata (area_stats, utility_scores, etc.)
     """
     entries = session.query(DominatingSet).filter_by(timepoint_id=timepoint_id).all()
-    
+
     if not entries:
         return None, None
-        
+
     dominating_set = {entry.dmr_id for entry in entries}
     metadata = {
-        'area_stats': {entry.dmr_id: entry.area_stat for entry in entries},
-        'utility_scores': {entry.dmr_id: entry.utility_score for entry in entries},
-        'dominated_counts': {entry.dmr_id: entry.dominated_gene_count for entry in entries},
-        'calculation_timestamp': min(entry.calculation_timestamp for entry in entries)
+        "area_stats": {entry.dmr_id: entry.area_stat for entry in entries},
+        "utility_scores": {entry.dmr_id: entry.utility_score for entry in entries},
+        "dominated_counts": {
+            entry.dmr_id: entry.dominated_gene_count for entry in entries
+        },
+        "calculation_timestamp": min(entry.calculation_timestamp for entry in entries),
     }
-    
+
     return dominating_set, metadata
-from backend.app.core.rb_domination import store_dominating_set

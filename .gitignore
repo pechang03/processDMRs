@@ -1,12 +1,7 @@
-.aider*
+*.pyc
+__pycache__/
+*.db
+.coverage
 .env
-# Environment files
-.env
-*.env
-!sample.env
+claude_xai_env/
 
-# Environment files with secrets
-env_*
-claud_xai_env
-*env_claude*
-*openai_env

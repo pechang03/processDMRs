@@ -33,7 +33,7 @@ if not database_exists(engine.url):
 echo "Initializing database schema..."
 python -m backend.app.database.management.initialize_database
 
-# Create database views  
+# Create database views
 echo "Creating database views..."
 python -m backend.app.database.management.create_views
 
