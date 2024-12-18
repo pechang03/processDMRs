@@ -33,13 +33,22 @@ def get_or_create_timepoint(
     dmr_id_offset: int = None
 ) -> int:
     """Get existing timepoint or create if it doesn't exist."""
-    # Clean up name if not provided
+    # Clean up name if not provided by stripping _TSS from sheet_name
     if name is None:
-        name = sheet_name.replace("_TSS", "")
+        name = sheet_name[:-4] if sheet_name.endswith("_TSS") else sheet_name
     
     # Try to find by sheet_name first
     timepoint = session.query(Timepoint).filter_by(sheet_name=sheet_name).first()
     if timepoint:
+        return timepoint.id
+        
+    # Also try finding by name as it might exist with different sheet_name
+    timepoint = session.query(Timepoint).filter_by(name=name).first()
+    if timepoint:
+        # Update sheet_name if it's different
+        if timepoint.sheet_name != sheet_name:
+            timepoint.sheet_name = sheet_name
+            session.commit()
         return timepoint.id
         
     # Get default offset from the mapping if not provided
