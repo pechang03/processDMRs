@@ -6,29 +6,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database
 import os
-from dotenv import load_dotenv
+import logging
+from ..utils.extensions import app
 
-load_dotenv()
-
-DB_URL = os.getenv('DATABASE_URL')
+logger = logging.getLogger(__name__)
 
 def get_db_engine():
     """Create and return a database engine."""
-    # Try multiple .env locations
-    env_files = [
-        'sample.env',  # Root directory
-        '../sample.env',  # One level up
-        '../../sample.env',  # Two levels up
-        os.path.join(os.path.dirname(__file__), 'sample.env'),  # Same directory as this file
-    ]
-    
-    for env_file in env_files:
-        if os.path.exists(env_file):
-            load_dotenv(env_file)
-            break
-            
-    # Set default configuration for SQLite
-    db_url = os.getenv('DATABASE_URL', 'sqlite:///dmr_analysis.db')
+    # Get database URL from Flask app config
+    db_url = app.config.get('DATABASE_URL', 'sqlite:///dmr_analysis.db')
+    logger.info(f"Creating database engine with URL: {db_url}")
+    logger.debug(f"Current app config: {app.config}")
     
     # For SQLite, we don't need to check if database exists
     engine = create_engine(db_url)

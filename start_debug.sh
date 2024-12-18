@@ -2,19 +2,19 @@
 
 # Kill any existing processes on ports 3000 and 5555
 kill_port() {
-    local port=$1
-    pid=$(lsof -t -i:$port)
-    if [ ! -z "$pid" ]; then
-        echo "Killing process on port $port"
-        kill -9 $pid
-    fi
+  local port=$1
+  pid=$(lsof -t -i:$port)
+  if [ ! -z "$pid" ]; then
+    echo "Killing process on port $port"
+    kill -9 $pid
+  fi
 }
 
 kill_port 3000
 kill_port 5555
 
 # Set environment variables
-export FLASK_APP=app.app
+export FLASK_APP=app.app.py
 export FLASK_ENV=development
 export FLASK_DEBUG=1
 export FLASK_PORT=5555
