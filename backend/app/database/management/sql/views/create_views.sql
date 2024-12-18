@@ -72,6 +72,7 @@ GROUP BY c.id, t.name, c.graph_type, c.category, c.size,
 CREATE VIEW biclique_details_view AS
 SELECT 
     b.id AS biclique_id,
+    t.id AS timepoint_id,
     t.name AS timepoint,
     b.category,
     c.id AS component_id,

@@ -28,14 +28,23 @@ from .models import (
     MasterGeneID,
     DominatingSet,
 )
-from sqlalchemy import create_engine
 import os
-from app.utils.extensions import app
+from sqlalchemy import create_engine
 
-def get_db_engine():
-    """Get SQLAlchemy engine instance."""
-    # Get database URL from Flask app config
-    database_url = app.config.get("DATABASE_URL", "sqlite:///dmr_analysis.db")
+def get_db_engine(database_url=None):
+    """Get SQLAlchemy engine instance.
+    
+    Args:
+        database_url: Optional database URL. If not provided, will try to get from:
+            1. Environment variable DATABASE_URL
+            2. Default value of sqlite:///dmr_analysis.db
+    
+    Returns:
+        SQLAlchemy engine instance
+    """
+    # Get database URL from args, env, or default
+    if database_url is None:
+        database_url = os.environ.get("DATABASE_URL", "sqlite:///dmr_analysis.db")
     
     print(f"Connecting to database at: {database_url}")  # Debug print
     

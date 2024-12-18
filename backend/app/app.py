@@ -60,6 +60,8 @@ def configure_app(app):
 # Configure the app before any routes are defined
 configure_app(app)
 
+# Import and register routes
+from app.routes.data_routes import *
 
 @app.route("/api/health")
 def health_check():

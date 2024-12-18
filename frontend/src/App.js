@@ -82,18 +82,54 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
     })
     .then(data => {
         const bicliques = data;
-        // Calculate statistics from biclique data
+        console.log("Received bicliques:", bicliques);
         const stats = bicliques.reduce((acc, biclique) => {
-            acc.totalBicliques = (acc.totalBicliques || 0) + 1;
-            acc.totalDMRs = (acc.totalDMRs || 0) + parseInt(biclique.dmr_count);
-            acc.totalGenes = (acc.totalGenes || 0) + parseInt(biclique.gene_count);
+            // Increment biclique count
+            acc.totalBicliques++;
+            
+            // Sum DMRs and genes
+            acc.totalDMRs += parseInt(biclique.dmr_count);
+            acc.totalGenes += parseInt(biclique.gene_count);
+            
+            // Track unique components
             acc.components.add(biclique.component_id);
-            acc.categories[biclique.category] = (acc.categories[biclique.category] || 0) + 1;
-            acc.graphTypes[biclique.graph_type] = (acc.graphTypes[biclique.graph_type] || 0) + 1;
+            
+            // Count graph types and add to mapping
+            if (biclique.graph_type === 'split') {
+                acc.methylatedRegions++;
+            }
+
+            // Track categories and significant genes
+            if (biclique.category === 'complex') {
+                acc.significantGenes += biclique.gene_count;
+            }
+            
             return acc;
-        }, { components: new Set(), categories: {}, graphTypes: {} });
+        }, { 
+            components: new Set(), 
+            totalBicliques: 0,
+            totalDMRs: 0, 
+            totalGenes: 0,
+            methylatedRegions: 0,
+            significantGenes: 0
+        });
+
+        console.log("Calculated stats:", stats);
         
-        setTimepointDetails({ bicliques, stats });
+        // Convert Set to array for component count
+        stats.componentCount = stats.components.size;
+
+        setTimepointDetails({ 
+            bicliques, 
+            stats: {
+                totalBicliques: stats.totalBicliques,
+                totalDMRs: stats.totalDMRs,
+                totalGenes: stats.totalGenes,
+                componentCount: stats.componentCount,
+                categories: stats.categories,
+                graphTypes: stats.graphTypes
+            }
+        });
         
         setDetailsLoading(false);
     })
