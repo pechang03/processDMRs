@@ -77,6 +77,8 @@ from .process_timepoints import (
     process_timepoint_table_data,
 )
 
+from .dominating_sets import calculate_dominating_sets
+
 __all__ = [
     # Classes
     "Base",
@@ -144,4 +146,6 @@ __all__ = [
     "get_or_create_gene",
     "store_dominating_set",
     "get_dominating_set",
+    # Dominating set operations
+    "calculate_dominating_sets",
 ]
