@@ -206,7 +206,6 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                     <Alert severity="error" sx={{ width: '100%' }}>{detailsError}</Alert>
                 ) : timepointDetails ? (
                     <Box>
-                    <Box>
                         <Typography variant="h6">Timepoint {timepointDetails?.bicliques?.[0]?.timepoint || ''}</Typography>
                         <Grid container spacing={2} sx={{ mt: 2 }}>
                             <Grid item xs={12} md={4}>
