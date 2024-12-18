@@ -1,9 +1,10 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
+from flask import jsonify
 import os
+from app.utils.extensions import app
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
+@app.route('/')
+def root():
+    return jsonify({"message": "DMR Analysis API"}), 200
 
 @app.route('/api/health')
 def health_check():
@@ -17,10 +18,6 @@ def not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return jsonify({"error": "Internal server error"}), 500
-
-@app.route('/')
-def root():
-    return jsonify({"message": "DMR Analysis API"}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('FLASK_PORT', 5555))
