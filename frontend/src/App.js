@@ -72,72 +72,35 @@ setTimepointDetails(null);
 
 fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
     .then(res => {
-        if (res.status === 404) {
-            throw new Error('Timepoint not found. The requested timepoint data is unavailable.');
-        }
         if (!res.ok) {
+            if (res.status === 404) {
+                throw new Error('Timepoint not found. The requested timepoint data is unavailable.');
+            }
             throw new Error('Failed to fetch timepoint details. Please try again later.');
         }
         return res.json();
     })
-    .then(bicliques => {
-        console.log("Received bicliques:", bicliques);
-        const stats = bicliques.reduce((acc, biclique) => {
-            // Increment biclique count
-            acc.totalBicliques++;
-            
-            // Sum DMRs and genes
-            acc.totalDMRs += parseInt(biclique.dmr_count);
-            acc.totalGenes += parseInt(biclique.gene_count);
-            
-            // Track unique components
-            acc.components.add(biclique.component_id);
-            
-            // Count graph types
-            if (biclique.graph_type === 'split') {
-                acc.methylatedRegions++;
-            }
-
-            // Track categories and significant genes
-            if (biclique.category === 'complex') {
-                acc.significantGenes += parseInt(biclique.gene_count);
-            }
-            
-            return acc;
-        }, { 
-            components: new Set(), 
-            totalBicliques: 0,
-            totalDMRs: 0, 
-            totalGenes: 0,
-            methylatedRegions: 0,
-            significantGenes: 0
-        });
-        console.log("Calculated stats:", stats);
-        
-        // Convert Set to array for component count
-        stats.componentCount = stats.components.size;
-
-        setTimepointDetails({
-            bicliques,
-            stats: {
-                totalBicliques: stats.totalBicliques,
-                totalDMRs: stats.totalDMRs,
-                totalGenes: stats.totalGenes,
-                componentCount: stats.components.size,
-                methylatedRegions: stats.methylatedRegions,
-                significantGenes: stats.significantGenes
-            }
-        });
-        });
-        
-        setDetailsLoading(false);
+    .then(data => {
+        console.log("Received biclique data:", data);
+        const stats = {
+            totalBicliques: data.bicliques ? data.bicliques.length : 0,
+            totalDMRs: data.bicliques ? data.bicliques.reduce((sum, b) => sum + parseInt(b.dmr_count || 0), 0) : 0,
+            totalGenes: data.bicliques ? data.bicliques.reduce((sum, b) => sum + parseInt(b.gene_count || 0), 0) : 0,
+            componentCount: data.bicliques ? new Set(data.bicliques.map(b => b.component_id)).size : 0,
+            methylatedRegions: data.bicliques ? data.bicliques.filter(b => b.graph_type === 'split').length : 0,
+            significantGenes: data.bicliques ? data.bicliques.filter(b => b.category === 'complex')
+                .reduce((sum, b) => sum + parseInt(b.gene_count || 0), 0) : 0
+    };
+    setTimepointDetails({ bicliques: data.bicliques, stats });
+    setDetailsLoading(false);
     })
     .catch(err => {
-        console.error('Error fetching timepoint details:', err);
-        setDetailsError(err.message);
-        setDetailsLoading(false);
+    console.error('Error fetching timepoint details:', err);
+    setDetailsError(err.message);
+    setDetailsLoading(false);
     });
 };
+            
 
   return (
     <ThemeProvider theme={theme}>
@@ -230,28 +193,42 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
             </Grid>
             {selectedTimepoint && (
                 <Grid item xs={12}>
-                    <Paper elevation={3} sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Timepoint Analysis Results
+                    <Box>
+                        <Typography variant="h6">
+                            Timepoint {timepoints.find(t => t.id === selectedTimepoint)?.name}
                         </Typography>
-                        {detailsError ? (
-                            <Alert severity="error" sx={{ mt: 2 }}>
-                                {detailsError}
-                            </Alert>
-                        ) : detailsLoading ? (
+                        {detailsLoading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                                 <CircularProgress />
                             </Box>
-                        ) : timepointDetails ? (
-                        <Typography variant="h6" gutterBottom>
-                            Biclique Summary
-                        </Typography>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} md={4}>
-                                <Paper elevation={1} sx={{ p: 2 }}>
-                                    <Typography variant="subtitle1">Biclique Statistics</Typography>
-                                    <Typography>Total Bicliques: {timepointDetails?.stats?.totalBicliques || 0}</Typography>
-                                    <Typography>Active Components: {timepointDetails?.stats?.componentCount || 0}</Typography>
+                        ) : detailsError ? (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {detailsError}
+                            </Alert>
+                        ) : (
+                        <Grid container spacing={2} sx={{ mt: 2 }}>
+                        <Grid item xs={12} md={4}>
+                        <Paper elevation={2} sx={{ p: 2 }}>
+                            <Typography variant="subtitle1">Biclique Statistics</Typography>
+                            <Typography>Total Bicliques: {timepointDetails.bicliques?.length || 0}</Typography>
+                            <Typography>Active Components: {new Set(timepointDetails.bicliques?.map(b => b.component_id)).size || 0}</Typography>
+                        </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                        <Paper elevation={2} sx={{ p: 2 }}>
+                            <Typography variant="subtitle1">Gene Statistics</Typography>
+                            <Typography>Total Genes: {timepointDetails.bicliques?.reduce((sum, b) => sum + b.gene_count, 0) || 0}</Typography>
+                            <Typography>Total Components: {timepointDetails.bicliques?.filter(b => b.graph_type === 'split').length || 0}</Typography>
+                        </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                        <Paper elevation={2} sx={{ p: 2 }}>
+                            <Typography variant="subtitle1">DMR Statistics</Typography>
+                            <Typography>Total DMRs: {timepointDetails.bicliques?.reduce((sum, b) => sum + b.dmr_count, 0) || 0}</Typography>
+                            <Typography>By Category: {Object.entries(timepointDetails.bicliques?.reduce((acc, b) => {
+                                acc[b.category] = (acc[b.category] || 0) + 1;
+                                return acc;
+                            }, {}) || {}).map(([k,v]) => `${k}: ${v}`).join(', ')}</Typography>
                                 </Paper>
                             </Grid>
                             <Grid item xs={12} md={4}>
@@ -269,7 +246,8 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                                 </Paper>
                             </Grid>
                         </Grid>
-                    </Paper>
+                        )}
+                    </Box>
                     <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
                         <Typography variant="h6" gutterBottom>
                             Biclique Details
@@ -301,9 +279,6 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                             </Table>
                         </TableContainer>
                     </Paper>
-                </Grid>
-                        timepointDetails={timepointDetails}
-                    />
                 </Grid>
             )}
         </Grid>
