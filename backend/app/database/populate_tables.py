@@ -14,6 +14,22 @@ from .operations import (
     get_or_create_timepoint,
     insert_dmr,
 )
+from .models import (
+    Biclique,
+    ComponentBiclique,
+    Statistic,
+    Metadata,
+    Relationship,
+    GeneTimepointAnnotation,
+    DMRTimepointAnnotation,
+    Gene,
+    Timepoint,
+    DMR,
+    Component,
+    MasterGeneID,
+)
+from backend.app.core.data_loader import create_bipartite_graph
+from backend.app.database.dominating_sets import calculate_dominating_sets
 from backend.app.utils.data_processing import process_enhancer_info
 from backend.app.biclique_analysis.classifier import (
     classify_biclique,
