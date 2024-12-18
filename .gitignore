@@ -8,7 +8,21 @@ claude_xai_env/
 
 *.env
 *_env
-old_config/
+old_config/*
 .env*
 .aider*
+.DS_Store
+.git/
+__pycache__/ 
+backup/
+deepseek_models.sh
+dmr_analysis.db
+dmr_analysis_egg-info/
+old_config/
+references/*
+sample.env
+data/
+data_wit/
 
+cache/
+data_wip/
