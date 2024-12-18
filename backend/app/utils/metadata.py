@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Tuple, Set
 import pandas as pd
-from utils.node_info import NodeInfo
+from backend.app.utils.node_info import NodeInfo
 import networkx as nx
 
 

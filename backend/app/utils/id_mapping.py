@@ -1,5 +1,5 @@
 from typing import Set, Dict
-from utils.constants import START_GENE_ID
+from backend.app.utils.constants import START_GENE_ID
 
 # Cache for timepoint offsets
 def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
