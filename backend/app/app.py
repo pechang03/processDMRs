@@ -42,16 +42,16 @@ def configure_app(app):
     if not env_loaded:
         print("Warning: processDMR.env not found")
 
-    # Set default configuration with specific database name
-    app.config.setdefault("DATABASE_URL", "sqlite:///dmr_analysis.db")
-    app.config.setdefault("FLASK_ENV", "development")
-
-    # Override with environment variables if they exist
-    app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", app.config["DATABASE_URL"])
-    app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", app.config["FLASK_ENV"])
+    # Get the project root directory (three levels up from app.py)
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     
-    # Add MIME type handling
-    app.config["MIME_TYPES"] = {".css": "text/css", ".js": "application/javascript"}
+    # Construct database path relative to project root
+    db_path = os.path.join(project_root, "dmr_analysis.db")
+    database_url = f"sqlite:///{db_path}"
+
+    # Set configuration
+    app.config["DATABASE_URL"] = os.getenv("DATABASE_URL", database_url)
+    app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", "development")
     
     # Print the configuration being used
     print(f"Using database: {app.config['DATABASE_URL']}")
