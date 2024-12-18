@@ -23,11 +23,12 @@ from backend.app.core.data_loader import (
     read_gene_mapping
 )
 import pandas as pd
-from backend.app.utils import create_dmr_id, process_enhancer_info
+from backend.app.utils.data_processing import process_enhancer_info
+from backend.app.utils.id_mapping import create_dmr_id
 from backend.app.utils.constants import START_GENE_ID
 from backend.app.utils.graph_io import write_bipartite_graph, write_gene_mappings
 from backend.app.utils.id_mapping import create_gene_mapping
-from rb_domination import (
+from backend.app.core.rb_domination import (
     greedy_rb_domination,
     calculate_dominating_sets,  # Changed name
     print_domination_statistics,

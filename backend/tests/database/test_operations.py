@@ -43,11 +43,11 @@ def timepoint(session):
 def test_get_or_create_timepoint(session):
     """Test creating and retrieving a timepoint."""
     # Create new timepoint
-    timepoint_id = get_or_create_timepoint(session, "test", "Test Description", 1000)
+    timepoint_id = get_or_create_timepoint(session, "test", sheet_name="test_TSS", description="Test Description", dmr_id_offset=1000)
     assert timepoint_id is not None
-    
+
     # Retrieve existing timepoint
-    same_id = get_or_create_timepoint(session, "test")
+    same_id = get_or_create_timepoint(session, "test", sheet_name="test_TSS")
     assert same_id == timepoint_id
     
     # Verify timepoint in database

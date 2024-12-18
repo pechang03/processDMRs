@@ -11,33 +11,32 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
 
-from data_loader import (
+from backend.app.core.data_loader import (
     get_excel_sheets,
     read_excel_file,
     read_gene_mapping,
     create_bipartite_graph,
-    # create_gene_mapping, NO No NO
 )
 
-from database import models, connection, operations, clean_database
-from database.models import Base
-from database.operations import get_or_create_timepoint
-from database.populate_tables import (
+from backend.app.database import models, connection, operations
+from backend.app.database.models import Base
+from backend.app.database.operations import get_or_create_timepoint, clean_database
+from backend.app.database.populate_tables import (
     populate_timepoints,
     populate_master_gene_ids,
     populate_core_genes,
 )
 
-from database.process_timepoints import (
+from backend.app.database.process_timepoints import (
     process_bicliques_for_timepoint,
     get_genes_from_df,
     process_timepoint_table_data,
 )
 
-Base = declarative_base()
+from backend.app.config import get_project_root
 
 # Load environment variables from sample.env
-load_dotenv("sample.env")
+load_dotenv(os.path.join(get_project_root(), "processDMR.env"))
 
 
 def main():

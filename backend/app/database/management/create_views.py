@@ -1,19 +1,25 @@
 """Create database views for DMR analysis system."""
 
-import os
 import sys
 from sqlalchemy import text
-from database.connection import get_db_engine
+from backend.app.database.connection import get_db_engine
+from backend.app.config import get_view_sql_path
 
 def read_sql_file(filename):
     """Read SQL from a file in the sql/views directory."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    sql_dir = os.path.join(script_dir, '..', 'sql', 'views')
-    file_path = os.path.join(sql_dir, filename)
+    # Add .sql extension if not present
+    if not filename.endswith('.sql'):
+        filename = f"{filename}.sql"
+    
+    file_path = get_view_sql_path(filename)
+    print(f"Attempting to read SQL file from: {file_path}")
     
     try:
         with open(file_path, 'r') as f:
             return f.read()
+    except FileNotFoundError:
+        print(f"SQL file not found: {file_path}")
+        return None
     except Exception as e:
         print(f"Error reading SQL file {filename}: {e}")
         return None

@@ -1,6 +1,7 @@
 """Database schema definitions for DMR analysis system."""
 
 import json
+from typing import List, Optional
 
 from sqlalchemy import (
     create_engine,
