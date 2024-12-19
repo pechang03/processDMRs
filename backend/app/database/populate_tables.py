@@ -11,7 +11,6 @@ from collections import defaultdict
 from .operations import (
     update_gene_source_metadata,
     upsert_gene_timepoint_annotation,
-    # upsert_gene_metadata,
     upsert_dmr_timepoint_annotation,
     get_or_create_timepoint,
     update_gene_hub_status,
