@@ -17,7 +17,6 @@ from .operations import (
     insert_dmr,
     insert_biclique,
     insert_component_biclique,
-    update_biclique_catagory,
     insert_statistics,
     insert_metadata,
     insert_relationship,
