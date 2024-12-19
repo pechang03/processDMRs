@@ -206,17 +206,17 @@ def test_array_type_handling(session):
 
 def test_cascade_behavior(session):
     """Test cascade behavior on delete."""
-    # Create related records
+    # Create timepoint with required fields
     timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
-    timepoint = Timepoint(name="test_timepoint", sheet_name="test_timepoint_TSS")
-    session.flush()
+    session.add(timepoint)
+    session.commit()  # Commit to persist timepoint
     
     component = Component(
         timepoint_id=timepoint.id,
         graph_type='original'
     )
     session.add(component)
-    session.flush()
+    session.commit()  # Commit to persist component
     
     biclique = Biclique(
         timepoint_id=timepoint.id,
@@ -333,16 +333,16 @@ def test_component_relationships(session):
 
 def test_annotation_relationships(session):
     """Test relationships between annotations and their related entities."""
-    # Create base data
-    timepoint = Timepoint(name="test_timepoint")
+    # Create base data with required sheet_name
+    timepoint = Timepoint(name="test_timepoint", sheet_name="test_sheet")
     session.add(timepoint)
-    session.flush()
+    session.commit()  # Ensure timepoint is persisted
     
-    # Create gene and DMR
+    # Create gene with required symbol
     gene = Gene(symbol="TEST1")
     dmr = DMR(timepoint_id=timepoint.id, dmr_number=1)
     session.add_all([gene, dmr])
-    session.flush()
+    session.commit()  # Ensure gene and DMR are persisted
     
     # Create annotations
     gene_annotation = GeneTimepointAnnotation(

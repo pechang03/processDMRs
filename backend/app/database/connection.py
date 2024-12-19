@@ -13,12 +13,20 @@ logger = logging.getLogger(__name__)
 
 def get_db_engine():
     """Create and return a database engine."""
-    # Get database URL from Flask app config
-    db_url = app.config.get('DATABASE_URL', 'sqlite:///dmr_analysis.db')
-    logger.info(f"Creating database engine with URL: {db_url}")
-    logger.debug(f"Current app config: {app.config}")
+    # First check environment variable
+    db_url = os.environ.get('DATABASE_URL')
     
-    # For SQLite, we don't need to check if database exists
+    # Fall back to Flask app config if available
+    if db_url is None and app:
+        db_url = app.config.get('DATABASE_URL')
+        
+    # Finally fall back to default
+    if db_url is None:
+        db_url = 'sqlite:///dmr_analysis.db'
+        
+    logger.info(f"Creating database engine with URL: {db_url}")
+    logger.debug(f"Current app config: {app.config if app else 'No Flask app'}")
+    
     engine = create_engine(db_url)
     return engine
 

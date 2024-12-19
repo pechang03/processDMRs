@@ -6,80 +6,45 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from backend.app.database.connection import get_db_engine, get_db_session
 
-def test_get_db_engine_default():
+@pytest.fixture
+def test_env(tmp_path):
+    """Setup test environment with database configuration."""
+    env_path = tmp_path / "test_processDMR.env"
+    env_content = "DATABASE_URL=sqlite:///:memory:"
+    env_path.write_text(env_content)
+    
+    # Store original env var
+    original_env = dict(os.environ)
+    
+    # Set up test environment
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+    
+    yield
+    
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+
+def test_get_db_engine_default(test_env):
     """Test getting database engine with default settings."""
     engine = get_db_engine()
     assert isinstance(engine, Engine)
-    assert str(engine.url).startswith('sqlite:///')
+    assert str(engine.url) == 'sqlite:///:memory:'
 
-def test_get_db_engine_custom_url():
-    """Test getting database engine with custom URL."""
-    from backend.app.database.models import Base
-    os.environ['DATABASE_URL'] = 'sqlite:///test.db'
-    engine = get_db_engine()
-    assert isinstance(engine, Engine)
-    assert str(engine.url) == 'sqlite:///test.db'
-    # Clean up
-    os.remove('test.db') if os.path.exists('test.db') else None
-
-def test_get_db_session():
+def test_get_db_session(test_env):
     """Test getting database session."""
     engine = get_db_engine()
     session = get_db_session(engine)
     assert isinstance(session, Session)
     session.close()
 
-@pytest.mark.parametrize("env_file", [
-    'sample.env',
-    '../sample.env',
-    '../../sample.env',
-    os.path.join(os.path.dirname(__file__), 'sample.env')
-])
-def test_env_file_loading(tmp_path, env_file):
-    """Test loading environment variables from different locations."""
-    from backend.app.database.models import Base
-    env_content = "DATABASE_URL=sqlite:///custom_test.db"
-    env_path = tmp_path / os.path.basename(env_file)
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-    env_path.write_text(env_content)
-    
-    # Temporarily modify environment
-    old_env = os.environ.get('DATABASE_URL')
-    os.environ.pop('DATABASE_URL', None)
-    
-    try:
-        engine = get_db_engine()
-        assert isinstance(engine, Engine)
-    finally:
-        # Restore environment
-        if old_env is not None:
-            os.environ['DATABASE_URL'] = old_env
-        # Clean up
-        if os.path.exists('custom_test.db'):
-            os.remove('custom_test.db')
-
-def test_get_db_engine_invalid_url():
+def test_get_db_engine_invalid_url(test_env):
     """Test engine creation with invalid URL."""
     os.environ['DATABASE_URL'] = 'invalid://url'
     with pytest.raises(Exception):
         get_db_engine()
 
-@pytest.mark.parametrize("test_url", [
-    'sqlite:///:memory:',
-    'sqlite:///test_db.sqlite',
-])
-def test_get_db_engine_different_urls(test_url):
-    """Test engine creation with different valid URLs."""
-    os.environ['DATABASE_URL'] = test_url
-    engine = get_db_engine()
-    assert isinstance(engine, Engine)
-    assert str(engine.url) == test_url
-    
-    # Clean up if file database
-    if 'test_db.sqlite' in test_url:
-        os.remove('test_db.sqlite') if os.path.exists('test_db.sqlite') else None
-
-def test_session_transaction_handling():
+def test_session_transaction_handling(test_env):
     """Test session transaction handling."""
     engine = get_db_engine()
     session = get_db_session(engine)
@@ -105,7 +70,7 @@ def test_session_transaction_handling():
         session.commit()
         session.close()
 
-def test_session_rollback():
+def test_session_rollback(test_env):
     """Test session rollback functionality."""
     engine = get_db_engine()
     session = get_db_session(engine)

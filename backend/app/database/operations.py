@@ -31,23 +31,24 @@ from .models import (
 import os
 from sqlalchemy import create_engine
 
+
 def get_db_engine(database_url=None):
     """Get SQLAlchemy engine instance.
-    
+
     Args:
         database_url: Optional database URL. If not provided, will try to get from:
             1. Environment variable DATABASE_URL
             2. Default value of sqlite:///dmr_analysis.db
-    
+
     Returns:
         SQLAlchemy engine instance
     """
     # Get database URL from args, env, or default
     if database_url is None:
         database_url = os.environ.get("DATABASE_URL", "sqlite:///dmr_analysis.db")
-    
+
     print(f"Connecting to database at: {database_url}")  # Debug print
-    
+
     return create_engine(database_url)
 
 
@@ -313,38 +314,65 @@ def insert_gene(
     promoter_info: str = None,
 ):
     """Insert a new gene into the database."""
+    # print(f"\nAttempting to insert gene with symbol: '{symbol}'")
+
     # Skip invalid gene symbols
     if not symbol:  # Handle None or empty string
+        print("Symbol is None or empty, returning None")
         return None
 
     # Clean and lowercase the symbol
     original_symbol = str(symbol).strip()
     lookup_symbol = original_symbol.lower()
+    # print(f"Cleaned symbol: '{original_symbol}', lookup_symbol: '{lookup_symbol}'")
 
     # Extended validation for unnamed columns and invalid symbols
-    # invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""] TODO check unnamed is invalid
-    invalid_patterns = ["unnamed:", "nan", ".", "n/a", ""]
-    if (
-        any(lookup_symbol.startswith(pat) for pat in invalid_patterns)
-        or not lookup_symbol
-    ):
-        return None  # Skip invalid symbols instead of raising error
+    invalid_patterns = ["unnamed:", "nan", ".", "n/a"]
+    # print(f"Checking against invalid patterns: {invalid_patterns}")
 
-    # Check for duplicate gene symbols (case-insensitive)
-    existing_gene = (
-        session.query(Gene).filter(func.lower(Gene.symbol) == lookup_symbol).first()
-    )
-    if existing_gene:
-        return existing_gene.id
+    if any(lookup_symbol.startswith(pat) for pat in invalid_patterns):
+        matching_pattern = next(
+            pat for pat in invalid_patterns if lookup_symbol.startswith(pat)
+        )
+        print(f"Symbol matches invalid pattern: '{matching_pattern}', returning None")
+        return None
+
+    if not lookup_symbol:
+        print("Cleaned symbol is empty, returning None")
+        return None
 
     try:
-        # Get START_GENE_ID from environment, default to 100000
+        # Check for duplicate gene symbols (case-insensitive)
+        existing_gene = (
+            session.query(Gene).filter(func.lower(Gene.symbol) == lookup_symbol).first()
+        )
+        if existing_gene:
+            print(f"Found existing gene with symbol {original_symbol}")
+            return existing_gene.id
 
+        # print(f"Creating new gene with symbol {original_symbol}, master_gene_id {master_gene_id}" )
+
+        # Get START_GENE_ID from environment, default to 100000
         start_gene_id = int(environ.get("START_GENE_ID", "100000"))
+        print(f"Using start_gene_id: {start_gene_id}")
 
         # Get the maximum existing gene ID
         max_id = session.query(func.max(Gene.id)).scalar()
         new_id = start_gene_id if max_id is None else max(max_id + 1, start_gene_id)
+        # print(f"Generated new gene ID: {new_id}")
+
+        # Check if master_gene_id exists
+        if master_gene_id is not None:
+            master_gene = (
+                session.query(MasterGeneID).filter_by(id=master_gene_id).first()
+            )
+            if not master_gene:
+                print(f"Creating missing master gene entry for ID {master_gene_id}")
+                master_gene = MasterGeneID(
+                    id=master_gene_id, gene_symbol=original_symbol
+                )
+                session.add(master_gene)
+                session.flush()
 
         gene = Gene(
             id=new_id,
@@ -354,13 +382,18 @@ def insert_gene(
             interaction_source=interaction_source,
             promoter_info=promoter_info,
         )
+        # print(f"Created Gene object: {gene.id}, {gene.symbol}, {gene.master_gene_id}")
         session.add(gene)
+        session.flush()
+        # print("Flushed gene to database")
         session.commit()
+        # print(f"Successfully committed gene with ID: {gene.id}")
         return gene.id
 
     except Exception as e:
+        print(f"Error inserting gene {original_symbol}: {str(e)}")
         session.rollback()
-        raise ValueError(f"Error inserting gene {original_symbol}: {str(e)}")
+        raise
 
 
 def upsert_dmr_timepoint_annotation(

@@ -61,15 +61,15 @@ def test_get_or_create_timepoint(session):
     # Create new timepoint
     timepoint_id = get_or_create_timepoint(
         session,
-        "test",
-        sheet_name="test_sheet",
+        sheet_name="test_sheet",  # This is the first required param after session
+        name="test",  # This is an optional param 
         description="Test Description",
         dmr_id_offset=1000,
     )
     assert timepoint_id is not None
 
     # Retrieve existing timepoint
-    same_id = get_or_create_timepoint(session, "test", sheet_name="test_sheet")
+    same_id = get_or_create_timepoint(session, sheet_name="test_sheet")
     assert same_id == timepoint_id
 
     # Verify timepoint in database
@@ -91,30 +91,61 @@ def test_insert_gene(session):
     """Test inserting genes with various cases."""
     import os
 
-    os.environ["START_GENE_ID"] = "100000"  # Set start ID for testing
+    try:
+        print("\nStarting test_insert_gene test")
+        
+        # Create a master gene ID first
+        print("Creating master gene ID...")
+        master_gene = MasterGeneID(id=100001, gene_symbol="GENE1")
+        session.add(master_gene)
+        session.commit()
+        print(f"Master gene created with ID: {master_gene.id}")
 
-    # Test valid gene with master_gene_id
-    gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)
-    assert gene_id is not None
-    assert gene_id >= 100000  # Verify ID is at least START_GENE_ID
+        os.environ["START_GENE_ID"] = "100000"  # Set start ID for testing
+        print(f"Set START_GENE_ID to: {os.environ['START_GENE_ID']}")
 
-    # Test duplicate gene (case insensitive)
-    dup_id = insert_gene(session, "gene1", "Duplicate Gene", master_gene_id=100001)
-    assert dup_id == gene_id
+        # Test valid gene with master_gene_id
+        print("Attempting to insert gene...")
+        # Verify master gene exists
+        exists = session.query(MasterGeneID).filter_by(id=100001).first()
+        print(f"Master gene exists in DB: {exists is not None}")
+        
+        gene_id = insert_gene(session, "GENE1", "Test Gene", master_gene_id=100001)
+        print(f"Returned gene_id: {gene_id}")
+        
+        assert gene_id is not None
+        assert gene_id >= 100000  # Verify ID is at least START_GENE_ID
 
-    # Test invalid gene symbols
-    assert insert_gene(session, "") is None
-    assert insert_gene(session, "unnamed:1") is None
-    assert insert_gene(session, "nan") is None
-    assert insert_gene(session, ".") is None
+        # Test duplicate gene (case insensitive)
+        print("Testing duplicate gene insertion...")
+        dup_id = insert_gene(session, "gene1", "Duplicate Gene", master_gene_id=100001)
+        assert dup_id == gene_id
+        print("Duplicate gene test passed")
+
+        # Test invalid gene symbols
+        assert insert_gene(session, "") is None
+        assert insert_gene(session, "unnamed:1") is None
+        assert insert_gene(session, "nan") is None
+        assert insert_gene(session, ".") is None
+        print("Invalid gene symbol tests passed")
+
+    except Exception as e:
+        print(f"Error in test_insert_gene: {str(e)}")
+        print(f"Error type: {type(e)}")
+        raise
 
 
 def test_upsert_gene_timepoint_annotation_biclique_dedup(
     session, timepoint, master_gene
 ):
     """Test deduplication of biclique IDs in gene annotations."""
+    # Ensure master gene record exists
+    if not session.query(MasterGeneID).get(master_gene.id):
+        session.add(master_gene)
+        session.commit()
+
     # Create a test gene
-    gene_id = insert_gene(session, "TEST_GENE", master_gene_id=master_gene.id)
+    gene_id = insert_gene(session, master_gene.gene_symbol, master_gene_id=master_gene.id)
     assert gene_id is not None
 
     # First annotation with duplicate biclique IDs
@@ -157,8 +188,6 @@ def test_upsert_dmr_timepoint_annotation_biclique_dedup(session, timepoint):
 def test_upsert_annotations_with_component_info(session, timepoint):
     """Test updating annotations with component information."""
     # First create a master gene ID entry
-    from backend.app.database.models import MasterGeneID
-
     master_gene = MasterGeneID(id=100001, gene_symbol="TEST_GENE")
     session.add(master_gene)
     session.commit()
