@@ -11,21 +11,40 @@ from ..utils.extensions import app
 
 logger = logging.getLogger(__name__)
 
+def get_project_root():
+    """Get the project root directory."""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Navigate up from backend/app/database to project root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    return project_root
+
 def get_db_engine():
-    """Create and return a database engine."""
+    """Create and return a database engine.
+    
+    The database URL is determined in the following order:
+    1. DATABASE_URL environment variable
+    2. Flask app configuration
+    3. Default SQLite database in project root
+    """
     # First check environment variable
     db_url = os.environ.get('DATABASE_URL')
+    logger.debug(f"Environment DATABASE_URL: {db_url}")
     
     # Fall back to Flask app config if available
     if db_url is None and app:
-        db_url = app.config.get('DATABASE_URL')
-        
+        try:
+            db_url = app.config.get('DATABASE_URL')
+            logger.debug(f"Flask config DATABASE_URL: {db_url}")
+        except Exception as e:
+            logger.warning(f"Failed to get Flask config: {e}")
+            
     # Finally fall back to default
     if db_url is None:
-        db_url = 'sqlite:///dmr_analysis.db'
+        db_path = os.path.join(get_project_root(), "dmr_analysis.db")
+        db_url = f'sqlite:///{db_path}'
+        logger.debug(f"Using default database path: {db_path}")
         
     logger.info(f"Creating database engine with URL: {db_url}")
-    logger.debug(f"Current app config: {app.config if app else 'No Flask app'}")
     
     engine = create_engine(db_url)
     return engine

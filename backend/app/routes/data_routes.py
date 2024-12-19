@@ -1,9 +1,9 @@
 from flask import jsonify, abort
-from app.utils.extensions import app
-from app.database.connection import get_db_engine
+from ..utils.extensions import app
+from ..database.connection import get_db_engine
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
-from app.database.models import Timepoint, Biclique
+from ..database.models import Timepoint, Biclique
 
 
 

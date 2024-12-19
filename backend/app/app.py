@@ -1,11 +1,11 @@
 from flask import jsonify
 import os
-from app.utils.extensions import app
+from .utils.extensions import app
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.database.connection import get_db_engine
-from app.database.models import Timepoint
+from .database.connection import get_db_engine
+from .database.models import Timepoint
 
 print("\n" + "="*50)
 print(">>> IMPORTING app.py MODULE")
@@ -61,7 +61,7 @@ def configure_app(app):
 configure_app(app)
 
 # Import and register routes
-from app.routes.data_routes import *
+from .routes.data_routes import *
 
 @app.route("/api/health")
 def health_check():

@@ -13,15 +13,16 @@ kill_port() {
 kill_port 3000
 kill_port 5555
 
-# Set environment variables
-export FLASK_APP=app.app.py
+# Set environment variables and Python path
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+export FLASK_APP=backend/app/app.py
 export FLASK_ENV=development
 export FLASK_DEBUG=1
 export FLASK_PORT=5555
+export DATABASE_URL=sqlite:///$PWD/dmr_analysis.db
 
 # Start backend
 echo "Starting Flask backend..."
-cd backend
 python -m flask run --host=0.0.0.0 --port=5555 &
 
 # Wait for backend to start
@@ -30,7 +31,7 @@ sleep 2
 
 # Start frontend
 echo "Starting React frontend..."
-cd ../frontend
+cd frontend
 npm start &
 
 # Wait for both processes
