@@ -24,8 +24,7 @@ from .connection import get_db_engine, get_db_session
 from .cleanup import clean_database
 
 from .operations import (
-    # Core insert operations
-    # insert_timepoint, deprecated
+    # Core operations
     get_or_create_timepoint,
     insert_gene,
     insert_dmr,
@@ -41,7 +40,7 @@ from .operations import (
     upsert_dmr_timepoint_annotation,
     update_gene_metadata,
     update_gene_hub_status,
-    update_biclique_category,
+    update_gene_source_metadata,
     # Query operations
     query_timepoints,
     query_genes,
@@ -57,27 +56,13 @@ from .operations import (
     get_dominating_set,
 )
 
-from .populate_tables import (
-    populate_timepoints,
-    populate_core_genes,
-    populate_timepoint_genes,
-    populate_dmrs,
-    populate_dmr_annotations,
-    populate_gene_annotations,
-    populate_bicliques,
-    populate_statistics,
-    populate_metadata,
-    populate_relationships,
-    process_gene_sources,
-)
-
+from .biclique_processor import process_bicliques_db
+from .dominating_sets import calculate_dominating_sets
 from .process_timepoints import (
     process_bicliques_for_timepoint,
     get_genes_from_df,
     process_timepoint_table_data,
 )
-
-from .dominating_sets import calculate_dominating_sets
 
 __all__ = [
     # Classes
@@ -85,7 +70,7 @@ __all__ = [
     "Timepoint",
     "Gene",
     "DMR",
-    "Biclique",
+    "Biclique", 
     "Component",
     "ComponentBiclique",
     "Statistic",
@@ -95,15 +80,16 @@ __all__ = [
     "GeneTimepointAnnotation",
     "DMRTimepointAnnotation",
     "TriconnectedComponent",
+    "DominatingSet",
     # Connection functions
     "get_db_engine",
     "get_db_session",
     "create_tables",
     "clean_database",
-    # Core insert operations
+    # Core operations
     "get_or_create_timepoint",
     "insert_gene",
-    "insert_dmr",
+    "insert_dmr", 
     "insert_biclique",
     "insert_component",
     "insert_triconnected_component",
@@ -113,31 +99,20 @@ __all__ = [
     "insert_component_biclique",
     # Annotation operations
     "upsert_gene_timepoint_annotation",
-    "upsert_dmr_timepoint_annotation",
+    "upsert_dmr_timepoint_annotation", 
     "update_gene_metadata",
     "update_gene_hub_status",
-    "update_biclique_category",
-    # Population operations
-    "populate_timepoints",
-    "populate_core_genes",
-    "populate_timepoint_genes",
-    "populate_dmrs",
-    "populate_dmr_annotations",
-    "populate_gene_annotations",
-    "populate_bicliques",
-    "populate_statistics",
-    "populate_metadata",
-    "populate_relationships",
-    "process_timepoint_table_data",
-    "process_gene_sources",
-    # Timepoint processing
+    "update_gene_source_metadata",
+    # Processing operations
+    "process_bicliques_db",
     "process_bicliques_for_timepoint",
+    "process_timepoint_table_data",
     "get_genes_from_df",
     # Query operations
     "query_timepoints",
     "query_genes",
     "query_dmrs",
-    "query_bicliques",
+    "query_bicliques", 
     "query_components",
     "query_statistics",
     "query_metadata",
