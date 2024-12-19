@@ -67,7 +67,7 @@ def create_node_labels_and_metadata(
     return node_labels, dmr_metadata, gene_metadata
 
 
-def get_dmr_details(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
+def get_dmr_details_depricated(dmr_nodes: Set[int], df: pd.DataFrame) -> List[Dict]:
     """Get detailed information for DMR nodes."""
     dmr_details = []
     for dmr_id in dmr_nodes:
