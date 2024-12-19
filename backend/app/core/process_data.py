@@ -311,7 +311,7 @@ def create_gene_metadata(df: pd.DataFrame) -> Dict:
     return gene_metadata
 
 
-def create_master_gene_mapping(df: pd.DataFrame) -> Dict[str, int]:
+def create_master_gene_mapping_depricated(df: pd.DataFrame) -> Dict[str, int]:
     """Create a master gene mapping from a DataFrame"""
     all_genes = set()
 

@@ -14,7 +14,6 @@ from .models import (
 )
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from .models import (
     Timepoint,
     Gene,
@@ -396,6 +395,21 @@ def insert_gene(
         raise
 
 
+def clean_biclique_ids(ids_str: str) -> str:
+    """Helper function to clean and deduplicate biclique IDs"""
+    if not ids_str:
+        return None
+    # Split string, convert to ints, deduplicate, sort, and convert back
+    try:
+        # Handle both quoted and unquoted strings
+        clean_str = ids_str.strip("\"'")
+        ids = {int(x.strip()) for x in clean_str.split(",")}
+        return ",".join(str(x) for x in sorted(ids))
+    except ValueError as e:
+        print(f"Error processing biclique IDs {ids_str}: {e}")
+        return None
+
+
 def upsert_dmr_timepoint_annotation(
     session: Session,
     timepoint_id: int,
@@ -421,20 +435,6 @@ def upsert_dmr_timepoint_annotation(
         is_isolate: Whether the DMR is isolated
         biclique_ids: Comma-separated list of biclique IDs
     """
-
-    def clean_biclique_ids(ids_str: str) -> str:
-        """Helper function to clean and deduplicate biclique IDs"""
-        if not ids_str:
-            return None
-        # Split string, convert to ints, deduplicate, sort, and convert back
-        try:
-            # Handle both quoted and unquoted strings
-            clean_str = ids_str.strip("\"'")
-            ids = {int(x.strip()) for x in clean_str.split(",")}
-            return ",".join(str(x) for x in sorted(ids))
-        except ValueError as e:
-            print(f"Error processing biclique IDs {ids_str}: {e}")
-            return None
 
     # Try to get existing annotation
     annotation = (
@@ -474,7 +474,7 @@ def upsert_dmr_timepoint_annotation(
             # Update with deduplicated string
             annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
-        # Create new annotation
+        # Create new annotation with cleaned biclique_ids
         annotation = DMRTimepointAnnotation(
             timepoint_id=timepoint_id,
             dmr_id=dmr_id,
@@ -508,6 +508,11 @@ def upsert_gene_timepoint_annotation(
     gene_type: str = None,
     is_isolate: bool = False,
     biclique_ids: str = None,
+    symbol: str = None,
+    master_gene_id: int = None,
+    description: str = None,
+    interaction_source: str = None,
+    promoter_info: str = None,
 ):
     """
     Update or insert gene annotation for a specific timepoint.
@@ -552,14 +557,23 @@ def upsert_gene_timepoint_annotation(
         if is_isolate is not None:
             annotation.is_isolate = is_isolate
         if biclique_ids:
-            # Append new biclique ID to existing list
-            existing_ids = (
-                set(annotation.biclique_ids.split(","))
-                if annotation.biclique_ids
-                else set()
-            )
-            existing_ids.add(str(biclique_ids))
-            annotation.biclique_ids = ",".join(sorted(existing_ids))
+            # Add new biclique IDs
+            if biclique_ids:
+                # Convert existing string to set of integers
+                existing_ids = set()
+                if annotation.biclique_ids:
+                    existing_ids = {int(x) for x in annotation.biclique_ids.split(",")}
+
+                # Handle both single IDs and comma-separated strings
+                if "," in str(biclique_ids):  # If it's a comma-separated string
+                    new_ids = {int(x) for x in biclique_ids.split(",")}
+                else:  # If it's a single ID
+                    new_ids = {int(biclique_ids)}
+
+                existing_ids.update(new_ids)
+
+                # Convert back to sorted string
+                annotation.biclique_ids = ",".join(str(x) for x in sorted(existing_ids))
     else:
         # Create new annotation
         annotation = GeneTimepointAnnotation(
