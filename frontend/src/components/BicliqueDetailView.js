@@ -43,13 +43,21 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
         return <Alert severity="info">No data available for this timepoint</Alert>;
     }
     
-    // Check the actual structure of timepointDetails
-    console.log('TimepointDetails structure:', JSON.stringify(timepointDetails, null, 2));
+    // Add debug logging for incoming data
+    console.log('BicliqueDetailView received:', { timepointId, timepointDetails });
     
-    // Ensure we're accessing the components array correctly
-    const components = timepointDetails.components || [];
+    if (!timepointDetails) {
+        return <Alert severity="info">No data available for this timepoint</Alert>;
+    }
+
+    // Ensure components exists and is an array
+    const components = Array.isArray(timepointDetails.components) 
+        ? timepointDetails.components 
+        : [];
+
+    console.log('Components array:', components); // Debug log
     
-    if (!Array.isArray(components) || components.length === 0) {
+    if (components.length === 0) {
         return <Alert severity="info">No components found for this timepoint</Alert>;
     }
 
