@@ -14,6 +14,8 @@ import {
     Alert
 } from '@mui/material';
 import BicliqueGraphView from './BicliqueGraphView';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
 
 function BicliqueDetailView({ timepointId, timepointDetails }) {
     const [loading, setLoading] = React.useState(false);
@@ -61,12 +63,21 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
         return <Alert severity="info">No components found for this timepoint</Alert>;
     }
 
+    const [activeTab, setActiveTab] = useState(0);
+
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
             <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                 <Typography variant="h5" gutterBottom>
                     Component Analysis for Timepoint {timepointDetails.name}
                 </Typography>
+                <Tabs onSelect={index => setActiveTab(index)} selectedIndex={activeTab}>
+                    <TabList>
+                        <Tab>Overview</Tab>
+                        <Tab>Details</Tab>
+                    </TabList>
+
+                    <TabPanel>
                     <TableContainer>
                         <Table size="small">
                             <TableHead>
@@ -149,16 +160,20 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                 ))}
                             </TableBody>
                         </Table>
-                    </TableContainer>
-                </Paper>
-                {selectedComponent && (
-                    <BicliqueGraphView 
-                        componentId={selectedComponent}
-                        timepointId={timepointId}
-                    />
-                )}
-            </Box>
-        );
-    }
+                        </TableContainer>
+                    </TabPanel>
+                    <TabPanel>
+                        {/* Add detailed view here */}
+                    </TabPanel>
+                </Tabs>
+            </Paper>
+            {selectedComponent && (
+                <BicliqueGraphView 
+                    componentId={selectedComponent}
+                    timepointId={timepointId}
+                />
+            )}
+        </Box>
+    );
 
 export default BicliqueDetailView;
