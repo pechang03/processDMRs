@@ -67,55 +67,54 @@ def get_timepoint_stats(timepoint_id):
             for row in results:
                 if row.all_gene_ids:  # Check if not None
                     # Clean and parse the gene IDs string into integers
-                    gene_ids = [int(id.strip()) for id in row.all_gene_ids.strip('[]').split(',') if id.strip().isdigit()]
+                    gene_ids_str = row.all_gene_ids.strip('[]')
+                    gene_ids = [int(id.strip()) for id in gene_ids_str.split(',') if id.strip()]
                     all_gene_ids.update(gene_ids)
 
-            if all_gene_ids:  # Only query if we have gene IDs
-                # Query gene symbols for all gene IDs
-                # Create the correct number of placeholders for the IN clause
-                # Create the IN clause with named parameters
-                gene_param_names = [f':gene_id_{i}' for i in range(len(all_gene_ids))]
-                placeholders = ','.join(gene_param_names)
+            app.logger.debug(f"Extracted gene IDs: {all_gene_ids}")
 
+            gene_id_to_symbol = {}
+            if all_gene_ids:  # Only query if we have gene IDs
+                # Create the IN clause with placeholders
+                placeholders = ','.join('?' * len(all_gene_ids))
+                
                 gene_symbols_query = text(f"""
                     SELECT gene_id, symbol 
                     FROM gene_annotations_view 
                     WHERE gene_id IN ({placeholders})
-                    AND timepoint = :timepoint  
-                    AND component_id = :component_id
+                    AND timepoint = ?
                 """)
 
-                # Create parameters dictionary
-                params = {
-                    f'gene_id_{i}': gene_id 
-                    for i, gene_id in enumerate(all_gene_ids)
-                }
-                params.update({
-                    'timepoint': results[0].timepoint,
-                    'component_id': results[0].component_id
-                })
+                # Convert set to list and add timepoint parameter
+                params = list(all_gene_ids)
+                params.append(results[0].timepoint)
 
                 gene_symbols_results = session.execute(
                     gene_symbols_query,
                     params
                 ).fetchall()
 
+                app.logger.debug(f"Gene symbols query results: {gene_symbols_results}")
+                
                 # Create gene ID to symbol mapping
-                gene_id_to_symbol = {str(row.gene_id): row.symbol for row in gene_symbols_results}
-            else:
-                gene_id_to_symbol = {}
+                gene_id_to_symbol = {row.gene_id: row.symbol for row in gene_symbols_results}
+                
+            app.logger.debug(f"Gene ID to symbol mapping: {gene_id_to_symbol}")
 
-            app.logger.debug("Starting conversion of results to components list")
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
-                # Parse the JSON strings for DMR and gene IDs
-                dmr_ids = eval(row.all_dmr_ids) if row.all_dmr_ids else []
-                gene_ids = eval(row.all_gene_ids) if row.all_gene_ids else []
-
+                # Parse the DMR IDs
+                dmr_ids_str = row.all_dmr_ids.strip('[]')
+                dmr_ids = [int(id.strip()) for id in dmr_ids_str.split(',') if id.strip()]
+                
+                # Parse the gene IDs
+                gene_ids_str = row.all_gene_ids.strip('[]')
+                gene_ids = [int(id.strip()) for id in gene_ids_str.split(',') if id.strip()]
+                
                 # Get symbols for this component's genes
                 gene_symbols = [
-                    gene_id_to_symbol.get(str(gene_id), str(gene_id))
+                    gene_id_to_symbol.get(gene_id, str(gene_id))
                     for gene_id in gene_ids
                 ]
 
@@ -126,10 +125,12 @@ def get_timepoint_stats(timepoint_id):
                     "category": row.category,
                     "dmr_count": row.dmr_count,
                     "gene_count": row.gene_count,
-                    "all_dmr_ids": dmr_ids,  # Already parsed
-                    "all_gene_ids": gene_ids,  # Already parsed
-                    "gene_symbols": gene_symbols  # List of actual symbols
+                    "all_dmr_ids": dmr_ids,
+                    "all_gene_ids": gene_ids,
+                    "gene_symbols": gene_symbols
                 })
+
+            app.logger.debug(f"Final components data: {components}")
 
             timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
 
