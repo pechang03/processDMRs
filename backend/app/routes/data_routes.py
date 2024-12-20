@@ -64,26 +64,33 @@ def get_timepoint_stats(timepoint_id):
             all_gene_ids = set()
             for row in results:
                 if row.all_gene_ids:  # Check if not None
-                    all_gene_ids.update(row.all_gene_ids)
+                    # Clean and parse the gene IDs string into integers
+                    gene_ids = [int(id.strip()) for id in row.all_gene_ids.strip('[]').split(',') if id.strip().isdigit()]
+                    all_gene_ids.update(gene_ids)
 
-            # Query gene symbols for all gene IDs
-            gene_symbols_query = text("""
-                SELECT gene_id, symbol 
-                FROM gene_annotations_view 
-                WHERE gene_id IN :gene_ids 
-                AND timepoint = :timepoint
-            """)
-            
-            gene_symbols_results = session.execute(
-                gene_symbols_query, 
-                {
-                    "gene_ids": tuple(all_gene_ids),
-                    "timepoint": results[0].timepoint
-                }
-            ).fetchall()
+            if all_gene_ids:  # Only query if we have gene IDs
+                # Query gene symbols for all gene IDs
+                gene_symbols_query = text("""
+                    SELECT gene_id, symbol 
+                    FROM gene_annotations_view 
+                    WHERE gene_id IN :gene_ids 
+                    AND timepoint = :timepoint
+                    AND component_id = :component_id
+                """)
+                
+                gene_symbols_results = session.execute(
+                    gene_symbols_query, 
+                    {
+                        "gene_ids": tuple(all_gene_ids),  # Convert set to tuple
+                        "timepoint": results[0].timepoint,
+                        "component_id": results[0].component_id
+                    }
+                ).fetchall()
 
-            # Create gene ID to symbol mapping
-            gene_id_to_symbol = {str(row.gene_id): row.symbol for row in gene_symbols_results}
+                # Create gene ID to symbol mapping
+                gene_id_to_symbol = {str(row.gene_id): row.symbol for row in gene_symbols_results}
+            else:
+                gene_id_to_symbol = {}
 
             # Convert the results to a list of dictionaries
             components = []
