@@ -256,17 +256,19 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                                 {detailsError}
                             </Alert>
                         ) : (
-                            // Rest of your statistics content
-                            // ... (keep the existing content)
+                            <BicliqueDetailView 
+                                timepointId={selectedTimepoint} 
+                                timepointDetails={timepointDetails} 
+                            />
                         )}
                     </Box>
                 </Grid>
             )}
         </TabPanel>
-        </Tabs>
-    </Box>
-    </Container>
-    </ThemeProvider>
+    </Tabs>
+</Box>
+</Container>
+</ThemeProvider>
   );
 }
 
