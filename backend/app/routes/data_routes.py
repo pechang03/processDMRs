@@ -39,11 +39,11 @@ def get_timepoint_stats(timepoint_id):
                     component_id,
                     timepoint,
                     graph_type,
-                    category,
-                    dmr_count,
-                    gene_count,
-                    dmr_ids as all_dmr_ids,
-                    gene_ids as all_gene_ids
+                    categories as category,
+                    total_dmr_count as dmr_count,
+                    total_gene_count as gene_count,
+                    all_dmr_ids,
+                    all_gene_ids
                 FROM component_details_view
                 WHERE timepoint_id = :timepoint_id
             """)
