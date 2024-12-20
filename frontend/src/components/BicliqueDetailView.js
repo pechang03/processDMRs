@@ -21,12 +21,9 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     if (!timepointDetails || !timepointDetails.bicliques) {
         return null;
     }
-
-    const totalBicliques = timepointDetails.bicliques.length;
-    const totalDMRs = timepointDetails.bicliques.reduce((sum, b) => sum + (b.dmr_count || 0), 0);
-    const totalGenes = timepointDetails.bicliques.reduce((sum, b) => sum + (b.gene_count || 0), 0);
-    const uniqueComponents = new Set(timepointDetails.bicliques.map(b => b.component_id)).size;
-
+    
+    const stats = timepointDetails.stats;
+    
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
             <Paper elevation={3} sx={{ p: 3 }}>
@@ -36,6 +33,27 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
 
                 <Box sx={{ mb: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 2 }}>
+                        <Typography variant="body1">
+                            Total Bicliques: <b>{stats.totalBicliques}</b>
+                        </Typography>
+                        <Typography variant="body1">
+                            Active Components: <b>{stats.componentCount}</b>
+                        </Typography>
+                        <Typography variant="body1">
+                            Total DMRs: <b>{stats.totalDMRs}</b>
+                        </Typography>
+                        <Typography variant="body1">
+                            Total Genes: <b>{stats.totalGenes}</b>
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 2 }}>
+                        <Typography variant="body1">
+                            Methylated Regions: <b>{stats.methylatedRegions}</b>
+                        </Typography>
+                        <Typography variant="body1">
+                            Significant Genes: <b>{stats.significantGenes}</b>
+                        </Typography>
+                    </Box>
                         <Typography variant="body1">
                             Total Bicliques: <b>{totalBicliques}</b>
                         </Typography>
