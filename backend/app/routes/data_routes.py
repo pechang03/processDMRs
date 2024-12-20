@@ -38,7 +38,7 @@ def get_timepoint_stats(timepoint_id):
                 WITH gene_symbols AS (
                     SELECT DISTINCT
                         g.component_id,
-                        array_agg(DISTINCT g.symbol ORDER BY g.symbol) as symbols
+                        GROUP_CONCAT(DISTINCT g.symbol) as symbols
                     FROM gene_annotations_view g
                     WHERE g.timepoint_id = :timepoint_id
                     GROUP BY g.component_id
@@ -91,10 +91,7 @@ def get_timepoint_stats(timepoint_id):
                 # Parse gene symbols - ensure it's a list
                 gene_symbols = []
                 if row.gene_symbols:
-                    if isinstance(row.gene_symbols, list):
-                        gene_symbols = row.gene_symbols
-                    elif isinstance(row.gene_symbols, str):
-                        gene_symbols = [s.strip() for s in row.gene_symbols.split(',') if s.strip()]
+                    gene_symbols = [s.strip() for s in row.gene_symbols.split(',') if s.strip()]
 
                 component = {
                     "component_id": row.component_id,
