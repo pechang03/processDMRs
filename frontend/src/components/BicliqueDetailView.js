@@ -41,6 +41,8 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                     <TableCell align="right">Total DMRs</TableCell>
                                     <TableCell align="right">Total Genes</TableCell>
                                     <TableCell>Type</TableCell>
+                                    <TableCell>DMR IDs</TableCell>
+                                    <TableCell>Gene Symbols</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -49,7 +51,11 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                     const totalDMRs = componentBicliques.reduce((sum, b) => sum + (b.dmr_count || 0), 0);
                                     const totalGenes = componentBicliques.reduce((sum, b) => sum + (b.gene_count || 0), 0);
                                     const type = componentBicliques[0].graph_type;
-                                    
+                                
+                                    // Combine all DMR IDs and gene symbols from the component's bicliques
+                                    const allDMRIds = [...new Set(componentBicliques.flatMap(b => b.all_dmr_ids || []))];
+                                    const allGeneSymbols = [...new Set(componentBicliques.flatMap(b => b.gene_symbols || []))];
+                                
                                     return (
                                         <TableRow key={componentId}
                                             hover
@@ -60,6 +66,32 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                             <TableCell align="right">{totalDMRs}</TableCell>
                                             <TableCell align="right">{totalGenes}</TableCell>
                                             <TableCell>{type}</TableCell>
+                                            <TableCell>
+                                                <Typography
+                                                    sx={{
+                                                        maxWidth: 200,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                    title={allDMRIds.join(', ')}
+                                                >
+                                                    {allDMRIds.join(', ')}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography
+                                                    sx={{
+                                                        maxWidth: 200,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                    title={allGeneSymbols.join(', ')}
+                                                >
+                                                    {allGeneSymbols.join(', ')}
+                                                </Typography>
+                                            </TableCell>
                                         </TableRow>
                                     );
                                 })}

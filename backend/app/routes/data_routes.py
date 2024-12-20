@@ -34,16 +34,33 @@ def get_timepoint_stats(timepoint_id):
             # Get biclique details
             bicliques_query = text("""
                 SELECT 
-                    biclique_id,
-                    category,
-                    component_id,
-                    graph_type,
-                    dmr_count,
-                    gene_count,
-                    timepoint,
-                    timepoint_id
-                FROM biclique_details_view 
-                WHERE timepoint_id = :timepoint_id
+                    b.biclique_id,
+                    b.category,
+                    b.component_id,
+                    b.graph_type,
+                    b.dmr_count,
+                    b.gene_count,
+                    b.timepoint,
+                    b.timepoint_id,
+                    b.all_dmr_ids,
+                    b.all_gene_ids,
+                    array_agg(DISTINCT ga.symbol) as gene_symbols
+                FROM biclique_details_view b
+                LEFT JOIN unnest(b.all_gene_ids) AS gene_id ON true
+                LEFT JOIN gene_annotations_view ga ON ga.gene_id = gene_id 
+                    AND ga.timepoint = b.timepoint
+                WHERE b.timepoint_id = :timepoint_id
+                GROUP BY 
+                    b.biclique_id,
+                    b.category,
+                    b.component_id,
+                    b.graph_type,
+                    b.dmr_count,
+                    b.gene_count,
+                    b.timepoint,
+                    b.timepoint_id,
+                    b.all_dmr_ids,
+                    b.all_gene_ids
             """)
 
             app.logger.info(f"Executing bicliques query for timepoint: {timepoint.name}")
@@ -71,7 +88,9 @@ def get_timepoint_stats(timepoint_id):
                 "dmr_count": row.dmr_count,
                 "gene_count": row.gene_count,
                 "timepoint": row.timepoint,
-                "timepoint_id": row.timepoint_id
+                "timepoint_id": row.timepoint_id,
+                "all_dmr_ids": row.all_dmr_ids,
+                "gene_symbols": row.gene_symbols
             } for row in biclique_results]
 
             return jsonify({
