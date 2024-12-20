@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import BicliqueGraphView from './BicliqueGraphView';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
+import './BicliqueDetailView.css';
 
 function BicliqueDetailView({ timepointId, timepointDetails }) {
     const [loading, setLoading] = React.useState(false);
