@@ -43,31 +43,22 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
         return <Alert severity="info">No data available for this timepoint</Alert>;
     }
     
-    // Check for either components or bicliques property
-    const components = timepointDetails.components || timepointDetails.bicliques || [];
-    if (components.length === 0) {
+    // Check the actual structure of timepointDetails
+    console.log('TimepointDetails structure:', JSON.stringify(timepointDetails, null, 2));
+    
+    // Ensure we're accessing the components array correctly
+    const components = timepointDetails.components || [];
+    
+    if (!Array.isArray(components) || components.length === 0) {
         return <Alert severity="info">No components found for this timepoint</Alert>;
     }
 
-    const stats = timepointDetails.stats;
-    
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
             <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                    Component Analysis for Timepoint {timepointDetails.timepoint}
+                    Component Analysis for Timepoint {timepointDetails.name}
                 </Typography>
-                
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" gutterBottom>Statistics Summary</Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                        {stats && Object.entries(stats).map(([key, value]) => (
-                            <Typography key={key} variant="body1">
-                                {key.replace(/([A-Z])/g, ' $1').trim()}: <b>{value}</b>
-                            </Typography>
-                        ))}
-                    </Box>
-                </Box>
                     <TableContainer>
                         <Table size="small">
                             <TableHead>
