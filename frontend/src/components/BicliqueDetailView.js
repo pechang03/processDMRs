@@ -175,5 +175,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
             )}
         </Box>
     );
+}
 
 export default BicliqueDetailView;
