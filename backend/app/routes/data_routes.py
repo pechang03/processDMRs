@@ -66,10 +66,18 @@ def get_timepoint_stats(timepoint_id):
             all_gene_ids = set()
             for row in results:
                 if row.all_gene_ids:  # Check if not None
-                    # Clean and parse the gene IDs string into integers
-                    gene_ids_str = row.all_gene_ids.strip('[]')
-                    gene_ids = [int(id.strip()) for id in gene_ids_str.split(',') if id.strip()]
-                    all_gene_ids.update(gene_ids)
+                    # First split by '],['
+                    gene_lists = row.all_gene_ids.replace('[', '').replace(']', '').split('],[')
+                    for gene_list in gene_lists:
+                        # Split each sublist by comma and clean
+                        for gene_id in gene_list.split(','):
+                            try:
+                                clean_id = gene_id.strip('[]').strip()
+                                if clean_id:  # Make sure we have a value
+                                    all_gene_ids.add(int(clean_id))
+                            except ValueError:
+                                app.logger.warning(f"Could not parse gene ID: {gene_id}")
+                                continue
 
             app.logger.debug(f"Extracted gene IDs: {all_gene_ids}")
 
@@ -98,13 +106,33 @@ def get_timepoint_stats(timepoint_id):
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
-                # Parse the DMR IDs
-                dmr_ids_str = row.all_dmr_ids.strip('[]')
-                dmr_ids = [int(id.strip()) for id in dmr_ids_str.split(',') if id.strip()]
+                # Parse the DMR IDs with error handling
+                dmr_ids = []
+                if row.all_dmr_ids:
+                    dmr_lists = row.all_dmr_ids.replace('[', '').replace(']', '').split('],[')
+                    for dmr_list in dmr_lists:
+                        for dmr_id in dmr_list.split(','):
+                            try:
+                                clean_id = dmr_id.strip('[]').strip()
+                                if clean_id:
+                                    dmr_ids.append(int(clean_id))
+                            except ValueError:
+                                app.logger.warning(f"Could not parse DMR ID: {dmr_id}")
+                                continue
                 
-                # Parse the gene IDs
-                gene_ids_str = row.all_gene_ids.strip('[]')
-                gene_ids = [int(id.strip()) for id in gene_ids_str.split(',') if id.strip()]
+                # Parse the gene IDs with error handling
+                gene_ids = []
+                if row.all_gene_ids:
+                    gene_lists = row.all_gene_ids.replace('[', '').replace(']', '').split('],[')
+                    for gene_list in gene_lists:
+                        for gene_id in gene_list.split(','):
+                            try:
+                                clean_id = gene_id.strip('[]').strip()
+                                if clean_id:
+                                    gene_ids.append(int(clean_id))
+                            except ValueError:
+                                app.logger.warning(f"Could not parse gene ID: {gene_id}")
+                                continue
                 
                 # Look up symbols for each gene ID using the mapping
                 gene_symbols = []
