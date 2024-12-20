@@ -26,7 +26,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
-            <Paper elevation={3} sx={{ p: 3 }}>
                 {/* Component Details Section */}
                 <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                     <Typography variant="h5" gutterBottom>
