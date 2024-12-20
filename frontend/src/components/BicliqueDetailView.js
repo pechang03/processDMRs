@@ -18,10 +18,35 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState(null);
 
-    if (!timepointDetails || !timepointDetails.components) {
-        return null;
+    const formatGeneSymbols = (symbols) => {
+        if (!symbols) return '';
+        if (Array.isArray(symbols)) {
+            return symbols.join(', ');
+        }
+        return String(symbols);
+    };
+
+    const formatArray = (arr) => {
+        if (!arr) return '';
+        if (Array.isArray(arr)) {
+            return arr.join(', ');
+        }
+        return String(arr).replace(/[\[\]']/g, '');
+    };
+
+    // Add debug logging for incoming data
+    console.log('BicliqueDetailView received:', { timepointId, timepointDetails });
+    
+    if (!timepointDetails) {
+        return <Alert severity="info">No data available for this timepoint</Alert>;
     }
     
+    // Check for either components or bicliques property
+    const components = timepointDetails.components || timepointDetails.bicliques || [];
+    if (components.length === 0) {
+        return <Alert severity="info">No components found for this timepoint</Alert>;
+    }
+
     const stats = timepointDetails.stats;
     
     return (
@@ -52,10 +77,11 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                     <TableCell align="right">Gene Count</TableCell>
                                     <TableCell>DMR IDs</TableCell>
                                     <TableCell>Gene Symbols</TableCell>
+                                    <TableCell align="center">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {timepointDetails.components.map((component) => (
+                                {components.map((component) => (
                                     <TableRow key={component.component_id}
                                         hover
                                         sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
@@ -82,7 +108,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                         <TableCell>
                                             <Typography
                                                 sx={{
-                                                    maxWidth: 300,
+                                                    maxWidth: 400,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
@@ -90,10 +116,28 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     fontSize: '0.875rem',
                                                     color: 'primary.main'
                                                 }}
-                                                title={Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : component.gene_symbols}>
-                                                {Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : component.gene_symbols}
+                                                title={Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : String(component.gene_symbols)}>
+                                                {Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : String(component.gene_symbols)}
                                             </Typography>
                                         </TableCell>
+                                        <TableCell align="center">
+                                            variant="contained"
+                                            color="primary" 
+                                            size="small"
+                                            onClick={() => {
+                                                console.log(`View component ${component.component_id}`);
+                                                console.log('Opening component visualization:', component.component_id);
+                                                // TODO: Implement component visualization 
+                                            }}
+                                            sx={{
+                                                textTransform: 'none',
+                                                minWidth: '100px'
+                                            }}
+                                        >
+                                            View Graph
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
                                     </TableRow>
                                 ))}
                             </TableBody>
