@@ -54,20 +54,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                             Significant Genes: <b>{stats.significantGenes}</b>
                         </Typography>
                     </Box>
-                        <Typography variant="body1">
-                            Total Bicliques: <b>{totalBicliques}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Active Components: <b>{uniqueComponents}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Total DMRs: <b>{totalDMRs}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Total Genes: <b>{totalGenes}</b>
-                        </Typography>
-                    </Box>
-                </Box>
 
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
