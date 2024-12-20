@@ -32,6 +32,7 @@ def get_timepoint_stats(timepoint_id):
             app.logger.info(f"Found timepoint: {timepoint.name} (ID: {timepoint.id})")
 
             # Get biclique details
+            # First get the bicliques data
             bicliques_query = text("""
                 SELECT 
                     b.biclique_id,
@@ -43,55 +44,72 @@ def get_timepoint_stats(timepoint_id):
                     b.timepoint,
                     b.timepoint_id,
                     b.all_dmr_ids,
-                    b.all_gene_ids,
-                    array_agg(DISTINCT ga.symbol) as gene_symbols
-                FROM biclique_details_view b
-                LEFT JOIN unnest(b.all_gene_ids) AS gene_id ON true
-                LEFT JOIN gene_annotations_view ga ON ga.gene_id = gene_id 
-                    AND ga.timepoint = b.timepoint
-                WHERE b.timepoint_id = :timepoint_id
-                GROUP BY 
-                    b.biclique_id,
-                    b.category,
-                    b.component_id,
-                    b.graph_type,
-                    b.dmr_count,
-                    b.gene_count,
-                    b.timepoint,
-                    b.timepoint_id,
-                    b.all_dmr_ids,
                     b.all_gene_ids
+                FROM biclique_details_view b
+                WHERE b.timepoint_id = :timepoint_id
             """)
 
-            app.logger.info(f"Executing bicliques query for timepoint: {timepoint.name}")
             biclique_results = session.execute(
                 bicliques_query, {"timepoint_id": timepoint_id}
             ).fetchall()
 
             if not biclique_results:
-                app.logger.info(f"No biclique data found for {timepoint.name}")
                 return jsonify({
                     "status": "error", 
                     "code": 404,
-                    "message": f"No biclique data found for timepoint {timepoint.name}",
+                    "message": f"No biclique data found for timepoint {timepoint_id}",
                     "details": "The timepoint exists but has no associated biclique data"
                 }), 404
 
-            app.logger.info(f"Retrieved {len(biclique_results)} bicliques")
+            # Get all unique gene IDs from all bicliques
+            all_gene_ids = set()
+            for row in biclique_results:
+                if row.all_gene_ids:  # Check if not None
+                    all_gene_ids.update(row.all_gene_ids)
+
+            # Query gene symbols for all gene IDs
+            gene_symbols_query = text("""
+                SELECT gene_id, symbol 
+                FROM gene_annotations_view 
+                WHERE gene_id IN :gene_ids 
+                AND timepoint = :timepoint
+            """)
+
+            gene_symbols_results = session.execute(
+                gene_symbols_query, 
+                {
+                    "gene_ids": tuple(all_gene_ids),
+                    "timepoint": biclique_results[0].timepoint
+                }
+            ).fetchall()
+
+            # Create gene ID to symbol mapping
+            gene_id_to_symbol = {str(row.gene_id): row.symbol for row in gene_symbols_results}
 
             # Convert the results to a list of dictionaries
-            bicliques = [{
-                "biclique_id": row.biclique_id,
-                "category": row.category, 
-                "component_id": row.component_id,
-                "graph_type": row.graph_type,
-                "dmr_count": row.dmr_count,
-                "gene_count": row.gene_count,
-                "timepoint": row.timepoint,
-                "timepoint_id": row.timepoint_id,
-                "all_dmr_ids": row.all_dmr_ids,
-                "gene_symbols": row.gene_symbols
-            } for row in biclique_results]
+            bicliques = []
+            for row in biclique_results:
+                # Get symbols for this biclique's genes
+                gene_symbols = []
+                if row.all_gene_ids:
+                    gene_symbols = [
+                        gene_id_to_symbol.get(str(gene_id), str(gene_id))
+                        for gene_id in row.all_gene_ids
+                    ]
+
+                bicliques.append({
+                    "biclique_id": row.biclique_id,
+                    "category": row.category, 
+                    "component_id": row.component_id,
+                    "graph_type": row.graph_type,
+                    "dmr_count": row.dmr_count,
+                    "gene_count": row.gene_count,
+                    "timepoint": row.timepoint,
+                    "timepoint_id": row.timepoint_id,
+                    "all_dmr_ids": row.all_dmr_ids,
+                    "all_gene_ids": row.all_gene_ids,
+                    "gene_symbols": gene_symbols
+                })
 
             return jsonify({
                 "id": timepoint.id,
