@@ -137,7 +137,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                 View Graph
                                             </Button>
                                         </TableCell>
-                                        </TableRow>
                                     </TableRow>
                                 ))}
                             </TableBody>
