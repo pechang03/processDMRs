@@ -71,17 +71,18 @@ def get_timepoint_stats(timepoint_id):
             if all_gene_ids:  # Only query if we have gene IDs
                 # Query gene symbols for all gene IDs
                 # Create the correct number of placeholders for the IN clause
-                placeholders = ','.join('?' * len(all_gene_ids))
+                placeholders = ','.join(['?'] * len(all_gene_ids))  # For gene_ids
                 gene_symbols_query = text(f"""
                     SELECT gene_id, symbol 
                     FROM gene_annotations_view 
                     WHERE gene_id IN ({placeholders})
-                    AND timepoint = ?
+                    AND timepoint = ?  
                     AND component_id = ?
                 """)
 
-                # Convert parameters to a flat list in the correct order
-                params = list(all_gene_ids) + [results[0].timepoint, results[0].component_id]
+                # Convert all_gene_ids to a list and add timepoint and component_id
+                params = list(all_gene_ids)  # Convert set to list for gene_ids
+                params.extend([results[0].timepoint, results[0].component_id])  # Add additional parameters
 
                 gene_symbols_results = session.execute(
                     gene_symbols_query, 
