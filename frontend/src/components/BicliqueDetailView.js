@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Paper,
@@ -13,10 +13,12 @@ import {
     CircularProgress,
     Alert
 } from '@mui/material';
+import BicliqueGraphView from './BicliqueGraphView';
 
 function BicliqueDetailView({ timepointId, timepointDetails }) {
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState(null);
+    const [selectedComponent, setSelectedComponent] = useState(null);
 
     const formatGeneSymbols = (symbols) => {
         if (!symbols) return '';
@@ -126,9 +128,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                 color="primary" 
                                                 size="small"
                                                 onClick={() => {
-                                                    console.log(`View component ${component.component_id}`);
-                                                    console.log('Opening component visualization:', component.component_id);
-                                                    // TODO: Implement component visualization 
+                                                    setSelectedComponent(component.component_id);
                                                 }}
                                                 sx={{
                                                     textTransform: 'none',
@@ -144,6 +144,12 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                         </Table>
                     </TableContainer>
                 </Paper>
+                {selectedComponent && (
+                    <BicliqueGraphView 
+                        componentId={selectedComponent}
+                        timepointId={timepointId}
+                    />
+                )}
             </Box>
         );
     }
