@@ -121,23 +121,23 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="center">
-                                            variant="contained"
-                                            color="primary" 
-                                            size="small"
-                                            onClick={() => {
-                                                console.log(`View component ${component.component_id}`);
-                                                console.log('Opening component visualization:', component.component_id);
-                                                // TODO: Implement component visualization 
-                                            }}
-                                            sx={{
-                                                textTransform: 'none',
-                                                minWidth: '100px'
-                                            }}
-                                        >
-                                            View Graph
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
+                                            <Button
+                                                variant="contained"
+                                                color="primary" 
+                                                size="small"
+                                                onClick={() => {
+                                                    console.log(`View component ${component.component_id}`);
+                                                    console.log('Opening component visualization:', component.component_id);
+                                                    // TODO: Implement component visualization 
+                                                }}
+                                                sx={{
+                                                    textTransform: 'none',
+                                                    minWidth: '100px'
+                                                }}
+                                            >
+                                                View Graph
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
