@@ -66,7 +66,25 @@ JOIN timepoints t ON c.timepoint_id = t.id
 LEFT JOIN component_bicliques cb ON c.id = cb.component_id
 LEFT JOIN bicliques b ON cb.biclique_id = b.id
 GROUP BY c.id, t.name, c.graph_type, c.category, c.size, 
-         c.dmr_count, c.gene_count, c.edge_count, c.density;
+        c.dmr_count, c.gene_count, c.edge_count, c.density;
+
+-- Component details view with concatenated DMR and gene IDs
+CREATE VIEW component_details_view AS
+SELECT 
+    t.id AS timepoint_id,
+    t.name AS timepoint,
+    c.id AS component_id,
+    c.graph_type,
+    GROUP_CONCAT(DISTINCT b.category) as categories,
+    SUM(length(b.dmr_ids) - length(replace(b.dmr_ids, ',', '')) + 1) as total_dmr_count,
+    SUM(length(b.gene_ids) - length(replace(b.gene_ids, ',', '')) + 1) as total_gene_count,
+    GROUP_CONCAT(DISTINCT b.dmr_ids) as all_dmr_ids,
+    GROUP_CONCAT(DISTINCT b.gene_ids) as all_gene_ids
+FROM bicliques b
+JOIN timepoints t ON b.timepoint_id = t.id
+JOIN components c ON b.component_id = c.id
+WHERE b.category != 'simple'
+GROUP BY t.id, t.name, c.id, c.graph_type;
 
 -- Biclique details view
 CREATE VIEW biclique_details_view AS
