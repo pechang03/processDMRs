@@ -89,7 +89,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
             <Tab className="reactTabs__tab">Details</Tab>
           </TabList>
 
-          <TabPanel>
+          <TabPanel className="reactTabs__tabPanel">
             <TableContainer>
               <Table size="small">
                 <TableHead>
