@@ -62,24 +62,6 @@ def get_timepoint_stats(timepoint_id):
                     "details": "The timepoint exists but has no associated data"
                 }), 404
 
-            # Get gene symbol mappings for this timepoint
-            gene_id_to_symbol = {}
-            gene_symbols_query = text("""
-                SELECT gene_id, symbol 
-                FROM gene_annotations_view 
-                WHERE timepoint_id = :timepoint_id
-            """)
-
-            gene_symbols_results = session.execute(
-                gene_symbols_query,
-                {"timepoint_id": timepoint_id}
-            ).fetchall()
-
-            app.logger.debug(f"Gene symbols query results: {gene_symbols_results}")
-            
-            # Create gene ID to symbol mapping
-            gene_id_to_symbol = {row.gene_id: row.symbol for row in gene_symbols_results}
-
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
@@ -112,15 +94,44 @@ def get_timepoint_stats(timepoint_id):
                                 continue
                 
                 # Look up symbols for each gene ID using the mapping
+                # Convert gene IDs to their symbols
+                # Get gene symbols for this component and timepoint
+                gene_symbols_query = text("""
+                    SELECT DISTINCT g.gene_id, g.symbol 
+                    FROM gene_annotations_view g
+                    WHERE g.timepoint_id = :timepoint_id 
+                    AND g.component_id = :component_id
+                    AND g.symbol IS NOT NULL
+                    ORDER BY g.symbol
+                """)
+
+                try:
+                    gene_symbols_results = session.execute(
+                        gene_symbols_query,
+                        {"timepoint_id": timepoint_id, "component_id": row.component_id}
+                    ).fetchall()
+
+                    app.logger.debug(f"Gene symbols query results for component {row.component_id}: {gene_symbols_results}")
+                    
+                    # Create gene ID to symbol mapping
+                    gene_id_to_symbol = {str(row.gene_id): str(row.symbol).strip() for row in gene_symbols_results}
+                except Exception as e:
+                    app.logger.error(f"Error fetching gene symbols for component {row.component_id}: {str(e)}")
+                    gene_id_to_symbol = {}
+
                 gene_symbols = []
                 for gene_id in gene_ids:
-                    symbol = gene_id_to_symbol.get(gene_id)
-                    if symbol:
-                        gene_symbols.append(symbol)
-                    else:
-                        # Fallback to ID if no symbol found
+                    gene_id_str = str(gene_id)
+                    try:
+                        symbol = gene_id_to_symbol.get(gene_id_str)
+                        if symbol and symbol.strip():
+                            gene_symbols.append(symbol.strip())
+                        else:
+                            app.logger.warning(f"No symbol found for gene_id {gene_id} in component {row.component_id}")
+                            gene_symbols.append(f"Gene_{gene_id}")
+                    except Exception as e:
+                        app.logger.error(f"Error processing gene symbol for gene_id {gene_id}: {str(e)}")
                         gene_symbols.append(f"Gene_{gene_id}")
-
                 components.append({
                     "component_id": row.component_id,
                     "timepoint": row.timepoint,

@@ -7,6 +7,7 @@ SELECT
     g.master_gene_id,
     g.interaction_source,
     g.promoter_info,
+    t.id AS timepoint_id,
     t.name AS timepoint,
     gta.component_id,
     gta.triconnected_id,

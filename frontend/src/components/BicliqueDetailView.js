@@ -28,7 +28,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
         <Box sx={{ width: '100%', mt: 3 }}>
             <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                    Component Analysis for Timepoint {timepointDetails.components[0].timepoint}
+                    Component Analysis for Timepoint {timepointDetails.timepoint}
                 </Typography>
                 
                 <Box sx={{ mb: 3 }}>
@@ -41,10 +41,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                         ))}
                     </Box>
                 </Box>
-                    <Typography variant="h5" gutterBottom>
-                        Component Analysis for Timepoint {timepointDetails.components[0].timepoint}
-                    </Typography>
-                    
                     <TableContainer>
                         <Table size="small">
                             <TableHead>
@@ -72,25 +68,30 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                         <TableCell>
                                             <Typography
                                                 sx={{
-                                                    maxWidth: 200,
+                                                    maxWidth: 300,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
+                                                    whiteSpace: 'nowrap',
+                                                    fontFamily: 'monospace',
+                                                    fontSize: '0.875rem'
                                                 }}
-                                                title={component.all_dmr_ids.join(', ')}>
-                                                {component.all_dmr_ids.join(', ')}
+                                                title={Array.isArray(component.all_dmr_ids) ? component.all_dmr_ids.join(', ') : component.all_dmr_ids}>
+                                                {Array.isArray(component.all_dmr_ids) ? component.all_dmr_ids.join(', ') : component.all_dmr_ids}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
                                             <Typography
                                                 sx={{
-                                                    maxWidth: 200,
+                                                    maxWidth: 300,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
+                                                    whiteSpace: 'nowrap',
+                                                    fontFamily: 'monospace',
+                                                    fontSize: '0.875rem',
+                                                    color: 'primary.main'
                                                 }}
-                                                title={component.gene_symbols.join(', ')}>
-                                                {component.gene_symbols.join(', ')}
+                                                title={Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : component.gene_symbols}>
+                                                {Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : component.gene_symbols}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>

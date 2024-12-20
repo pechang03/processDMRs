@@ -96,6 +96,7 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
     };
     setTimepointDetails({ bicliques: data.bicliques, stats });
     setDetailsLoading(false);
+    setSelectedTab(2);  // Switch to Statistics tab after data loads
     })
     .catch(err => {
     console.error('Error fetching timepoint details:', err);
