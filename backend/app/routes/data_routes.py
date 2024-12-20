@@ -33,37 +33,36 @@ def get_timepoint_stats(timepoint_id):
 
             # Get biclique details
             # First get the bicliques data
-            bicliques_query = text("""
+            # Get the component details
+            query = text("""
                 SELECT 
-                    b.biclique_id,
-                    b.category,
-                    b.component_id,
-                    b.graph_type,
-                    b.dmr_count,
-                    b.gene_count,
-                    b.timepoint,
-                    b.timepoint_id,
-                    b.all_dmr_ids,
-                    b.all_gene_ids
-                FROM biclique_details_view b
-                WHERE b.timepoint_id = :timepoint_id
+                    component_id,
+                    timepoint,
+                    graph_type,
+                    category,
+                    dmr_count,
+                    gene_count,
+                    dmr_ids as all_dmr_ids,
+                    gene_ids as all_gene_ids
+                FROM component_details_view
+                WHERE timepoint_id = :timepoint_id
             """)
-
-            biclique_results = session.execute(
-                bicliques_query, {"timepoint_id": timepoint_id}
+            
+            results = session.execute(
+                query, {"timepoint_id": timepoint_id}
             ).fetchall()
 
-            if not biclique_results:
+            if not results:
                 return jsonify({
                     "status": "error", 
                     "code": 404,
-                    "message": f"No biclique data found for timepoint {timepoint_id}",
-                    "details": "The timepoint exists but has no associated biclique data"
+                    "message": f"No data found for timepoint {timepoint_id}",
+                    "details": "The timepoint exists but has no associated data"
                 }), 404
 
-            # Get all unique gene IDs from all bicliques
+            # Get all unique gene IDs from all components
             all_gene_ids = set()
-            for row in biclique_results:
+            for row in results:
                 if row.all_gene_ids:  # Check if not None
                     all_gene_ids.update(row.all_gene_ids)
 
@@ -74,12 +73,12 @@ def get_timepoint_stats(timepoint_id):
                 WHERE gene_id IN :gene_ids 
                 AND timepoint = :timepoint
             """)
-
+            
             gene_symbols_results = session.execute(
                 gene_symbols_query, 
                 {
                     "gene_ids": tuple(all_gene_ids),
-                    "timepoint": biclique_results[0].timepoint
+                    "timepoint": results[0].timepoint
                 }
             ).fetchall()
 
@@ -87,9 +86,9 @@ def get_timepoint_stats(timepoint_id):
             gene_id_to_symbol = {str(row.gene_id): row.symbol for row in gene_symbols_results}
 
             # Convert the results to a list of dictionaries
-            bicliques = []
-            for row in biclique_results:
-                # Get symbols for this biclique's genes
+            components = []
+            for row in results:
+                # Get symbols for this component's genes
                 gene_symbols = []
                 if row.all_gene_ids:
                     gene_symbols = [
@@ -97,26 +96,26 @@ def get_timepoint_stats(timepoint_id):
                         for gene_id in row.all_gene_ids
                     ]
 
-                bicliques.append({
-                    "biclique_id": row.biclique_id,
-                    "category": row.category, 
+                components.append({
                     "component_id": row.component_id,
+                    "timepoint": row.timepoint,
                     "graph_type": row.graph_type,
+                    "category": row.category,
                     "dmr_count": row.dmr_count,
                     "gene_count": row.gene_count,
-                    "timepoint": row.timepoint,
-                    "timepoint_id": row.timepoint_id,
                     "all_dmr_ids": row.all_dmr_ids,
                     "all_gene_ids": row.all_gene_ids,
                     "gene_symbols": gene_symbols
                 })
+
+            timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
 
             return jsonify({
                 "id": timepoint.id,
                 "name": timepoint.name,
                 "description": timepoint.description,
                 "sheet_name": timepoint.sheet_name,
-                "bicliques": bicliques
+                "components": components  # Changed from bicliques to components
             })
 
     except Exception as e:

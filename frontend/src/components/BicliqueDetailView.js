@@ -18,7 +18,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState(null);
 
-    if (!timepointDetails || !timepointDetails.bicliques) {
+    if (!timepointDetails || !timepointDetails.components) {
         return null;
     }
     
@@ -29,7 +29,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                 {/* Component Details Section */}
                 <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                     <Typography variant="h5" gutterBottom>
-                        Component Analysis for Timepoint {timepointDetails.bicliques[0].timepoint}
+                        Component Analysis for Timepoint {timepointDetails.components[0].timepoint}
                     </Typography>
                     
                     <TableContainer>
@@ -37,125 +37,56 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Component ID</TableCell>
-                                    <TableCell align="right">Total Bicliques</TableCell>
-                                    <TableCell align="right">Total DMRs</TableCell>
-                                    <TableCell align="right">Total Genes</TableCell>
+                                    <TableCell>Category</TableCell>
                                     <TableCell>Type</TableCell>
+                                    <TableCell align="right">DMR Count</TableCell>
+                                    <TableCell align="right">Gene Count</TableCell>
                                     <TableCell>DMR IDs</TableCell>
                                     <TableCell>Gene Symbols</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {Array.from(new Set(timepointDetails.bicliques.map(b => b.component_id))).map((componentId) => {
-                                    const componentBicliques = timepointDetails.bicliques.filter(b => b.component_id === componentId);
-                                    const totalDMRs = componentBicliques.reduce((sum, b) => sum + (b.dmr_count || 0), 0);
-                                    const totalGenes = componentBicliques.reduce((sum, b) => sum + (b.gene_count || 0), 0);
-                                    const type = componentBicliques[0].graph_type;
-                                
-                                    // Combine all DMR IDs and gene symbols from the component's bicliques
-                                    const allDMRIds = [...new Set(componentBicliques.flatMap(b => b.all_dmr_ids || []))];
-                                    const allGeneSymbols = [...new Set(componentBicliques.flatMap(b => b.gene_symbols || []))];
-                                
-                                    return (
-                                        <TableRow key={componentId}
-                                            hover
-                                            sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                                        >
-                                            <TableCell>{componentId}</TableCell>
-                                            <TableCell align="right">{componentBicliques.length}</TableCell>
-                                            <TableCell align="right">{totalDMRs}</TableCell>
-                                            <TableCell align="right">{totalGenes}</TableCell>
-                                            <TableCell>{type}</TableCell>
-                                            <TableCell>
-                                                <Typography
-                                                    sx={{
-                                                        maxWidth: 200,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}
-                                                    title={allDMRIds.join(', ')}
-                                                >
-                                                    {allDMRIds.join(', ')}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography
-                                                    sx={{
-                                                        maxWidth: 200,
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}
-                                                    title={allGeneSymbols.join(', ')}
-                                                >
-                                                    {allGeneSymbols.join(', ')}
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Paper>
-
-                {/* Bicliques Section */}
-                <Paper elevation={3} sx={{ p: 3 }}>
-                    <Typography variant="h5" gutterBottom>
-                        Biclique Details
-                    </Typography>
-
-
-                {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                        <CircularProgress />
-                    </Box>
-                ) : error ? (
-                    <Alert severity="error">{error}</Alert>
-                ) : (
-                    <TableContainer>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Biclique ID</TableCell>
-                                    <TableCell>Category</TableCell>
-                                    <TableCell>Component ID</TableCell>
-                                    <TableCell>Graph Type</TableCell>
-                                    <TableCell align="right">DMR Count</TableCell>
-                                    <TableCell align="right">Gene Count</TableCell>
-                                    <TableCell>Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {timepointDetails.bicliques.map((biclique) => (
-                                    <TableRow key={biclique.biclique_id} 
+                                {timepointDetails.components.map((component) => (
+                                    <TableRow key={component.component_id}
                                         hover
                                         sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
                                     >
-                                        <TableCell>{biclique.biclique_id}</TableCell>
-                                        <TableCell>{biclique.category}</TableCell>
-                                        <TableCell>{biclique.component_id}</TableCell>
-                                        <TableCell>{biclique.graph_type}</TableCell>
-                                        <TableCell align="right">{biclique.dmr_count || 0}</TableCell>
-                                        <TableCell align="right">{biclique.gene_count || 0}</TableCell>
+                                        <TableCell>{component.component_id}</TableCell>
+                                        <TableCell>{component.category}</TableCell>
+                                        <TableCell>{component.graph_type}</TableCell>
+                                        <TableCell align="right">{component.dmr_count || 0}</TableCell>
+                                        <TableCell align="right">{component.gene_count || 0}</TableCell>
                                         <TableCell>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                onClick={() => {
-                                                    console.log('View details for biclique:', biclique.biclique_id);
+                                            <Typography
+                                                sx={{
+                                                    maxWidth: 200,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
                                                 }}
+                                                title={component.all_dmr_ids.join(', ')}
                                             >
-                                                View Details
-                                            </Button>
+                                                {component.all_dmr_ids.join(', ')}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography
+                                                sx={{
+                                                    maxWidth: 200,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                                title={component.gene_symbols.join(', ')}
+                                            >
+                                                {component.gene_symbols.join(', ')}
+                                            </Typography>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
-                    )}
                 </Paper>
             </Box>
         );
