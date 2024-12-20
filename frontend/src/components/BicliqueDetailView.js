@@ -26,8 +26,21 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
-                {/* Component Details Section */}
-                <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+            <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h5" gutterBottom>
+                    Component Analysis for Timepoint {timepointDetails.components[0].timepoint}
+                </Typography>
+                
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>Statistics Summary</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                        {stats && Object.entries(stats).map(([key, value]) => (
+                            <Typography key={key} variant="body1">
+                                {key.replace(/([A-Z])/g, ' $1').trim()}: <b>{value}</b>
+                            </Typography>
+                        ))}
+                    </Box>
+                </Box>
                     <Typography variant="h5" gutterBottom>
                         Component Analysis for Timepoint {timepointDetails.components[0].timepoint}
                     </Typography>
@@ -64,7 +77,8 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}
-                                                title={component.all_dmr_ids.join(', ')}
+                                                title={JSON.parse(component.all_dmr_ids).join(', ')}>
+                                                {JSON.parse(component.all_dmr_ids).join(', ')}
                                             >
                                                 {component.all_dmr_ids.join(', ')}
                                             </Typography>
@@ -77,7 +91,8 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}
-                                                title={component.gene_symbols.join(', ')}
+                                                title={JSON.parse(component.gene_symbols).join(', ')}>
+                                                {JSON.parse(component.gene_symbols).join(', ')}
                                             >
                                                 {component.gene_symbols.join(', ')}
                                             </Typography>

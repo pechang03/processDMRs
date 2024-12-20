@@ -52,7 +52,9 @@ def get_timepoint_stats(timepoint_id):
                 query, {"timepoint_id": timepoint_id}
             ).fetchall()
 
-            if not results:
+            app.logger.debug(f"Raw query results: {results}")
+
+            if results is None or len(results) == 0:
                 return jsonify({
                     "status": "error", 
                     "code": 404,
@@ -71,21 +73,30 @@ def get_timepoint_stats(timepoint_id):
             if all_gene_ids:  # Only query if we have gene IDs
                 # Query gene symbols for all gene IDs
                 # Create the correct number of placeholders for the IN clause
-                placeholders = ','.join(['?'] * len(all_gene_ids))  # For gene_ids
+                # Create the IN clause with named parameters
+                gene_param_names = [f':gene_id_{i}' for i in range(len(all_gene_ids))]
+                placeholders = ','.join(gene_param_names)
+
                 gene_symbols_query = text(f"""
                     SELECT gene_id, symbol 
                     FROM gene_annotations_view 
                     WHERE gene_id IN ({placeholders})
-                    AND timepoint = ?  
-                    AND component_id = ?
+                    AND timepoint = :timepoint  
+                    AND component_id = :component_id
                 """)
 
-                # Convert all_gene_ids to a list and add timepoint and component_id
-                params = list(all_gene_ids)  # Convert set to list for gene_ids
-                params.extend([results[0].timepoint, results[0].component_id])  # Add additional parameters
+                # Create parameters dictionary
+                params = {
+                    f'gene_id_{i}': gene_id 
+                    for i, gene_id in enumerate(all_gene_ids)
+                }
+                params.update({
+                    'timepoint': results[0].timepoint,
+                    'component_id': results[0].component_id
+                })
 
                 gene_symbols_results = session.execute(
-                    gene_symbols_query, 
+                    gene_symbols_query,
                     params
                 ).fetchall()
 
@@ -94,6 +105,7 @@ def get_timepoint_stats(timepoint_id):
             else:
                 gene_id_to_symbol = {}
 
+            app.logger.debug("Starting conversion of results to components list")
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
@@ -119,13 +131,16 @@ def get_timepoint_stats(timepoint_id):
 
             timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
 
-            return jsonify({
+            response_data = {
                 "id": timepoint.id,
-                "name": timepoint.name,
+                "name": timepoint.name, 
                 "description": timepoint.description,
                 "sheet_name": timepoint.sheet_name,
-                "components": components  # Changed from bicliques to components
-            })
+                "components": components
+            }
+            
+            app.logger.debug(f"Sending response: {response_data}")
+            return jsonify(response_data)
 
     except Exception as e:
         app.logger.error(f"Error processing request: {str(e)}")
