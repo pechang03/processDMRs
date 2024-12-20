@@ -31,29 +31,6 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                     Biclique Analysis for Timepoint {timepointDetails.bicliques[0].timepoint}
                 </Typography>
 
-                <Box sx={{ mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 2 }}>
-                        <Typography variant="body1">
-                            Total Bicliques: <b>{stats.totalBicliques}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Active Components: <b>{stats.componentCount}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Total DMRs: <b>{stats.totalDMRs}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Total Genes: <b>{stats.totalGenes}</b>
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 2 }}>
-                        <Typography variant="body1">
-                            Methylated Regions: <b>{stats.methylatedRegions}</b>
-                        </Typography>
-                        <Typography variant="body1">
-                            Significant Genes: <b>{stats.significantGenes}</b>
-                        </Typography>
-                    </Box>
 
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
