@@ -94,8 +94,13 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     fontFamily: 'monospace',
                                                     fontSize: '0.875rem'
                                                 }}
-                                                title={Array.isArray(component.all_dmr_ids) ? component.all_dmr_ids.join(', ') : component.all_dmr_ids}>
-                                                {Array.isArray(component.all_dmr_ids) ? component.all_dmr_ids.join(', ') : component.all_dmr_ids}
+                                                title={Array.isArray(component.all_dmr_ids) ? 
+                                                    component.all_dmr_ids.join(', ') : 
+                                                    String(component.all_dmr_ids)}
+                                            >
+                                                {Array.isArray(component.all_dmr_ids) ? 
+                                                    component.all_dmr_ids.join(', ') : 
+                                                    String(component.all_dmr_ids)}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
@@ -109,8 +114,13 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     fontSize: '0.875rem',
                                                     color: 'primary.main'
                                                 }}
-                                                title={Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : String(component.gene_symbols)}>
-                                                {Array.isArray(component.gene_symbols) ? component.gene_symbols.join(', ') : String(component.gene_symbols)}
+                                                title={Array.isArray(component.gene_symbols) ? 
+                                                    component.gene_symbols.join(', ') : 
+                                                    String(component.gene_symbols)}
+                                            >
+                                                {Array.isArray(component.gene_symbols) ? 
+                                                    component.gene_symbols.join(', ') : 
+                                                    String(component.gene_symbols)}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="center">
@@ -118,9 +128,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                 variant="contained"
                                                 color="primary" 
                                                 size="small"
-                                                onClick={() => {
-                                                    setSelectedComponent(component.component_id);
-                                                }}
+                                                onClick={() => setSelectedComponent(component.component_id)}
                                                 sx={{
                                                     textTransform: 'none',
                                                     minWidth: '100px'
