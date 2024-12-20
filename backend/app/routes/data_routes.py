@@ -70,21 +70,21 @@ def get_timepoint_stats(timepoint_id):
 
             if all_gene_ids:  # Only query if we have gene IDs
                 # Query gene symbols for all gene IDs
-                gene_symbols_query = text("""
+                placeholders = ','.join('?' * len(all_gene_ids))
+                gene_symbols_query = text(f"""
                     SELECT gene_id, symbol 
                     FROM gene_annotations_view 
-                    WHERE gene_id IN :gene_ids 
-                    AND timepoint = :timepoint
-                    AND component_id = :component_id
+                    WHERE gene_id IN ({placeholders})
+                    AND timepoint = ?
+                    AND component_id = ?
                 """)
+
+                # Convert parameters to a list in the correct order
+                params = list(all_gene_ids) + [results[0].timepoint, results[0].component_id]
                 
                 gene_symbols_results = session.execute(
                     gene_symbols_query, 
-                    {
-                        "gene_ids": tuple(all_gene_ids),  # Convert set to tuple
-                        "timepoint": results[0].timepoint,
-                        "component_id": results[0].component_id
-                    }
+                    params
                 ).fetchall()
 
                 # Create gene ID to symbol mapping
