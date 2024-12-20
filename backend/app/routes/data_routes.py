@@ -35,17 +35,28 @@ def get_timepoint_stats(timepoint_id):
             # First get the bicliques data
             # Get the component details
             query = text("""
+                WITH gene_symbols AS (
+                    SELECT DISTINCT
+                        g.component_id,
+                        array_agg(DISTINCT g.symbol ORDER BY g.symbol) as symbols
+                    FROM gene_annotations_view g
+                    WHERE g.timepoint_id = :timepoint_id
+                    GROUP BY g.component_id
+                )
                 SELECT 
-                    component_id,
-                    timepoint,
-                    graph_type,
-                    categories as category,
-                    total_dmr_count as dmr_count,
-                    total_gene_count as gene_count,
-                    all_dmr_ids,
-                    all_gene_ids
-                FROM component_details_view
-                WHERE timepoint_id = :timepoint_id
+                    c.component_id,
+                    c.timepoint,
+                    c.graph_type,
+                    c.categories as category,
+                    c.total_dmr_count as dmr_count,
+                    c.total_gene_count as gene_count,
+                    c.all_dmr_ids,
+                    c.all_gene_ids,
+                    gs.symbols as gene_symbols
+                FROM component_details_view c
+                LEFT JOIN gene_symbols gs ON c.component_id = gs.component_id
+                WHERE c.timepoint_id = :timepoint_id
+                ORDER BY c.component_id
             """)
             
             results = session.execute(
@@ -54,95 +65,50 @@ def get_timepoint_stats(timepoint_id):
 
             app.logger.debug(f"Raw query results: {results}")
 
-            if results is None or len(results) == 0:
+            if not results:
                 return jsonify({
-                    "status": "error", 
-                    "code": 404,
-                    "message": f"No data found for timepoint {timepoint_id}",
-                    "details": "The timepoint exists but has no associated data"
-                }), 404
+                    "id": timepoint.id,
+                    "name": timepoint.name,
+                    "description": timepoint.description,
+                    "sheet_name": timepoint.sheet_name,
+                    "components": []
+                })
 
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
-                # Parse the DMR IDs with error handling
+                # Parse DMR IDs
                 dmr_ids = []
                 if row.all_dmr_ids:
-                    dmr_lists = row.all_dmr_ids.replace('[', '').replace(']', '').split('],[')
-                    for dmr_list in dmr_lists:
-                        for dmr_id in dmr_list.split(','):
-                            try:
-                                clean_id = dmr_id.strip('[]').strip()
-                                if clean_id:
-                                    dmr_ids.append(int(clean_id))
-                            except ValueError:
-                                app.logger.warning(f"Could not parse DMR ID: {dmr_id}")
-                                continue
-                
-                # Parse the gene IDs with error handling
-                gene_ids = []
-                if row.all_gene_ids:
-                    gene_lists = row.all_gene_ids.replace('[', '').replace(']', '').split('],[')
-                    for gene_list in gene_lists:
-                        for gene_id in gene_list.split(','):
-                            try:
-                                clean_id = gene_id.strip('[]').strip()
-                                if clean_id:
-                                    gene_ids.append(int(clean_id))
-                            except ValueError:
-                                app.logger.warning(f"Could not parse gene ID: {gene_id}")
-                                continue
-                
-                # Look up symbols for each gene ID using the mapping
-                # Convert gene IDs to their symbols
-                # Get gene symbols for this component and timepoint
-                gene_symbols_query = text("""
-                    SELECT DISTINCT g.gene_id, g.symbol 
-                    FROM gene_annotations_view g
-                    WHERE g.timepoint_id = :timepoint_id 
-                    AND g.component_id = :component_id
-                    AND g.symbol IS NOT NULL
-                    ORDER BY g.symbol
-                """)
-
-                try:
-                    gene_symbols_results = session.execute(
-                        gene_symbols_query,
-                        {"timepoint_id": timepoint_id, "component_id": row.component_id}
-                    ).fetchall()
-
-                    app.logger.debug(f"Gene symbols query results for component {row.component_id}: {gene_symbols_results}")
-                    
-                    # Create gene ID to symbol mapping
-                    gene_id_to_symbol = {str(row.gene_id): str(row.symbol).strip() for row in gene_symbols_results}
-                except Exception as e:
-                    app.logger.error(f"Error fetching gene symbols for component {row.component_id}: {str(e)}")
-                    gene_id_to_symbol = {}
-
-                gene_symbols = []
-                for gene_id in gene_ids:
-                    gene_id_str = str(gene_id)
                     try:
-                        symbol = gene_id_to_symbol.get(gene_id_str)
-                        if symbol and symbol.strip():
-                            gene_symbols.append(symbol.strip())
-                        else:
-                            app.logger.warning(f"No symbol found for gene_id {gene_id} in component {row.component_id}")
-                            gene_symbols.append(f"Gene_{gene_id}")
+                        # Clean the string and split into individual IDs
+                        clean_str = row.all_dmr_ids.replace('[', '').replace(']', '')
+                        if clean_str:
+                            dmr_ids = [int(x.strip()) for x in clean_str.split(',') if x.strip()]
                     except Exception as e:
-                        app.logger.error(f"Error processing gene symbol for gene_id {gene_id}: {str(e)}")
-                        gene_symbols.append(f"Gene_{gene_id}")
-                components.append({
+                        app.logger.warning(f"Error parsing DMR IDs: {e}")
+
+                # Parse gene symbols - ensure it's a list
+                gene_symbols = []
+                if row.gene_symbols:
+                    if isinstance(row.gene_symbols, list):
+                        gene_symbols = row.gene_symbols
+                    elif isinstance(row.gene_symbols, str):
+                        gene_symbols = [s.strip() for s in row.gene_symbols.split(',') if s.strip()]
+
+                component = {
                     "component_id": row.component_id,
                     "timepoint": row.timepoint,
                     "graph_type": row.graph_type,
                     "category": row.category,
-                    "dmr_count": row.dmr_count,
-                    "gene_count": row.gene_count,
+                    "dmr_count": row.dmr_count or 0,
+                    "gene_count": row.gene_count or 0,
                     "all_dmr_ids": dmr_ids,
-                    "all_gene_ids": gene_ids,
                     "gene_symbols": gene_symbols
-                })
+                }
+                
+                app.logger.debug(f"Processed component: {component}")
+                components.append(component)
 
             app.logger.debug(f"Final components data: {components}")
 
