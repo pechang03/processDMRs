@@ -1,14 +1,14 @@
-.react-tabs {
+.reactTabs {
   -webkit-tap-highlight-color: transparent;
 }
 
-.react-tabs__tab-list {
+.reactTabs__tabList {
   border-bottom: 1px solid #aaa;
   margin: 0 0 10px;
   padding: 0;
 }
 
-.react-tabs__tab {
+.reactTabs__tab {
   display: inline-block;
   border: 1px solid transparent;
   border-bottom: none;
@@ -19,26 +19,26 @@
   cursor: pointer;
 }
 
-.react-tabs__tab--selected {
+.reactTabs__tab--selected {
   background: #fff;
   border-color: #aaa;
   color: black;
   border-radius: 5px 5px 0 0;
 }
 
-.react-tabs__tab-panel {
+.reactTabs__tabPanel {
   display: none;
 }
 
-.react-tabs__tab-panel--selected {
+.reactTabs__tabPanel--selected {
   display: block;
 }
 
-.react-tabs__tab:focus {
+.reactTabs__tab:focus {
   outline: none;
 }
 
-.react-tabs__tab:focus:after {
+.reactTabs__tab:focus:after {
   content: '';
   position: absolute;
   height: 5px;

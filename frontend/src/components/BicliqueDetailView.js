@@ -162,7 +162,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                         </Table>
                         </TableContainer>
                     </TabPanel>
-                    <TabPanel>
+                  <TabPanel className="reactTabs__tabPanel">
                         {/* Add detailed view here */}
                     </TabPanel>
                 </Tabs>
