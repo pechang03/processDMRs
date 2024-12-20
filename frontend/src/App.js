@@ -1,5 +1,7 @@
 import React from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
@@ -16,7 +18,7 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import BicliqueDetailView from './components/BicliqueDetailView';
-
+import LLMAnalysisView from './components/LLMAnalysisView';
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -30,6 +32,7 @@ const theme = createTheme({
 });
 
 function App() {
+const [selectedTab, setSelectedTab] = React.useState(0);
 const [backendStatus, setBackendStatus] = React.useState(null);
 const [timepoints, setTimepoints] = React.useState([]);
 const [loading, setLoading] = React.useState(true);
@@ -107,11 +110,38 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
       <CssBaseline />
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom align="center">
-            DMR Analysis Dashboard
-          </Typography>
+        <Typography variant="h3" component="h1" gutterBottom align="center">
+        DMR Analysis Dashboard
+        </Typography>
+        <Typography variant="subtitle1" align="center" gutterBottom>
+        Version 1.1.0
+        </Typography>
           
-          <Grid container spacing={3}>
+        <Tabs
+        selectedIndex={selectedTab}
+        onSelect={index => setSelectedTab(index)}
+        className="react-tabs"
+        style={{
+            border: 'none',
+            borderRadius: theme.shape.borderRadius,
+            '& .react-tabs__tab': {
+            border: 'none',
+            borderBottom: '2px solid transparent',
+            '&--selected': {
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main
+            }
+            }
+        }}
+        >
+        <TabList>
+            <Tab>Overview</Tab>
+            <Tab>Analysis</Tab>
+            <Tab disabled={!selectedTimepoint}>Statistics</Tab>
+        </TabList>
+
+        <TabPanel>
+            <Grid container spacing={3}>
             <Grid item xs={12}>
               <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="h6" gutterBottom>
@@ -191,7 +221,37 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                 </Typography>
               </Paper>
             </Grid>
-            {selectedTimepoint && (
+            </Grid>
+            </TabPanel>
+
+        <TabPanel>
+            <Grid container spacing={3}>
+            <Grid item xs={12}>
+                <Paper elevation={3} sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                    LLM Analysis Tool
+                </Typography>
+                <LLMAnalysisView 
+                    selectedTimepoint={selectedTimepoint}
+                    timepointDetails={timepointDetails}
+                />
+                </Paper>
+            </Grid>
+            </Grid>
+        </TabPanel>
+
+                <TabPanel>
+                LLM Analysis Tool
+                </Typography>
+                <LLMAnalysisView 
+                selectedTimepoint={selectedTimepoint}
+                timepointDetails={timepointDetails}
+                />
+            </Paper>
+            </Grid>
+            
+            <TabPanel>
+                {selectedTimepoint && (
                 <Grid item xs={12}>
                     <Box>
                         <Typography variant="h6">
@@ -281,9 +341,10 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
                     </Paper>
                 </Grid>
             )}
-        </Grid>
-        </Box>
-      </Container>
+        </TabPanel>
+        </Tabs>
+    </Box>
+    </Container>
     </ThemeProvider>
   );
 }
