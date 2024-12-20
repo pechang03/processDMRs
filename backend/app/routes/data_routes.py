@@ -109,13 +109,15 @@ def get_timepoint_stats(timepoint_id):
             # Convert the results to a list of dictionaries
             components = []
             for row in results:
+                # Parse the JSON strings for DMR and gene IDs
+                dmr_ids = eval(row.all_dmr_ids) if row.all_dmr_ids else []
+                gene_ids = eval(row.all_gene_ids) if row.all_gene_ids else []
+
                 # Get symbols for this component's genes
-                gene_symbols = []
-                if row.all_gene_ids:
-                    gene_symbols = [
-                        gene_id_to_symbol.get(str(gene_id), str(gene_id))
-                        for gene_id in row.all_gene_ids
-                    ]
+                gene_symbols = [
+                    gene_id_to_symbol.get(str(gene_id), str(gene_id))
+                    for gene_id in gene_ids
+                ]
 
                 components.append({
                     "component_id": row.component_id,
@@ -124,9 +126,9 @@ def get_timepoint_stats(timepoint_id):
                     "category": row.category,
                     "dmr_count": row.dmr_count,
                     "gene_count": row.gene_count,
-                    "all_dmr_ids": row.all_dmr_ids,
-                    "all_gene_ids": row.all_gene_ids,
-                    "gene_symbols": gene_symbols
+                    "all_dmr_ids": dmr_ids,  # Already parsed
+                    "all_gene_ids": gene_ids,  # Already parsed
+                    "gene_symbols": gene_symbols  # List of actual symbols
                 })
 
             timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()

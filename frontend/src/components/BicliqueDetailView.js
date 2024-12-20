@@ -77,9 +77,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}
-                                                title={JSON.parse(component.all_dmr_ids).join(', ')}>
-                                                {JSON.parse(component.all_dmr_ids).join(', ')}
-                                            >
+                                                title={component.all_dmr_ids.join(', ')}>
                                                 {component.all_dmr_ids.join(', ')}
                                             </Typography>
                                         </TableCell>
@@ -91,9 +89,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap'
                                                 }}
-                                                title={JSON.parse(component.gene_symbols).join(', ')}>
-                                                {JSON.parse(component.gene_symbols).join(', ')}
-                                            >
+                                                title={component.gene_symbols.join(', ')}>
                                                 {component.gene_symbols.join(', ')}
                                             </Typography>
                                         </TableCell>
