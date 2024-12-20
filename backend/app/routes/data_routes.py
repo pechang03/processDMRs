@@ -73,32 +73,26 @@ def get_timepoint_stats(timepoint_id):
 
             app.logger.debug(f"Extracted gene IDs: {all_gene_ids}")
 
+            # Get gene symbol mappings for this timepoint
             gene_id_to_symbol = {}
-            if all_gene_ids:  # Only query if we have gene IDs
-                # Create the IN clause with placeholders
-                placeholders = ','.join('?' * len(all_gene_ids))
-                
-                gene_symbols_query = text(f"""
+            if all_gene_ids:
+                gene_symbols_query = text("""
                     SELECT gene_id, symbol 
                     FROM gene_annotations_view 
-                    WHERE gene_id IN ({placeholders})
-                    AND timepoint = ?
-                """)
-
-                # Convert set to list and add timepoint parameter
-                params = list(all_gene_ids)
-                params.append(results[0].timepoint)
+                    WHERE gene_id IN ({}) 
+                    AND timepoint_id = :timepoint_id
+                """.format(','.join(str(id) for id in all_gene_ids)))
 
                 gene_symbols_results = session.execute(
                     gene_symbols_query,
-                    params
+                    {"timepoint_id": timepoint_id}
                 ).fetchall()
 
                 app.logger.debug(f"Gene symbols query results: {gene_symbols_results}")
                 
                 # Create gene ID to symbol mapping
                 gene_id_to_symbol = {row.gene_id: row.symbol for row in gene_symbols_results}
-                
+
             app.logger.debug(f"Gene ID to symbol mapping: {gene_id_to_symbol}")
 
             # Convert the results to a list of dictionaries
@@ -112,11 +106,15 @@ def get_timepoint_stats(timepoint_id):
                 gene_ids_str = row.all_gene_ids.strip('[]')
                 gene_ids = [int(id.strip()) for id in gene_ids_str.split(',') if id.strip()]
                 
-                # Get symbols for this component's genes
-                gene_symbols = [
-                    gene_id_to_symbol.get(gene_id, str(gene_id))
-                    for gene_id in gene_ids
-                ]
+                # Look up symbols for each gene ID using the mapping
+                gene_symbols = []
+                for gene_id in gene_ids:
+                    symbol = gene_id_to_symbol.get(gene_id)
+                    if symbol:
+                        gene_symbols.append(symbol)
+                    else:
+                        # Fallback to ID if no symbol found
+                        gene_symbols.append(f"Gene_{gene_id}")
 
                 components.append({
                     "component_id": row.component_id,
