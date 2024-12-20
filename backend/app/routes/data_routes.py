@@ -62,46 +62,23 @@ def get_timepoint_stats(timepoint_id):
                     "details": "The timepoint exists but has no associated data"
                 }), 404
 
-            # Get all unique gene IDs from all components
-            all_gene_ids = set()
-            for row in results:
-                if row.all_gene_ids:  # Check if not None
-                    # First split by '],['
-                    gene_lists = row.all_gene_ids.replace('[', '').replace(']', '').split('],[')
-                    for gene_list in gene_lists:
-                        # Split each sublist by comma and clean
-                        for gene_id in gene_list.split(','):
-                            try:
-                                clean_id = gene_id.strip('[]').strip()
-                                if clean_id:  # Make sure we have a value
-                                    all_gene_ids.add(int(clean_id))
-                            except ValueError:
-                                app.logger.warning(f"Could not parse gene ID: {gene_id}")
-                                continue
-
-            app.logger.debug(f"Extracted gene IDs: {all_gene_ids}")
-
             # Get gene symbol mappings for this timepoint
             gene_id_to_symbol = {}
-            if all_gene_ids:
-                gene_symbols_query = text("""
-                    SELECT gene_id, symbol 
-                    FROM gene_annotations_view 
-                    WHERE gene_id IN ({}) 
-                    AND timepoint_id = :timepoint_id
-                """.format(','.join(str(id) for id in all_gene_ids)))
+            gene_symbols_query = text("""
+                SELECT gene_id, symbol 
+                FROM gene_annotations_view 
+                WHERE timepoint_id = :timepoint_id
+            """)
 
-                gene_symbols_results = session.execute(
-                    gene_symbols_query,
-                    {"timepoint_id": timepoint_id}
-                ).fetchall()
+            gene_symbols_results = session.execute(
+                gene_symbols_query,
+                {"timepoint_id": timepoint_id}
+            ).fetchall()
 
-                app.logger.debug(f"Gene symbols query results: {gene_symbols_results}")
-                
-                # Create gene ID to symbol mapping
-                gene_id_to_symbol = {row.gene_id: row.symbol for row in gene_symbols_results}
-
-            app.logger.debug(f"Gene ID to symbol mapping: {gene_id_to_symbol}")
+            app.logger.debug(f"Gene symbols query results: {gene_symbols_results}")
+            
+            # Create gene ID to symbol mapping
+            gene_id_to_symbol = {row.gene_id: row.symbol for row in gene_symbols_results}
 
             # Convert the results to a list of dictionaries
             components = []
