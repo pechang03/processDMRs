@@ -27,9 +27,53 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
             <Paper elevation={3} sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                    Biclique Analysis for Timepoint {timepointDetails.bicliques[0].timepoint}
-                </Typography>
+                {/* Component Details Section */}
+                <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h5" gutterBottom>
+                        Component Analysis for Timepoint {timepointDetails.bicliques[0].timepoint}
+                    </Typography>
+                    
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Component ID</TableCell>
+                                    <TableCell align="right">Total Bicliques</TableCell>
+                                    <TableCell align="right">Total DMRs</TableCell>
+                                    <TableCell align="right">Total Genes</TableCell>
+                                    <TableCell>Type</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {Array.from(new Set(timepointDetails.bicliques.map(b => b.component_id))).map((componentId) => {
+                                    const componentBicliques = timepointDetails.bicliques.filter(b => b.component_id === componentId);
+                                    const totalDMRs = componentBicliques.reduce((sum, b) => sum + (b.dmr_count || 0), 0);
+                                    const totalGenes = componentBicliques.reduce((sum, b) => sum + (b.gene_count || 0), 0);
+                                    const type = componentBicliques[0].graph_type;
+                                    
+                                    return (
+                                        <TableRow key={componentId}
+                                            hover
+                                            sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                                        >
+                                            <TableCell>{componentId}</TableCell>
+                                            <TableCell align="right">{componentBicliques.length}</TableCell>
+                                            <TableCell align="right">{totalDMRs}</TableCell>
+                                            <TableCell align="right">{totalGenes}</TableCell>
+                                            <TableCell>{type}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Paper>
+
+                {/* Bicliques Section */}
+                <Paper elevation={3} sx={{ p: 3 }}>
+                    <Typography variant="h5" gutterBottom>
+                        Biclique Details
+                    </Typography>
 
 
                 {loading ? (
@@ -80,10 +124,10 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                )}
-            </Paper>
-        </Box>
-    );
-}
+                    )}
+                </Paper>
+            </Box>
+        );
+    }
 
 export default BicliqueDetailView;
