@@ -61,7 +61,6 @@ def configure_app(app):
 configure_app(app)
 
 # Import and register routes
-from .routes.data_routes import *
 
 @app.route("/api/health")
 def health_check():
