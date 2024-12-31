@@ -17,8 +17,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import BicliqueDetailView from './components/BicliqueDetailView';
-import LLMAnalysisView from './components/LLMAnalysisView';
+import BicliqueDetailView from './components/BicliqueDetailView.jsx';
+import LLMAnalysisView from './components/LLMAnalysisView.jsx';
+import ComponentSelectionView from './components/ComponentSelectionView.jsx';
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -35,6 +36,8 @@ function App() {
 const [selectedTab, setSelectedTab] = React.useState(0);
 const [backendStatus, setBackendStatus] = React.useState(null);
 const [timepoints, setTimepoints] = React.useState([]);
+const [components, setComponents] = React.useState([]);
+const [selectedComponent, setSelectedComponent] = React.useState(null);
 const [loading, setLoading] = React.useState(true);
 const [error, setError] = React.useState(null);
 const [selectedTimepoint, setSelectedTimepoint] = React.useState(null);
@@ -96,7 +99,8 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
     };
     setTimepointDetails({ bicliques: data.bicliques, stats });
     setDetailsLoading(false);
-    setSelectedTab(2);  // Switch to Statistics tab after data loads
+    setSelectedTab(2);  // Switch to Components tab after data loads
+    setSelectedComponent(null);  // Reset selected component when loading new timepoint
     })
     .catch(err => {
     console.error('Error fetching timepoint details:', err);
@@ -138,7 +142,8 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
         <TabList>
             <Tab>Overview</Tab>
             <Tab>Analysis</Tab>
-            <Tab disabled={!selectedTimepoint}>Statistics</Tab>
+            <Tab disabled={!selectedTimepoint}>Components</Tab>
+            <Tab disabled={!selectedComponent}>Statistics</Tab>
         </TabList>
 
         <TabPanel>
@@ -242,8 +247,22 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
         </TabPanel>
 
         <TabPanel>
-            {selectedTimepoint && (
-                <Grid item xs={12}>
+        {selectedTimepoint && (
+            <Grid container spacing={3}>
+            <Grid item xs={12}>
+                <ComponentSelectionView
+                timepointDetails={timepointDetails}
+                onComponentSelect={setSelectedComponent}
+                selectedTimepoint={selectedTimepoint}
+                />
+            </Grid>
+            </Grid>
+        )}
+        </TabPanel>
+
+        <TabPanel>
+        {selectedComponent && (
+            <Grid item xs={12}>
                     <Box>
                         <Typography variant="h6">
                             Timepoint {timepoints.find(t => t.id === selectedTimepoint)?.name}
