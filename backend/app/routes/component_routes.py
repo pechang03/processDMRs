@@ -1,8 +1,6 @@
 from flask import Blueprint, jsonify
-from ..database import get_db
-from flask import Blueprint, jsonify
-from ..database import get_db
-from ..database.connection import get_db_engine
+from ..utils.extensions import app
+from ..database import get_db_engine, get_db_session
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from ..database.models import Timepoint
@@ -12,26 +10,25 @@ component_bp = Blueprint('components', __name__)
 @component_bp.route('/api/components/<int:timepoint_id>/summary', methods=['GET'])
 def get_component_summary_by_timepoint(timepoint_id):
     try:
-        db = get_db()
-        cursor = db.cursor()
+        engine = get_db_engine()
         
-        query = """
-            SELECT 
-                component_id,
-                timepoint_id,
-                category,
-                dmr_count,
-                gene_count,
-                edge_count,
-                biclique_count,
-                density
-            FROM component_summary_view
-            WHERE timepoint_id = ? AND graph_type = 'SPLIT'
-            ORDER BY category, component_id
-        """
-        
-        cursor.execute(query, (timepoint_id,))
-        results = cursor.fetchall()
+        with Session(engine) as session:
+            query = text("""
+                SELECT 
+                    component_id,
+                    timepoint_id,
+                    category,
+                    dmr_count,
+                    gene_count,
+                    edge_count,
+                    biclique_count,
+                    density
+                FROM component_summary_view
+                WHERE timepoint_id = :timepoint_id AND graph_type = 'SPLIT'
+                ORDER BY category, component_id
+            """)
+            
+            results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
         
         components = []
         for row in results:
@@ -60,26 +57,25 @@ def get_component_summary_by_timepoint(timepoint_id):
 @component_bp.route('/api/components/<int:timepoint_id>/details', methods=['GET'])
 def get_component_details_by_timepoint(timepoint_id):
     try:
-        db = get_db()
-        cursor = db.cursor()
+        engine = get_db_engine()
         
-        query = """
-            SELECT 
-                timepoint_id,
-                timepoint,
-                component_id,
-                graph_type,
-                categories,
-                total_dmr_count,
-                total_gene_count,
-                all_dmr_ids,
-                all_gene_ids
-            FROM component_details_view
-            WHERE timepoint_id = ? AND graph_type = 'SPLIT'
-        """
-        
-        cursor.execute(query, (timepoint_id,))
-        results = cursor.fetchall()
+        with Session(engine) as session:
+            query = text("""
+                SELECT 
+                    timepoint_id,
+                    timepoint,
+                    component_id,
+                    graph_type,
+                    categories,
+                    total_dmr_count,
+                    total_gene_count,
+                    all_dmr_ids,
+                    all_gene_ids
+                FROM component_details_view
+                WHERE timepoint_id = :timepoint_id AND graph_type = 'SPLIT'
+            """)
+            
+            results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
         
         components = []
         for row in results:
