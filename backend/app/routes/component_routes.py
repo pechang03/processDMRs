@@ -16,15 +16,25 @@ def get_component_summary_by_timepoint(timepoint_id):
     try:
         engine = get_db_engine()
         app.logger.info("Database engine created successfully")
-        timepoint_name = None
-        with Session(engine) as sessoin1:
-            timepoint_name = (
-                session1.query(Timepoint.id, Timepoint.name)
+        
+        # First verify timepoint exists
+        with Session(engine) as session:
+            timepoint = (
+                session.query(Timepoint)
                 .filter_by(id=timepoint_id)
                 .first()
             )
-        app.logger.info(f"Timepoint name: {timepoint_name}")
-        with Session(engine) as session:
+            
+            if not timepoint:
+                app.logger.error(f"Timepoint {timepoint_id} not found")
+                return jsonify({
+                    "status": "error", 
+                    "message": f"Timepoint {timepoint_id} not found"
+                }), 404
+                
+            app.logger.info(f"Found timepoint: {timepoint.name}")
+
+            # Execute component summary query in same session
             query = text("""
                 SELECT 
                     component_id,
@@ -58,7 +68,11 @@ def get_component_summary_by_timepoint(timepoint_id):
                     continue
 
             app.logger.info(f"Returning {len(components)} component summaries")
-            return jsonify({"status": "success", "data": components})
+            return jsonify({
+                "status": "success",
+                "timepoint": timepoint.name,
+                "data": components
+            })
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
