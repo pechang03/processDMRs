@@ -39,9 +39,9 @@ def get_component_summary_by_timepoint(timepoint_id):
                 SELECT 
                     component_id,
                     timepoint_id,
-                    bicliques_count,
-                    genes_count,
-                    dmrs_count
+                    biclique_count as bicliques_count,
+                    gene_count as genes_count,
+                    dmr_count as dmrs_count
                 FROM component_summary_view
                 WHERE timepoint_id = :timepoint_id
             """)
