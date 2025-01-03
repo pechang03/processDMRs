@@ -32,11 +32,14 @@ function BicliqueDetailView({ timepointId, componentId }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ gene_ids: geneIds })
+        body: JSON.stringify({ 
+          gene_ids: geneIds,
+          timepoint_id: timepointId 
+        })
       });
       if (!response.ok) throw new Error('Failed to fetch gene symbols');
       const data = await response.json();
-      setGeneSymbols(data.symbols);
+      setGeneSymbols(data.gene_info);
     } catch (error) {
       console.error('Error fetching gene symbols:', error);
     }
@@ -44,27 +47,45 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const fetchDmrNames = async (dmrIds) => {
     try {
-      const response = await fetch(`http://localhost:5555/api/dmrs/names`, {
+      const response = await fetch(`http://localhost:5555/api/dmrs/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ dmr_ids: dmrIds })
+        body: JSON.stringify({ 
+          dmr_ids: dmrIds,
+          timepoint_id: timepointId 
+        })
       });
-      if (!response.ok) throw new Error('Failed to fetch DMR names');
+      if (!response.ok) throw new Error('Failed to fetch DMR status');
       const data = await response.json();
-      setDmrNames(data.names);
+      setDmrNames(data.dmr_status);
     } catch (error) {
       console.error('Error fetching DMR names:', error);
     }
   };
 
   const formatGeneSymbols = (geneIds) => {
-    return geneIds.map(id => geneSymbols[id] || id).join(", ");
+    return geneIds.map(id => {
+      const info = geneSymbols[id];
+      if (!info) return id;
+      
+      let label = info.symbol || id;
+      if (info.is_split) label += ' (Split)';
+      if (info.is_hub) label += ' (Hub)';
+      return label;
+    }).join(", ");
   };
 
   const formatDmrNames = (dmrIds) => {
-    return dmrIds.map(id => dmrNames[id] || id).join(", ");
+    return dmrIds.map(id => {
+      const info = dmrNames[id];
+      if (!info) return id;
+      
+      let label = id;
+      if (info.is_hub) label += ' (Hub)';
+      return label;
+    }).join(", ");
   };
 
   React.useEffect(() => {

@@ -195,13 +195,18 @@ def get_gene_symbols():
     try:
         data = request.get_json()
         gene_ids_raw = data.get('gene_ids', [])
+        timepoint_id = data.get('timepoint_id')
         
-        # Clean up the gene IDs - they're coming in as string lists
+        if not timepoint_id:
+            return jsonify({
+                "status": "error",
+                "message": "timepoint_id is required"
+            }), 400
+            
+        # Clean up the gene IDs
         gene_ids = []
         for id_list in gene_ids_raw:
-            # Remove brackets and split
             cleaned = id_list.strip('[]').split(',')
-            # Convert to integers and add to list
             gene_ids.extend([int(g.strip()) for g in cleaned if g.strip()])
         
         # Remove duplicates
@@ -210,17 +215,37 @@ def get_gene_symbols():
         engine = get_db_engine()
         with Session(engine) as session:
             query = text("""
-                SELECT id, symbol 
-                FROM genes 
-                WHERE id IN :gene_ids
+                SELECT 
+                    g.gene_id as id,
+                    g.symbol,
+                    g.is_split,
+                    g.is_hub,
+                    g.description
+                FROM gene_timepoint_annotation g
+                WHERE g.timepoint_id = :timepoint_id
+                AND g.gene_id IN :gene_ids
             """)
             
-            results = session.execute(query, {"gene_ids": tuple(gene_ids)}).fetchall()
-            symbols = {str(row.id): row.symbol for row in results}
+            results = session.execute(
+                query, 
+                {
+                    "timepoint_id": timepoint_id,
+                    "gene_ids": tuple(gene_ids)
+                }
+            ).fetchall()
+            
+            gene_info = {
+                str(row.id): {
+                    "symbol": row.symbol,
+                    "is_split": row.is_split,
+                    "is_hub": row.is_hub,
+                    "description": row.description
+                } for row in results
+            }
             
             return jsonify({
                 "status": "success",
-                "symbols": symbols
+                "gene_info": gene_info
             })
             
     except Exception as e:
@@ -230,38 +255,54 @@ def get_gene_symbols():
             "message": str(e)
         }), 500
 
-@component_bp.route("/api/dmrs/names", methods=["POST"])
-def get_dmr_names():
+@component_bp.route("/api/dmrs/status", methods=["POST"])
+def get_dmr_status():
     try:
         data = request.get_json()
         dmr_ids_raw = data.get('dmr_ids', [])
+        timepoint_id = data.get('timepoint_id')
         
-        # Clean up the DMR IDs - they're coming in as string lists
+        if not timepoint_id:
+            return jsonify({
+                "status": "error",
+                "message": "timepoint_id is required"
+            }), 400
+            
         dmr_ids = []
         for id_list in dmr_ids_raw:
-            # Remove brackets and split
             cleaned = id_list.strip('[]').split(',')
-            # Convert to integers and add to list
             dmr_ids.extend([int(d.strip()) for d in cleaned if d.strip()])
         
-        # Remove duplicates
         dmr_ids = list(set(dmr_ids))
         
         engine = get_db_engine()
         with Session(engine) as session:
-            # Use description instead of name for DMRs
             query = text("""
-                SELECT id, description 
-                FROM dmrs 
-                WHERE id IN :dmr_ids
+                SELECT 
+                    d.id,
+                    d.is_hub
+                FROM dmr_timepoint_annotation d
+                WHERE d.timepoint_id = :timepoint_id
+                AND d.id IN :dmr_ids
             """)
             
-            results = session.execute(query, {"dmr_ids": tuple(dmr_ids)}).fetchall()
-            names = {str(row.id): row.description for row in results}
+            results = session.execute(
+                query, 
+                {
+                    "timepoint_id": timepoint_id,
+                    "dmr_ids": tuple(dmr_ids)
+                }
+            ).fetchall()
+            
+            dmr_status = {
+                str(row.id): {
+                    "is_hub": row.is_hub
+                } for row in results
+            }
             
             return jsonify({
                 "status": "success",
-                "names": names
+                "dmr_status": dmr_status
             })
             
     except Exception as e:
