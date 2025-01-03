@@ -270,34 +270,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
           <TabPanel className="reactTabs__tabPanel">
             <TableContainer>
               <Table size="small">
-                {/* Existing table content */}
-              </Table>
-            </TableContainer>
-            
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom>Bicliques</Typography>
-              {componentDetails.bicliques.map((biclique, index) => (
-                <Paper key={biclique.biclique_id} sx={{ p: 2, mb: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Biclique {index + 1} ({biclique.category})
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">DMRs ({biclique.dmr_ids.length})</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {formatDmrNames(biclique.dmr_ids)}
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Genes ({biclique.gene_ids.length})</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {formatGeneSymbols(biclique.gene_ids)}
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              ))}
-            </Box>
                 <TableHead>
                   <TableRow>
                     <TableCell>Component ID</TableCell>
@@ -362,6 +334,31 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 </TableBody>
               </Table>
             </TableContainer>
+            
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom>Bicliques</Typography>
+              {componentDetails.bicliques.map((biclique, index) => (
+                <Paper key={biclique.biclique_id} sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Biclique {index + 1} ({biclique.category})
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="subtitle2" color="text.secondary">DMRs ({biclique.dmr_ids.length})</Typography>
+                      <Box sx={{ mt: 1 }}>
+                        {formatDmrNames(biclique.dmr_ids)}
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="subtitle2" color="text.secondary">Genes ({biclique.gene_ids.length})</Typography>
+                      <Box sx={{ mt: 1 }}>
+                        {formatGeneSymbols(biclique.gene_ids)}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+            </Box>
           </TabPanel>
           <TabPanel className="reactTabs__tabPanel">
             {/* Add detailed view here */}
