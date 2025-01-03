@@ -31,12 +31,18 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                     }
                     return response.json();
                 })
-                .then(response => {
-                    if (response.status === 'success') {
-                        setComponents(response.data);
-                        setTimepointName(response.timepoint);
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Ensure we're mapping the correct fields from the backend response
+                        setComponents(data.data.map(component => ({
+                            component_id: component.component_id,
+                            biclique_count: component.biclique_count,
+                            gene_count: component.gene_count,
+                            dmr_count: component.dmr_count
+                        })));
+                        setTimepointName(data.timepoint);
                     } else {
-                        throw new Error(response.message || 'Failed to fetch components');
+                        throw new Error(data.message || 'Failed to fetch components');
                     }
                 })
                 .catch(error => {
