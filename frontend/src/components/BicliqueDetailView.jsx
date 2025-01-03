@@ -216,9 +216,46 @@ function BicliqueDetailView({ timepointId, componentId }) {
   return (
     <Box sx={{ width: "100%", mt: 3 }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Component Analysis for Timepoint {componentDetails.timepoint}
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Component Analysis for Timepoint {componentDetails.timepoint}
+          </Typography>
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">Genes</Typography>
+              <Stack direction="row" spacing={1} alignItems="baseline">
+                <Typography variant="h6">{geneStats?.total}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ({geneStats?.hubs} hubs, {geneStats?.splits} splits)
+                </Typography>
+              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                Degree: {geneStats?.minDegree} - {geneStats?.maxDegree}
+              </Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">DMRs</Typography>
+              <Stack direction="row" spacing={1} alignItems="baseline">
+                <Typography variant="h6">{dmrStats?.total}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ({dmrStats?.hubs} hubs)
+                </Typography>
+              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                Degree: {dmrStats?.minDegree} - {dmrStats?.maxDegree}
+              </Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">Bicliques</Typography>
+              <Typography variant="h6">
+                {componentDetails.biclique_count}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {geneStats?.totalBicliques + dmrStats?.totalBicliques} total associations
+              </Typography>
+            </Paper>
+          </Stack>
+        </Box>
         <Tabs
           onSelect={(index) => setActiveTab(index)}
           selectedIndex={activeTab}
