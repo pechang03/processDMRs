@@ -100,6 +100,30 @@ def get_component_details(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
+            # First verify the component exists
+            verify_query = text("""
+                SELECT COUNT(*) 
+                FROM component_details_view
+                WHERE timepoint_id = :timepoint_id 
+                AND component_id = :component_id
+                AND LOWER(graph_type) = 'split'
+            """)
+            
+            count = session.execute(
+                verify_query, 
+                {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).scalar()
+            
+            app.logger.info(f"Found {count} matching components")
+            
+            if count == 0:
+                app.logger.error(f"No component found with ID {component_id} for timepoint {timepoint_id}")
+                return jsonify({
+                    "status": "error",
+                    "message": f"Component {component_id} not found for timepoint {timepoint_id}"
+                }), 404
+
+            # If component exists, get the details
             query = text("""
                 SELECT 
                     timepoint_id,
@@ -123,11 +147,13 @@ def get_component_details(timepoint_id, component_id):
             }).first()
             
             if not result:
+                app.logger.error("Query returned no results after verifying existence")
                 return jsonify({
                     "status": "error",
-                    "message": f"No details found for component {component_id}"
-                }), 404
+                    "message": "Failed to retrieve component details"
+                }), 500
                 
+            # Log the actual data being returned
             component_data = {
                 "timepoint_id": result.timepoint_id,
                 "timepoint": result.timepoint,
@@ -139,6 +165,9 @@ def get_component_details(timepoint_id, component_id):
                 "all_dmr_ids": result.all_dmr_ids.split(",") if result.all_dmr_ids else [],
                 "all_gene_ids": result.all_gene_ids.split(",") if result.all_gene_ids else []
             }
+            
+            app.logger.info(f"Returning details for component {component_id}")
+            app.logger.debug(f"Component data: {component_data}")
             
             return jsonify({
                 "status": "success",
