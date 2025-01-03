@@ -291,96 +291,56 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
           <TabPanel className="reactTabs__tabPanel">
             <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Component ID</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell align="right">DMR Count</TableCell>
-                    <TableCell align="right">Gene Count</TableCell>
-                    <TableCell>DMR IDs</TableCell>
-                    <TableCell>Gene Symbols</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow
-                    hover
-                    sx={{
-                      "&:nth-of-type(odd)": {
-                        backgroundColor: "rgba(0, 0, 0, 0.04)",
-                      },
-                    }}
-                  >
-                    <TableCell>{componentDetails.component_id}</TableCell>
-                    <TableCell>{componentDetails.categories}</TableCell>
-                    <TableCell>{componentDetails.graph_type}</TableCell>
-                    <TableCell align="right">
-                      {componentDetails.total_dmr_count || 0}
-                    </TableCell>
-                    <TableCell align="right">
-                      {componentDetails.total_gene_count || 0}
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        sx={{
-                          maxWidth: 300,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                        }}
-                        title={componentDetails.all_dmr_ids.join(", ")}
-                      >
-                        {formatDmrNames(componentDetails.all_dmr_ids)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        sx={{
-                          maxWidth: 400,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                          color: "primary.main",
-                        }}
-                        title={componentDetails.all_gene_ids.join(", ")}
-                      >
-                        {formatGeneSymbols(componentDetails.all_gene_ids)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-            
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom>Bicliques</Typography>
-              {componentDetails.bicliques.map((biclique, index) => (
+              <Typography variant="h6" gutterBottom>Biclique Details</Typography>
+              {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
                 <Paper key={biclique.biclique_id} sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle1" gutterBottom>
                     Biclique {index + 1} ({biclique.category})
                   </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">DMRs ({biclique.dmr_ids.length})</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {formatDmrNames(biclique.dmr_ids)}
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Genes ({biclique.gene_ids.length})</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {formatGeneSymbols(biclique.gene_ids)}
-                      </Box>
-                    </Grid>
-                  </Grid>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Count</TableCell>
+                        <TableCell>Members</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>DMRs</TableCell>
+                        <TableCell>{biclique.dmr_ids.length}</TableCell>
+                        <TableCell>
+                          <Box sx={{ 
+                            maxWidth: '500px', 
+                            overflowX: 'auto',
+                            display: 'flex',
+                            gap: 1,
+                            flexWrap: 'wrap'
+                          }}>
+                            {formatDmrNames(biclique.dmr_ids)}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Genes</TableCell>
+                        <TableCell>{biclique.gene_ids.length}</TableCell>
+                        <TableCell>
+                          <Box sx={{ 
+                            maxWidth: '500px', 
+                            overflowX: 'auto',
+                            display: 'flex',
+                            gap: 1,
+                            flexWrap: 'wrap'
+                          }}>
+                            {formatGeneSymbols(biclique.gene_ids)}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </Paper>
               ))}
-            </Box>
+            </TableContainer>
           </TabPanel>
           <TabPanel className="reactTabs__tabPanel">
             {/* Add detailed view here */}
