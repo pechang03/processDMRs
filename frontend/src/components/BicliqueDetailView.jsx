@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -12,6 +12,9 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Chip,
+  Stack,
+  Tooltip,
 } from "@mui/material";
 import BicliqueGraphView from './BicliqueGraphView.jsx';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
@@ -70,11 +73,16 @@ function BicliqueDetailView({ timepointId, componentId }) {
       const info = geneSymbols[id];
       if (!info) return id;
       
-      let label = info.symbol || id;
-      if (info.is_split) label += ' (Split)';
-      if (info.is_hub) label += ' (Hub)';
-      return label;
-    }).join(", ");
+      return (
+        <Tooltip title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+          <span className="node-info">
+            {info.symbol || id}
+            {info.is_split && <span className="node-badge split">Split</span>}
+            {info.is_hub && <span className="node-badge hub">Hub</span>}
+          </span>
+        </Tooltip>
+      );
+    });
   };
 
   const formatDmrNames = (dmrIds) => {
@@ -82,11 +90,66 @@ function BicliqueDetailView({ timepointId, componentId }) {
       const info = dmrNames[id];
       if (!info) return id;
       
-      let label = id;
-      if (info.is_hub) label += ' (Hub)';
-      return label;
-    }).join(", ");
+      return (
+        <Tooltip title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+          <span className="node-info">
+            DMR {id}
+            {info.is_hub && <span className="node-badge hub">Hub</span>}
+          </span>
+        </Tooltip>
+      );
+    });
   };
+
+  const geneStats = useMemo(() => {
+    if (!componentDetails?.all_gene_ids) return null;
+    
+    const stats = {
+      total: componentDetails.all_gene_ids.length,
+      hubs: 0,
+      splits: 0,
+      maxDegree: 0,
+      minDegree: Infinity,
+      totalBicliques: 0
+    };
+    
+    componentDetails.all_gene_ids.forEach(id => {
+      const info = geneSymbols[id];
+      if (info) {
+        if (info.is_hub) stats.hubs++;
+        if (info.is_split) stats.splits++;
+        stats.maxDegree = Math.max(stats.maxDegree, info.degree || 0);
+        stats.minDegree = Math.min(stats.minDegree, info.degree || 0);
+        stats.totalBicliques += info.biclique_count || 0;
+      }
+    });
+    
+    return stats;
+  }, [componentDetails, geneSymbols]);
+
+  const dmrStats = useMemo(() => {
+    if (!componentDetails?.all_dmr_ids) return null;
+    
+    const stats = {
+      total: componentDetails.all_dmr_ids.length,
+      hubs: 0,
+      maxDegree: 0,
+      minDegree: Infinity,
+      totalBicliques: 0
+    };
+    
+    componentDetails.all_dmr_ids.forEach(id => {
+      const info = dmrNames[id];
+      if (info) {
+        if (info.is_hub) stats.hubs++;
+        stats.maxDegree = Math.max(stats.maxDegree, info.degree || 0);
+        stats.minDegree = Math.min(stats.minDegree, info.degree || 0);
+        stats.totalBicliques += info.biclique_count || 0;
+      }
+    });
+    
+    return stats;
+  }, [componentDetails, dmrNames]);
 
   React.useEffect(() => {
     if (timepointId && componentId) {
@@ -242,6 +305,8 @@ function BicliqueDetailView({ timepointId, componentId }) {
       <BicliqueGraphView
         componentId={componentId}
         timepointId={timepointId}
+        geneSymbols={geneSymbols}
+        dmrNames={dmrNames}
       />
     </Box>
   );
