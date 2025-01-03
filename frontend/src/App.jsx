@@ -257,27 +257,27 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
         <TabPanel>
         {selectedComponent && (
             <Grid item xs={12}>
-                    <Box>
-                        <Typography variant="h6">
-                            Timepoint {timepoints.find(t => t.id === selectedTimepoint)?.name}
-                        </Typography>
-                        {detailsLoading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                                <CircularProgress />
-                            </Box>
-                        ) : detailsError ? (
-                            <Alert severity="error" sx={{ mt: 2 }}>
-                                {detailsError}
-                            </Alert>
-                        ) : (
-                            <BicliqueDetailView 
-                                timepointId={selectedTimepoint}
-                                componentId={selectedComponent}
-                            />
-                        )}
-                    </Box>
-                </Grid>
-            )}
+                <Box>
+                    <Typography variant="h5" gutterBottom>
+                        Timepoint {timepoints.find(t => t.id === selectedTimepoint)?.name} - Component {selectedComponent}
+                    </Typography>
+                    {detailsLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : detailsError ? (
+                        <Alert severity="error" sx={{ mt: 2 }}>
+                            {detailsError}
+                        </Alert>
+                    ) : (
+                        <BicliqueDetailView 
+                            timepointId={selectedTimepoint}
+                            componentId={selectedComponent}
+                        />
+                    )}
+                </Box>
+            </Grid>
+        )}
         </TabPanel>
     </Tabs>
 </Box>
