@@ -51,7 +51,7 @@ def get_component_summary_by_timepoint(timepoint_id):
                     biclique_count,
                     biclique_categories
                 FROM component_summary_view
-                WHERE timepoint_id = :timepoint_id
+                WHERE timepoint_id = :timepoint_id AND GRAPH_TYPE = 'SPLIT'
             """)
 
             app.logger.info("Executing component summary query")
@@ -72,12 +72,12 @@ def get_component_summary_by_timepoint(timepoint_id):
                     "edge_count": row.edge_count,
                     "density": row.density,
                     "biclique_count": row.biclique_count,
-                    "biclique_categories": row.biclique_categories
+                    "biclique_categories": row.biclique_categories,
                 }
                 try:
                     component = ComponentSummarySchema(**component_data)
                     components.append(component.dict())
-                    app.logger.debug(f"Processed component summary: {component.dict()}")
+                    # app.logger.debug(f"Processed component summary: {component.dict()}")
                 except Exception as e:
                     app.logger.error(f"Error validating component summary: {e}")
                     continue
@@ -86,7 +86,7 @@ def get_component_summary_by_timepoint(timepoint_id):
             response = jsonify(
                 {"status": "success", "timepoint": timepoint.name, "data": components}
             )
-            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add("Access-Control-Allow-Origin", "*")
             return response
 
     except Exception as e:
