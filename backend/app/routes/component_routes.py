@@ -212,15 +212,16 @@ def get_gene_symbols():
         with Session(engine) as session:
             query = text("""
                 SELECT 
-                    g.gene_id,
+                    g.id as gene_id,
                     g.symbol,
-                    g.node_type,
-                    g.gene_type,
-                    g.degree,
-                    g.is_isolate,
-                    g.biclique_ids
-                FROM gene_timepoint_annotation g
-                WHERE g.timepoint_id = :timepoint_id
+                    gta.node_type,
+                    gta.gene_type,
+                    gta.degree,
+                    gta.is_isolate,
+                    gta.biclique_ids
+                FROM genes g
+                JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
+                WHERE gta.timepoint_id = :timepoint_id
             """)
             
             results = session.execute(
@@ -282,13 +283,14 @@ def get_dmr_status():
         with Session(engine) as session:
             query = text("""
                 SELECT 
-                    d.dmr_id,
-                    d.node_type,
-                    d.degree,
-                    d.is_isolate,
-                    d.biclique_ids
-                FROM dmr_timepoint_annotation d
-                WHERE d.timepoint_id = :timepoint_id
+                    d.id as dmr_id,
+                    dta.node_type,
+                    dta.degree,
+                    dta.is_isolate,
+                    dta.biclique_ids
+                FROM dmrs d
+                JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
+                WHERE dta.timepoint_id = :timepoint_id
             """)
             
             results = session.execute(
