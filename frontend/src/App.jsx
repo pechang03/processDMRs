@@ -244,9 +244,17 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
                         <ComponentsView
                             selectedTimepoint={selectedTimepoint}
                             onSelectComponent={(componentId) => {
+                                // Add debug logging
                                 console.log(`Selected component ${componentId} from timepoint ${selectedTimepoint}`);
+                                // Store the current timepoint ID with the component ID
                                 setSelectedComponent(componentId);
-                                setSelectedTab(3);  // Switch to Statistics tab
+                                // Verify the timepoint is still correct
+                                if (selectedTimepoint) {
+                                    setSelectedTab(3);  // Switch to Statistics tab
+                                } else {
+                                    console.error('No timepoint selected when choosing component');
+                                    setError('Please select a timepoint first');
+                                }
                             }}
                         />
                     </Grid>
