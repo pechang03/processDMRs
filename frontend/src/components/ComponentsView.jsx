@@ -105,7 +105,18 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                             {components.map((component) => (
                                 <TableRow key={component.component_id}>
                                     <TableCell>{component.component_id}</TableCell>
-                                    <TableCell align="right">{component.biclique_count}</TableCell>
+                                    <TableCell align="right">
+                                        {component.biclique_count}
+                                        {component.biclique_count <= 1 && (
+                                            <Typography 
+                                                variant="caption" 
+                                                color="text.secondary" 
+                                                display="block"
+                                            >
+                                                (Simple)
+                                            </Typography>
+                                        )}
+                                    </TableCell>
                                     <TableCell align="right">{component.gene_count}</TableCell>
                                     <TableCell align="right">{component.dmr_count}</TableCell>
                                     <TableCell>
@@ -113,6 +124,11 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                                             variant="contained"
                                             color="primary"
                                             onClick={() => onSelectComponent(component.component_id)}
+                                            disabled={component.biclique_count <= 1}
+                                            title={component.biclique_count <= 1 ? 
+                                                "Detailed analysis is only available for complex components" : 
+                                                "View component details"
+                                            }
                                         >
                                             Details
                                         </Button>

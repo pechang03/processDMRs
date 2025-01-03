@@ -100,33 +100,36 @@ def get_component_details(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
-            # First verify the component exists and belongs to this timepoint
-            verify_query = text("""
-                SELECT timepoint_id 
-                FROM component_details_view
-                WHERE component_id = :component_id
-                AND LOWER(graph_type) = 'split'
+            # First check if component exists at all
+            basic_query = text("""
+                SELECT c.timepoint_id, c.biclique_count
+                FROM component_summary_view c
+                WHERE c.component_id = :component_id
+                AND c.timepoint_id = :timepoint_id
+                AND LOWER(c.graph_type) = 'split'
             """)
             
             result = session.execute(
-                verify_query, 
-                {"component_id": component_id}
+                basic_query, 
+                {
+                    "component_id": component_id,
+                    "timepoint_id": timepoint_id
+                }
             ).first()
             
             if not result:
-                app.logger.error(f"Component {component_id} not found in any timepoint")
+                app.logger.error(f"Component {component_id} not found in timepoint {timepoint_id}")
                 return jsonify({
                     "status": "error",
-                    "message": f"Component {component_id} not found"
+                    "message": f"Component {component_id} not found in timepoint {timepoint_id}"
                 }), 404
                 
-            actual_timepoint = result[0]
-            if actual_timepoint != timepoint_id:
-                app.logger.warning(f"Component {component_id} belongs to timepoint {actual_timepoint}, not {timepoint_id}")
+            if result.biclique_count <= 1:
+                app.logger.info(f"Component {component_id} has only {result.biclique_count} biclique(s)")
                 return jsonify({
                     "status": "error",
-                    "message": f"Component {component_id} belongs to timepoint {actual_timepoint}",
-                    "correct_timepoint": actual_timepoint
+                    "message": "Simple components (with 1 or fewer bicliques) don't have detailed views",
+                    "biclique_count": result.biclique_count
                 }), 400
 
             # If component exists, get the details

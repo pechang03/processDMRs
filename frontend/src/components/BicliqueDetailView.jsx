@@ -97,7 +97,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
         })
         .catch(error => {
           console.error('Error:', error);
-          setError(error.message);
+          if (error.response?.status === 400 && error.response?.data?.biclique_count !== undefined) {
+            setError(`This is a simple component with ${error.response.data.biclique_count} biclique(s). Detailed analysis is only available for complex components with multiple bicliques.`);
+          } else {
+            setError(error.message || 'Failed to load component details');
+          }
         })
         .finally(() => {
           setLoading(false);
