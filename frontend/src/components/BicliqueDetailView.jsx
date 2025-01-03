@@ -70,14 +70,19 @@ function BicliqueDetailView({ timepointId, componentId }) {
   };
 
   const formatGeneSymbols = (geneIds) => {
-    return geneIds.map(id => {
+    // Ensure geneIds is an array
+    const geneArray = Array.isArray(geneIds) ? geneIds :
+                     typeof geneIds === 'string' ? geneIds.split(',').map(id => parseInt(id.trim())) :
+                     [];
+    
+    return geneArray.map(id => {
       const info = geneSymbols[id];
-      if (!info) return id;
+      if (!info) return `Gene ${id}`;
       
       return (
-        <Tooltip title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+        <Tooltip key={id} title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
           <span className="node-info">
-            {info.symbol || id}
+            {info.symbol || `Gene ${id}`}
             {info.is_split && <span className="node-badge split">Split</span>}
             {info.is_hub && <span className="node-badge hub">Hub</span>}
           </span>
@@ -87,12 +92,17 @@ function BicliqueDetailView({ timepointId, componentId }) {
   };
 
   const formatDmrNames = (dmrIds) => {
-    return dmrIds.map(id => {
+    // Ensure dmrIds is an array
+    const dmrArray = Array.isArray(dmrIds) ? dmrIds : 
+                    typeof dmrIds === 'string' ? dmrIds.split(',').map(id => parseInt(id.trim())) :
+                    [];
+    
+    return dmrArray.map(id => {
       const info = dmrNames[id];
-      if (!info) return id;
+      if (!info) return `DMR ${id}`;
       
       return (
-        <Tooltip title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+        <Tooltip key={id} title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
           <span className="node-info">
             DMR {id}
             {info.is_hub && <span className="node-badge hub">Hub</span>}
