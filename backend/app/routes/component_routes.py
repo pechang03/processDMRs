@@ -194,20 +194,28 @@ def get_component_details(timepoint_id, component_id):
 def get_gene_symbols():
     try:
         data = request.get_json()
-        gene_ids = data.get('gene_ids', [])
+        gene_ids_raw = data.get('gene_ids', [])
         
-        if not gene_ids:
-            return jsonify({"status": "error", "message": "No gene IDs provided"}), 400
-            
+        # Clean up the gene IDs - they're coming in as string lists
+        gene_ids = []
+        for id_list in gene_ids_raw:
+            # Remove brackets and split
+            cleaned = id_list.strip('[]').split(',')
+            # Convert to integers and add to list
+            gene_ids.extend([int(g.strip()) for g in cleaned if g.strip()])
+        
+        # Remove duplicates
+        gene_ids = list(set(gene_ids))
+        
         engine = get_db_engine()
         with Session(engine) as session:
             query = text("""
                 SELECT id, symbol 
                 FROM genes 
-                WHERE id = ANY(:gene_ids)
+                WHERE id IN :gene_ids
             """)
             
-            results = session.execute(query, {"gene_ids": gene_ids}).fetchall()
+            results = session.execute(query, {"gene_ids": tuple(gene_ids)}).fetchall()
             symbols = {str(row.id): row.symbol for row in results}
             
             return jsonify({
@@ -217,27 +225,39 @@ def get_gene_symbols():
             
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @component_bp.route("/api/dmrs/names", methods=["POST"])
 def get_dmr_names():
     try:
         data = request.get_json()
-        dmr_ids = data.get('dmr_ids', [])
+        dmr_ids_raw = data.get('dmr_ids', [])
         
-        if not dmr_ids:
-            return jsonify({"status": "error", "message": "No DMR IDs provided"}), 400
-            
+        # Clean up the DMR IDs - they're coming in as string lists
+        dmr_ids = []
+        for id_list in dmr_ids_raw:
+            # Remove brackets and split
+            cleaned = id_list.strip('[]').split(',')
+            # Convert to integers and add to list
+            dmr_ids.extend([int(d.strip()) for d in cleaned if d.strip()])
+        
+        # Remove duplicates
+        dmr_ids = list(set(dmr_ids))
+        
         engine = get_db_engine()
         with Session(engine) as session:
+            # Use description instead of name for DMRs
             query = text("""
-                SELECT id, name 
+                SELECT id, description 
                 FROM dmrs 
-                WHERE id = ANY(:dmr_ids)
+                WHERE id IN :dmr_ids
             """)
             
-            results = session.execute(query, {"dmr_ids": dmr_ids}).fetchall()
-            names = {str(row.id): row.name for row in results}
+            results = session.execute(query, {"dmr_ids": tuple(dmr_ids)}).fetchall()
+            names = {str(row.id): row.description for row in results}
             
             return jsonify({
                 "status": "success",
@@ -246,7 +266,10 @@ def get_dmr_names():
             
     except Exception as e:
         app.logger.error(f"Error getting DMR names: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @component_bp.route("/api/components/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
