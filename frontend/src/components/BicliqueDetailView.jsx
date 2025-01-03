@@ -31,6 +31,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const fetchGeneSymbols = async (geneIds) => {
     try {
+      console.log('Fetching gene symbols for:', geneIds);
       const response = await fetch(`http://localhost:5555/api/genes/symbols`, {
         method: 'POST',
         headers: {
@@ -43,6 +44,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
       });
       if (!response.ok) throw new Error('Failed to fetch gene symbols');
       const data = await response.json();
+      console.log('Received gene data:', data);
       setGeneSymbols(data.gene_info);
     } catch (error) {
       console.error('Error fetching gene symbols:', error);
@@ -51,6 +53,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const fetchDmrNames = async (dmrIds) => {
     try {
+      console.log('Fetching DMR status for:', dmrIds);
       const response = await fetch(`http://localhost:5555/api/dmrs/status`, {
         method: 'POST',
         headers: {
@@ -63,6 +66,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
       });
       if (!response.ok) throw new Error('Failed to fetch DMR status');
       const data = await response.json();
+      console.log('Received DMR data:', data);
       setDmrNames(data.dmr_status);
     } catch (error) {
       console.error('Error fetching DMR names:', error);
@@ -129,12 +133,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
       if (info) {
         if (info.is_hub) stats.hubs++;
         if (info.is_split) stats.splits++;
-        stats.maxDegree = Math.max(stats.maxDegree, info.degree || 0);
-        stats.minDegree = Math.min(stats.minDegree, info.degree || 0);
+        if (info.degree !== undefined) {
+          stats.maxDegree = Math.max(stats.maxDegree, info.degree);
+          stats.minDegree = Math.min(stats.minDegree, info.degree);
+        }
         stats.totalBicliques += info.biclique_count || 0;
       }
     });
     
+    console.log('Calculated gene stats:', stats); // Debug log
     return stats;
   }, [componentDetails, geneSymbols]);
 
@@ -153,12 +160,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
       const info = dmrNames[id];
       if (info) {
         if (info.is_hub) stats.hubs++;
-        stats.maxDegree = Math.max(stats.maxDegree, info.degree || 0);
-        stats.minDegree = Math.min(stats.minDegree, info.degree || 0);
+        if (info.degree !== undefined) {
+          stats.maxDegree = Math.max(stats.maxDegree, info.degree);
+          stats.minDegree = Math.min(stats.minDegree, info.degree);
+        }
         stats.totalBicliques += info.biclique_count || 0;
       }
     });
     
+    console.log('Calculated DMR stats:', stats); // Debug log
     return stats;
   }, [componentDetails, dmrNames]);
 
@@ -177,13 +187,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
           return response.json();
         })
         .then(data => {
+          console.log('Received component data:', data); // Debug log
           if (data.status === 'success') {
             setComponentDetails(data.data);
-            // Fetch names for IDs
-            if (data.data.all_gene_ids.length > 0) {
+            // Fetch gene symbols for all genes in the component
+            if (data.data.all_gene_ids && data.data.all_gene_ids.length > 0) {
               fetchGeneSymbols(data.data.all_gene_ids);
             }
-            if (data.data.all_dmr_ids.length > 0) {
+            // Fetch DMR status for all DMRs in the component
+            if (data.data.all_dmr_ids && data.data.all_dmr_ids.length > 0) {
               fetchDmrNames(data.data.all_dmr_ids);
             }
           } else {
