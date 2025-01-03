@@ -16,6 +16,28 @@ def get_component_graph(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
+            # First verify component exists
+            verify_query = text("""
+                SELECT COUNT(*)
+                FROM component_details_view c
+                WHERE c.timepoint_id = :timepoint_id 
+                AND c.id = :component_id
+            """)
+            
+            count = session.execute(
+                verify_query,
+                {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).scalar()
+            
+            app.logger.info(f"Found {count} matching components")
+            
+            if count == 0:
+                app.logger.error(f"Component {component_id} not found for timepoint {timepoint_id}")
+                return jsonify({
+                    "error": "Component not found",
+                    "status": 404
+                }), 404
+
             # Get component data
             query = text("""
                 SELECT 
@@ -37,10 +59,13 @@ def get_component_graph(timepoint_id, component_id):
             ).first()
             
             if not result:
+                app.logger.error("Query returned no results after verifying existence")
                 return jsonify({
-                    "error": "Component not found",
-                    "status": 404
-                }), 404
+                    "error": "Failed to retrieve component data",
+                    "status": 500
+                }), 500
+
+            app.logger.debug(f"Component data found: {result}")
 
             # Get bicliques for this component
             bicliques_query = text("""
@@ -57,12 +82,18 @@ def get_component_graph(timepoint_id, component_id):
                 {"component_id": component_id}
             ).fetchall()
 
+            app.logger.info(f"Found {len(bicliques_result)} bicliques")
+
             # Parse bicliques data
             bicliques = []
             for b in bicliques_result:
-                dmr_ids = [int(x) for x in b.dmr_ids.strip('{}').split(',') if x]
-                gene_ids = [int(x) for x in b.gene_ids.strip('{}').split(',') if x]
-                bicliques.append((set(dmr_ids), set(gene_ids)))
+                try:
+                    dmr_ids = [int(x) for x in b.dmr_ids.strip('{}').split(',') if x]
+                    gene_ids = [int(x) for x in b.gene_ids.strip('{}').split(',') if x]
+                    bicliques.append((set(dmr_ids), set(gene_ids)))
+                except Exception as e:
+                    app.logger.error(f"Error parsing biclique data: {str(e)}")
+                    continue
 
             # Get node metadata
             dmr_query = text("""
