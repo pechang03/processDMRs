@@ -189,6 +189,8 @@ function BicliqueDetailView({ timepointId, componentId }) {
         .then(data => {
           console.log('Received component data:', data); // Debug log
           if (data.status === 'success') {
+            console.log('Bicliques in component data:', data.data.bicliques); // Debug bicliques
+            console.log('Number of bicliques:', data.data.bicliques?.length); // Debug count
             setComponentDetails(data.data);
             // Fetch gene symbols for all genes in the component
             if (data.data.all_gene_ids && data.data.all_gene_ids.length > 0) {
@@ -292,6 +294,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
           <TabPanel className="reactTabs__tabPanel">
             <TableContainer>
               <Typography variant="h6" gutterBottom>Biclique Details</Typography>
+              {console.log('Rendering bicliques:', componentDetails.bicliques)} {/* Debug render */}
               {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
                 <Paper key={biclique.biclique_id} sx={{ p: 2, mb: 2 }}>
                   <Typography variant="subtitle1" gutterBottom>
