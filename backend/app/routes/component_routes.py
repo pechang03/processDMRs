@@ -5,7 +5,12 @@ from ..database import get_db_engine, get_db_session
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from ..database.models import Timepoint
-from ..schemas import ComponentSummarySchema, ComponentDetailsSchema
+from ..schemas import (
+    ComponentSummarySchema, 
+    ComponentDetailsSchema,
+    GeneTimepointAnnotationSchema,
+    DmrTimepointAnnotationSchema
+)
 from typing import List, Dict, Any
 
 component_bp = Blueprint("components", __name__)
@@ -194,7 +199,7 @@ def get_component_details(timepoint_id, component_id):
 def get_gene_symbols():
     try:
         data = request.get_json()
-        gene_ids_raw = data.get('gene_ids', [])
+        gene_ids = data.get('gene_ids', [])
         timepoint_id = data.get('timepoint_id')
         
         if not timepoint_id:
@@ -203,25 +208,17 @@ def get_gene_symbols():
                 "message": "timepoint_id is required"
             }), 400
             
-        # Clean up the gene IDs
-        gene_ids = []
-        for id_list in gene_ids_raw:
-            cleaned = id_list.strip('[]').split(',')
-            gene_ids.extend([int(g.strip()) for g in cleaned if g.strip()])
-        
-        # Remove duplicates
-        gene_ids = list(set(gene_ids))
-        
         engine = get_db_engine()
         with Session(engine) as session:
-            # Get all gene annotations for this timepoint
             query = text("""
                 SELECT 
-                    g.gene_id as id,
+                    g.gene_id,
                     g.symbol,
-                    g.is_split,
-                    g.is_hub,
-                    g.description
+                    g.node_type,
+                    g.gene_type,
+                    g.degree,
+                    g.is_isolate,
+                    g.biclique_ids
                 FROM gene_timepoint_annotation g
                 WHERE g.timepoint_id = :timepoint_id
             """)
@@ -231,25 +228,34 @@ def get_gene_symbols():
                 {"timepoint_id": timepoint_id}
             ).fetchall()
             
-            # Create lookup dictionary
-            gene_info = {
-                str(row.id): {
-                    "symbol": row.symbol,
-                    "is_split": row.is_split,
-                    "is_hub": row.is_hub,
-                    "description": row.description
-                } for row in results
-            }
-            
-            # Filter to just the requested genes
-            requested_gene_info = {
-                str(gene_id): gene_info.get(str(gene_id), {"symbol": str(gene_id)})
-                for gene_id in gene_ids
-            }
+            # Convert results to dictionary using schema
+            gene_info = {}
+            for row in results:
+                try:
+                    annotation = GeneTimepointAnnotationSchema(
+                        timepoint_id=timepoint_id,
+                        gene_id=row.gene_id,
+                        node_type=row.node_type,
+                        gene_type=row.gene_type,
+                        degree=row.degree,
+                        is_isolate=row.is_isolate,
+                        biclique_ids=row.biclique_ids
+                    )
+                    
+                    gene_info[str(row.gene_id)] = {
+                        "symbol": row.symbol,
+                        "is_split": annotation.gene_type == "split" if annotation.gene_type else False,
+                        "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
+                        "degree": annotation.degree,
+                        "biclique_count": len(annotation.biclique_ids.split(",")) if annotation.biclique_ids else 0
+                    }
+                except Exception as e:
+                    app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
+                    continue
             
             return jsonify({
                 "status": "success",
-                "gene_info": requested_gene_info
+                "gene_info": gene_info
             })
             
     except Exception as e:
@@ -263,7 +269,7 @@ def get_gene_symbols():
 def get_dmr_status():
     try:
         data = request.get_json()
-        dmr_ids_raw = data.get('dmr_ids', [])
+        dmr_ids = data.get('dmr_ids', [])
         timepoint_id = data.get('timepoint_id')
         
         if not timepoint_id:
@@ -272,20 +278,15 @@ def get_dmr_status():
                 "message": "timepoint_id is required"
             }), 400
             
-        dmr_ids = []
-        for id_list in dmr_ids_raw:
-            cleaned = id_list.strip('[]').split(',')
-            dmr_ids.extend([int(d.strip()) for d in cleaned if d.strip()])
-        
-        dmr_ids = list(set(dmr_ids))
-        
         engine = get_db_engine()
         with Session(engine) as session:
-            # Get all DMR annotations for this timepoint
             query = text("""
                 SELECT 
-                    d.id,
-                    d.is_hub
+                    d.dmr_id,
+                    d.node_type,
+                    d.degree,
+                    d.is_isolate,
+                    d.biclique_ids
                 FROM dmr_timepoint_annotation d
                 WHERE d.timepoint_id = :timepoint_id
             """)
@@ -295,22 +296,31 @@ def get_dmr_status():
                 {"timepoint_id": timepoint_id}
             ).fetchall()
             
-            # Create lookup dictionary
-            dmr_status = {
-                str(row.id): {
-                    "is_hub": row.is_hub
-                } for row in results
-            }
-            
-            # Filter to just the requested DMRs
-            requested_dmr_status = {
-                str(dmr_id): dmr_status.get(str(dmr_id), {})
-                for dmr_id in dmr_ids
-            }
+            # Convert results to dictionary using schema
+            dmr_info = {}
+            for row in results:
+                try:
+                    annotation = DmrTimepointAnnotationSchema(
+                        timepoint_id=timepoint_id,
+                        dmr_id=row.dmr_id,
+                        node_type=row.node_type,
+                        degree=row.degree,
+                        is_isolate=row.is_isolate,
+                        biclique_ids=row.biclique_ids
+                    )
+                    
+                    dmr_info[str(row.dmr_id)] = {
+                        "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
+                        "degree": annotation.degree,
+                        "biclique_count": len(annotation.biclique_ids.split(",")) if annotation.biclique_ids else 0
+                    }
+                except Exception as e:
+                    app.logger.error(f"Error processing DMR {row.dmr_id}: {str(e)}")
+                    continue
             
             return jsonify({
                 "status": "success",
-                "dmr_status": requested_dmr_status
+                "dmr_status": dmr_info
             })
             
     except Exception as e:
