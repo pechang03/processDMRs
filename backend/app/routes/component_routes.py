@@ -16,22 +16,20 @@ def get_component_summary_by_timepoint(timepoint_id):
     try:
         engine = get_db_engine()
         app.logger.info("Database engine created successfully")
-        
+
         # First verify timepoint exists
         with Session(engine) as session:
-            timepoint = (
-                session.query(Timepoint)
-                .filter_by(id=timepoint_id)
-                .first()
-            )
-            
+            timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
+
             if not timepoint:
                 app.logger.error(f"Timepoint {timepoint_id} not found")
-                return jsonify({
-                    "status": "error", 
-                    "message": f"Timepoint {timepoint_id} not found"
-                }), 404
-                
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Timepoint {timepoint_id} not found",
+                    }
+                ), 404
+
             app.logger.info(f"Found timepoint: {timepoint.name}")
 
             # Execute component summary query in same session
@@ -58,7 +56,6 @@ def get_component_summary_by_timepoint(timepoint_id):
                     "biclique_count": row.biclique_count,
                     "gene_count": row.gene_count,
                     "dmr_count": row.dmr_count,
-                    "name": f"Component {row.component_id}"
                 }
                 try:
                     component = ComponentSummarySchema(**component_data)
@@ -69,11 +66,9 @@ def get_component_summary_by_timepoint(timepoint_id):
                     continue
 
             app.logger.info(f"Returning {len(components)} component summaries")
-            return jsonify({
-                "status": "success",
-                "timepoint": timepoint.name,
-                "data": components
-            })
+            return jsonify(
+                {"status": "success", "timepoint": timepoint.name, "data": components}
+            )
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
