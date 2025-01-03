@@ -100,8 +100,7 @@ def get_component_details(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
-            # First verify the component exists
-            # First verify component exists and get its actual timepoint
+            # First verify the component exists and belongs to this timepoint
             verify_query = text("""
                 SELECT timepoint_id 
                 FROM component_details_view
@@ -109,39 +108,26 @@ def get_component_details(timepoint_id, component_id):
                 AND LOWER(graph_type) = 'split'
             """)
             
-            actual_timepoint = session.execute(
+            result = session.execute(
                 verify_query, 
                 {"component_id": component_id}
-            ).scalar()
+            ).first()
             
-            if not actual_timepoint:
+            if not result:
                 app.logger.error(f"Component {component_id} not found in any timepoint")
                 return jsonify({
                     "status": "error",
                     "message": f"Component {component_id} not found"
                 }), 404
                 
+            actual_timepoint = result[0]
             if actual_timepoint != timepoint_id:
-                app.logger.warning(f"Component {component_id} belongs to timepoint {actual_timepoint} but was requested with timepoint {timepoint_id}")
+                app.logger.warning(f"Component {component_id} belongs to timepoint {actual_timepoint}, not {timepoint_id}")
                 return jsonify({
                     "status": "error",
                     "message": f"Component {component_id} belongs to timepoint {actual_timepoint}",
                     "correct_timepoint": actual_timepoint
                 }), 400
-            
-            count = session.execute(
-                verify_query, 
-                {"timepoint_id": timepoint_id, "component_id": component_id}
-            ).scalar()
-            
-            app.logger.info(f"Found {count} matching components")
-            
-            if count == 0:
-                app.logger.error(f"No component found with ID {component_id} for timepoint {timepoint_id}")
-                return jsonify({
-                    "status": "error",
-                    "message": f"Component {component_id} not found for timepoint {timepoint_id}"
-                }), 404
 
             # If component exists, get the details
             query = text("""
