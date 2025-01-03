@@ -238,17 +238,19 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
         </TabPanel>
 
         <TabPanel>
-        {selectedTimepoint && (
-            <Grid container spacing={3}>
-            <Grid item xs={12}>
-                <ComponentSelectionView
-                timepointDetails={timepointDetails}
-                onComponentSelect={setSelectedComponent}
-                selectedTimepoint={selectedTimepoint}
-                />
-            </Grid>
-            </Grid>
-        )}
+            {selectedTimepoint && (
+                <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                        <ComponentsView
+                            selectedTimepoint={selectedTimepoint}
+                            onSelectComponent={(componentId) => {
+                                setSelectedComponent(componentId);
+                                setSelectedTab(3);  // Switch to Statistics tab
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            )}
         </TabPanel>
 
         <TabPanel>

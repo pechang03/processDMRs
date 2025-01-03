@@ -76,6 +76,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Component ID</TableCell>
+                                <TableCell>Name</TableCell>
                                 <TableCell align="right">Bicliques</TableCell>
                                 <TableCell align="right">Genes</TableCell>
                                 <TableCell align="right">DMRs</TableCell>
@@ -86,6 +87,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                             {components.map((component) => (
                                 <TableRow key={component.component_id}>
                                     <TableCell>{component.component_id}</TableCell>
+                                    <TableCell>{component.name || `Component ${component.component_id}`}</TableCell>
                                     <TableCell align="right">{component.bicliques_count}</TableCell>
                                     <TableCell align="right">{component.genes_count}</TableCell>
                                     <TableCell align="right">{component.dmrs_count}</TableCell>
@@ -93,7 +95,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            onClick={() => onSelectComponent(selectedTimepoint, component.component_id)}
+                                            onClick={() => onSelectComponent(component.component_id)}
                                         >
                                             Details
                                         </Button>
