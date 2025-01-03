@@ -105,7 +105,7 @@ def get_component_details(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
-            # First check if component exists at all
+            # First check if component exists and get biclique count
             basic_query = text("""
                 SELECT c.timepoint_id, c.biclique_count
                 FROM component_summary_view c
@@ -128,16 +128,18 @@ def get_component_details(timepoint_id, component_id):
                     "status": "error",
                     "message": f"Component {component_id} not found in timepoint {timepoint_id}"
                 }), 404
+
+            biclique_count = result.biclique_count
                 
-            if result.biclique_count <= 1:
-                app.logger.info(f"Component {component_id} has only {result.biclique_count} biclique(s)")
+            if biclique_count <= 1:
+                app.logger.info(f"Component {component_id} has only {biclique_count} biclique(s)")
                 return jsonify({
                     "status": "error",
                     "message": "Simple components (with 1 or fewer bicliques) don't have detailed views",
-                    "biclique_count": result.biclique_count
+                    "biclique_count": biclique_count
                 }), 400
 
-            # If component exists, get the details
+            # Get the details
             query = text("""
                 SELECT 
                     timepoint_id,
@@ -166,8 +168,29 @@ def get_component_details(timepoint_id, component_id):
                     "status": "error",
                     "message": "Failed to retrieve component details"
                 }), 500
+
+            # Parse the string arrays properly
+            def parse_array_string(arr_str):
+                if not arr_str:
+                    return []
+                # Remove outer brackets and split by comma
+                cleaned = arr_str.replace('[', '').replace(']', '').strip()
+                return [int(x.strip()) for x in cleaned.split(',') if x.strip()]
+
+            # Combine all DMR IDs and Gene IDs from multiple arrays
+            all_dmr_ids = []
+            all_gene_ids = []
+            
+            for dmr_array in result.all_dmr_ids:
+                all_dmr_ids.extend(parse_array_string(dmr_array))
+            
+            for gene_array in result.all_gene_ids:
+                all_gene_ids.extend(parse_array_string(gene_array))
+
+            # Remove duplicates
+            all_dmr_ids = list(set(all_dmr_ids))
+            all_gene_ids = list(set(all_gene_ids))
                 
-            # Log the actual data being returned
             component_data = {
                 "timepoint_id": result.timepoint_id,
                 "timepoint": result.timepoint,
@@ -176,8 +199,9 @@ def get_component_details(timepoint_id, component_id):
                 "categories": result.categories,
                 "total_dmr_count": result.total_dmr_count,
                 "total_gene_count": result.total_gene_count,
-                "all_dmr_ids": result.all_dmr_ids.split(",") if result.all_dmr_ids else [],
-                "all_gene_ids": result.all_gene_ids.split(",") if result.all_gene_ids else []
+                "biclique_count": biclique_count,
+                "all_dmr_ids": all_dmr_ids,
+                "all_gene_ids": all_gene_ids
             }
             
             app.logger.info(f"Returning details for component {component_id}")
