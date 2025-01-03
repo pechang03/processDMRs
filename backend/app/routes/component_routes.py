@@ -105,53 +105,48 @@ def get_component_details(timepoint_id, component_id):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
-            # First check if component exists and get biclique count
-            basic_query = text("""
-                SELECT c.timepoint_id, c.biclique_count
-                FROM component_summary_view c
-                WHERE c.component_id = :component_id
-                AND c.timepoint_id = :timepoint_id
-                AND LOWER(c.graph_type) = 'split'
-            """)
-            
-            result = session.execute(
-                basic_query, 
-                {"component_id": component_id, "timepoint_id": timepoint_id}
-            ).first()
-            
-            if not result:
-                app.logger.error(f"Component {component_id} not found in timepoint {timepoint_id}")
-                return jsonify({
-                    "status": "error",
-                    "message": f"Component {component_id} not found in timepoint {timepoint_id}"
-                }), 404
-
-            biclique_count = result.biclique_count
-                
-            if biclique_count <= 1:
-                app.logger.info(f"Component {component_id} has only {biclique_count} biclique(s)")
-                return jsonify({
-                    "status": "error",
-                    "message": "Simple components (with 1 or fewer bicliques) don't have detailed views",
-                    "biclique_count": biclique_count
-                }), 400
-
-            # Get the component details
+            # Get the component details including bicliques
             query = text("""
+                WITH component_info AS (
+                    SELECT 
+                        cd.timepoint_id,
+                        cd.timepoint,
+                        cd.component_id,
+                        cd.graph_type,
+                        cd.categories,
+                        cd.total_dmr_count,
+                        cd.total_gene_count,
+                        cd.all_dmr_ids,
+                        cd.all_gene_ids
+                    FROM component_details_view cd
+                    WHERE cd.timepoint_id = :timepoint_id 
+                    AND cd.component_id = :component_id
+                    AND LOWER(cd.graph_type) = 'split'
+                ),
+                biclique_info AS (
+                    SELECT 
+                        b.id as biclique_id,
+                        b.dmr_ids,
+                        b.gene_ids,
+                        b.category
+                    FROM bicliques b
+                    JOIN component_bicliques cb ON b.id = cb.biclique_id
+                    WHERE cb.component_id = :component_id
+                    AND cb.timepoint_id = :timepoint_id
+                )
                 SELECT 
-                    cd.timepoint_id,
-                    cd.timepoint,
-                    cd.component_id,
-                    cd.graph_type,
-                    cd.categories,
-                    cd.total_dmr_count,
-                    cd.total_gene_count,
-                    cd.all_dmr_ids,
-                    cd.all_gene_ids
-                FROM component_details_view cd
-                WHERE cd.timepoint_id = :timepoint_id 
-                AND cd.component_id = :component_id
-                AND LOWER(cd.graph_type) = 'split'
+                    ci.*,
+                    json_group_array(
+                        json_object(
+                            'biclique_id', bi.biclique_id,
+                            'category', bi.category,
+                            'dmr_ids', bi.dmr_ids,
+                            'gene_ids', bi.gene_ids
+                        )
+                    ) as bicliques
+                FROM component_info ci
+                LEFT JOIN biclique_info bi ON 1=1
+                GROUP BY ci.component_id
             """)
             
             result = session.execute(query, {
@@ -160,7 +155,7 @@ def get_component_details(timepoint_id, component_id):
             }).first()
             
             if not result:
-                app.logger.error("Query returned no results after verifying existence")
+                app.logger.error("Query returned no results")
                 return jsonify({
                     "status": "error",
                     "message": "Failed to retrieve component details"
