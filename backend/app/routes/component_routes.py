@@ -51,7 +51,7 @@ def get_component_summary_by_timepoint(timepoint_id):
                     biclique_count,
                     biclique_categories
                 FROM component_summary_view
-                WHERE timepoint_id = :timepoint_id AND GRAPH_TYPE = 'SPLIT'
+                WHERE timepoint_id = :timepoint_id AND LOWER(graph_type) = 'split'
             """)
 
             app.logger.info("Executing component summary query")
@@ -112,7 +112,7 @@ def get_component_details_by_timepoint(timepoint_id):
                     all_dmr_ids,
                     all_gene_ids
                 FROM component_details_view
-                WHERE timepoint_id = :timepoint_id AND graph_type = 'SPLIT'
+                WHERE timepoint_id = :timepoint_id AND LOWER(graph_type) = 'split'
             """)
 
             app.logger.info("Executing component details query")
