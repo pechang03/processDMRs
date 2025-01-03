@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from ..utils.extensions import app
@@ -171,6 +172,9 @@ def get_component_details(timepoint_id, component_id):
             all_dmr_ids = parse_array_string(result.all_dmr_ids)
             all_gene_ids = parse_array_string(result.all_gene_ids)
 
+            # Parse the bicliques JSON array
+            bicliques = json.loads(result.bicliques) if result.bicliques else []
+            
             component_data = {
                 "timepoint_id": result.timepoint_id,
                 "timepoint": result.timepoint,
@@ -179,9 +183,10 @@ def get_component_details(timepoint_id, component_id):
                 "categories": result.categories,
                 "total_dmr_count": result.total_dmr_count,
                 "total_gene_count": result.total_gene_count,
-                "biclique_count": biclique_count,
+                "biclique_count": len(bicliques),
                 "all_dmr_ids": all_dmr_ids,
-                "all_gene_ids": all_gene_ids
+                "all_gene_ids": all_gene_ids,
+                "bicliques": bicliques
             }
             
             app.logger.info(f"Returning details for component {component_id}")
