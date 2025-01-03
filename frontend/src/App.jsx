@@ -244,6 +244,7 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
                         <ComponentsView
                             selectedTimepoint={selectedTimepoint}
                             onSelectComponent={(componentId) => {
+                                console.log(`Selected component ${componentId} from timepoint ${selectedTimepoint}`);
                                 setSelectedComponent(componentId);
                                 setSelectedTab(3);  // Switch to Statistics tab
                             }}
