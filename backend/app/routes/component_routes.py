@@ -152,6 +152,64 @@ def get_component_details(timepoint_id, component_id):
             "message": str(e)
         }), 500
 
+@component_bp.route("/api/genes/symbols", methods=["POST"])
+def get_gene_symbols():
+    try:
+        data = request.get_json()
+        gene_ids = data.get('gene_ids', [])
+        
+        if not gene_ids:
+            return jsonify({"status": "error", "message": "No gene IDs provided"}), 400
+            
+        engine = get_db_engine()
+        with Session(engine) as session:
+            query = text("""
+                SELECT id, symbol 
+                FROM genes 
+                WHERE id = ANY(:gene_ids)
+            """)
+            
+            results = session.execute(query, {"gene_ids": gene_ids}).fetchall()
+            symbols = {str(row.id): row.symbol for row in results}
+            
+            return jsonify({
+                "status": "success",
+                "symbols": symbols
+            })
+            
+    except Exception as e:
+        app.logger.error(f"Error getting gene symbols: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@component_bp.route("/api/dmrs/names", methods=["POST"])
+def get_dmr_names():
+    try:
+        data = request.get_json()
+        dmr_ids = data.get('dmr_ids', [])
+        
+        if not dmr_ids:
+            return jsonify({"status": "error", "message": "No DMR IDs provided"}), 400
+            
+        engine = get_db_engine()
+        with Session(engine) as session:
+            query = text("""
+                SELECT id, name 
+                FROM dmrs 
+                WHERE id = ANY(:dmr_ids)
+            """)
+            
+            results = session.execute(query, {"dmr_ids": dmr_ids}).fetchall()
+            names = {str(row.id): row.name for row in results}
+            
+            return jsonify({
+                "status": "success",
+                "names": names
+            })
+            
+    except Exception as e:
+        app.logger.error(f"Error getting DMR names: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @component_bp.route("/api/components/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
     try:

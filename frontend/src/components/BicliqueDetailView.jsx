@@ -21,7 +21,51 @@ function BicliqueDetailView({ timepointId, componentId }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [componentDetails, setComponentDetails] = useState(null);
+  const [geneSymbols, setGeneSymbols] = useState({});
+  const [dmrNames, setDmrNames] = useState({});
   const [activeTab, setActiveTab] = useState(0);
+
+  const fetchGeneSymbols = async (geneIds) => {
+    try {
+      const response = await fetch(`http://localhost:5555/api/genes/symbols`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gene_ids: geneIds })
+      });
+      if (!response.ok) throw new Error('Failed to fetch gene symbols');
+      const data = await response.json();
+      setGeneSymbols(data.symbols);
+    } catch (error) {
+      console.error('Error fetching gene symbols:', error);
+    }
+  };
+
+  const fetchDmrNames = async (dmrIds) => {
+    try {
+      const response = await fetch(`http://localhost:5555/api/dmrs/names`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dmr_ids: dmrIds })
+      });
+      if (!response.ok) throw new Error('Failed to fetch DMR names');
+      const data = await response.json();
+      setDmrNames(data.names);
+    } catch (error) {
+      console.error('Error fetching DMR names:', error);
+    }
+  };
+
+  const formatGeneSymbols = (geneIds) => {
+    return geneIds.map(id => geneSymbols[id] || id).join(", ");
+  };
+
+  const formatDmrNames = (dmrIds) => {
+    return dmrIds.map(id => dmrNames[id] || id).join(", ");
+  };
 
   React.useEffect(() => {
     if (timepointId && componentId) {
@@ -38,6 +82,13 @@ function BicliqueDetailView({ timepointId, componentId }) {
         .then(data => {
           if (data.status === 'success') {
             setComponentDetails(data.data);
+            // Fetch names for IDs
+            if (data.data.all_gene_ids.length > 0) {
+              fetchGeneSymbols(data.data.all_gene_ids);
+            }
+            if (data.data.all_dmr_ids.length > 0) {
+              fetchDmrNames(data.data.all_dmr_ids);
+            }
           } else {
             throw new Error(data.message || 'Failed to load component details');
           }
@@ -132,7 +183,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                         }}
                         title={componentDetails.all_dmr_ids.join(", ")}
                       >
-                        {componentDetails.all_dmr_ids.join(", ")}
+                        {formatDmrNames(componentDetails.all_dmr_ids)}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -148,7 +199,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                         }}
                         title={componentDetails.all_gene_ids.join(", ")}
                       >
-                        {componentDetails.all_gene_ids.join(", ")}
+                        {formatGeneSymbols(componentDetails.all_gene_ids)}
                       </Typography>
                     </TableCell>
                   </TableRow>
