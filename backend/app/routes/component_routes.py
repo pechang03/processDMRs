@@ -39,9 +39,9 @@ def get_component_summary_by_timepoint(timepoint_id):
                 SELECT 
                     component_id,
                     timepoint_id,
-                    biclique_count as bicliques_count,
-                    gene_count as genes_count,
-                    dmr_count as dmrs_count
+                    biclique_count,
+                    gene_count,
+                    dmr_count
                 FROM component_summary_view
                 WHERE timepoint_id = :timepoint_id
             """)
@@ -55,9 +55,10 @@ def get_component_summary_by_timepoint(timepoint_id):
                 component_data = {
                     "component_id": row.component_id,
                     "timepoint_id": row.timepoint_id,
-                    "bicliques_count": row.bicliques_count,
-                    "genes_count": row.genes_count,
-                    "dmrs_count": row.dmrs_count,
+                    "biclique_count": row.biclique_count,
+                    "gene_count": row.gene_count,
+                    "dmr_count": row.dmr_count,
+                    "name": f"Component {row.component_id}"
                 }
                 try:
                     component = ComponentSummarySchema(**component_data)
