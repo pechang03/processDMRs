@@ -76,7 +76,7 @@ setDetailsLoading(true);
 setDetailsError(null);
 setTimepointDetails(null);
 
-fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
+fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
     .then(res => {
         if (!res.ok) {
             if (res.status === 404) {
@@ -87,17 +87,8 @@ fetch(`http://localhost:5555/api/timepoint-stats/${timepointId}`)
         return res.json();
     })
     .then(data => {
-        console.log("Received biclique data:", data);
-        const stats = {
-            totalBicliques: data.bicliques ? data.bicliques.length : 0,
-            totalDMRs: data.bicliques ? data.bicliques.reduce((sum, b) => sum + parseInt(b.dmr_count || 0), 0) : 0,
-            totalGenes: data.bicliques ? data.bicliques.reduce((sum, b) => sum + parseInt(b.gene_count || 0), 0) : 0,
-            componentCount: data.bicliques ? new Set(data.bicliques.map(b => b.component_id)).size : 0,
-            methylatedRegions: data.bicliques ? data.bicliques.filter(b => b.graph_type === 'split').length : 0,
-            significantGenes: data.bicliques ? data.bicliques.filter(b => b.category === 'complex')
-                .reduce((sum, b) => sum + parseInt(b.gene_count || 0), 0) : 0
-    };
-    setTimepointDetails({ bicliques: data.bicliques, stats });
+        console.log("Received component summary:", data);
+        setTimepointDetails(data);
     setDetailsLoading(false);
     setSelectedTab(2);  // Switch to Components tab after data loads
     setSelectedComponent(null);  // Reset selected component when loading new timepoint
