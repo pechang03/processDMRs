@@ -60,9 +60,16 @@ def get_component_summary_by_timepoint(timepoint_id):
                 component_data = {
                     "component_id": row.component_id,
                     "timepoint_id": row.timepoint_id,
-                    "biclique_count": row.biclique_count,
-                    "gene_count": row.gene_count,
+                    "timepoint": row.timepoint,
+                    "graph_type": row.graph_type,
+                    "category": row.category,
+                    "size": row.size,
                     "dmr_count": row.dmr_count,
+                    "gene_count": row.gene_count,
+                    "edge_count": row.edge_count,
+                    "density": row.density,
+                    "biclique_count": row.biclique_count,
+                    "biclique_categories": row.biclique_categories
                 }
                 try:
                     component = ComponentSummarySchema(**component_data)
