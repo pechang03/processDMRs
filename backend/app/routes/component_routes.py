@@ -101,13 +101,33 @@ def get_component_details(timepoint_id, component_id):
         engine = get_db_engine()
         with Session(engine) as session:
             # First verify the component exists
+            # First verify component exists and get its actual timepoint
             verify_query = text("""
-                SELECT COUNT(*) 
+                SELECT timepoint_id 
                 FROM component_details_view
-                WHERE timepoint_id = :timepoint_id 
-                AND component_id = :component_id
+                WHERE component_id = :component_id
                 AND LOWER(graph_type) = 'split'
             """)
+            
+            actual_timepoint = session.execute(
+                verify_query, 
+                {"component_id": component_id}
+            ).scalar()
+            
+            if not actual_timepoint:
+                app.logger.error(f"Component {component_id} not found in any timepoint")
+                return jsonify({
+                    "status": "error",
+                    "message": f"Component {component_id} not found"
+                }), 404
+                
+            if actual_timepoint != timepoint_id:
+                app.logger.warning(f"Component {component_id} belongs to timepoint {actual_timepoint} but was requested with timepoint {timepoint_id}")
+                return jsonify({
+                    "status": "error",
+                    "message": f"Component {component_id} belongs to timepoint {actual_timepoint}",
+                    "correct_timepoint": actual_timepoint
+                }), 400
             
             count = session.execute(
                 verify_query, 

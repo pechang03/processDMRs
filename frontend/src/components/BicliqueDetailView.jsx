@@ -72,6 +72,8 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setLoading(true);
       setError(null);
       
+      console.log(`Fetching details for component ${componentId} from timepoint ${timepointId}`);
+      
       fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
         .then(response => {
           if (!response.ok) {
