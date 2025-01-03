@@ -19,7 +19,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import BicliqueDetailView from './components/BicliqueDetailView.jsx';
 import LLMAnalysisView from './components/LLMAnalysisView.jsx';
-import ComponentSelectionView from './components/ComponentSelectionView.jsx';
+import ComponentsView from './components/ComponentsView';
 const theme = createTheme({
   palette: {
     mode: 'light',
