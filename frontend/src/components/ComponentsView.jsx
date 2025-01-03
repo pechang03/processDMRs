@@ -26,10 +26,11 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             
             console.log(`Fetching components for timepoint ${selectedTimepoint}`);
             
-            fetch(`/api/components/${selectedTimepoint}/summary`)
+            fetch(`http://localhost:5555/api/components/${selectedTimepoint}/summary`)
                 .then(response => {
                     console.log('Response status:', response.status);
                     console.log('Response headers:', response.headers);
+                    console.log('Requesting URL:', `http://localhost:5555/api/components/${selectedTimepoint}/summary`);
                     
                     if (!response.ok) {
                         throw new Error(`Network response was not ok (${response.status}): ${response.statusText}`);

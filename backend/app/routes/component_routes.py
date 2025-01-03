@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_cors import CORS
 from ..utils.extensions import app
 from ..database import get_db_engine, get_db_session
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from ..schemas import ComponentSummarySchema, ComponentDetailsSchema
 from typing import List, Dict, Any
 
 component_bp = Blueprint("components", __name__)
+CORS(component_bp)  # Enable CORS for all routes in this blueprint
 
 
 @component_bp.route("/api/components/<int:timepoint_id>/summary", methods=["GET"])
@@ -81,9 +83,11 @@ def get_component_summary_by_timepoint(timepoint_id):
                     continue
 
             app.logger.info(f"Returning {len(components)} component summaries")
-            return jsonify(
+            response = jsonify(
                 {"status": "success", "timepoint": timepoint.name, "data": components}
             )
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
