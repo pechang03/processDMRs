@@ -13,6 +13,7 @@ component_bp = Blueprint("components", __name__)
 @component_bp.route("/api/components/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
+    app.logger.debug(f"Request headers: {request.headers}")
     try:
         engine = get_db_engine()
         app.logger.info("Database engine created successfully")

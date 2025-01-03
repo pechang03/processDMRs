@@ -24,16 +24,23 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             setLoading(true);
             setError(null);
             
+            console.log(`Fetching components for timepoint ${selectedTimepoint}`);
+            
             fetch(`/api/components/${selectedTimepoint}/summary`)
                 .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`Network response was not ok (${response.status}): ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Received data:', data);
+                    
                     if (data.status === 'success') {
-                        // Ensure we're mapping the correct fields from the backend response
+                        console.log(`Found ${data.data.length} components`);
                         setComponents(data.data.map(component => ({
                             component_id: component.component_id,
                             biclique_count: component.biclique_count,
@@ -47,7 +54,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                 })
                 .catch(error => {
                     console.error('Error fetching components:', error);
-                    setError(error.message);
+                    setError(`${error.message} (${error.name})`);
                 })
                 .finally(() => {
                     setLoading(false);
@@ -77,6 +84,11 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                 <Typography variant="h6" gutterBottom>
                     Components for Timepoint: {timepointName}
                 </Typography>
+                {components.length > 0 && (
+                    <Typography variant="subtitle1" gutterBottom>
+                        Found {components.length} components
+                    </Typography>
+                )}
                 <TableContainer>
                     <Table>
                         <TableHead>
