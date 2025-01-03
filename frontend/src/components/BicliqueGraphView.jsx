@@ -21,7 +21,7 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             setError(null);
 
             try {
-                const response = await fetch(`/api/graph/${timepointId}/${componentId}`);
+                const response = await fetch(`http://localhost:5555/api/graph/${timepointId}/${componentId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

@@ -19,7 +19,7 @@ def get_component_graph(timepoint_id, component_id):
             # First verify component exists
             verify_query = text("""
                 SELECT COUNT(*)
-                FROM component_details_view c
+                FROM components c
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.id = :component_id
             """)

@@ -181,16 +181,17 @@ function BicliqueDetailView({ timepointId, componentId }) {
       
       fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
         .then(response => {
+          console.log('Response status:', response.status);
           if (!response.ok) {
-            throw new Error(`Failed to fetch component details: ${response.statusText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         })
         .then(data => {
-          console.log('Received component data:', data); // Debug log
+          console.log('Received component data:', data);
+          console.log('Component details:', data.data);
+          console.log('Bicliques:', data.data?.bicliques);
           if (data.status === 'success') {
-            console.log('Bicliques in component data:', data.data.bicliques); // Debug bicliques
-            console.log('Number of bicliques:', data.data.bicliques?.length); // Debug count
             setComponentDetails(data.data);
             // Fetch gene symbols for all genes in the component
             if (data.data.all_gene_ids && data.data.all_gene_ids.length > 0) {
