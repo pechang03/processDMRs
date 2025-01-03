@@ -37,9 +37,16 @@ def get_component_summary_by_timepoint(timepoint_id):
                 SELECT 
                     component_id,
                     timepoint_id,
-                    biclique_count,
+                    timepoint,
+                    graph_type,
+                    category,
+                    size,
+                    dmr_count,
                     gene_count,
-                    dmr_count
+                    edge_count,
+                    density,
+                    biclique_count,
+                    biclique_categories
                 FROM component_summary_view
                 WHERE timepoint_id = :timepoint_id
             """)
