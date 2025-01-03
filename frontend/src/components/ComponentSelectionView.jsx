@@ -17,32 +17,10 @@ timepointDetails,
 onComponentSelect,
 selectedTimepoint 
 }) => {
-// Group bicliques by component_id
+// Process timepoint component summaries
 const componentSummaries = React.useMemo(() => {
-    if (!timepointDetails?.bicliques) return [];
-    
-    const components = {};
-    timepointDetails.bicliques.forEach(biclique => {
-    if (!components[biclique.component_id]) {
-        components[biclique.component_id] = {
-        component_id: biclique.component_id,
-        biclique_count: 0,
-        total_genes: 0,
-        total_dmrs: 0,
-        methylated_regions: 0
-        };
-    }
-    
-    const comp = components[biclique.component_id];
-    comp.biclique_count++;
-    comp.total_genes += parseInt(biclique.gene_count || 0);
-    comp.total_dmrs += parseInt(biclique.dmr_count || 0);
-    if (biclique.graph_type === 'split') {
-        comp.methylated_regions++;
-    }
-    });
-    
-    return Object.values(components);
+    if (!timepointDetails?.components) return [];
+    return timepointDetails.components;
 }, [timepointDetails]);
 
 return (
@@ -67,10 +45,10 @@ return (
             {componentSummaries.map((component) => (
                 <TableRow key={component.component_id}>
                 <TableCell>{component.component_id}</TableCell>
-                <TableCell align="right">{component.biclique_count}</TableCell>
-                <TableCell align="right">{component.total_genes}</TableCell>
-                <TableCell align="right">{component.total_dmrs}</TableCell>
-                <TableCell align="right">{component.methylated_regions}</TableCell>
+                <TableCell align="right">{component.bicliques_count}</TableCell>
+                <TableCell align="right">{component.genes_count}</TableCell>
+                <TableCell align="right">{component.dmrs_count}</TableCell>
+                <TableCell align="right">{component.methylated_regions_count}</TableCell>
                 <TableCell>
                     <Button
                     variant="contained"

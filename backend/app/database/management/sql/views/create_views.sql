@@ -1,6 +1,6 @@
 -- View for genes with their timepoint annotations
 CREATE VIEW gene_annotations_view AS
-SELECT 
+SELECT
     g.id AS gene_id,
     g.symbol,
     g.description,
@@ -22,7 +22,7 @@ LEFT JOIN timepoints t ON gta.timepoint_id = t.id;
 
 -- View for DMRs with their timepoint annotations
 CREATE VIEW dmr_annotations_view AS
-SELECT 
+SELECT
     d.id AS dmr_id,
     d.dmr_number,
     d.area_stat,
@@ -52,6 +52,7 @@ LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
 CREATE VIEW component_summary_view AS
 SELECT 
     c.id AS component_id,
+    c.timepoint_id,
     t.name AS timepoint,
     c.graph_type,
     c.category,
@@ -66,21 +67,24 @@ FROM components c
 JOIN timepoints t ON c.timepoint_id = t.id
 LEFT JOIN component_bicliques cb ON c.id = cb.component_id
 LEFT JOIN bicliques b ON cb.biclique_id = b.id
-GROUP BY c.id, t.name, c.graph_type, c.category, c.size, 
-        c.dmr_count, c.gene_count, c.edge_count, c.density;
+GROUP BY 
+    c.id, c.timepoint_id, t.name, c.graph_type, c.category, 
+    c.size, c.dmr_count, c.gene_count, c.edge_count, c.density;
 
 -- Component details view with concatenated DMR and gene IDs
 CREATE VIEW component_details_view AS
-SELECT 
+SELECT
     t.id AS timepoint_id,
     t.name AS timepoint,
     c.id AS component_id,
     c.graph_type,
-    GROUP_CONCAT(DISTINCT b.category) as categories,
-    SUM(length(b.dmr_ids) - length(replace(b.dmr_ids, ',', '')) + 1) as total_dmr_count,
-    SUM(length(b.gene_ids) - length(replace(b.gene_ids, ',', '')) + 1) as total_gene_count,
-    GROUP_CONCAT(DISTINCT b.dmr_ids) as all_dmr_ids,
-    GROUP_CONCAT(DISTINCT b.gene_ids) as all_gene_ids
+    GROUP_CONCAT(DISTINCT b.category) AS categories,
+    SUM(LENGTH(b.dmr_ids) - LENGTH(REPLACE(b.dmr_ids, ',', '')) + 1)
+        AS total_dmr_count,
+    SUM(LENGTH(b.gene_ids) - LENGTH(REPLACE(b.gene_ids, ',', '')) + 1)
+        AS total_gene_count,
+    GROUP_CONCAT(DISTINCT b.dmr_ids) AS all_dmr_ids,
+    GROUP_CONCAT(DISTINCT b.gene_ids) AS all_gene_ids
 FROM bicliques b
 JOIN timepoints t ON b.timepoint_id = t.id
 JOIN components c ON b.component_id = c.id
@@ -89,15 +93,15 @@ GROUP BY t.id, t.name, c.id, c.graph_type;
 
 -- Biclique details view
 CREATE VIEW biclique_details_view AS
-SELECT 
+SELECT
     b.id AS biclique_id,
     t.id AS timepoint_id,
     t.name AS timepoint,
     b.category,
     c.id AS component_id,
     c.graph_type,
-    length(b.dmr_ids) - length(replace(b.dmr_ids, ',', '')) + 1 as dmr_count,
-    length(b.gene_ids) - length(replace(b.gene_ids, ',', '')) + 1 as gene_count,
+    LENGTH(b.dmr_ids) - LENGTH(REPLACE(b.dmr_ids, ',', '')) + 1 AS dmr_count,
+    LENGTH(b.gene_ids) - LENGTH(REPLACE(b.gene_ids, ',', '')) + 1 AS gene_count,
     b.dmr_ids,
     b.gene_ids
 FROM bicliques b
@@ -106,17 +110,17 @@ JOIN components c ON b.component_id = c.id;
 
 -- Timepoint statistics view
 CREATE VIEW timepoint_stats_view AS
-SELECT 
+SELECT
     t.name AS timepoint,
-    COUNT(DISTINCT d.id) as total_dmrs,
-    COUNT(DISTINCT g.id) as total_genes,
-    COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) as hub_dmrs,
-    COUNT(DISTINCT b.id) as biclique_count,
-    COUNT(DISTINCT c.id) as component_count,
-    AVG(CAST(c.density AS FLOAT)) as avg_component_density,
-    AVG(CAST(c.size AS FLOAT)) as avg_component_size,
-    AVG(CAST(c.dmr_count AS FLOAT)) as avg_dmr_count,
-    AVG(CAST(c.gene_count AS FLOAT)) as avg_gene_count
+    COUNT(DISTINCT d.id) AS total_dmrs,
+    COUNT(DISTINCT g.id) AS total_genes,
+    COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) AS hub_dmrs,
+    COUNT(DISTINCT b.id) AS biclique_count,
+    COUNT(DISTINCT c.id) AS component_count,
+    AVG(CAST(c.density AS FLOAT)) AS avg_component_density,
+    AVG(CAST(c.size AS FLOAT)) AS avg_component_size,
+    AVG(CAST(c.dmr_count AS FLOAT)) AS avg_dmr_count,
+    AVG(CAST(c.gene_count AS FLOAT)) AS avg_gene_count
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
@@ -127,21 +131,21 @@ GROUP BY t.name;
 
 -- Component node details view
 CREATE VIEW component_nodes_view AS
-SELECT 
+SELECT
     c.id AS component_id,
     t.name AS timepoint,
     c.graph_type,
-    GROUP_CONCAT(DISTINCT json_object(
+    GROUP_CONCAT(DISTINCT JSON_OBJECT(
         'dmr_id', d.id,
         'dmr_number', d.dmr_number,
         'area_stat', d.area_stat,
         'is_hub', d.is_hub
-    )) as dmrs,
-    GROUP_CONCAT(DISTINCT json_object(
+    )) AS dmrs,
+    GROUP_CONCAT(DISTINCT JSON_OBJECT(
         'gene_id', g.id,
         'symbol', g.symbol,
         'interaction_source', g.interaction_source
-    )) as genes
+    )) AS genes
 FROM components c
 JOIN timepoints t ON c.timepoint_id = t.id
 LEFT JOIN dmr_timepoint_annotations dta ON c.id = dta.component_id
@@ -152,7 +156,7 @@ GROUP BY c.id, t.name, c.graph_type;
 
 -- Triconnected component view
 CREATE VIEW triconnected_component_view AS
-SELECT 
+SELECT
     tc.id AS triconnected_id,
     t.name AS timepoint,
     c.id AS component_id,
@@ -161,7 +165,7 @@ SELECT
     tc.gene_count,
     tc.edge_count,
     tc.density,
-    tc.catagory as category,
+    tc.catagory AS category,
     tc.nodes,
     tc.separation_pairs,
     tc.avg_dmrs,

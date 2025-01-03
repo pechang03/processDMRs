@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from .database.connection import get_db_engine
 from .database.models import Timepoint
+from .routes.component_routes import component_bp
 
 print("\n" + "="*50)
 print(">>> IMPORTING app.py MODULE")
@@ -59,6 +60,9 @@ def configure_app(app):
 
 # Configure the app before any routes are defined
 configure_app(app)
+
+# Register blueprints
+app.register_blueprint(component_bp)
 
 # Import and register routes
 
