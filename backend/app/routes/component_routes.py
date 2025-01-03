@@ -214,6 +214,7 @@ def get_gene_symbols():
         
         engine = get_db_engine()
         with Session(engine) as session:
+            # Get all gene annotations for this timepoint
             query = text("""
                 SELECT 
                     g.gene_id as id,
@@ -223,17 +224,14 @@ def get_gene_symbols():
                     g.description
                 FROM gene_timepoint_annotation g
                 WHERE g.timepoint_id = :timepoint_id
-                AND g.gene_id IN :gene_ids
             """)
             
             results = session.execute(
                 query, 
-                {
-                    "timepoint_id": timepoint_id,
-                    "gene_ids": tuple(gene_ids)
-                }
+                {"timepoint_id": timepoint_id}
             ).fetchall()
             
+            # Create lookup dictionary
             gene_info = {
                 str(row.id): {
                     "symbol": row.symbol,
@@ -243,9 +241,15 @@ def get_gene_symbols():
                 } for row in results
             }
             
+            # Filter to just the requested genes
+            requested_gene_info = {
+                str(gene_id): gene_info.get(str(gene_id), {"symbol": str(gene_id)})
+                for gene_id in gene_ids
+            }
+            
             return jsonify({
                 "status": "success",
-                "gene_info": gene_info
+                "gene_info": requested_gene_info
             })
             
     except Exception as e:
@@ -277,36 +281,40 @@ def get_dmr_status():
         
         engine = get_db_engine()
         with Session(engine) as session:
+            # Get all DMR annotations for this timepoint
             query = text("""
                 SELECT 
                     d.id,
                     d.is_hub
                 FROM dmr_timepoint_annotation d
                 WHERE d.timepoint_id = :timepoint_id
-                AND d.id IN :dmr_ids
             """)
             
             results = session.execute(
                 query, 
-                {
-                    "timepoint_id": timepoint_id,
-                    "dmr_ids": tuple(dmr_ids)
-                }
+                {"timepoint_id": timepoint_id}
             ).fetchall()
             
+            # Create lookup dictionary
             dmr_status = {
                 str(row.id): {
                     "is_hub": row.is_hub
                 } for row in results
             }
             
+            # Filter to just the requested DMRs
+            requested_dmr_status = {
+                str(dmr_id): dmr_status.get(str(dmr_id), {})
+                for dmr_id in dmr_ids
+            }
+            
             return jsonify({
                 "status": "success",
-                "dmr_status": dmr_status
+                "dmr_status": requested_dmr_status
             })
             
     except Exception as e:
-        app.logger.error(f"Error getting DMR names: {str(e)}")
+        app.logger.error(f"Error getting DMR status: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
