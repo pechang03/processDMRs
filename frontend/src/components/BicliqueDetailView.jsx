@@ -17,10 +17,39 @@ import BicliqueGraphView from './BicliqueGraphView.jsx';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "./BicliqueDetailView.css";
 
-function BicliqueDetailView({ timepointId, timepointDetails }) {
-  const [loading, setLoading] = React.useState(false);
+function BicliqueDetailView({ timepointId, componentId }) {
+  const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
-  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [componentDetails, setComponentDetails] = useState(null);
+
+  React.useEffect(() => {
+    if (timepointId && componentId) {
+      setLoading(true);
+      setError(null);
+      
+      fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch component details: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.status === 'success') {
+            setComponentDetails(data.data);
+          } else {
+            throw new Error(data.message || 'Failed to load component details');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          setError(error.message);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [timepointId, componentId]);
 
   const formatGeneSymbols = (symbols) => {
     if (!symbols) return "";
@@ -44,31 +73,24 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
     timepointDetails,
   });
 
-  if (!timepointDetails) {
-    return <Alert severity="info">No data available for this timepoint</Alert>;
-  }
-
-  // Add debug logging for incoming data
-  console.log("BicliqueDetailView received:", {
-    timepointId,
-    timepointDetails,
-  });
-
-  if (!timepointDetails) {
-    return <Alert severity="info">No data available for this timepoint</Alert>;
-  }
-
-  // Ensure components exists and is an array
-  const components = Array.isArray(timepointDetails.components)
-    ? timepointDetails.components
-    : [];
-
-  console.log("Components array:", components); // Debug log
-
-  if (components.length === 0) {
+  if (loading) {
     return (
-      <Alert severity="info">No components found for this timepoint</Alert>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
     );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        Error loading component details: {error}
+      </Alert>
+    );
+  }
+
+  if (!componentDetails) {
+    return <Alert severity="info">No component details available</Alert>;
   }
 
   const [activeTab, setActiveTab] = useState(0);
@@ -105,9 +127,7 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {components.map((component) => (
                     <TableRow
-                      key={component.component_id}
                       hover
                       sx={{
                         "&:nth-of-type(odd)": {
@@ -115,14 +135,14 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                         },
                       }}
                     >
-                      <TableCell>{component.component_id}</TableCell>
-                      <TableCell>{component.category}</TableCell>
-                      <TableCell>{component.graph_type}</TableCell>
+                      <TableCell>{componentDetails.component_id}</TableCell>
+                      <TableCell>{componentDetails.categories}</TableCell>
+                      <TableCell>{componentDetails.graph_type}</TableCell>
                       <TableCell align="right">
-                        {component.dmr_count || 0}
+                        {componentDetails.total_dmr_count || 0}
                       </TableCell>
                       <TableCell align="right">
-                        {component.gene_count || 0}
+                        {componentDetails.total_gene_count || 0}
                       </TableCell>
                       <TableCell>
                         <Typography
@@ -134,15 +154,9 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                             fontFamily: "monospace",
                             fontSize: "0.875rem",
                           }}
-                          title={
-                            Array.isArray(component.all_dmr_ids)
-                              ? component.all_dmr_ids.join(", ")
-                              : String(component.all_dmr_ids)
-                          }
+                          title={componentDetails.all_dmr_ids.join(", ")}
                         >
-                          {Array.isArray(component.all_dmr_ids)
-                            ? component.all_dmr_ids.join(", ")
-                            : String(component.all_dmr_ids)}
+                          {componentDetails.all_dmr_ids.join(", ")}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -156,35 +170,12 @@ function BicliqueDetailView({ timepointId, timepointDetails }) {
                             fontSize: "0.875rem",
                             color: "primary.main",
                           }}
-                          title={
-                            Array.isArray(component.gene_symbols)
-                              ? component.gene_symbols.join(", ")
-                              : String(component.gene_symbols)
-                          }
+                          title={componentDetails.all_gene_ids.join(", ")}
                         >
-                          {Array.isArray(component.gene_symbols)
-                            ? component.gene_symbols.join(", ")
-                            : String(component.gene_symbols)}
+                          {componentDetails.all_gene_ids.join(", ")}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          size="small"
-                          onClick={() =>
-                            setSelectedComponent(component.component_id)
-                          }
-                          sx={{
-                            textTransform: "none",
-                            minWidth: "100px",
-                          }}
-                        >
-                          View Graph
-                        </Button>
-                      </TableCell>
                     </TableRow>
-                  ))}
                 </TableBody>
               </Table>
             </TableContainer>

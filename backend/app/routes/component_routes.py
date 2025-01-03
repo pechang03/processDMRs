@@ -94,6 +94,64 @@ def get_component_summary_by_timepoint(timepoint_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@component_bp.route("/api/components/<int:timepoint_id>/<int:component_id>/details", methods=["GET"])
+def get_component_details(timepoint_id, component_id):
+    app.logger.info(f"Getting details for timepoint {timepoint_id}, component {component_id}")
+    try:
+        engine = get_db_engine()
+        with Session(engine) as session:
+            query = text("""
+                SELECT 
+                    timepoint_id,
+                    timepoint,
+                    component_id,
+                    graph_type,
+                    categories,
+                    total_dmr_count,
+                    total_gene_count,
+                    all_dmr_ids,
+                    all_gene_ids
+                FROM component_details_view
+                WHERE timepoint_id = :timepoint_id 
+                AND component_id = :component_id
+                AND LOWER(graph_type) = 'split'
+            """)
+            
+            result = session.execute(query, {
+                "timepoint_id": timepoint_id,
+                "component_id": component_id
+            }).first()
+            
+            if not result:
+                return jsonify({
+                    "status": "error",
+                    "message": f"No details found for component {component_id}"
+                }), 404
+                
+            component_data = {
+                "timepoint_id": result.timepoint_id,
+                "timepoint": result.timepoint,
+                "component_id": result.component_id,
+                "graph_type": result.graph_type,
+                "categories": result.categories,
+                "total_dmr_count": result.total_dmr_count,
+                "total_gene_count": result.total_gene_count,
+                "all_dmr_ids": result.all_dmr_ids.split(",") if result.all_dmr_ids else [],
+                "all_gene_ids": result.all_gene_ids.split(",") if result.all_gene_ids else []
+            }
+            
+            return jsonify({
+                "status": "success",
+                "data": component_data
+            })
+            
+    except Exception as e:
+        app.logger.error(f"Error getting component details: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @component_bp.route("/api/components/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
     try:

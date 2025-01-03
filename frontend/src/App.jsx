@@ -270,8 +270,8 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
                             </Alert>
                         ) : (
                             <BicliqueDetailView 
-                                timepointId={selectedTimepoint} 
-                                timepointDetails={timepointDetails} 
+                                timepointId={selectedTimepoint}
+                                componentId={selectedComponent}
                             />
                         )}
                     </Box>
