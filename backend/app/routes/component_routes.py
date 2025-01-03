@@ -116,10 +116,7 @@ def get_component_details(timepoint_id, component_id):
             
             result = session.execute(
                 basic_query, 
-                {
-                    "component_id": component_id,
-                    "timepoint_id": timepoint_id
-                }
+                {"component_id": component_id, "timepoint_id": timepoint_id}
             ).first()
             
             if not result:
@@ -139,69 +136,100 @@ def get_component_details(timepoint_id, component_id):
                     "biclique_count": biclique_count
                 }), 400
 
-            # Get the details
+            # Get the component details with gene and DMR annotations
             query = text("""
+                WITH component_info AS (
+                    SELECT 
+                        cd.timepoint_id,
+                        cd.timepoint,
+                        cd.component_id,
+                        cd.graph_type,
+                        cd.categories,
+                        cd.total_dmr_count,
+                        cd.total_gene_count,
+                        cd.all_dmr_ids,
+                        cd.all_gene_ids
+                    FROM component_details_view cd
+                    WHERE cd.timepoint_id = :timepoint_id 
+                    AND cd.component_id = :component_id
+                    AND LOWER(cd.graph_type) = 'split'
+                )
                 SELECT 
-                    timepoint_id,
-                    timepoint,
-                    component_id,
-                    graph_type,
-                    categories,
-                    total_dmr_count,
-                    total_gene_count,
-                    all_dmr_ids,
-                    all_gene_ids
-                FROM component_details_view
-                WHERE timepoint_id = :timepoint_id 
-                AND component_id = :component_id
-                AND LOWER(graph_type) = 'split'
+                    ci.*,
+                    g.symbol as gene_symbols,
+                    gta.node_type as gene_node_types,
+                    gta.gene_type as gene_types,
+                    gta.degree as gene_degrees,
+                    gta.biclique_ids as gene_biclique_ids,
+                    dta.node_type as dmr_node_types,
+                    dta.degree as dmr_degrees,
+                    dta.biclique_ids as dmr_biclique_ids
+                FROM component_info ci
+                LEFT JOIN genes g ON g.id = ANY(string_to_array(ci.all_gene_ids, ',')::integer[])
+                LEFT JOIN gene_timepoint_annotations gta ON gta.gene_id = g.id AND gta.timepoint_id = :timepoint_id
+                LEFT JOIN dmr_timepoint_annotations dta ON dta.dmr_id = ANY(string_to_array(ci.all_dmr_ids, ',')::integer[]) 
+                    AND dta.timepoint_id = :timepoint_id
             """)
             
-            result = session.execute(query, {
+            results = session.execute(query, {
                 "timepoint_id": timepoint_id,
                 "component_id": component_id
-            }).first()
+            }).fetchall()
             
-            if not result:
+            if not results:
                 app.logger.error("Query returned no results after verifying existence")
                 return jsonify({
                     "status": "error",
                     "message": "Failed to retrieve component details"
                 }), 500
 
-            # Parse the string arrays properly
+            # Parse arrays and collect annotations
             def parse_array_string(arr_str):
                 if not arr_str:
                     return []
-                # Remove outer brackets and split by comma
                 cleaned = arr_str.replace('[', '').replace(']', '').strip()
                 return [int(x.strip()) for x in cleaned.split(',') if x.strip()]
 
-            # Combine all DMR IDs and Gene IDs from multiple arrays
-            all_dmr_ids = []
-            all_gene_ids = []
-            
-            for dmr_array in result.all_dmr_ids:
-                all_dmr_ids.extend(parse_array_string(dmr_array))
-            
-            for gene_array in result.all_gene_ids:
-                all_gene_ids.extend(parse_array_string(gene_array))
+            first_row = results[0]
+            all_dmr_ids = parse_array_string(first_row.all_dmr_ids)
+            all_gene_ids = parse_array_string(first_row.all_gene_ids)
 
-            # Remove duplicates
-            all_dmr_ids = list(set(all_dmr_ids))
-            all_gene_ids = list(set(all_gene_ids))
-                
+            # Collect gene annotations
+            gene_annotations = {}
+            dmr_annotations = {}
+
+            for row in results:
+                if row.gene_symbols:  # Process gene annotations
+                    gene_id = int(row.all_gene_ids)
+                    gene_annotations[gene_id] = {
+                        "symbol": row.gene_symbols,
+                        "node_type": row.gene_node_types,
+                        "gene_type": row.gene_types,
+                        "degree": row.gene_degrees,
+                        "biclique_count": len(parse_array_string(row.gene_biclique_ids)) if row.gene_biclique_ids else 0
+                    }
+
+                if row.dmr_node_types:  # Process DMR annotations
+                    dmr_id = int(row.all_dmr_ids)
+                    dmr_annotations[dmr_id] = {
+                        "node_type": row.dmr_node_types,
+                        "degree": row.dmr_degrees,
+                        "biclique_count": len(parse_array_string(row.dmr_biclique_ids)) if row.dmr_biclique_ids else 0
+                    }
+
             component_data = {
-                "timepoint_id": result.timepoint_id,
-                "timepoint": result.timepoint,
-                "component_id": result.component_id,
-                "graph_type": result.graph_type,
-                "categories": result.categories,
-                "total_dmr_count": result.total_dmr_count,
-                "total_gene_count": result.total_gene_count,
+                "timepoint_id": first_row.timepoint_id,
+                "timepoint": first_row.timepoint,
+                "component_id": first_row.component_id,
+                "graph_type": first_row.graph_type,
+                "categories": first_row.categories,
+                "total_dmr_count": first_row.total_dmr_count,
+                "total_gene_count": first_row.total_gene_count,
                 "biclique_count": biclique_count,
                 "all_dmr_ids": all_dmr_ids,
-                "all_gene_ids": all_gene_ids
+                "all_gene_ids": all_gene_ids,
+                "gene_annotations": gene_annotations,
+                "dmr_annotations": dmr_annotations
             }
             
             app.logger.info(f"Returning details for component {component_id}")
