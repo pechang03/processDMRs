@@ -43,3 +43,34 @@ class TimePointSchema(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+
+class GeneTimepointAnnotationSchema(BaseModel):
+    """Pydantic model for gene_timepoint_annotations table"""
+    timepoint_id: int
+    gene_id: int
+    component_id: Optional[int]
+    triconnected_id: Optional[int]
+    degree: Optional[int]
+    node_type: Optional[str]
+    gene_type: Optional[str]
+    is_isolate: Optional[bool]
+    biclique_ids: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class DmrTimepointAnnotationSchema(BaseModel):
+    """Pydantic model for dmr_timepoint_annotations table"""
+    timepoint_id: int
+    dmr_id: int
+    component_id: Optional[int]
+    triconnected_id: Optional[int]
+    degree: Optional[int]
+    node_type: Optional[str]
+    is_isolate: Optional[bool]
+    biclique_ids: Optional[str]
+
+    class Config:
+        from_attributes = True
