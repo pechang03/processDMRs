@@ -144,12 +144,13 @@ def get_component_graph(timepoint_id, component_id):
             # Get node metadata
             dmr_query = text("""
                 SELECT 
-                    d.id,
+                    dta.dmr_id as id,
                     d.area,
                     d.description
-                FROM dmr_timepoint_annotations d
-                WHERE d.timepoint_id = :timepoint_id
-                AND d.id = ANY(:dmr_ids)
+                FROM dmr_timepoint_annotations dta
+                JOIN dmrs d ON d.id = dta.dmr_id
+                WHERE dta.timepoint_id = :timepoint_id
+                AND dta.dmr_id IN :dmr_ids
             """)
 
             gene_query = text("""
@@ -173,9 +174,20 @@ def get_component_graph(timepoint_id, component_id):
             dmr_metadata = {}
             gene_metadata = {}
 
-            dmr_results = session.execute(
-                dmr_query, {"timepoint_id": timepoint_id, "dmr_ids": list(all_dmr_ids)}
-            ).fetchall()
+            # Get metadata
+            dmr_metadata = {}
+            gene_metadata = {}
+
+            if all_dmr_ids:  # Only execute if we have DMR IDs
+                dmr_results = session.execute(
+                    dmr_query, 
+                    {
+                        "timepoint_id": timepoint_id, 
+                        "dmr_ids": tuple(all_dmr_ids)  # Convert to tuple for SQLite IN clause
+                    }
+                ).fetchall()
+            else:
+                dmr_results = []
 
             gene_results = session.execute(
                 gene_query,
