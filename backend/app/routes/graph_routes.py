@@ -1,5 +1,7 @@
 from flask import jsonify
+from pydantic import ValidationError
 from ..utils.extensions import app
+from ..schemas import GraphComponentSchema, BicliqueMemberSchema
 from ..database.connection import get_db_engine
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -64,7 +66,26 @@ def get_component_graph(timepoint_id, component_id):
                     "status": 500
                 }), 500
 
-            app.logger.debug(f"Component data found: {result}")
+            # Validate with Pydantic
+            try:
+                component_data = GraphComponentSchema(
+                    component_id=result.component_id,
+                    timepoint_id=result.timepoint_id,
+                    dmr_ids=result.dmr_ids,
+                    gene_ids=result.gene_ids,
+                    graph_type=result.graph_type,
+                    categories=result.categories,
+                    bicliques=[BicliqueMemberSchema(**b) for b in json.loads(result.bicliques)]
+                )
+            except ValidationError as e:
+                app.logger.error(f"Validation error: {e}")
+                return jsonify({
+                    "error": "Invalid component data",
+                    "details": e.errors(),
+                    "status": 500
+                }), 500
+
+            app.logger.debug(f"Validated component data: {component_data}")
 
             # Get bicliques for this component
             bicliques_query = text("""

@@ -74,3 +74,30 @@ class DmrTimepointAnnotationSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class BicliqueMemberSchema(BaseModel):
+    """Schema for biclique member data"""
+    biclique_id: int
+    category: str
+    dmr_ids: str  # Comma-separated string of IDs
+    gene_ids: str  # Comma-separated string of IDs
+
+class GraphComponentSchema(BaseModel):
+    """Schema for graph component data"""
+    component_id: int
+    timepoint_id: int
+    dmr_ids: str  # Comma-separated string of IDs
+    gene_ids: str  # Comma-separated string of IDs
+    graph_type: str
+    categories: str
+    bicliques: List[BicliqueMemberSchema]
+
+class NodeSymbolRequest(BaseModel):
+    """Schema for node symbol request"""
+    gene_ids: List[int]
+    timepoint_id: int
+
+class NodeStatusRequest(BaseModel):
+    """Schema for node status request"""
+    dmr_ids: List[int]
+    timepoint_id: int

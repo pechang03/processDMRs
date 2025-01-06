@@ -1,5 +1,14 @@
 import json
 from flask import Blueprint, jsonify, request
+from pydantic import ValidationError
+from ..schemas import (
+    ComponentSummarySchema,
+    ComponentDetailsSchema,
+    GeneTimepointAnnotationSchema,
+    DmrTimepointAnnotationSchema,
+    NodeSymbolRequest,
+    NodeStatusRequest
+)
 from flask_cors import CORS
 from ..utils.extensions import app
 from ..database import get_db_engine, get_db_session
@@ -207,14 +216,19 @@ def get_component_details(timepoint_id, component_id):
 @component_bp.route("/api/genes/symbols", methods=["POST"])
 def get_gene_symbols():
     try:
-        data = request.get_json()
-        gene_ids = data.get("gene_ids", [])
-        timepoint_id = data.get("timepoint_id")
+        # Validate request data
+        try:
+            request_data = NodeSymbolRequest(**request.get_json())
+        except ValidationError as e:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid request data",
+                "details": e.errors()
+            }), 400
 
-        if not timepoint_id:
-            return jsonify(
-                {"status": "error", "message": "timepoint_id is required"}
-            ), 400
+        # Use validated data
+        gene_ids = request_data.gene_ids
+        timepoint_id = request_data.timepoint_id
 
         engine = get_db_engine()
         with Session(engine) as session:
@@ -354,14 +368,19 @@ def get_gene_annotations():
 @component_bp.route("/api/dmrs/status", methods=["POST"])
 def get_dmr_status():
     try:
-        data = request.get_json()
-        # dmr_ids = data.get('dmr_ids', [])
-        timepoint_id = data.get("timepoint_id")
+        # Validate request data
+        try:
+            request_data = NodeStatusRequest(**request.get_json())
+        except ValidationError as e:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid request data",
+                "details": e.errors()
+            }), 400
 
-        if not timepoint_id:
-            return jsonify(
-                {"status": "error", "message": "timepoint_id is required"}
-            ), 400
+        # Use validated data
+        dmr_ids = request_data.dmr_ids
+        timepoint_id = request_data.timepoint_id
 
         engine = get_db_engine()
         with Session(engine) as session:
