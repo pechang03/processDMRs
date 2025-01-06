@@ -150,8 +150,8 @@ def get_component_graph(timepoint_id, component_id):
                 FROM dmr_timepoint_annotations dta
                 JOIN dmrs d ON d.id = dta.dmr_id
                 WHERE dta.timepoint_id = :timepoint_id
-                AND dta.dmr_id IN :dmr_ids
-            """)
+                AND dta.dmr_id IN ({})
+            """.format(','.join('?' * len(all_dmr_ids))))
 
             gene_query = text("""
                 SELECT 
@@ -182,8 +182,8 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_results = session.execute(
                     dmr_query, 
                     {
-                        "timepoint_id": timepoint_id, 
-                        "dmr_ids": tuple(all_dmr_ids)  # Convert to tuple for SQLite IN clause
+                        "timepoint_id": timepoint_id,
+                        **dict(enumerate(all_dmr_ids))  # Unpack the DMR IDs as positional parameters
                     }
                 ).fetchall()
             else:
