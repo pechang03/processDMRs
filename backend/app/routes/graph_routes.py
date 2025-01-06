@@ -141,6 +141,13 @@ def get_component_graph(timepoint_id, component_id):
                     app.logger.error(f"Error parsing biclique data: {str(e)}")
                     continue
 
+            # Extract all DMR and gene IDs
+            all_dmr_ids = set()
+            all_gene_ids = set()
+            for dmr_set, gene_set in bicliques:
+                all_dmr_ids.update(dmr_set)
+                all_gene_ids.update(gene_set)
+
             # Get node metadata
             dmr_query = text("""
                 SELECT 
