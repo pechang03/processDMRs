@@ -170,15 +170,17 @@ def get_component_graph(timepoint_id, component_id):
                 AND dta.dmr_id IN ({})
             """.format(','.join('?' * len(all_dmr_ids))))
 
+            # Get gene annotations including split gene information
             gene_query = text("""
                 SELECT 
-                    g.gene_id,
-                    g.symbol,
-                    g.description
-                FROM gene_timepoint_annotation g
-                WHERE g.timepoint_id = :timepoint_id
-                AND g.gene_id = ANY(:gene_ids)
-            """)
+                    g.id as gene_id,
+                    gta.node_type,
+                    gta.biclique_ids
+                FROM genes g
+                JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
+                WHERE gta.timepoint_id = :timepoint_id
+                AND g.id IN ({})
+            """.format(','.join('?' * len(all_gene_ids))))
 
             # Extract all DMR and gene IDs
             all_dmr_ids = set()
@@ -218,11 +220,14 @@ def get_component_graph(timepoint_id, component_id):
                     "description": dmr.description,
                 }
 
-            for gene in gene_results:
-                gene_metadata[gene.gene_id] = {
-                    "symbol": gene.symbol,
-                    "description": gene.description,
-                }
+            # Identify split genes from annotations
+            split_genes = {
+                int(row.gene_id) for row in gene_results 
+                if row.node_type == 'SPLIT_GENE' or 
+                (row.biclique_ids and len(row.biclique_ids.split(',')) > 1)
+            }
+
+            app.logger.debug(f"Found {len(split_genes)} split genes from annotations: {split_genes}")
 
             # Create node labels
             node_labels = {}
@@ -251,12 +256,12 @@ def get_component_graph(timepoint_id, component_id):
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
             app.logger.debug(f"min_gene_id: {min_gene_id}")
 
-            # Create NodeInfo object with explicit type conversion
+            # Create NodeInfo object using annotated split genes
             node_info = NodeInfo(
                 all_nodes=all_dmr_ids | all_gene_ids,
                 dmr_nodes=all_dmr_ids,
                 regular_genes={int(g) for g in all_gene_ids},
-                split_genes=set(),  # You might want to calculate this
+                split_genes=split_genes,  # Using split genes from annotations
                 node_degrees={int(node): graph.degree(node) for node in graph.nodes()},
                 min_gene_id=min_gene_id,
             )
