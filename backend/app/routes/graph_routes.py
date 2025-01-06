@@ -166,7 +166,10 @@ def get_component_graph(timepoint_id, component_id):
                 SELECT 
                     g.id as gene_id,
                     gta.node_type,
-                    gta.biclique_ids
+                    CASE 
+                        WHEN gta.biclique_ids IS NULL THEN ''
+                        ELSE gta.biclique_ids 
+                    END as biclique_ids
                 FROM genes g
                 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
                 WHERE gta.timepoint_id = :timepoint_id
@@ -179,10 +182,6 @@ def get_component_graph(timepoint_id, component_id):
             for dmr_set, gene_set in bicliques:
                 all_dmr_ids.update(dmr_set)
                 all_gene_ids.update(gene_set)
-
-            # Get metadata
-            dmr_metadata = {}
-            gene_metadata = {}
 
             # Get metadata
             dmr_metadata = {}
@@ -212,11 +211,19 @@ def get_component_graph(timepoint_id, component_id):
                 }
 
             # Identify split genes from annotations
-            split_genes = {
-                int(row.gene_id) for row in gene_results 
-                if (row.node_type and row.node_type.upper()[:5] == 'SPLIT') or 
-                (row.biclique_ids and len(row.biclique_ids.split(',')) > 1)
-            }
+            split_genes = set()
+            for row in gene_results:
+                gene_id = int(row.gene_id)  # Ensure gene_id is an integer
+                
+                # Check if biclique_ids is a string and contains data
+                if row.biclique_ids and isinstance(row.biclique_ids, str):
+                    biclique_count = len([x for x in row.biclique_ids.split(',') if x.strip()])
+                    if biclique_count > 1:
+                        split_genes.add(gene_id)
+                
+                # Also check node_type for SPLIT
+                if row.node_type and row.node_type.upper().startswith('SPLIT'):
+                    split_genes.add(gene_id)
 
             app.logger.debug(f"Found {len(split_genes)} split genes from annotations: {split_genes}")
 
