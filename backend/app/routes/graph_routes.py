@@ -239,14 +239,26 @@ def get_component_graph(timepoint_id, component_id):
                     for gene in gene_set:
                         graph.add_edge(dmr, gene)
 
-            # Create NodeInfo object
+            # Add debug logging for node IDs before creating NodeInfo
+            app.logger.debug(f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}")
+            app.logger.debug(f"all_gene_ids type: {type(all_gene_ids)}, content: {all_gene_ids}")
+
+            # Ensure all IDs are integers
+            all_dmr_ids = {int(x) for x in all_dmr_ids}
+            all_gene_ids = {int(x) for x in all_gene_ids}
+
+            # Add debug logging for min_gene_id calculation
+            min_gene_id = min(all_gene_ids) if all_gene_ids else 0
+            app.logger.debug(f"min_gene_id: {min_gene_id}")
+
+            # Create NodeInfo object with explicit type conversion
             node_info = NodeInfo(
                 all_nodes=all_dmr_ids | all_gene_ids,
                 dmr_nodes=all_dmr_ids,
-                regular_genes={g for g in all_gene_ids},
+                regular_genes={int(g) for g in all_gene_ids},
                 split_genes=set(),  # You might want to calculate this
-                node_degrees={node: graph.degree(node) for node in graph.nodes()},
-                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
+                node_degrees={int(node): graph.degree(node) for node in graph.nodes()},
+                min_gene_id=min_gene_id,
             )
 
             # Calculate positions using CircularBicliqueLayout
