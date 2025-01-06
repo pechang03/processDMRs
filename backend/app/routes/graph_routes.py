@@ -12,6 +12,15 @@ from ..utils.node_info import NodeInfo
 import networkx as nx
 
 
+def parse_id_string(id_str):
+    """Helper function to parse string representation of ID arrays"""
+    if not id_str:
+        return set()
+    # Remove brackets and split by comma
+    cleaned = id_str.replace('[', '').replace(']', '').strip()
+    # Split and convert to integers, filtering out empty strings
+    return {int(x.strip()) for x in cleaned.split(',') if x.strip()}
+
 @app.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
     """Get graph visualization data for a specific component."""
@@ -124,26 +133,11 @@ def get_component_graph(timepoint_id, component_id):
 
             # Parse bicliques data
             bicliques = []
-            for b in bicliques_result:
+            for b in component_data.bicliques:
                 try:
-                    # Clean and parse the DMR IDs string - handle both string and list inputs
-                    if isinstance(b.dmr_ids, str):
-                        dmr_str = b.dmr_ids.strip('[]').replace(' ', '')
-                        dmr_ids = [int(x) for x in dmr_str.split(',') if x]
-                    else:
-                        dmr_ids = [int(x) for x in b.dmr_ids]
-                        
-                    # Clean and parse the gene IDs string - handle both string and list inputs
-                    if isinstance(b.gene_ids, str):
-                        gene_str = b.gene_ids.strip('[]').replace(' ', '')
-                        gene_ids = [int(x) for x in gene_str.split(',') if x]
-                    else:
-                        gene_ids = [int(x) for x in b.gene_ids]
-                    
-                    # Convert to sets
-                    dmr_set = set(dmr_ids)
-                    gene_set = set(gene_ids)
-                    
+                    # Parse DMR and gene IDs using the helper function
+                    dmr_set = parse_id_string(b.dmr_ids)
+                    gene_set = parse_id_string(b.gene_ids)
                     bicliques.append((dmr_set, gene_set))
                 except Exception as e:
                     app.logger.error(f"Error parsing biclique data: {str(e)}")
@@ -151,12 +145,9 @@ def get_component_graph(timepoint_id, component_id):
                     app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # Extract all DMR and gene IDs
-            all_dmr_ids = set()
-            all_gene_ids = set()
-            for dmr_set, gene_set in bicliques:
-                all_dmr_ids.update(dmr_set)
-                all_gene_ids.update(gene_set)
+            # Extract all DMR and gene IDs from the component data
+            all_dmr_ids = parse_id_string(component_data.dmr_ids)
+            all_gene_ids = parse_id_string(component_data.gene_ids)
 
             # Get node metadata
             dmr_query = text("""
