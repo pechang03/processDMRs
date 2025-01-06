@@ -49,7 +49,7 @@ def get_component_graph(timepoint_id, component_id):
                     c.all_dmr_ids as dmr_ids,
                     c.all_gene_ids as gene_ids,
                     c.graph_type,
-                    c.categories as category,
+                    c.categories,  # Keep as categories to match the view
                     (
                         SELECT json_group_array(
                             json_object(
@@ -89,7 +89,7 @@ def get_component_graph(timepoint_id, component_id):
                     dmr_ids=result.dmr_ids,
                     gene_ids=result.gene_ids,
                     graph_type=result.graph_type,
-                    categories=result.categories,
+                    categories=result.categories,  # Keep as categories to match the view
                     bicliques=[BicliqueMemberSchema(**b) for b in json.loads(result.bicliques)]
                 )
             except ValidationError as e:
