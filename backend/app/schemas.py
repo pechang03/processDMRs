@@ -89,7 +89,7 @@ class GraphComponentSchema(BaseModel):
     dmr_ids: str  # Comma-separated string of IDs
     gene_ids: str  # Comma-separated string of IDs
     graph_type: str
-    categories: str
+    category: str  # Changed from categories to category
     bicliques: List[BicliqueMemberSchema]
 
 class NodeSymbolRequest(BaseModel):

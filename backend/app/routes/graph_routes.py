@@ -49,7 +49,21 @@ def get_component_graph(timepoint_id, component_id):
                     c.all_dmr_ids as dmr_ids,
                     c.all_gene_ids as gene_ids,
                     c.graph_type,
-                    c.categories as category
+                    c.categories as category,
+                    (
+                        SELECT json_group_array(
+                            json_object(
+                                'biclique_id', b.id,
+                                'category', b.category,
+                                'dmr_ids', b.dmr_ids,
+                                'gene_ids', b.gene_ids
+                            )
+                        )
+                        FROM bicliques b
+                        JOIN component_bicliques cb ON b.id = cb.biclique_id
+                        WHERE cb.component_id = c.component_id
+                        AND cb.timepoint_id = c.timepoint_id
+                    ) as bicliques
                 FROM component_details_view c
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.component_id = :component_id
