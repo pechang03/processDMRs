@@ -11,11 +11,14 @@ from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 import networkx as nx
 
+
 @app.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
     """Get graph visualization data for a specific component."""
-    app.logger.info(f"Fetching graph for timepoint={timepoint_id}, component={component_id}")
-    
+    app.logger.info(
+        f"Fetching graph for timepoint={timepoint_id}, component={component_id}"
+    )
+
     try:
         engine = get_db_engine()
         with Session(engine) as session:
@@ -26,20 +29,19 @@ def get_component_graph(timepoint_id, component_id):
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.id = :component_id
             """)
-            
+
             count = session.execute(
                 verify_query,
-                {"timepoint_id": timepoint_id, "component_id": component_id}
+                {"timepoint_id": timepoint_id, "component_id": component_id},
             ).scalar()
-            
+
             app.logger.info(f"Found {count} matching components")
-            
+
             if count == 0:
-                app.logger.error(f"Component {component_id} not found for timepoint {timepoint_id}")
-                return jsonify({
-                    "error": "Component not found",
-                    "status": 404
-                }), 404
+                app.logger.error(
+                    f"Component {component_id} not found for timepoint {timepoint_id}"
+                )
+                return jsonify({"error": "Component not found", "status": 404}), 404
 
             # Get component data
             query = text("""
@@ -49,7 +51,7 @@ def get_component_graph(timepoint_id, component_id):
                     c.all_dmr_ids as dmr_ids,
                     c.all_gene_ids as gene_ids,
                     c.graph_type,
-                    c.categories,  # Keep as categories to match the view
+                    c.categories, 
                     (
                         SELECT json_group_array(
                             json_object(
@@ -68,18 +70,16 @@ def get_component_graph(timepoint_id, component_id):
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.component_id = :component_id
             """)
-            
+
             result = session.execute(
-                query, 
-                {"timepoint_id": timepoint_id, "component_id": component_id}
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).first()
-            
+
             if not result:
                 app.logger.error("Query returned no results after verifying existence")
-                return jsonify({
-                    "error": "Failed to retrieve component data",
-                    "status": 500
-                }), 500
+                return jsonify(
+                    {"error": "Failed to retrieve component data", "status": 500}
+                ), 500
 
             # Validate with Pydantic
             try:
@@ -90,15 +90,19 @@ def get_component_graph(timepoint_id, component_id):
                     gene_ids=result.gene_ids,
                     graph_type=result.graph_type,
                     categories=result.categories,  # Keep as categories to match the view
-                    bicliques=[BicliqueMemberSchema(**b) for b in json.loads(result.bicliques)]
+                    bicliques=[
+                        BicliqueMemberSchema(**b) for b in json.loads(result.bicliques)
+                    ],
                 )
             except ValidationError as e:
                 app.logger.error(f"Validation error: {e}")
-                return jsonify({
-                    "error": "Invalid component data",
-                    "details": e.errors(),
-                    "status": 500
-                }), 500
+                return jsonify(
+                    {
+                        "error": "Invalid component data",
+                        "details": e.errors(),
+                        "status": 500,
+                    }
+                ), 500
 
             app.logger.debug(f"Validated component data: {component_data}")
 
@@ -111,10 +115,9 @@ def get_component_graph(timepoint_id, component_id):
                 JOIN component_bicliques cb ON b.id = cb.biclique_id
                 WHERE cb.component_id = :component_id
             """)
-            
+
             bicliques_result = session.execute(
-                bicliques_query, 
-                {"component_id": component_id}
+                bicliques_query, {"component_id": component_id}
             ).fetchall()
 
             app.logger.info(f"Found {len(bicliques_result)} bicliques")
@@ -123,8 +126,8 @@ def get_component_graph(timepoint_id, component_id):
             bicliques = []
             for b in bicliques_result:
                 try:
-                    dmr_ids = [int(x) for x in b.dmr_ids.strip('{}').split(',') if x]
-                    gene_ids = [int(x) for x in b.gene_ids.strip('{}').split(',') if x]
+                    dmr_ids = [int(x) for x in b.dmr_ids.strip("{}").split(",") if x]
+                    gene_ids = [int(x) for x in b.gene_ids.strip("{}").split(",") if x]
                     bicliques.append((set(dmr_ids), set(gene_ids)))
                 except Exception as e:
                     app.logger.error(f"Error parsing biclique data: {str(e)}")
@@ -161,34 +164,27 @@ def get_component_graph(timepoint_id, component_id):
             # Get metadata
             dmr_metadata = {}
             gene_metadata = {}
-            
+
             dmr_results = session.execute(
-                dmr_query, 
-                {
-                    "timepoint_id": timepoint_id,
-                    "dmr_ids": list(all_dmr_ids)
-                }
+                dmr_query, {"timepoint_id": timepoint_id, "dmr_ids": list(all_dmr_ids)}
             ).fetchall()
-            
+
             gene_results = session.execute(
                 gene_query,
-                {
-                    "timepoint_id": timepoint_id,
-                    "gene_ids": list(all_gene_ids)
-                }
+                {"timepoint_id": timepoint_id, "gene_ids": list(all_gene_ids)},
             ).fetchall()
 
             # Create metadata dictionaries
             for dmr in dmr_results:
                 dmr_metadata[dmr.id] = {
                     "area": dmr.area,
-                    "description": dmr.description
+                    "description": dmr.description,
                 }
 
             for gene in gene_results:
                 gene_metadata[gene.gene_id] = {
                     "symbol": gene.symbol,
-                    "description": gene.description
+                    "description": gene.description,
                 }
 
             # Create node labels
@@ -213,7 +209,7 @@ def get_component_graph(timepoint_id, component_id):
                 regular_genes={g for g in all_gene_ids},
                 split_genes=set(),  # You might want to calculate this
                 node_degrees={node: graph.degree(node) for node in graph.nodes()},
-                min_gene_id=min(all_gene_ids) if all_gene_ids else 0
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
             )
 
             # Calculate positions using CircularBicliqueLayout
@@ -230,15 +226,17 @@ def get_component_graph(timepoint_id, component_id):
                 original_graph=graph,
                 bipartite_graph=graph,
                 dmr_metadata=dmr_metadata,
-                gene_metadata=gene_metadata
+                gene_metadata=gene_metadata,
             )
 
             return visualization_data
 
     except Exception as e:
         app.logger.error(f"Error generating graph visualization: {str(e)}")
-        return jsonify({
-            "error": "Failed to generate graph visualization",
-            "details": str(e) if app.debug else "Internal server error",
-            "status": 500
-        }), 500
+        return jsonify(
+            {
+                "error": "Failed to generate graph visualization",
+                "details": str(e) if app.debug else "Internal server error",
+                "status": 500,
+            }
+        ), 500
