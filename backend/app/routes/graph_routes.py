@@ -176,13 +176,6 @@ def get_component_graph(timepoint_id, component_id):
                 AND g.id IN ({})
             """.format(','.join('?' * len(all_gene_ids))))
 
-            # Extract all DMR and gene IDs
-            all_dmr_ids = set()
-            all_gene_ids = set()
-            for dmr_set, gene_set in bicliques:
-                all_dmr_ids.update(dmr_set)
-                all_gene_ids.update(gene_set)
-
             # Get metadata
             dmr_metadata = {}
             gene_metadata = {}
