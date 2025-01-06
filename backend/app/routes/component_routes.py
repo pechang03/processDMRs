@@ -216,22 +216,22 @@ def get_component_details(timepoint_id, component_id):
 @component_bp.route("/api/genes/symbols", methods=["POST"])
 def get_gene_symbols():
     try:
-        # Validate request data
-        try:
-            request_data = NodeSymbolRequest(**request.get_json())
-        except ValidationError as e:
+        data = request.get_json()
+        gene_ids = data.get('gene_ids', [])
+        timepoint_id = data.get('timepoint_id')
+        component_id = data.get('component_id')  # Get component_id
+
+        if not all([timepoint_id, component_id, gene_ids]):
             return jsonify({
                 "status": "error",
-                "message": "Invalid request data",
-                "details": e.errors()
+                "message": "Missing required parameters"
             }), 400
-
-        # Use validated data
-        gene_ids = request_data.gene_ids
-        timepoint_id = request_data.timepoint_id
 
         engine = get_db_engine()
         with Session(engine) as session:
+            # Convert gene_ids list to comma-separated string
+            gene_ids_str = ','.join(map(str, gene_ids))
+            
             query = text("""
                 WITH gene_bicliques AS (
                     SELECT 
@@ -261,7 +261,11 @@ def get_gene_symbols():
                 AND g.id = ANY(string_to_array(:gene_ids, ',')::integer[])
             """)
 
-            results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
+            results = session.execute(query, {
+                "timepoint_id": timepoint_id,
+                "component_id": component_id,
+                "gene_ids": gene_ids_str
+            }).fetchall()
 
             # Convert results to dictionary using schema
             gene_info = {}

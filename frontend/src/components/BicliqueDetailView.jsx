@@ -39,13 +39,18 @@ function BicliqueDetailView({ timepointId, componentId }) {
         },
         body: JSON.stringify({ 
           gene_ids: geneIds,
-          timepoint_id: timepointId 
+          timepoint_id: timepointId,
+          component_id: componentId  // Add component_id
         })
       });
       if (!response.ok) throw new Error('Failed to fetch gene symbols');
       const data = await response.json();
       console.log('Received gene data:', data);
-      setGeneSymbols(data.gene_info);
+      if (data.status === 'success' && data.gene_info) {
+        setGeneSymbols(data.gene_info);
+      } else {
+        throw new Error('Invalid gene data received');
+      }
     } catch (error) {
       console.error('Error fetching gene symbols:', error);
     }
