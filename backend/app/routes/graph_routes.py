@@ -71,8 +71,8 @@ def get_component_graph(timepoint_id, component_id):
                 SELECT 
                     b.dmr_ids,
                     b.gene_ids
-                FROM biclique b
-                JOIN component_biclique cb ON b.id = cb.biclique_id
+                FROM bicliques b
+                JOIN component_bicliques cb ON b.id = cb.biclique_id
                 WHERE cb.component_id = :component_id
             """)
             
