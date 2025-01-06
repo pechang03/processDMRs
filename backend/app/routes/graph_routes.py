@@ -126,11 +126,19 @@ def get_component_graph(timepoint_id, component_id):
             bicliques = []
             for b in bicliques_result:
                 try:
-                    # Clean and parse the DMR IDs string
-                    dmr_ids = [int(x.strip()) for x in b.dmr_ids.strip('[]').split(',') if x.strip()]
-                    
-                    # Clean and parse the gene IDs string
-                    gene_ids = [int(x.strip()) for x in b.gene_ids.strip('[]').split(',') if x.strip()]
+                    # Clean and parse the DMR IDs string - handle both string and list inputs
+                    if isinstance(b.dmr_ids, str):
+                        dmr_str = b.dmr_ids.strip('[]').replace(' ', '')
+                        dmr_ids = [int(x) for x in dmr_str.split(',') if x]
+                    else:
+                        dmr_ids = [int(x) for x in b.dmr_ids]
+                        
+                    # Clean and parse the gene IDs string - handle both string and list inputs
+                    if isinstance(b.gene_ids, str):
+                        gene_str = b.gene_ids.strip('[]').replace(' ', '')
+                        gene_ids = [int(x) for x in gene_str.split(',') if x]
+                    else:
+                        gene_ids = [int(x) for x in b.gene_ids]
                     
                     # Convert to sets
                     dmr_set = set(dmr_ids)
@@ -139,6 +147,8 @@ def get_component_graph(timepoint_id, component_id):
                     bicliques.append((dmr_set, gene_set))
                 except Exception as e:
                     app.logger.error(f"Error parsing biclique data: {str(e)}")
+                    app.logger.error(f"DMR IDs: {b.dmr_ids}")
+                    app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
             # Extract all DMR and gene IDs
