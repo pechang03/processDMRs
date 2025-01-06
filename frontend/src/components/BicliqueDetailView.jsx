@@ -31,16 +31,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const fetchGeneSymbols = async (geneIds) => {
     try {
-      console.log('Fetching gene symbols for:', geneIds);
+      console.log('Fetching gene symbols for component:', componentId);
       const response = await fetch(`http://localhost:5555/api/genes/symbols`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          gene_ids: geneIds,
           timepoint_id: timepointId,
-          component_id: componentId  // Add component_id
+          component_id: componentId
         })
       });
       if (!response.ok) throw new Error('Failed to fetch gene symbols');

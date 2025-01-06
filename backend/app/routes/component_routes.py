@@ -217,11 +217,10 @@ def get_component_details(timepoint_id, component_id):
 def get_gene_symbols():
     try:
         data = request.get_json()
-        gene_ids = data.get('gene_ids', [])
         timepoint_id = data.get('timepoint_id')
-        component_id = data.get('component_id')  # Get component_id
+        component_id = data.get('component_id')
 
-        if not all([timepoint_id, component_id, gene_ids]):
+        if not all([timepoint_id, component_id]):
             return jsonify({
                 "status": "error",
                 "message": "Missing required parameters"
@@ -229,16 +228,14 @@ def get_gene_symbols():
 
         engine = get_db_engine()
         with Session(engine) as session:
-            # Convert gene_ids list to comma-separated string
-            gene_ids_str = ','.join(map(str, gene_ids))
-            
+            # Modified query to get genes through component_bicliques
             query = text("""
-                WITH gene_bicliques AS (
-                    SELECT 
+                WITH component_genes AS (
+                    SELECT DISTINCT
                         g.id as gene_id,
                         COUNT(DISTINCT cb.biclique_id) as biclique_count
                     FROM genes g
-                    JOIN bicliques b ON g.id = ANY(string_to_array(b.gene_ids, ',')::integer[])
+                    JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
                     JOIN component_bicliques cb ON b.id = cb.biclique_id
                     WHERE cb.component_id = :component_id
                     AND cb.timepoint_id = :timepoint_id
@@ -252,19 +249,17 @@ def get_gene_symbols():
                     gta.degree,
                     gta.is_isolate,
                     gta.biclique_ids,
-                    gb.biclique_count,
-                    CASE WHEN gb.biclique_count > 1 THEN true ELSE false END as is_split
-                FROM genes g
+                    cg.biclique_count,
+                    CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
+                FROM component_genes cg
+                JOIN genes g ON g.id = cg.gene_id
                 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-                LEFT JOIN gene_bicliques gb ON g.id = gb.gene_id
                 WHERE gta.timepoint_id = :timepoint_id
-                AND g.id = ANY(string_to_array(:gene_ids, ',')::integer[])
             """)
 
             results = session.execute(query, {
                 "timepoint_id": timepoint_id,
-                "component_id": component_id,
-                "gene_ids": gene_ids_str
+                "component_id": component_id
             }).fetchall()
 
             # Convert results to dictionary using schema
@@ -283,7 +278,7 @@ def get_gene_symbols():
 
                     gene_info[str(row.gene_id)] = {
                         "symbol": row.symbol,
-                        "is_split": row.is_split,  # Now using the calculated split status
+                        "is_split": bool(row.is_split),
                         "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
                         "degree": annotation.degree,
                         "biclique_count": row.biclique_count,
@@ -297,7 +292,7 @@ def get_gene_symbols():
 
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)})
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @component_bp.route("/api/genes/annotations", methods=["POST"])
