@@ -126,9 +126,17 @@ def get_component_graph(timepoint_id, component_id):
             bicliques = []
             for b in bicliques_result:
                 try:
-                    dmr_ids = [int(x) for x in b.dmr_ids.strip("{}").split(",") if x]
-                    gene_ids = [int(x) for x in b.gene_ids.strip("{}").split(",") if x]
-                    bicliques.append((set(dmr_ids), set(gene_ids)))
+                    # Clean and parse the DMR IDs string
+                    dmr_ids = [int(x.strip()) for x in b.dmr_ids.strip('[]').split(',') if x.strip()]
+                    
+                    # Clean and parse the gene IDs string
+                    gene_ids = [int(x.strip()) for x in b.gene_ids.strip('[]').split(',') if x.strip()]
+                    
+                    # Convert to sets
+                    dmr_set = set(dmr_ids)
+                    gene_set = set(gene_ids)
+                    
+                    bicliques.append((dmr_set, gene_set))
                 except Exception as e:
                     app.logger.error(f"Error parsing biclique data: {str(e)}")
                     continue
