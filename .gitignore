@@ -12,6 +12,7 @@ old_config/*
 .env*
 .aider*
 .DS_Store
+monday6
 .git/
 __pycache__/ 
 backup/
