@@ -223,7 +223,7 @@ def get_component_graph(timepoint_id, component_id):
             # Identify split genes from annotations
             split_genes = {
                 int(row.gene_id) for row in gene_results 
-                if row.node_type == 'SPLIT_GENE' or 
+                if (row.node_type and row.node_type.upper()[:5] == 'SPLIT') or 
                 (row.biclique_ids and len(row.biclique_ids.split(',')) > 1)
             }
 
