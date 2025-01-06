@@ -139,7 +139,7 @@ def get_component_graph(timepoint_id, component_id):
                     d.id,
                     d.area,
                     d.description
-                FROM dmr_timepoint_annotation d
+                FROM dmr_timepoint_annotations d
                 WHERE d.timepoint_id = :timepoint_id
                 AND d.id = ANY(:dmr_ids)
             """)
