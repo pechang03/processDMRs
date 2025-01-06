@@ -243,6 +243,21 @@ function BicliqueDetailView({ timepointId, componentId }) {
     <Box sx={{ width: "100%", mt: 3 }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>Split Genes</Typography>
+          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+            {Object.entries(geneSymbols)
+              .filter(([_, info]) => info.is_split)
+              .map(([geneId, info]) => (
+                <Chip
+                  key={geneId}
+                  label={`${info.symbol} (${info.biclique_count} bicliques)`}
+                  sx={{ m: 0.5 }}
+                  color="primary"
+                  variant="outlined"
+                  title={`Bicliques: ${info.biclique_ids.join(', ')}`}
+                />
+              ))}
+          </Paper>
           <Typography variant="h5" gutterBottom>
             Component Analysis for Timepoint {componentDetails.timepoint}
           </Typography>
@@ -336,7 +351,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
                             gap: 1,
                             flexWrap: 'wrap'
                           }}>
-                            {formatGeneSymbols(biclique.gene_ids)}
+                            {formatGeneSymbols(biclique.gene_ids).map((gene, idx) => (
+                              <Chip
+                                key={idx}
+                                label={gene}
+                                color={geneSymbols[gene.id]?.is_split ? "secondary" : "default"}
+                                size="small"
+                                sx={{ m: 0.5 }}
+                              />
+                            ))}
                           </Box>
                         </TableCell>
                       </TableRow>

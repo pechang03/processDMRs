@@ -233,6 +233,17 @@ def get_gene_symbols():
         engine = get_db_engine()
         with Session(engine) as session:
             query = text("""
+                WITH gene_bicliques AS (
+                    SELECT 
+                        g.id as gene_id,
+                        COUNT(DISTINCT cb.biclique_id) as biclique_count
+                    FROM genes g
+                    JOIN bicliques b ON g.id = ANY(string_to_array(b.gene_ids, ',')::integer[])
+                    JOIN component_bicliques cb ON b.id = cb.biclique_id
+                    WHERE cb.component_id = :component_id
+                    AND cb.timepoint_id = :timepoint_id
+                    GROUP BY g.id
+                )
                 SELECT 
                     g.id as gene_id,
                     g.symbol,
@@ -240,10 +251,14 @@ def get_gene_symbols():
                     gta.gene_type,
                     gta.degree,
                     gta.is_isolate,
-                    gta.biclique_ids
+                    gta.biclique_ids,
+                    gb.biclique_count,
+                    CASE WHEN gb.biclique_count > 1 THEN true ELSE false END as is_split
                 FROM genes g
                 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
+                LEFT JOIN gene_bicliques gb ON g.id = gb.gene_id
                 WHERE gta.timepoint_id = :timepoint_id
+                AND g.id = ANY(string_to_array(:gene_ids, ',')::integer[])
             """)
 
             results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
@@ -264,16 +279,11 @@ def get_gene_symbols():
 
                     gene_info[str(row.gene_id)] = {
                         "symbol": row.symbol,
-                        "is_split": annotation.gene_type == "split"
-                        if annotation.gene_type
-                        else False,
-                        "is_hub": annotation.node_type == "hub"
-                        if annotation.node_type
-                        else False,
+                        "is_split": row.is_split,  # Now using the calculated split status
+                        "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
                         "degree": annotation.degree,
-                        "biclique_count": len(annotation.biclique_ids.split(","))
-                        if annotation.biclique_ids
-                        else 0,
+                        "biclique_count": row.biclique_count,
+                        "biclique_ids": annotation.biclique_ids.split(",") if annotation.biclique_ids else []
                     }
                 except Exception as e:
                     app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
