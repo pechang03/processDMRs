@@ -41,16 +41,15 @@ def get_component_graph(timepoint_id, component_id):
             # Get component data
             query = text("""
                 SELECT 
-                    c.id,
+                    c.component_id,
                     c.timepoint_id,
-                    c.dmr_ids,
-                    c.gene_ids,
-                    c.biclique_ids,
+                    c.all_dmr_ids as dmr_ids,
+                    c.all_gene_ids as gene_ids,
                     c.graph_type,
-                    c.category
+                    c.categories as category
                 FROM component_details_view c
                 WHERE c.timepoint_id = :timepoint_id 
-                AND c.id = :component_id
+                AND c.component_id = :component_id
             """)
             
             result = session.execute(
