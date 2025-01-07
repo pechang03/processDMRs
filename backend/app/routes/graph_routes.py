@@ -188,7 +188,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get metadata
             dmr_metadata = {}
-            gene_metadata = {}
+            gene_metadata = {}  # This should be a dictionary, not a model
 
             dmr_results = session.execute(
                 dmr_query, {"timepoint_id": timepoint_id, "component_id": component_id}
@@ -229,18 +229,18 @@ def get_component_graph(timepoint_id, component_id):
                         biclique_ids=row.biclique_ids
                     )
                     
-                    gene_metadata = GeneAnnotationViewSchema(**gene_data)
-                    gene_id = gene_metadata.gene_id
-
+                    # Store the gene metadata in the dictionary
+                    gene_metadata[gene_data.gene_id] = gene_data.model_dump()
+                    
                     # Check if gene is split based on gene_type or biclique_ids
-                    if gene_metadata.gene_type and gene_metadata.gene_type.lower() == "split":
-                        split_genes.add(gene_id)
-                    elif gene_metadata.biclique_ids:
+                    if gene_data.gene_type and gene_data.gene_type.lower() == "split":
+                        split_genes.add(gene_data.gene_id)
+                    elif gene_data.biclique_ids:
                         biclique_count = len(
-                            [x for x in gene_metadata.biclique_ids.split(",") if x.strip()]
+                            [x for x in gene_data.biclique_ids.split(",") if x.strip()]
                         )
                         if biclique_count > 1:
-                            split_genes.add(gene_id)
+                            split_genes.add(gene_data.gene_id)
                 except ValidationError as e:
                     app.logger.error(f"Error validating gene data: {e}")
                     continue
