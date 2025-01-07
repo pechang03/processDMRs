@@ -153,27 +153,31 @@ def get_component_graph(timepoint_id, component_id):
             # Get node metadata
             dmr_query = text("""
                 SELECT 
-                    dta.dmr_id as id,
-                    d.area,
-                    d.description
-                FROM dmr_timepoint_annotations dta
-                JOIN dmrs d ON d.id = dta.dmr_id
-                WHERE dta.timepoint_id = :timepoint_id
-                AND dta.component_id = :component_id
+                    dmr_id as id,
+                    area_stat as area,
+                    description,
+                    node_type,
+                    degree,
+                    is_isolate,
+                    biclique_ids
+                FROM dmr_annotations_view
+                WHERE timepoint_id = :timepoint_id
+                AND component_id = :component_id
             """)
 
             # Get gene annotations including split gene information
             gene_query = text("""
                 SELECT 
-                    gta.gene_id,
-                    gta.node_type,
-                    CASE 
-                        WHEN gta.biclique_ids IS NULL THEN ''
-                        ELSE gta.biclique_ids 
-                    END as biclique_ids
-                FROM gene_timepoint_annotations gta
-                WHERE gta.timepoint_id = :timepoint_id 
-                AND gta.component_id = :component_id
+                    gene_id,
+                    symbol,
+                    node_type,
+                    gene_type,
+                    degree,
+                    is_isolate,
+                    biclique_ids
+                FROM gene_annotations_view
+                WHERE timepoint_id = :timepoint_id
+                AND component_id = :component_id
             """)
 
             # Get metadata
@@ -188,31 +192,36 @@ def get_component_graph(timepoint_id, component_id):
                 gene_query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
             app.logger.debug("graph_routes point 1")
-            # Create metadata dictionaries
+            # Create metadata dictionaries using Pydantic models
             for dmr in dmr_results:
-                dmr_metadata[dmr.id] = {
-                    "area": dmr.area,
-                    "description": dmr.description,
-                }
+                try:
+                    dmr_data = DmrComponentSchema.model_validate(dmr)
+                    dmr_metadata[dmr_data.id] = dmr_data.model_dump()
+                except ValidationError as e:
+                    app.logger.error(f"Error validating DMR data: {e}")
+                    continue
 
-            # Identify split genes from annotations
+            # Identify split genes from annotations using Pydantic models
             app.logger.debug("graph_routes point 2")
             split_genes = set()
             for row in gene_results:
-                gene_id = int(row.gene_id)  # Ensure gene_id is an integer
+                try:
+                    gene_data = GeneTimepointAnnotationSchema.model_validate(row)
+                    gene_id = gene_data.gene_id
 
-                app.logger.debug("graph_routes point 3")
-                # Check if biclique_ids is a string and contains data
-                if row.biclique_ids and isinstance(row.biclique_ids, str):
-                    biclique_count = len(
-                        [x for x in row.biclique_ids.split(",") if x.strip()]
-                    )
-                    if biclique_count > 1:
+                    # Check if gene is split based on biclique_ids or node_type
+                    if gene_data.biclique_ids:
+                        biclique_count = len(
+                            [x for x in gene_data.biclique_ids.split(",") if x.strip()]
+                        )
+                        if biclique_count > 1:
+                            split_genes.add(gene_id)
+
+                    if gene_data.node_type and gene_data.node_type.upper().startswith("SPLIT"):
                         split_genes.add(gene_id)
-
-                # Also check node_type for SPLIT
-                if row.node_type and row.node_type.upper().startswith("SPLIT"):
-                    split_genes.add(gene_id)
+                except ValidationError as e:
+                    app.logger.error(f"Error validating gene data: {e}")
+                    continue
 
             app.logger.debug(
                 f"Found {len(split_genes)} split genes from annotations: {split_genes}"
