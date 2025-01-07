@@ -6,6 +6,8 @@
   border-bottom: 1px solid #aaa;
   margin: 0 0 10px;
   padding: 0;
+  display: flex;
+  list-style: none;
 }
 
 .bicliqueDetailTabs__tab {
@@ -17,12 +19,13 @@
   list-style: none;
   padding: 6px 12px;
   cursor: pointer;
+  margin: 0;
 }
 
 .bicliqueDetailTabs__tab--selected {
   background: #fff;
   border-color: #aaa;
-  color: black;
+  color: #1976d2;
   border-radius: 5px 5px 0 0;
 }
 
@@ -36,14 +39,42 @@
 
 .bicliqueDetailTabs__tab:focus {
   outline: none;
+  box-shadow: 0 0 5px hsl(208, 99%, 50%, 0.2);
 }
 
 .bicliqueDetailTabs__tab:focus:after {
-  content: '';
+  content: "";
   position: absolute;
   height: 5px;
   left: -4px;
   right: -4px;
   bottom: -5px;
   background: #fff;
+}
+
+.bicliqueDetailTabs__tab:hover {
+  background: #f4f4f4;
+}
+
+.node-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.node-badge {
+  font-size: 0.75em;
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.node-badge.hub {
+  background-color: #1976d2;
+  color: white;
+}
+
+.node-badge.split {
+  background-color: #dc004e;
+  color: white;
 }

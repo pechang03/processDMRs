@@ -24,7 +24,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BicliqueGraphView from './BicliqueGraphView.jsx';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "./BicliqueDetailView.css";
+import "../styles/BicliqueDetailView.css";
 
 const GeneTable = ({ genes, geneSymbols }) => {
   const [page, setPage] = useState(0);
