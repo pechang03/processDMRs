@@ -104,8 +104,8 @@ class NodeStatusRequest(BaseModel):
 
 class DmrComponentSchema(BaseModel):
     """Schema for DMR component data"""
-    dmr_id: int = Field(alias='id')
-    area: Optional[float]
+    id: int = Field(alias='dmr_id')  # Changed to match the view's dmr_id field
+    area: Optional[float] = Field(alias='area_stat')  # Changed to match area_stat from view
     description: Optional[str]
     node_type: Optional[str]
     degree: Optional[int]
