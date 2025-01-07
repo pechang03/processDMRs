@@ -151,8 +151,7 @@ def get_component_graph(timepoint_id, component_id):
             all_gene_ids = parse_id_string(component_data.gene_ids)
 
             # Get node metadata
-            dmr_query = text(
-                """
+            dmr_query = text("""
                 SELECT 
                     dta.dmr_id as id,
                     d.area,
@@ -160,9 +159,8 @@ def get_component_graph(timepoint_id, component_id):
                 FROM dmr_timepoint_annotations dta
                 JOIN dmrs d ON d.id = dta.dmr_id
                 WHERE dta.timepoint_id = :timepoint_id
-                AND dta.dmr_id IN ({})
-            """.format(",".join("?" * len(all_dmr_ids)))
-            )
+                AND dta.component_id = :component_id
+            """)
 
             # Get gene annotations including split gene information
             gene_query = text("""
@@ -182,18 +180,13 @@ def get_component_graph(timepoint_id, component_id):
             dmr_metadata = {}
             gene_metadata = {}
 
-            if all_dmr_ids:  # Only execute if we have DMR IDs
-                dmr_results = session.execute(
-                    dmr_query,
-                    {
-                        "timepoint_id": timepoint_id,
-                        **dict(
-                            enumerate(all_dmr_ids)
-                        ),  # Unpack the DMR IDs as positional parameters
-                    },
-                ).fetchall()
-            else:
-                dmr_results = []
+            dmr_results = session.execute(
+                dmr_query,
+                {
+                    "timepoint_id": timepoint_id,
+                    "component_id": component_id
+                }
+            ).fetchall()
 
             gene_results = session.execute(
                 gene_query,
