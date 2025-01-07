@@ -222,7 +222,6 @@ def get_component_graph(timepoint_id, component_id):
                         "timepoint": None,
                         "timepoint_id": timepoint_id,
                         "component_id": component_id,
-                        "triconnected_id": row.triconnected_id,
                         "degree": row.degree,
                         "node_type": row.node_type,
                         "gene_type": row.gene_type,
