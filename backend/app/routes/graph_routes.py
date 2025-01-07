@@ -181,21 +181,13 @@ def get_component_graph(timepoint_id, component_id):
             gene_metadata = {}
 
             dmr_results = session.execute(
-                dmr_query,
-                {
-                    "timepoint_id": timepoint_id,
-                    "component_id": component_id
-                }
+                dmr_query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
 
             gene_results = session.execute(
-                gene_query,
-                {
-                    "timepoint_id": timepoint_id,
-                    "component_id": component_id
-                }
+                gene_query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
-
+            app.logger.debug("graph_routes point 1")
             # Create metadata dictionaries
             for dmr in dmr_results:
                 dmr_metadata[dmr.id] = {
@@ -204,10 +196,12 @@ def get_component_graph(timepoint_id, component_id):
                 }
 
             # Identify split genes from annotations
+            app.logger.debug("graph_routes point 2")
             split_genes = set()
             for row in gene_results:
                 gene_id = int(row.gene_id)  # Ensure gene_id is an integer
 
+                app.logger.debug("graph_routes point 3")
                 # Check if biclique_ids is a string and contains data
                 if row.biclique_ids and isinstance(row.biclique_ids, str):
                     biclique_count = len(
