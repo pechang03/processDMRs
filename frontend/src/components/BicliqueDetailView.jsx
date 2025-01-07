@@ -16,10 +16,144 @@ import {
   Stack,
   Tooltip,
   Grid,
+  TablePagination,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BicliqueGraphView from './BicliqueGraphView.jsx';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "./BicliqueDetailView.css";
+
+const GeneTable = ({ genes, geneSymbols }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const geneArray = genes.map(geneId => ({
+    id: geneId,
+    ...geneSymbols[geneId]
+  }));
+
+  return (
+    <Box>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Gene ID</TableCell>
+              <TableCell>Symbol</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell align="right">Degree</TableCell>
+              <TableCell align="right">Biclique Count</TableCell>
+              <TableCell>Properties</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {geneArray
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((gene) => (
+                <TableRow key={gene.id}>
+                  <TableCell>{gene.id}</TableCell>
+                  <TableCell>{gene.symbol}</TableCell>
+                  <TableCell>
+                    {gene.is_split ? 'Split' : gene.is_hub ? 'Hub' : 'Regular'}
+                  </TableCell>
+                  <TableCell align="right">{gene.degree}</TableCell>
+                  <TableCell align="right">{gene.biclique_count}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      {gene.is_hub && <Chip size="small" label="Hub" color="primary" />}
+                      {gene.is_split && <Chip size="small" label="Split" color="secondary" />}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={geneArray.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </Box>
+  );
+};
+
+const DMRTable = ({ dmrs, dmrNames }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const dmrArray = dmrs.map(dmrId => ({
+    id: dmrId,
+    ...dmrNames[dmrId]
+  }));
+
+  return (
+    <Box>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>DMR ID</TableCell>
+              <TableCell align="right">Degree</TableCell>
+              <TableCell align="right">Biclique Count</TableCell>
+              <TableCell>Properties</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {dmrArray
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((dmr) => (
+                <TableRow key={dmr.id}>
+                  <TableCell>DMR_{dmr.id}</TableCell>
+                  <TableCell align="right">{dmr.degree}</TableCell>
+                  <TableCell align="right">{dmr.biclique_count}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      {dmr.is_hub && <Chip size="small" label="Hub" color="primary" />}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={dmrArray.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </Box>
+  );
+};
 
 function BicliqueDetailView({ timepointId, componentId }) {
   const [loading, setLoading] = React.useState(true);
@@ -314,62 +448,31 @@ function BicliqueDetailView({ timepointId, componentId }) {
           <TabPanel className="reactTabs__tabPanel">
             <TableContainer>
               <Typography variant="h6" gutterBottom>Biclique Details</Typography>
-              {console.log('Rendering bicliques:', componentDetails.bicliques)} {/* Debug render */}
               {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
-                <Paper key={biclique.biclique_id} sx={{ p: 2, mb: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Biclique {index + 1} ({biclique.category})
-                  </Typography>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Type</TableCell>
-                        <TableCell>Count</TableCell>
-                        <TableCell>Members</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>DMRs</TableCell>
-                        <TableCell>{biclique.dmr_ids.length}</TableCell>
-                        <TableCell>
-                          <Box sx={{ 
-                            maxWidth: '500px', 
-                            overflowX: 'auto',
-                            display: 'flex',
-                            gap: 1,
-                            flexWrap: 'wrap'
-                          }}>
-                            {formatDmrNames(biclique.dmr_ids)}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Genes</TableCell>
-                        <TableCell>{biclique.gene_ids.length}</TableCell>
-                        <TableCell>
-                          <Box sx={{ 
-                            maxWidth: '500px', 
-                            overflowX: 'auto',
-                            display: 'flex',
-                            gap: 1,
-                            flexWrap: 'wrap'
-                          }}>
-                            {formatGeneSymbols(biclique.gene_ids).map((gene, idx) => (
-                              <Chip
-                                key={idx}
-                                label={gene}
-                                color={geneSymbols[gene.id]?.is_split ? "secondary" : "default"}
-                                size="small"
-                                sx={{ m: 0.5 }}
-                              />
-                            ))}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Paper>
+                <Accordion key={biclique.biclique_id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>
+                      Biclique {index + 1} ({biclique.category}) - 
+                      {biclique.dmr_ids.length} DMRs, {biclique.gene_ids.length} Genes
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" gutterBottom>Genes</Typography>
+                      <GeneTable 
+                        genes={biclique.gene_ids} 
+                        geneSymbols={geneSymbols}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" gutterBottom>DMRs</Typography>
+                      <DMRTable 
+                        dmrs={biclique.dmr_ids} 
+                        dmrNames={dmrNames}
+                      />
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
               ))}
             </TableContainer>
           </TabPanel>
