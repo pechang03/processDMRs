@@ -197,7 +197,10 @@ def get_component_graph(timepoint_id, component_id):
 
             gene_results = session.execute(
                 gene_query,
-                {"timepoint_id": timepoint_id, "gene_ids": list(all_gene_ids)},
+                {
+                    "timepoint_id": timepoint_id,
+                    "component_id": component_id
+                }
             ).fetchall()
 
             # Create metadata dictionaries
