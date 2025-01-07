@@ -115,3 +115,52 @@ class DmrComponentSchema(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+class GeneAnnotationViewSchema(BaseModel):
+    """Pydantic model matching gene_annotations_view"""
+    gene_id: int
+    symbol: str
+    description: Optional[str]
+    master_gene_id: Optional[int]
+    interaction_source: Optional[str]
+    promoter_info: Optional[str]
+    timepoint: Optional[str]
+    timepoint_id: Optional[int]
+    component_id: Optional[int]
+    triconnected_id: Optional[int]
+    degree: Optional[int]
+    node_type: Optional[str]
+    gene_type: Optional[str]
+    is_isolate: Optional[bool]
+    biclique_ids: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class DmrAnnotationViewSchema(BaseModel):
+    """Pydantic model matching dmr_annotations_view"""
+    dmr_id: int
+    dmr_number: Optional[int]
+    area_stat: Optional[float]
+    description: Optional[str]
+    dmr_name: Optional[str]
+    gene_description: Optional[str]
+    chromosome: Optional[str]
+    start_position: Optional[int]
+    end_position: Optional[int]
+    strand: Optional[str]
+    p_value: Optional[float]
+    q_value: Optional[float]
+    mean_methylation: Optional[float]
+    is_hub: Optional[bool]
+    timepoint: Optional[str]
+    timepoint_id: Optional[int]
+    component_id: Optional[int]
+    triconnected_id: Optional[int]
+    degree: Optional[int]
+    node_type: Optional[str]
+    is_isolate: Optional[bool]
+    biclique_ids: Optional[str]
+
+    class Config:
+        from_attributes = True

@@ -6,7 +6,8 @@ from ..schemas import (
     GraphComponentSchema, 
     BicliqueMemberSchema, 
     DmrComponentSchema,
-    GeneTimepointAnnotationSchema
+    GeneAnnotationViewSchema,
+    DmrAnnotationViewSchema
 )
 from ..database.connection import get_db_engine
 from sqlalchemy.orm import Session
@@ -211,19 +212,18 @@ def get_component_graph(timepoint_id, component_id):
             split_genes = set()
             for row in gene_results:
                 try:
-                    gene_data = GeneTimepointAnnotationSchema.model_validate(row)
+                    gene_data = GeneAnnotationViewSchema.model_validate(row)
                     gene_id = gene_data.gene_id
 
-                    # Check if gene is split based on biclique_ids or node_type
-                    if gene_data.biclique_ids:
+                    # Check if gene is split based on gene_type or biclique_ids
+                    if gene_data.gene_type and gene_data.gene_type.lower() == "split":
+                        split_genes.add(gene_id)
+                    elif gene_data.biclique_ids:
                         biclique_count = len(
                             [x for x in gene_data.biclique_ids.split(",") if x.strip()]
                         )
                         if biclique_count > 1:
                             split_genes.add(gene_id)
-
-                    if gene_data.node_type and gene_data.node_type.upper().startswith("SPLIT"):
-                        split_genes.add(gene_id)
                 except ValidationError as e:
                     app.logger.error(f"Error validating gene data: {e}")
                     continue
