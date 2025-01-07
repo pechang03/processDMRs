@@ -212,22 +212,22 @@ def get_component_graph(timepoint_id, component_id):
             split_genes = set()
             for row in gene_results:
                 try:
-                    gene_data = {
-                        "gene_id": row.gene_id,
-                        "symbol": row.symbol,
-                        "description": None,  # Add default values for required fields
-                        "master_gene_id": None,
-                        "interaction_source": None,
-                        "promoter_info": None,
-                        "timepoint": None,
-                        "timepoint_id": timepoint_id,
-                        "component_id": component_id,
-                        "degree": row.degree,
-                        "node_type": row.node_type,
-                        "gene_type": row.gene_type,
-                        "is_isolate": row.is_isolate,
-                        "biclique_ids": row.biclique_ids
-                    }
+                    gene_data = GeneAnnotationViewSchema(
+                        gene_id=row.gene_id,
+                        symbol=row.symbol,
+                        description=None,
+                        master_gene_id=None,
+                        interaction_source=None,
+                        promoter_info=None,
+                        timepoint=None,
+                        timepoint_id=timepoint_id,
+                        component_id=component_id,
+                        degree=row.degree,
+                        node_type=row.node_type,
+                        gene_type=row.gene_type,
+                        is_isolate=row.is_isolate,
+                        biclique_ids=row.biclique_ids
+                    )
                     
                     gene_metadata = GeneAnnotationViewSchema(**gene_data)
                     gene_id = gene_metadata.gene_id
