@@ -261,23 +261,25 @@ def get_gene_symbols():
 def get_gene_annotations():
     try:
         data = request.get_json()
-        # gene_ids = data.get('gene_ids', [])
         timepoint_id = data.get("timepoint_id")
         component_id = data.get("component_id")
 
-        if not timepoint_id:
-            return jsonify(
-                {"status": "error", "message": "timepoint_id is required"}
-            ), 400
-
-        if not component_id:
-            return jsonify(
-                {"status": "error", "message": "component_id is required"}
-            ), 400
+        if not all([timepoint_id, component_id]):
+            return jsonify({
+                "status": "error", 
+                "message": "Missing required parameters"
+            }), 400
 
         engine = get_db_engine()
         with Session(engine) as session:
+            # Modified query to get complete gene information
             query = text("""
+                WITH component_genes AS (
+                    SELECT unnest(string_to_array(cdv.all_gene_ids, ',')::integer[]) as gene_id
+                    FROM component_details_view cdv
+                    WHERE cdv.timepoint_id = :timepoint_id 
+                    AND cdv.component_id = :component_id
+                )
                 SELECT 
                     g.id as gene_id,
                     g.symbol,
@@ -285,49 +287,33 @@ def get_gene_annotations():
                     gta.gene_type,
                     gta.degree,
                     gta.is_isolate,
-                    gta.biclique_ids
-                FROM genes g
+                    gta.biclique_ids,
+                    COUNT(DISTINCT cb.biclique_id) as biclique_count
+                FROM component_genes cg
+                JOIN genes g ON g.id = cg.gene_id
                 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-                JOIN component_details_view cdv ON cdv.timepoint_id = gta.timepoint_id
+                LEFT JOIN component_bicliques cb ON cb.component_id = :component_id
                 WHERE gta.timepoint_id = :timepoint_id
-                AND cdv.component_id = :component_id
-                AND g.id = ANY(string_to_array(cdv.all_gene_ids, ',')::integer[])
+                GROUP BY 
+                    g.id, g.symbol, gta.node_type, gta.gene_type, 
+                    gta.degree, gta.is_isolate, gta.biclique_ids
             """)
 
-            results = session.execute(
-                query, {"timepoint_id": timepoint_id, "component_id": component_id}
-            ).fetchall()
+            results = session.execute(query, {
+                "timepoint_id": timepoint_id,
+                "component_id": component_id
+            }).fetchall()
 
-            # Convert results to dictionary using schema
             gene_info = {}
             for row in results:
-                try:
-                    annotation = GeneTimepointAnnotationSchema(
-                        timepoint_id=timepoint_id,
-                        gene_id=row.gene_id,
-                        node_type=row.node_type,
-                        gene_type=row.gene_type,
-                        degree=row.degree,
-                        is_isolate=row.is_isolate,
-                        biclique_ids=row.biclique_ids,
-                    )
-
-                    gene_info[str(row.gene_id)] = {
-                        "symbol": row.symbol,
-                        "is_split": annotation.gene_type == "split"
-                        if annotation.gene_type
-                        else False,
-                        "is_hub": annotation.node_type == "hub"
-                        if annotation.node_type
-                        else False,
-                        "degree": annotation.degree,
-                        "biclique_count": len(annotation.biclique_ids.split(","))
-                        if annotation.biclique_ids
-                        else 0,
-                    }
-                except Exception as e:
-                    app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
-                    continue
+                gene_info[str(row.gene_id)] = {
+                    "symbol": row.symbol or f"Gene_{row.gene_id}",
+                    "is_split": row.gene_type == "split" or row.biclique_count > 1,
+                    "is_hub": row.node_type == "hub",
+                    "degree": row.degree or 0,
+                    "biclique_count": row.biclique_count or 0,
+                    "biclique_ids": row.biclique_ids
+                }
 
             return jsonify({"status": "success", "gene_info": gene_info})
 
