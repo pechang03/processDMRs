@@ -361,42 +361,56 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setLoading(true);
       setError(null);
       
+      // Fetch component details
       fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
         .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          if (!response.ok) throw new Error('Failed to load component details');
           return response.json();
         })
         .then(data => {
           if (data.status === 'success') {
             setComponentDetails(data.data);
-            fetchGeneSymbols();
-            // Only fetch annotations if detailed view is needed
-            if (activeTab === 1) {
-              fetchGeneAnnotations();
-            }
-            // Fetch DMR status for all DMRs in the component
-            if (data.data.all_dmr_ids && data.data.all_dmr_ids.length > 0) {
-              fetchDmrNames(data.data.all_dmr_ids);
-            }
-          } else {
-            throw new Error(data.message || 'Failed to load component details');
+            // Fetch gene symbols and annotations
+            return Promise.all([
+              fetch(`http://localhost:5555/api/genes/symbols`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  timepoint_id: timepointId,
+                  component_id: componentId
+                })
+              }),
+              fetch(`http://localhost:5555/api/genes/annotations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  timepoint_id: timepointId,
+                  component_id: componentId
+                })
+              })
+            ]);
+          }
+        })
+        .then(([symbolsResponse, annotationsResponse]) => 
+          Promise.all([symbolsResponse.json(), annotationsResponse.json()])
+        )
+        .then(([symbolsData, annotationsData]) => {
+          if (symbolsData.status === 'success') {
+            setGeneSymbols(symbolsData.gene_info);
+          }
+          if (annotationsData.status === 'success') {
+            setGeneAnnotations(annotationsData.gene_info);
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          if (error.response?.status === 400 && error.response?.data?.biclique_count !== undefined) {
-            setError(`This is a simple component with ${error.response.data.biclique_count} biclique(s). Detailed analysis is only available for complex components with multiple bicliques.`);
-          } else {
-            setError(error.message || 'Failed to load component details');
-          }
+          setError(error.message);
         })
         .finally(() => {
           setLoading(false);
         });
     }
-  }, [timepointId, componentId, activeTab]);
+  }, [timepointId, componentId]);
 
   if (loading) {
     return (
@@ -488,35 +502,34 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
           <TabPanel className="bicliqueDetailTabs__tabPanel">
             <Box sx={{ maxHeight: '500px', overflow: 'auto' }}>
-              <TableContainer>
-                <Typography variant="h6" gutterBottom>Biclique Details</Typography>
-                {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
-                  <Accordion key={biclique.biclique_id}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>
-                        Biclique {index + 1} ({biclique.category}) - 
-                        {biclique.dmr_ids.length} DMRs, {biclique.gene_ids.length} Genes
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>Genes</Typography>
-                        <GeneTable 
-                          genes={biclique.gene_ids} 
-                          geneSymbols={geneSymbols}
-                        />
-                      </Box>
-                      <Box>
-                        <Typography variant="h6" gutterBottom>DMRs</Typography>
-                        <DMRTable 
-                          dmrs={biclique.dmr_ids} 
-                          dmrNames={dmrNames}
-                        />
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </TableContainer>
+              <Typography variant="h6" gutterBottom>Biclique Details</Typography>
+              {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
+                <Accordion key={biclique.biclique_id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>
+                      Biclique {index + 1} ({biclique.category}) - 
+                      {biclique.dmr_ids.split(',').length} DMRs, {biclique.gene_ids.split(',').length} Genes
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" gutterBottom>Genes</Typography>
+                      <GeneTable 
+                        genes={biclique.gene_ids} 
+                        geneSymbols={geneSymbols}
+                        geneAnnotations={geneAnnotations}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" gutterBottom>DMRs</Typography>
+                      <DMRTable 
+                        dmrs={biclique.dmr_ids} 
+                        dmrNames={dmrNames}
+                      />
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
             </Box>
           </TabPanel>
           <TabPanel className="bicliqueDetailTabs__tabPanel">
