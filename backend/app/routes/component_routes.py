@@ -244,17 +244,26 @@ def get_gene_symbols():
                 SELECT 
                     g.id as gene_id,
                     g.symbol,
+                    g.description,
+                    g.master_gene_id,
+                    g.interaction_source,
+                    g.promoter_info,
+                    t.name as timepoint,
+                    gta.timepoint_id,
+                    gta.component_id,
+                    gta.triconnected_id,
+                    gta.degree,
                     gta.node_type,
                     gta.gene_type,
-                    gta.degree,
                     gta.is_isolate,
                     gta.biclique_ids,
                     cg.biclique_count,
                     CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
                 FROM component_genes cg
                 JOIN genes g ON g.id = cg.gene_id
-                JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-                WHERE gta.timepoint_id = :timepoint_id
+                LEFT JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id 
+                    AND gta.timepoint_id = :timepoint_id
+                LEFT JOIN timepoints t ON gta.timepoint_id = t.id
             """)
 
             results = session.execute(query, {
@@ -262,26 +271,38 @@ def get_gene_symbols():
                 "component_id": component_id
             }).fetchall()
 
-            # Convert results to dictionary using schema
             gene_info = {}
             for row in results:
                 try:
-                    annotation = GeneTimepointAnnotationSchema(
-                        timepoint_id=timepoint_id,
-                        gene_id=row.gene_id,
-                        node_type=row.node_type,
-                        gene_type=row.gene_type,
-                        degree=row.degree,
-                        is_isolate=row.is_isolate,
-                        biclique_ids=row.biclique_ids,
-                    )
-
+                    # Create dictionary matching GeneAnnotationViewSchema
+                    gene_data = {
+                        "gene_id": row.gene_id,
+                        "symbol": row.symbol or f"Gene_{row.gene_id}",
+                        "description": row.description,
+                        "master_gene_id": row.master_gene_id,
+                        "interaction_source": row.interaction_source,
+                        "promoter_info": row.promoter_info,
+                        "timepoint": row.timepoint,
+                        "timepoint_id": row.timepoint_id,
+                        "component_id": row.component_id,
+                        "triconnected_id": row.triconnected_id,
+                        "degree": row.degree,
+                        "node_type": row.node_type,
+                        "gene_type": row.gene_type,
+                        "is_isolate": row.is_isolate,
+                        "biclique_ids": row.biclique_ids
+                    }
+                    
+                    # Validate with schema
+                    annotation = GeneAnnotationViewSchema(**gene_data)
+                    
+                    # Create response format
                     gene_info[str(row.gene_id)] = {
-                        "symbol": row.symbol,
+                        "symbol": annotation.symbol,
                         "is_split": bool(row.is_split),
                         "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
-                        "degree": annotation.degree,
-                        "biclique_count": row.biclique_count,
+                        "degree": annotation.degree or 0,
+                        "biclique_count": row.biclique_count or 0,
                         "biclique_ids": annotation.biclique_ids.split(",") if annotation.biclique_ids else []
                     }
                 except Exception as e:

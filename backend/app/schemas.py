@@ -143,22 +143,21 @@ class DmrComponentSchema(BaseModel):
 
 class GeneAnnotationViewSchema(BaseModel):
     """Pydantic model matching gene_annotations_view"""
-
     gene_id: int
     symbol: str
-    description: Optional[str]
-    master_gene_id: Optional[int]
-    interaction_source: Optional[str]
-    promoter_info: Optional[str]
-    timepoint: Optional[str]
-    timepoint_id: Optional[int]
-    component_id: Optional[int]
-    triconnected_id: Optional[int]
-    degree: Optional[int]
-    node_type: Optional[str]
-    gene_type: Optional[str]
-    is_isolate: Optional[bool]
-    biclique_ids: Optional[str]
+    description: Optional[str] = None
+    master_gene_id: Optional[int] = None
+    interaction_source: Optional[str] = None
+    promoter_info: Optional[str] = None
+    timepoint: Optional[str] = None
+    timepoint_id: Optional[int] = None
+    component_id: Optional[int] = None
+    triconnected_id: Optional[int] = None
+    degree: Optional[int] = None
+    node_type: Optional[str] = None
+    gene_type: Optional[str] = None
+    is_isolate: Optional[bool] = None
+    biclique_ids: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -212,15 +212,33 @@ def get_component_graph(timepoint_id, component_id):
             split_genes = set()
             for row in gene_results:
                 try:
-                    gene_data = GeneAnnotationViewSchema.model_validate(row)
-                    gene_id = gene_data.gene_id
+                    gene_data = {
+                        "gene_id": row.gene_id,
+                        "symbol": row.symbol,
+                        "description": None,  # Add default values for required fields
+                        "master_gene_id": None,
+                        "interaction_source": None,
+                        "promoter_info": None,
+                        "timepoint": None,
+                        "timepoint_id": timepoint_id,
+                        "component_id": component_id,
+                        "triconnected_id": row.triconnected_id,
+                        "degree": row.degree,
+                        "node_type": row.node_type,
+                        "gene_type": row.gene_type,
+                        "is_isolate": row.is_isolate,
+                        "biclique_ids": row.biclique_ids
+                    }
+                    
+                    gene_metadata = GeneAnnotationViewSchema(**gene_data)
+                    gene_id = gene_metadata.gene_id
 
                     # Check if gene is split based on gene_type or biclique_ids
-                    if gene_data.gene_type and gene_data.gene_type.lower() == "split":
+                    if gene_metadata.gene_type and gene_metadata.gene_type.lower() == "split":
                         split_genes.add(gene_id)
-                    elif gene_data.biclique_ids:
+                    elif gene_metadata.biclique_ids:
                         biclique_count = len(
-                            [x for x in gene_data.biclique_ids.split(",") if x.strip()]
+                            [x for x in gene_metadata.biclique_ids.split(",") if x.strip()]
                         )
                         if biclique_count > 1:
                             split_genes.add(gene_id)
