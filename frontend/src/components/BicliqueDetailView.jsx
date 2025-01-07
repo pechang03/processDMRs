@@ -26,7 +26,7 @@ import BicliqueGraphView from './BicliqueGraphView.jsx';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "../styles/BicliqueDetailView.css";
 
-const GeneTable = ({ genes, geneSymbols }) => {
+const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -49,7 +49,8 @@ const GeneTable = ({ genes, geneSymbols }) => {
   // Parse the genes string before mapping
   const geneArray = parseGenes(genes).map(geneId => ({
     id: geneId,
-    ...geneSymbols[geneId]
+    symbol: geneSymbols[geneId]?.symbol || `Gene ${geneId}`,
+    ...(geneAnnotations?.[geneId] || {})
   }));
 
   return (
@@ -179,9 +180,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
   const [dmrNames, setDmrNames] = useState({});
   const [activeTab, setActiveTab] = useState(0);
 
-  const fetchGeneSymbols = async (geneIds) => {
+  const [geneAnnotations, setGeneAnnotations] = useState({});
+
+  // For basic symbol lookup
+  const fetchGeneSymbols = async () => {
     try {
-      console.log('Fetching gene symbols for component:', componentId);
       const response = await fetch(`http://localhost:5555/api/genes/symbols`, {
         method: 'POST',
         headers: {
@@ -194,7 +197,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
       });
       if (!response.ok) throw new Error('Failed to fetch gene symbols');
       const data = await response.json();
-      console.log('Received gene data:', data);
       if (data.status === 'success' && data.gene_info) {
         setGeneSymbols(data.gene_info);
       } else {
@@ -202,6 +204,29 @@ function BicliqueDetailView({ timepointId, componentId }) {
       }
     } catch (error) {
       console.error('Error fetching gene symbols:', error);
+    }
+  };
+
+  // For detailed gene information
+  const fetchGeneAnnotations = async () => {
+    try {
+      const response = await fetch(`http://localhost:5555/api/genes/annotations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          timepoint_id: timepointId,
+          component_id: componentId
+        })
+      });
+      if (!response.ok) throw new Error('Failed to fetch gene annotations');
+      const data = await response.json();
+      if (data.status === 'success' && data.gene_info) {
+        setGeneAnnotations(data.gene_info);
+      }
+    } catch (error) {
+      console.error('Error fetching gene annotations:', error);
     }
   };
 
@@ -331,25 +356,20 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setLoading(true);
       setError(null);
       
-      console.log(`Fetching details for component ${componentId} from timepoint ${timepointId}`);
-      
       fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
         .then(response => {
-          console.log('Response status:', response.status);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         })
         .then(data => {
-          console.log('Received component data:', data);
-          console.log('Component details:', data.data);
-          console.log('Bicliques:', data.data?.bicliques);
           if (data.status === 'success') {
             setComponentDetails(data.data);
-            // Fetch gene symbols for all genes in the component
-            if (data.data.all_gene_ids && data.data.all_gene_ids.length > 0) {
-              fetchGeneSymbols(data.data.all_gene_ids);
+            fetchGeneSymbols();
+            // Only fetch annotations if detailed view is needed
+            if (activeTab === 1) {
+              fetchGeneAnnotations();
             }
             // Fetch DMR status for all DMRs in the component
             if (data.data.all_dmr_ids && data.data.all_dmr_ids.length > 0) {
@@ -371,7 +391,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
           setLoading(false);
         });
     }
-  }, [timepointId, componentId]);
+  }, [timepointId, componentId, activeTab]);
 
   if (loading) {
     return (

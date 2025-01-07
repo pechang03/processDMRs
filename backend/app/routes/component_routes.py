@@ -228,42 +228,14 @@ def get_gene_symbols():
 
         engine = get_db_engine()
         with Session(engine) as session:
-            # Modified query to get genes through component_bicliques
+            # Simplified query to only get gene IDs and symbols
             query = text("""
-                WITH component_genes AS (
-                    SELECT DISTINCT
-                        g.id as gene_id,
-                        COUNT(DISTINCT cb.biclique_id) as biclique_count
-                    FROM genes g
-                    JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
-                    JOIN component_bicliques cb ON b.id = cb.biclique_id
-                    WHERE cb.component_id = :component_id
-                    AND cb.timepoint_id = :timepoint_id
-                    GROUP BY g.id
-                )
-                SELECT 
-                    g.id as gene_id,
-                    g.symbol,
-                    g.description,
-                    g.master_gene_id,
-                    g.interaction_source,
-                    g.promoter_info,
-                    t.name as timepoint,
-                    gta.timepoint_id,
-                    gta.component_id,
-                    gta.triconnected_id,
-                    gta.degree,
-                    gta.node_type,
-                    gta.gene_type,
-                    gta.is_isolate,
-                    gta.biclique_ids,
-                    cg.biclique_count,
-                    CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
-                FROM component_genes cg
-                JOIN genes g ON g.id = cg.gene_id
-                LEFT JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id 
-                    AND gta.timepoint_id = :timepoint_id
-                LEFT JOIN timepoints t ON gta.timepoint_id = t.id
+                SELECT DISTINCT g.id as gene_id, g.symbol
+                FROM genes g
+                JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
+                JOIN component_bicliques cb ON b.id = cb.biclique_id
+                WHERE cb.component_id = :component_id
+                AND cb.timepoint_id = :timepoint_id
             """)
 
             results = session.execute(query, {
@@ -271,43 +243,12 @@ def get_gene_symbols():
                 "component_id": component_id
             }).fetchall()
 
-            gene_info = {}
-            for row in results:
-                try:
-                    # Create dictionary matching GeneAnnotationViewSchema
-                    gene_data = {
-                        "gene_id": row.gene_id,
-                        "symbol": row.symbol or f"Gene_{row.gene_id}",
-                        "description": row.description,
-                        "master_gene_id": row.master_gene_id,
-                        "interaction_source": row.interaction_source,
-                        "promoter_info": row.promoter_info,
-                        "timepoint": row.timepoint,
-                        "timepoint_id": row.timepoint_id,
-                        "component_id": row.component_id,
-                        "triconnected_id": row.triconnected_id,
-                        "degree": row.degree,
-                        "node_type": row.node_type,
-                        "gene_type": row.gene_type,
-                        "is_isolate": row.is_isolate,
-                        "biclique_ids": row.biclique_ids
-                    }
-                    
-                    # Validate with schema
-                    annotation = GeneAnnotationViewSchema(**gene_data)
-                    
-                    # Create response format
-                    gene_info[str(row.gene_id)] = {
-                        "symbol": annotation.symbol,
-                        "is_split": bool(row.is_split),
-                        "is_hub": annotation.node_type == "hub" if annotation.node_type else False,
-                        "degree": annotation.degree or 0,
-                        "biclique_count": row.biclique_count or 0,
-                        "biclique_ids": annotation.biclique_ids.split(",") if annotation.biclique_ids else []
-                    }
-                except Exception as e:
-                    app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
-                    continue
+            gene_info = {
+                str(row.gene_id): {
+                    "symbol": row.symbol or f"Gene_{row.gene_id}"
+                }
+                for row in results
+            }
 
             return jsonify({"status": "success", "gene_info": gene_info})
 
