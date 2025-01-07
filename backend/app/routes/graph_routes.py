@@ -17,9 +17,10 @@ def parse_id_string(id_str):
     if not id_str:
         return set()
     # Remove brackets and split by comma
-    cleaned = id_str.replace('[', '').replace(']', '').strip()
+    cleaned = id_str.replace("[", "").replace("]", "").strip()
     # Split and convert to integers, filtering out empty strings
-    return {int(x.strip()) for x in cleaned.split(',') if x.strip()}
+    return {int(x.strip()) for x in cleaned.split(",") if x.strip()}
+
 
 @app.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
@@ -83,7 +84,6 @@ def get_component_graph(timepoint_id, component_id):
             result = session.execute(
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).first()
-
             if not result:
                 app.logger.error("Query returned no results after verifying existence")
                 return jsonify(
@@ -135,6 +135,7 @@ def get_component_graph(timepoint_id, component_id):
             bicliques = []
             for b in component_data.bicliques:
                 try:
+                    app.logger.debug(f"Component {b}")
                     # Parse DMR and gene IDs using the helper function
                     dmr_set = parse_id_string(b.dmr_ids)
                     gene_set = parse_id_string(b.gene_ids)
@@ -150,7 +151,8 @@ def get_component_graph(timepoint_id, component_id):
             all_gene_ids = parse_id_string(component_data.gene_ids)
 
             # Get node metadata
-            dmr_query = text("""
+            dmr_query = text(
+                """
                 SELECT 
                     dta.dmr_id as id,
                     d.area,
@@ -159,10 +161,12 @@ def get_component_graph(timepoint_id, component_id):
                 JOIN dmrs d ON d.id = dta.dmr_id
                 WHERE dta.timepoint_id = :timepoint_id
                 AND dta.dmr_id IN ({})
-            """.format(','.join('?' * len(all_dmr_ids))))
+            """.format(",".join("?" * len(all_dmr_ids)))
+            )
 
             # Get gene annotations including split gene information
-            gene_query = text("""
+            gene_query = text(
+                """
                 SELECT 
                     g.id as gene_id,
                     gta.node_type,
@@ -174,7 +178,8 @@ def get_component_graph(timepoint_id, component_id):
                 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
                 WHERE gta.timepoint_id = :timepoint_id
                 AND g.id IN ({})
-            """.format(','.join('?' * len(all_gene_ids))))
+            """.format(",".join("?" * len(all_gene_ids)))
+            )
 
             # Get metadata
             dmr_metadata = {}
@@ -182,11 +187,13 @@ def get_component_graph(timepoint_id, component_id):
 
             if all_dmr_ids:  # Only execute if we have DMR IDs
                 dmr_results = session.execute(
-                    dmr_query, 
+                    dmr_query,
                     {
                         "timepoint_id": timepoint_id,
-                        **dict(enumerate(all_dmr_ids))  # Unpack the DMR IDs as positional parameters
-                    }
+                        **dict(
+                            enumerate(all_dmr_ids)
+                        ),  # Unpack the DMR IDs as positional parameters
+                    },
                 ).fetchall()
             else:
                 dmr_results = []
@@ -207,18 +214,22 @@ def get_component_graph(timepoint_id, component_id):
             split_genes = set()
             for row in gene_results:
                 gene_id = int(row.gene_id)  # Ensure gene_id is an integer
-                
+
                 # Check if biclique_ids is a string and contains data
                 if row.biclique_ids and isinstance(row.biclique_ids, str):
-                    biclique_count = len([x for x in row.biclique_ids.split(',') if x.strip()])
+                    biclique_count = len(
+                        [x for x in row.biclique_ids.split(",") if x.strip()]
+                    )
                     if biclique_count > 1:
                         split_genes.add(gene_id)
-                
+
                 # Also check node_type for SPLIT
-                if row.node_type and row.node_type.upper().startswith('SPLIT'):
+                if row.node_type and row.node_type.upper().startswith("SPLIT"):
                     split_genes.add(gene_id)
 
-            app.logger.debug(f"Found {len(split_genes)} split genes from annotations: {split_genes}")
+            app.logger.debug(
+                f"Found {len(split_genes)} split genes from annotations: {split_genes}"
+            )
 
             # Create node labels
             node_labels = {}
@@ -236,8 +247,12 @@ def get_component_graph(timepoint_id, component_id):
                         graph.add_edge(dmr, gene)
 
             # Add debug logging for node IDs before creating NodeInfo
-            app.logger.debug(f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}")
-            app.logger.debug(f"all_gene_ids type: {type(all_gene_ids)}, content: {all_gene_ids}")
+            app.logger.debug(
+                f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}"
+            )
+            app.logger.debug(
+                f"all_gene_ids type: {type(all_gene_ids)}, content: {all_gene_ids}"
+            )
 
             # Ensure all IDs are integers
             all_dmr_ids = {int(x) for x in all_dmr_ids}
