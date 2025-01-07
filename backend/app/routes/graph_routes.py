@@ -188,7 +188,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get metadata
             dmr_metadata = {}
-            gene_metadata = {}  # This should be a dictionary, not a model
+            gene_metadata = {}  # Dictionary to store all gene information
 
             dmr_results = session.execute(
                 dmr_query, {"timepoint_id": timepoint_id, "component_id": component_id}
@@ -198,6 +198,7 @@ def get_component_graph(timepoint_id, component_id):
                 gene_query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
             app.logger.debug("graph_routes point 1")
+            
             # Create metadata dictionaries using Pydantic models
             for dmr in dmr_results:
                 try:
@@ -229,18 +230,21 @@ def get_component_graph(timepoint_id, component_id):
                         biclique_ids=row.biclique_ids
                     )
                     
-                    # Store the gene metadata in the dictionary
-                    gene_metadata[gene_data.gene_id] = gene_data.model_dump()
+                    # Convert to dictionary and add derived fields
+                    gene_dict = gene_data.model_dump()
+                    gene_dict.update({
+                        'is_split': gene_data.gene_type == "split" if gene_data.gene_type else False,
+                        'is_hub': gene_data.node_type == "hub" if gene_data.node_type else False,
+                        'biclique_count': len(gene_data.biclique_ids.split(",")) if gene_data.biclique_ids else 0
+                    })
+                    
+                    # Store the enhanced gene metadata
+                    gene_metadata[gene_data.gene_id] = gene_dict
                     
                     # Check if gene is split based on gene_type or biclique_ids
-                    if gene_data.gene_type and gene_data.gene_type.lower() == "split":
+                    if gene_dict['is_split'] or gene_dict['biclique_count'] > 1:
                         split_genes.add(gene_data.gene_id)
-                    elif gene_data.biclique_ids:
-                        biclique_count = len(
-                            [x for x in gene_data.biclique_ids.split(",") if x.strip()]
-                        )
-                        if biclique_count > 1:
-                            split_genes.add(gene_data.gene_id)
+                        
                 except ValidationError as e:
                     app.logger.error(f"Error validating gene data: {e}")
                     continue
