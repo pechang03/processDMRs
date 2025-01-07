@@ -34,7 +34,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   const parseGenes = (genesStr) => {
     if (!genesStr) return [];
     if (Array.isArray(genesStr)) return genesStr;
-    return genesStr.split(',').map(id => parseInt(id.trim()));
+    return genesStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
   };
 
   const handleChangePage = (event, newPage) => {
@@ -47,11 +47,18 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   };
 
   // Parse the genes string before mapping
-  const geneArray = parseGenes(genes).map(geneId => ({
-    id: geneId,
-    symbol: geneSymbols[geneId]?.symbol || `Gene ${geneId}`,
-    ...(geneAnnotations?.[geneId] || {})
-  }));
+  const geneArray = parseGenes(genes).map(geneId => {
+    const geneInfo = geneSymbols[geneId] || {};
+    return {
+      id: geneId,
+      symbol: geneInfo.symbol || `Gene ${geneId}`,
+      type: geneInfo.is_split ? 'Split' : geneInfo.is_hub ? 'Hub' : 'Regular',
+      degree: geneInfo.degree || 0,
+      biclique_count: geneInfo.biclique_count || 0,
+      is_hub: geneInfo.is_hub || false,
+      is_split: geneInfo.is_split || false
+    };
+  });
 
   return (
     <Box>
@@ -74,9 +81,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
                 <TableRow key={gene.id}>
                   <TableCell>{gene.id}</TableCell>
                   <TableCell>{gene.symbol}</TableCell>
-                  <TableCell>
-                    {gene.is_split ? 'Split' : gene.is_hub ? 'Hub' : 'Regular'}
-                  </TableCell>
+                  <TableCell>{gene.type}</TableCell>
                   <TableCell align="right">{gene.degree}</TableCell>
                   <TableCell align="right">{gene.biclique_count}</TableCell>
                   <TableCell>
