@@ -1,7 +1,7 @@
 import React from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
+import './styles/TabStyles.css';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
@@ -114,28 +114,16 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
         </Typography>
           
         <Tabs
-        selectedIndex={selectedTab}
-        onSelect={index => setSelectedTab(index)}
-        className="react-tabs"
-        style={{
-            border: 'none',
-            borderRadius: theme.shape.borderRadius,
-            '& .react-tabs__tab': {
-            border: 'none',
-            borderBottom: '2px solid transparent',
-            '&--selected': {
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main
-            }
-            }
-        }}
+          selectedIndex={selectedTab}
+          onSelect={index => setSelectedTab(index)}
+          className="reactTabs"
         >
-        <TabList>
-            <Tab>Overview</Tab>
-            <Tab>Analysis</Tab>
-            <Tab disabled={!selectedTimepoint}>Components</Tab>
-            <Tab disabled={!selectedComponent}>Statistics</Tab>
-        </TabList>
+          <TabList className="reactTabs__tabList">
+            <Tab className="reactTabs__tab">Overview</Tab>
+            <Tab className="reactTabs__tab">Analysis</Tab>
+            <Tab className="reactTabs__tab" disabled={!selectedTimepoint}>Components</Tab>
+            <Tab className="reactTabs__tab" disabled={!selectedComponent}>Statistics</Tab>
+          </TabList>
 
         <TabPanel>
             <Grid container spacing={3}>

@@ -1,0 +1,30 @@
+.reactTabs {
+  border: none;
+  border-radius: 4px;
+}
+
+.reactTabs__tab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.reactTabs__tab--selected {
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.reactTabs__tabList {
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.reactTabs__tabPanel {
+  display: none;
+}
+
+.reactTabs__tabPanel--selected {
+  display: block;
+}

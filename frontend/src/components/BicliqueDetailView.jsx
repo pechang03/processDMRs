@@ -462,47 +462,52 @@ function BicliqueDetailView({ timepointId, componentId }) {
           </TabList>
 
           <TabPanel className="reactTabs__tabPanel">
-            <TableContainer>
-              <Typography variant="h6" gutterBottom>Biclique Details</Typography>
-              {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
-                <Accordion key={biclique.biclique_id}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>
-                      Biclique {index + 1} ({biclique.category}) - 
-                      {biclique.dmr_ids.length} DMRs, {biclique.gene_ids.length} Genes
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="h6" gutterBottom>Genes</Typography>
-                      <GeneTable 
-                        genes={biclique.gene_ids} 
-                        geneSymbols={geneSymbols}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" gutterBottom>DMRs</Typography>
-                      <DMRTable 
-                        dmrs={biclique.dmr_ids} 
-                        dmrNames={dmrNames}
-                      />
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </TableContainer>
+            <Box sx={{ maxHeight: '500px', overflow: 'auto' }}>
+              <TableContainer>
+                <Typography variant="h6" gutterBottom>Biclique Details</Typography>
+                {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
+                  <Accordion key={biclique.biclique_id}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>
+                        Biclique {index + 1} ({biclique.category}) - 
+                        {biclique.dmr_ids.length} DMRs, {biclique.gene_ids.length} Genes
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom>Genes</Typography>
+                        <GeneTable 
+                          genes={biclique.gene_ids} 
+                          geneSymbols={geneSymbols}
+                        />
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" gutterBottom>DMRs</Typography>
+                        <DMRTable 
+                          dmrs={biclique.dmr_ids} 
+                          dmrNames={dmrNames}
+                        />
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </TableContainer>
+            </Box>
           </TabPanel>
           <TabPanel className="reactTabs__tabPanel">
             {/* Add detailed view here */}
           </TabPanel>
         </Tabs>
       </Paper>
-      <BicliqueGraphView
-        componentId={componentId}
-        timepointId={timepointId}
-        geneSymbols={geneSymbols}
-        dmrNames={dmrNames}
-      />
+      
+      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <BicliqueGraphView
+          componentId={componentId}
+          timepointId={timepointId}
+          geneSymbols={geneSymbols}
+          dmrNames={dmrNames}
+        />
+      </Paper>
     </Box>
   );
 }
