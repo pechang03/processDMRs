@@ -454,14 +454,14 @@ function BicliqueDetailView({ timepointId, componentId }) {
         <Tabs
           onSelect={(index) => setActiveTab(index)}
           selectedIndex={activeTab}
-          className="reactTabs"
+          className="bicliqueDetailTabs"
         >
-          <TabList className="reactTabs__tabList">
-            <Tab className="reactTabs__tab">Overview</Tab>
-            <Tab className="reactTabs__tab">Details</Tab>
+          <TabList className="bicliqueDetailTabs__tabList">
+            <Tab className="bicliqueDetailTabs__tab">Overview</Tab>
+            <Tab className="bicliqueDetailTabs__tab">Details</Tab>
           </TabList>
 
-          <TabPanel className="reactTabs__tabPanel">
+          <TabPanel className="bicliqueDetailTabs__tabPanel">
             <Box sx={{ maxHeight: '500px', overflow: 'auto' }}>
               <TableContainer>
                 <Typography variant="h6" gutterBottom>Biclique Details</Typography>
@@ -494,7 +494,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
               </TableContainer>
             </Box>
           </TabPanel>
-          <TabPanel className="reactTabs__tabPanel">
+          <TabPanel className="bicliqueDetailTabs__tabPanel">
             {/* Add detailed view here */}
           </TabPanel>
         </Tabs>

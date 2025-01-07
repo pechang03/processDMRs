@@ -1,14 +1,14 @@
-.reactTabs {
+.bicliqueDetailTabs {
   -webkit-tap-highlight-color: transparent;
 }
 
-.reactTabs__tabList {
+.bicliqueDetailTabs__tabList {
   border-bottom: 1px solid #aaa;
   margin: 0 0 10px;
   padding: 0;
 }
 
-.reactTabs__tab {
+.bicliqueDetailTabs__tab {
   display: inline-block;
   border: 1px solid transparent;
   border-bottom: none;
@@ -19,26 +19,26 @@
   cursor: pointer;
 }
 
-.reactTabs__tab--selected {
+.bicliqueDetailTabs__tab--selected {
   background: #fff;
   border-color: #aaa;
   color: black;
   border-radius: 5px 5px 0 0;
 }
 
-.reactTabs__tabPanel {
+.bicliqueDetailTabs__tabPanel {
   display: none;
 }
 
-.reactTabs__tabPanel--selected {
+.bicliqueDetailTabs__tabPanel--selected {
   display: block;
 }
 
-.reactTabs__tab:focus {
+.bicliqueDetailTabs__tab:focus {
   outline: none;
 }
 
-.reactTabs__tab:focus:after {
+.bicliqueDetailTabs__tab:focus:after {
   content: '';
   position: absolute;
   height: 5px;
