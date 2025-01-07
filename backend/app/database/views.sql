@@ -46,3 +46,18 @@ SELECT
 FROM dmrs d
 LEFT JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
+
+-- View for DMR component data
+CREATE VIEW dmr_component_view AS
+SELECT 
+    dta.timepoint_id,
+    dta.dmr_id,
+    dta.component_id,
+    dta.node_type,
+    dta.degree,
+    dta.is_isolate,
+    dta.biclique_ids,
+    d.area_stat as area,  -- Using area_stat from the schema instead of area
+    d.description
+FROM dmr_timepoint_annotations dta
+JOIN dmrs d ON d.id = dta.dmr_id;

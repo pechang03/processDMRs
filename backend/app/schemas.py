@@ -101,3 +101,17 @@ class NodeStatusRequest(BaseModel):
     """Schema for node status request"""
     dmr_ids: List[int]
     timepoint_id: int
+
+class DmrComponentSchema(BaseModel):
+    """Schema for DMR component data"""
+    dmr_id: int = Field(alias='id')
+    area: Optional[float]
+    description: Optional[str]
+    node_type: Optional[str]
+    degree: Optional[int]
+    is_isolate: Optional[bool]
+    biclique_ids: Optional[str]
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
