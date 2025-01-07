@@ -38,7 +38,7 @@ SELECT
     d.mean_methylation,
     d.is_hub,
     t.name AS timepoint,
-    dta.timepoint_id,      -- Added from views.sql
+    dta.timepoint_id,
     dta.component_id,
     dta.triconnected_id,
     dta.degree,
@@ -51,7 +51,7 @@ LEFT JOIN timepoints t ON dta.timepoint_id = t.id;
 
 -- Component summary view
 CREATE VIEW component_summary_view AS
-SELECT 
+SELECT
     c.id AS component_id,
     c.timepoint_id,
     t.name AS timepoint,
@@ -62,14 +62,14 @@ SELECT
     c.gene_count,
     c.edge_count,
     c.density,
-    COUNT(DISTINCT cb.biclique_id) as biclique_count,
-    GROUP_CONCAT(DISTINCT b.category) as biclique_categories
+    COUNT(DISTINCT cb.biclique_id) AS biclique_count,
+    GROUP_CONCAT(DISTINCT b.category) AS biclique_categories
 FROM components c
 JOIN timepoints t ON c.timepoint_id = t.id
 LEFT JOIN component_bicliques cb ON c.id = cb.component_id
 LEFT JOIN bicliques b ON cb.biclique_id = b.id
-GROUP BY 
-    c.id, c.timepoint_id, t.name, c.graph_type, c.category, 
+GROUP BY
+    c.id, c.timepoint_id, t.name, c.graph_type, c.category,
     c.size, c.dmr_count, c.gene_count, c.edge_count, c.density;
 
 -- Component details view with concatenated DMR and gene IDs
