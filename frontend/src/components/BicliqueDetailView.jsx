@@ -30,6 +30,13 @@ const GeneTable = ({ genes, geneSymbols }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Parse the genes string into an array of integers
+  const parseGenes = (genesStr) => {
+    if (!genesStr) return [];
+    if (Array.isArray(genesStr)) return genesStr;
+    return genesStr.split(',').map(id => parseInt(id.trim()));
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -39,7 +46,8 @@ const GeneTable = ({ genes, geneSymbols }) => {
     setPage(0);
   };
 
-  const geneArray = genes.map(geneId => ({
+  // Parse the genes string before mapping
+  const geneArray = parseGenes(genes).map(geneId => ({
     id: geneId,
     ...geneSymbols[geneId]
   }));
@@ -98,6 +106,13 @@ const DMRTable = ({ dmrs, dmrNames }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Parse the DMRs string into an array of integers
+  const parseDMRs = (dmrsStr) => {
+    if (!dmrsStr) return [];
+    if (Array.isArray(dmrsStr)) return dmrsStr;
+    return dmrsStr.split(',').map(id => parseInt(id.trim()));
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -107,7 +122,8 @@ const DMRTable = ({ dmrs, dmrNames }) => {
     setPage(0);
   };
 
-  const dmrArray = dmrs.map(dmrId => ({
+  // Parse the DMRs string before mapping
+  const dmrArray = parseDMRs(dmrs).map(dmrId => ({
     id: dmrId,
     ...dmrNames[dmrId]
   }));
