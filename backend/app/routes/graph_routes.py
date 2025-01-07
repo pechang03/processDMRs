@@ -165,21 +165,18 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Get gene annotations including split gene information
-            gene_query = text(
-                """
+            gene_query = text("""
                 SELECT 
-                    g.id as gene_id,
+                    gta.gene_id,
                     gta.node_type,
                     CASE 
                         WHEN gta.biclique_ids IS NULL THEN ''
                         ELSE gta.biclique_ids 
                     END as biclique_ids
-                FROM genes g
-                JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-                WHERE gta.timepoint_id = :timepoint_id
-                AND g.id IN ({})
-            """.format(",".join("?" * len(all_gene_ids)))
-            )
+                FROM gene_timepoint_annotations gta
+                WHERE gta.timepoint_id = :timepoint_id 
+                AND gta.component_id = :component_id
+            """)
 
             # Get metadata
             dmr_metadata = {}
