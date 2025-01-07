@@ -7,8 +7,8 @@ SELECT
     g.master_gene_id,
     g.interaction_source,
     g.promoter_info,
-    t.id AS timepoint_id,
     t.name AS timepoint,
+    gta.timepoint_id,      -- Added from views.sql
     gta.component_id,
     gta.triconnected_id,
     gta.degree,
@@ -38,6 +38,7 @@ SELECT
     d.mean_methylation,
     d.is_hub,
     t.name AS timepoint,
+    dta.timepoint_id,      -- Added from views.sql
     dta.component_id,
     dta.triconnected_id,
     dta.degree,
