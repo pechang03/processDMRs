@@ -47,9 +47,9 @@ def get_component_graph(timepoint_id, component_id):
             if not timepoint_name:
                 return jsonify({"error": "Timepoint not found", "status": 404}), 404
                 
-        # Get the graphs for this timepoint
-        original_graph = current_app.graph_manager.get_original_graph(timepoint_name)
-        split_graph = current_app.graph_manager.get_split_graph(timepoint_name)
+        # Get the graphs for this timepoint using app.graph_manager instead of current_app
+        original_graph = app.graph_manager.get_original_graph(timepoint_name)
+        split_graph = app.graph_manager.get_split_graph(timepoint_name)
         
         if not original_graph or not split_graph:
             return jsonify({"error": "Graphs not found for timepoint", "status": 404}), 404

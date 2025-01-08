@@ -38,10 +38,9 @@ def configure_app(app, test_config=None):
     # Ensure graph data directory exists
     os.makedirs(app.config['GRAPH_DATA_DIR'], exist_ok=True)
     
-    # Initialize graph manager with app context
-    with app.app_context():
-        from .core.graph_manager import GraphManager
-        app.graph_manager = GraphManager()
+    # Initialize graph manager
+    from .core.graph_manager import GraphManager
+    app.graph_manager = GraphManager()
 
 def register_routes(app):
     """Register application routes"""
