@@ -46,9 +46,22 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
     setPage(0);
   };
 
+  // Add defensive check for geneSymbols
+  if (!geneSymbols) {
+    return <Typography>Loading gene information...</Typography>;
+  }
+
   // Parse the genes string before mapping
   const geneArray = parseGenes(genes).map(geneId => {
-    const geneInfo = geneSymbols[geneId] || {};
+    // Add defensive check for each gene ID
+    const geneInfo = geneSymbols[geneId] || {
+      symbol: `Gene ${geneId}`,
+      is_split: false,
+      is_hub: false,
+      degree: 0,
+      biclique_count: 0
+    };
+
     return {
       id: geneId,
       symbol: geneInfo.symbol || `Gene ${geneId}`,
@@ -59,6 +72,11 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
       is_split: geneInfo.is_split || false
     };
   });
+
+  // Add check for empty geneArray
+  if (geneArray.length === 0) {
+    return <Typography>No genes to display</Typography>;
+  }
 
   return (
     <Box>
