@@ -44,6 +44,9 @@ def configure_app(app, test_config=None):
 
 def register_routes(app):
     """Register application routes"""
+    from .routes.graph_routes import graph_bp
+    app.register_blueprint(graph_bp)
+
     @app.route('/api/health')
     def health_check():
         return jsonify({"status": "healthy"})

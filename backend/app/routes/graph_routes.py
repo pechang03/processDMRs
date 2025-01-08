@@ -1,7 +1,6 @@
 import json
-from flask import jsonify, current_app
+from flask import jsonify, current_app, Blueprint
 from pydantic import ValidationError
-from ..utils.extensions import app
 from ..schemas import (
     GraphComponentSchema, 
     BicliqueMemberSchema, 
@@ -28,10 +27,12 @@ def parse_id_string(id_str):
     return {int(x.strip()) for x in cleaned.split(",") if x.strip()}
 
 
-@app.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
+graph_bp = Blueprint('graph', __name__)
+
+@graph_bp.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
     """Get graph visualization data for a specific component."""
-    app.logger.info(
+    current_app.logger.info(
         f"Fetching graph for timepoint={timepoint_id}, component={component_id}"
     )
 
@@ -48,8 +49,8 @@ def get_component_graph(timepoint_id, component_id):
                 return jsonify({"error": "Timepoint not found", "status": 404}), 404
                 
         # Get the graphs for this timepoint using app.graph_manager instead of current_app
-        original_graph = app.graph_manager.get_original_graph(timepoint_name)
-        split_graph = app.graph_manager.get_split_graph(timepoint_name)
+        original_graph = current_app.graph_manager.get_original_graph(timepoint_name)
+        split_graph = current_app.graph_manager.get_split_graph(timepoint_name)
         
         if not original_graph or not split_graph:
             return jsonify({"error": "Graphs not found for timepoint", "status": 404}), 404
@@ -69,10 +70,10 @@ def get_component_graph(timepoint_id, component_id):
                 {"timepoint_id": timepoint_id, "component_id": component_id},
             ).scalar()
 
-            app.logger.info(f"Found {count} matching components")
+            current_app.logger.info(f"Found {count} matching components")
 
             if count == 0:
-                app.logger.error(
+                current_app.logger.error(
                     f"Component {component_id} not found for timepoint {timepoint_id}"
                 )
                 return jsonify({"error": "Component not found", "status": 404}), 404
@@ -109,7 +110,7 @@ def get_component_graph(timepoint_id, component_id):
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).first()
             if not result:
-                app.logger.error("Query returned no results after verifying existence")
+                current_app.logger.error("Query returned no results after verifying existence")
                 return jsonify(
                     {"error": "Failed to retrieve component data", "status": 500}
                 ), 500
@@ -128,7 +129,7 @@ def get_component_graph(timepoint_id, component_id):
                     ],
                 )
             except ValidationError as e:
-                app.logger.error(f"Validation error: {e}")
+                current_app.logger.error(f"Validation error: {e}")
                 return jsonify(
                     {
                         "error": "Invalid component data",
@@ -137,7 +138,7 @@ def get_component_graph(timepoint_id, component_id):
                     }
                 ), 500
 
-            app.logger.debug(f"Validated component data: {component_data}")
+            current_app.logger.debug(f"Validated component data: {component_data}")
 
             # Get bicliques for this component
             bicliques_query = text("""
@@ -153,21 +154,21 @@ def get_component_graph(timepoint_id, component_id):
                 bicliques_query, {"component_id": component_id}
             ).fetchall()
 
-            app.logger.info(f"Found {len(bicliques_result)} bicliques")
+            current_app.logger.info(f"Found {len(bicliques_result)} bicliques")
 
             # Parse bicliques data
             bicliques = []
             for b in component_data.bicliques:
                 try:
-                    app.logger.debug(f"Component {b}")
+                    current_app.logger.debug(f"Component {b}")
                     # Parse DMR and gene IDs using the helper function
                     dmr_set = parse_id_string(b.dmr_ids)
                     gene_set = parse_id_string(b.gene_ids)
                     bicliques.append((dmr_set, gene_set))
                 except Exception as e:
-                    app.logger.error(f"Error parsing biclique data: {str(e)}")
-                    app.logger.error(f"DMR IDs: {b.dmr_ids}")
-                    app.logger.error(f"Gene IDs: {b.gene_ids}")
+                    current_app.logger.error(f"Error parsing biclique data: {str(e)}")
+                    current_app.logger.error(f"DMR IDs: {b.dmr_ids}")
+                    current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
             # Extract all DMR and gene IDs from the component data
@@ -215,7 +216,7 @@ def get_component_graph(timepoint_id, component_id):
             gene_results = session.execute(
                 gene_query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
-            app.logger.debug("graph_routes point 1")
+            current_app.logger.debug("graph_routes point 1")
             
             # Create metadata dictionaries using Pydantic models
             for dmr in dmr_results:
@@ -223,11 +224,11 @@ def get_component_graph(timepoint_id, component_id):
                     dmr_data = DmrComponentSchema.model_validate(dmr)
                     dmr_metadata[dmr_data.id] = dmr_data.model_dump()
                 except ValidationError as e:
-                    app.logger.error(f"Error validating DMR data: {e}")
+                    current_app.logger.error(f"Error validating DMR data: {e}")
                     continue
 
             # Identify split genes from annotations using Pydantic models
-            app.logger.debug("graph_routes point 2")
+            current_app.logger.debug("graph_routes point 2")
             split_genes = set()
             for row in gene_results:
                 try:
@@ -264,10 +265,10 @@ def get_component_graph(timepoint_id, component_id):
                         split_genes.add(gene_data.gene_id)
                         
                 except ValidationError as e:
-                    app.logger.error(f"Error validating gene data: {e}")
+                    current_app.logger.error(f"Error validating gene data: {e}")
                     continue
 
-            app.logger.debug(
+            current_app.logger.debug(
                 f"Found {len(split_genes)} split genes from annotations: {split_genes}"
             )
 
@@ -287,7 +288,7 @@ def get_component_graph(timepoint_id, component_id):
                         graph.add_edge(dmr, gene)
 
             # Add debug logging for node IDs before creating NodeInfo
-            app.logger.debug(
+            current_app.logger.debug(
                 f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}"
             )
             app.logger.debug(
@@ -300,7 +301,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add debug logging for min_gene_id calculation
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
-            app.logger.debug(f"min_gene_id: {min_gene_id}")
+            current_app.logger.debug(f"min_gene_id: {min_gene_id}")
 
             # Create NodeInfo object using annotated split genes
             node_info = NodeInfo(
@@ -332,7 +333,7 @@ def get_component_graph(timepoint_id, component_id):
             return visualization_data
 
     except Exception as e:
-        app.logger.error(f"Error generating graph visualization: {str(e)}")
+        current_app.logger.error(f"Error generating graph visualization: {str(e)}")
         return jsonify(
             {
                 "error": "Failed to generate graph visualization",
