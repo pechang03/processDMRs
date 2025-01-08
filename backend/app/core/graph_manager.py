@@ -10,7 +10,8 @@ from typing import Dict, Optional, Tuple
 from sqlalchemy.orm import Session
 from flask import current_app
 
-from backend.app.utils.graph_io import read_bipartite_graph, create_bipartite_graph
+from backend.app.utils.graph_io import read_bipartite_graph
+from backend.app.core.data_loader import create_bipartite_graph
 from backend.app.database.connection import get_db_engine
 from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
