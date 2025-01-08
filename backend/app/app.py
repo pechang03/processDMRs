@@ -69,8 +69,30 @@ def configure_app(app):
 # Configure the app before any routes are defined
 configure_app(app)
 
+# Initialize GraphManager
+from backend.app.core.graph_manager import GraphManager
+with app.app_context():
+    app.graph_manager = GraphManager()
+
 # Register blueprints
 app.register_blueprint(component_bp)
+
+@app.route("/api/graph-manager/status")
+def graph_manager_status():
+    """Check GraphManager status"""
+    try:
+        graph_manager = current_app.graph_manager
+        return jsonify({
+            "status": "ok",
+            "initialized": graph_manager.is_initialized(),
+            "data_dir": graph_manager.data_dir,
+            "loaded_timepoints": list(graph_manager.original_graphs.keys())
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
 
 # Import and register routes
 

@@ -17,13 +17,28 @@ from backend.app.schemas import TimePointSchema
 from backend.app.core.data_loader import read_gene_mapping
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 class GraphManager:
     def __init__(self):
+        logger.info("Initializing GraphManager")
         self.original_graphs: Dict[str, nx.Graph] = {}
         self.split_graphs: Dict[str, nx.Graph] = {}
-        # Use Flask app config instead of direct env var
         self.data_dir = current_app.config.get("DATA_DIR", "./data")
+        logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
+
+    @classmethod
+    def get_instance(cls):
+        """Get or create GraphManager instance"""
+        if not hasattr(current_app, 'graph_manager'):
+            current_app.graph_manager = cls()
+        return current_app.graph_manager
+
+    def is_initialized(self):
+        """Check if GraphManager is properly initialized"""
+        return bool(self.data_dir and hasattr(self, 'original_graphs'))
 
     def get_graph_paths(self, timepoint_name: str) -> Tuple[str, str]:
         """Get paths for original and split graph files"""
