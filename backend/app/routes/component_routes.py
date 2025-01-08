@@ -258,6 +258,7 @@ def get_gene_symbols():
             gene_info = {}
             for row in results:
                 gene_info[str(row.gene_id)] = {
+                    "gene_id": row.gene_id,  # Add this line to include gene_id
                     "symbol": row.symbol or f"Gene_{row.gene_id}",
                     "is_split": bool(row.is_split),
                     "is_hub": row.node_type == "hub",
