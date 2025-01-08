@@ -8,14 +8,16 @@ from .database.connection import get_db_engine
 from .database.models import Timepoint
 from .routes.component_routes import component_bp
 
-print("\n" + "="*50)
+print("\n" + "=" * 50)
 print(">>> IMPORTING app.py MODULE")
-print("="*50 + "\n")
+print("=" * 50 + "\n")
+
+
 def configure_app(app):
-    print("\n" + "*"*50)
+    print("\n" + "*" * 50)
     print(">>> STARTING APP CONFIGURATION")
-    print("*"*50)
-    
+    print("*" * 50)
+
     print("\n>>> Getting project paths...")
     # Get the project root directory (three levels up from app.py)
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -32,11 +34,12 @@ def configure_app(app):
         print(f">>> Successfully loaded environment from {env_file}")
         env_loaded = True
     else:
-        print("\n" + "!"*50)
+        print("\n" + "!" * 50)
         print(f">>> ERROR: processDMR.env not found at {env_file}")
-        print("!"*50 + "\n")
+        print("!" * 50 + "\n")
         env_loaded = False
         exit(1)
+
     # Get database path from environment or use default in project root
     db_path = os.getenv("DATABASE_PATH", os.path.join(project_root, "dmr_analysis.db"))
     database_url = f"sqlite:///{db_path}"
@@ -44,16 +47,19 @@ def configure_app(app):
     # Set configuration
     app.config["DATABASE_URL"] = database_url
     app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", "development")
+    # Add DATA_DIR to app config
+    app.config["DATA_DIR"] = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
 
     print("\n>>> FINAL CONFIGURATION:")
-    print("-"*30)
+    print("-" * 30)
     print(f">>> Project root: {project_root}")
     print(f">>> Database URL: {app.config['DATABASE_URL']}")
     print(f">>> Environment: {app.config['FLASK_ENV']}")
-    print("-"*30)
+    print(f">>> Data directory: {app.config['DATA_DIR']}")
+    print("-" * 30)
 
     print("\n>>> CONFIGURATION COMPLETE")
-    print("*"*50 + "\n")
+    print("*" * 50 + "\n")
 
     return env_loaded
 
@@ -66,19 +72,20 @@ app.register_blueprint(component_bp)
 
 # Import and register routes
 
+
 @app.route("/api/health")
 def health_check():
     """Health check endpoint that verifies system and database status."""
     database_url = app.config.get("DATABASE_URL", "not configured")
     print(f"\n>>> Health Check - Using database URL: {database_url}")
-    
+
     health_status = {
         "status": "online",
         "environment": app.config["FLASK_ENV"],
         "database": "connected",
-        "database_url": database_url
+        "database_url": database_url,
     }
-    
+
     try:
         print(">>> Attempting database connection...")
         engine = get_db_engine()
@@ -93,7 +100,7 @@ def health_check():
         health_status["database"] = "disconnected"
         health_status["error"] = str(e)
         return jsonify(health_status), 503
-        
+
     return jsonify(health_status)
 
 
