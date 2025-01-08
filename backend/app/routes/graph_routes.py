@@ -291,7 +291,7 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(
                 f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}"
             )
-            app.logger.debug(
+            current_app.logger.debug(
                 f"all_gene_ids type: {type(all_gene_ids)}, content: {all_gene_ids}"
             )
 
@@ -337,7 +337,7 @@ def get_component_graph(timepoint_id, component_id):
         return jsonify(
             {
                 "error": "Failed to generate graph visualization",
-                "details": str(e) if app.debug else "Internal server error",
+                "details": str(e) if current_app.debug else "Internal server error",
                 "status": 500,
             }
         ), 500
