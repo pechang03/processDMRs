@@ -7,7 +7,7 @@ from ..schemas import (
     GeneTimepointAnnotationSchema,
     DmrTimepointAnnotationSchema,
     NodeSymbolRequest,
-    NodeStatusRequest
+    NodeStatusRequest,
 )
 from flask_cors import CORS
 from ..utils.extensions import app
@@ -15,12 +15,6 @@ from ..database import get_db_engine, get_db_session
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from ..database.models import Timepoint
-from ..schemas import (
-    ComponentSummarySchema,
-    ComponentDetailsSchema,
-    GeneTimepointAnnotationSchema,
-    DmrTimepointAnnotationSchema,
-)
 from typing import List, Dict, Any
 
 component_bp = Blueprint("components", __name__)
@@ -217,41 +211,79 @@ def get_component_details(timepoint_id, component_id):
 def get_gene_symbols():
     try:
         data = request.get_json()
-        timepoint_id = data.get('timepoint_id')
-        component_id = data.get('component_id')
+        timepoint_id = data.get("timepoint_id")
+        component_id = data.get("component_id")
 
         if not all([timepoint_id, component_id]):
-            return jsonify({
-                "status": "error",
-                "message": "Missing required parameters"
-            }), 400
+            return jsonify(
+                {"status": "error", "message": "Missing required parameters"}
+            ), 400
 
         engine = get_db_engine()
         with Session(engine) as session:
-            # Simplified query to only get gene IDs and symbols
+            # Modified query to get genes through component_bicliques
             query = text("""
-                SELECT DISTINCT g.id as gene_id, g.symbol
-                FROM genes g
-                JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
-                JOIN component_bicliques cb ON b.id = cb.biclique_id
-                WHERE cb.component_id = :component_id
-                AND cb.timepoint_id = :timepoint_id
+                WITH component_genes AS (
+                    SELECT DISTINCT
+                        g.id as gene_id,
+                        COUNT(DISTINCT cb.biclique_id) as biclique_count
+                    FROM genes g
+                    JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
+                    JOIN component_bicliques cb ON b.id = cb.biclique_id
+                    WHERE cb.component_id = :component_id
+                    AND cb.timepoint_id = :timepoint_id
+                    GROUP BY g.id
+                )
+                SELECT 
+                    g.id as gene_id,
+                    g.symbol,
+                    gta.node_type,
+                    gta.gene_type,
+                    gta.degree,
+                    gta.is_isolate,
+                    gta.biclique_ids,
+                    cg.biclique_count,
+                    CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
+                FROM component_genes cg
+                JOIN genes g ON g.id = cg.gene_id
+                JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
+                WHERE gta.timepoint_id = :timepoint_id
             """)
 
-            results = session.execute(query, {
-                "timepoint_id": timepoint_id,
-                "component_id": component_id
-            }).fetchall()
+            results = session.execute(
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).fetchall()
 
-            gene_info = {
-                str(row.gene_id): {
-                    "symbol": row.symbol or f"Gene_{row.gene_id}"
-                }
-                for row in results
-            }
+            # Convert results to dictionary using schema
+            gene_info = {}
+            for row in results:
+                try:
+                    annotation = GeneTimepointAnnotationSchema(
+                        timepoint_id=timepoint_id,
+                        gene_id=row.gene_id,
+                        node_type=row.node_type,
+                        gene_type=row.gene_type,
+                        degree=row.degree,
+                        is_isolate=row.is_isolate,
+                        biclique_ids=row.biclique_ids,
+                    )
 
-            return jsonify({"status": "success", "gene_info": gene_info})
-
+                    gene_info[str(row.gene_id)] = {
+                        "symbol": row.symbol,
+                        "is_split": bool(row.is_split),
+                        "is_hub": annotation.node_type == "hub"
+                        if annotation.node_type
+                        else False,
+                        "degree": annotation.degree,
+                        "biclique_count": row.biclique_count,
+                        "biclique_ids": annotation.biclique_ids.split(",")
+                        if annotation.biclique_ids
+                        else [],
+                    }
+                except Exception as e:
+                    app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
+                    continue
+            return jsonify({"status": "success", "data": gene_info})
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -265,17 +297,16 @@ def get_gene_annotations():
         component_id = data.get("component_id")
 
         if not all([timepoint_id, component_id]):
-            return jsonify({
-                "status": "error", 
-                "message": "Missing required parameters"
-            }), 400
+            return jsonify(
+                {"status": "error", "message": "Missing required parameters"}
+            ), 400
 
         engine = get_db_engine()
         with Session(engine) as session:
             # Modified query to get complete gene information
             query = text("""
                 WITH component_genes AS (
-                    SELECT unnest(string_to_array(cdv.all_gene_ids, ',')::integer[]) as gene_id
+                    SELECT unnest(string_to_array(cdv.all_gene_ids, ','))::integer[] as gene_id
                     FROM component_details_view cdv
                     WHERE cdv.timepoint_id = :timepoint_id 
                     AND cdv.component_id = :component_id
@@ -299,10 +330,9 @@ def get_gene_annotations():
                     gta.degree, gta.is_isolate, gta.biclique_ids
             """)
 
-            results = session.execute(query, {
-                "timepoint_id": timepoint_id,
-                "component_id": component_id
-            }).fetchall()
+            results = session.execute(
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).fetchall()
 
             gene_info = {}
             for row in results:
@@ -312,7 +342,7 @@ def get_gene_annotations():
                     "is_hub": row.node_type == "hub",
                     "degree": row.degree or 0,
                     "biclique_count": row.biclique_count or 0,
-                    "biclique_ids": row.biclique_ids
+                    "biclique_ids": row.biclique_ids,
                 }
 
             return jsonify({"status": "success", "gene_info": gene_info})
@@ -329,11 +359,13 @@ def get_dmr_status():
         try:
             request_data = NodeStatusRequest(**request.get_json())
         except ValidationError as e:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid request data",
-                "details": e.errors()
-            }), 400
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": "Invalid request data",
+                    "details": e.errors(),
+                }
+            ), 400
 
         # Use validated data
         dmr_ids = request_data.dmr_ids
@@ -416,6 +448,7 @@ def get_component_details_by_timepoint(timepoint_id):
             components = []
             for row in results:
                 app.logger.debug(f"Processing row: {row}")
+
                 # Convert row tuple to dict matching Pydantic model
                 component_data = {
                     "timepoint_id": row.timepoint_id,
