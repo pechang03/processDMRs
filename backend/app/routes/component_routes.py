@@ -303,13 +303,20 @@ def get_gene_annotations():
 
         engine = get_db_engine()
         with Session(engine) as session:
-            # Modified query to get complete gene information
+            # Modified query for SQLite using json_each to split the array
             query = text("""
-                WITH component_genes AS (
-                    SELECT unnest(string_to_array(cdv.all_gene_ids, ','))::integer[] as gene_id
-                    FROM component_details_view cdv
-                    WHERE cdv.timepoint_id = :timepoint_id 
-                    AND cdv.component_id = :component_id
+                WITH RECURSIVE split(gene_id, rest) AS (
+                    SELECT '', all_gene_ids || ',' FROM component_details_view 
+                    WHERE timepoint_id = :timepoint_id AND component_id = :component_id
+                    UNION ALL
+                    SELECT substr(rest, 0, instr(rest, ',')),
+                           substr(rest, instr(rest, ',') + 1)
+                    FROM split WHERE rest <> ''
+                ),
+                component_genes AS (
+                    SELECT CAST(gene_id AS INTEGER) as gene_id 
+                    FROM split 
+                    WHERE gene_id <> ''
                 )
                 SELECT 
                     g.id as gene_id,
