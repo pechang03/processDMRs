@@ -254,36 +254,22 @@ def get_gene_symbols():
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
 
-            # Convert results to dictionary using schema
+            # Convert results to dictionary with string keys
             gene_info = {}
             for row in results:
-                try:
-                    annotation = GeneTimepointAnnotationSchema(
-                        timepoint_id=timepoint_id,
-                        gene_id=row.gene_id,
-                        node_type=row.node_type,
-                        gene_type=row.gene_type,
-                        degree=row.degree,
-                        is_isolate=row.is_isolate,
-                        biclique_ids=row.biclique_ids,
-                    )
+                gene_info[str(row.gene_id)] = {
+                    "symbol": row.symbol or f"Gene_{row.gene_id}",
+                    "is_split": bool(row.is_split),
+                    "is_hub": row.node_type == "hub",
+                    "degree": row.degree or 0,
+                    "biclique_count": row.biclique_count or 0,
+                    "biclique_ids": row.biclique_ids.split(",") if row.biclique_ids else []
+                }
 
-                    gene_info[str(row.gene_id)] = {
-                        "symbol": row.symbol,
-                        "is_split": bool(row.is_split),
-                        "is_hub": annotation.node_type == "hub"
-                        if annotation.node_type
-                        else False,
-                        "degree": annotation.degree,
-                        "biclique_count": row.biclique_count,
-                        "biclique_ids": annotation.biclique_ids.split(",")
-                        if annotation.biclique_ids
-                        else [],
-                    }
-                except Exception as e:
-                    app.logger.error(f"Error processing gene {row.gene_id}: {str(e)}")
-                    continue
-            return jsonify({"status": "success", "data": gene_info})
+            return jsonify({
+                "status": "success",
+                "data": gene_info  # Return as data field
+            })
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
