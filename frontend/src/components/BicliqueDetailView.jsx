@@ -301,7 +301,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
   };
 
   const geneStats = useMemo(() => {
-    if (!componentDetails?.all_gene_ids) return null;
+    if (!componentDetails?.all_gene_ids || !geneSymbols) return null;
     
     const stats = {
       total: componentDetails.all_gene_ids.length,
@@ -314,7 +314,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
     
     componentDetails.all_gene_ids.forEach(id => {
       const info = geneSymbols[id];
-      if (info) {
+      if (info) {  // Add null check here
         if (info.is_hub) stats.hubs++;
         if (info.is_split) stats.splits++;
         if (info.degree !== undefined) {
@@ -324,6 +324,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
         stats.totalBicliques += info.biclique_count || 0;
       }
     });
+    
+    // If no valid degrees were found, reset minDegree
+    if (stats.minDegree === Infinity) {
+      stats.minDegree = 0;
+    }
     
     console.log('Calculated gene stats:', stats); // Debug log
     return stats;
