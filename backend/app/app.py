@@ -49,6 +49,8 @@ def configure_app(app):
     app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", "development")
     # Add DATA_DIR to app config
     app.config["DATA_DIR"] = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
+    # Add DATA_DIR to app config
+    app.config["DATA_DIR"] = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
 
     print("\n>>> FINAL CONFIGURATION:")
     print("-" * 30)

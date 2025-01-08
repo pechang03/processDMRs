@@ -21,7 +21,8 @@ class GraphManager:
     def __init__(self):
         self.original_graphs: Dict[str, nx.Graph] = {}
         self.split_graphs: Dict[str, nx.Graph] = {}
-        self.data_dir = os.getenv("DATA_DIR", "./data")
+        # Use Flask app config instead of direct env var
+        self.data_dir = current_app.config.get("DATA_DIR", "./data")
         self.load_all_timepoints()
 
     def get_graph_paths(self, timepoint_name: str) -> Tuple[str, str]:
