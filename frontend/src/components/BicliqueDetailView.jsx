@@ -447,9 +447,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
         )
         .then(([symbolsData, annotationsData]) => {
           if (symbolsData.status === "success") {
+            console.log("Received gene symbols data:", symbolsData);
             setGeneSymbols(symbolsData.gene_info);
           }
           if (annotationsData.status === "success") {
+            console.log("Received gene annotations data:", annotationsData);
             setGeneAnnotations(annotationsData.gene_info);
           }
         })
