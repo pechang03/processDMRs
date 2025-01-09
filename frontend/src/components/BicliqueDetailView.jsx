@@ -208,7 +208,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
   // For basic symbol lookup
   const fetchGeneSymbols = async () => {
     try {
-      const response = await fetch(`http://localhost:5555/api/genes/symbols`, {
+      const response = await fetch(`http://localhost:5555/api/component/genes/symbols`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
   // For detailed gene information
   const fetchGeneAnnotations = async () => {
     try {
-      const response = await fetch(`http://localhost:5555/api/genes/annotations`, {
+      const response = await fetch(`http://localhost:5555/api/component/genes/annotations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
   const fetchDmrNames = async (dmrIds) => {
     try {
       console.log('Fetching DMR status for:', dmrIds);
-      const response = await fetch(`http://localhost:5555/api/dmrs/status`, {
+      const response = await fetch(`http://localhost:5555/api/component/dmrs/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -385,7 +385,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setError(null);
       
       // Fetch component details
-      fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
+      fetch(`http://localhost:5555/api/component/${timepointId}/components/${componentId}/details`)
         .then(response => {
           if (!response.ok) throw new Error('Failed to load component details');
           return response.json();

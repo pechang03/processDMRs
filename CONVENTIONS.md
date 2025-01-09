@@ -315,3 +315,73 @@ const LLMAnalysisView = () => {
 - Unit tests for message handling
 - Integration tests for LLM communication
 - End-to-end tests for UI integration
+# API Conventions
+
+## URL Structure
+
+All API endpoints follow the pattern: `/api/<resource>/<action>`
+
+### Resources
+- component
+- graph
+- gene
+- dmr
+
+### URL Patterns
+
+#### Component Routes
+- GET `/api/component/:timepoint_id/components/summary` - Get component summary for timepoint
+- GET `/api/component/:timepoint_id/components/:component_id/details` - Get detailed component info
+- GET `/api/component/:timepoint_id/details` - Get timepoint component details
+
+#### Gene Routes
+- POST `/api/component/genes/symbols` - Get gene symbols
+- POST `/api/component/genes/annotations` - Get gene annotations
+
+#### DMR Routes
+- POST `/api/component/dmrs/status` - Get DMR status
+
+### Response Format
+
+All API responses follow this structure:
+```json
+{
+    "status": "success" | "error",
+    "data": <response_data>,
+    "message": <error_message>  // Only included for errors
+}
+```
+
+### Error Handling
+
+HTTP Status Codes:
+- 200: Success
+- 400: Bad Request
+- 404: Not Found
+- 500: Server Error
+
+### Query Parameters
+
+Common query parameters:
+- timepoint_id: Numeric ID of the timepoint
+- component_id: Numeric ID of the component
+
+### Request Bodies
+
+POST requests should include:
+- Content-Type: application/json
+- Request body in JSON format
+
+### Pagination
+
+When applicable, paginated responses include:
+```json
+{
+    "data": [...],
+    "pagination": {
+        "page": 1,
+        "per_page": 10,
+        "total": 100
+    }
+}
+```
