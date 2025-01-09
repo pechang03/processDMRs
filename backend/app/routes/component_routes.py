@@ -20,7 +20,7 @@ from typing import List, Dict, Any
 component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
 
 
-@component_bp.route("/<int:timepoint_id>/summary", methods=["GET"])
+@component_bp.route("/<int:timepoint_id>/components/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
@@ -74,24 +74,30 @@ def get_component_summary_by_timepoint(timepoint_id):
             components = []
             for row in results:
                 try:
+                    # Convert all values to appropriate types
                     component_data = {
-                        "component_id": row.component_id,
-                        "timepoint_id": row.timepoint_id,
-                        "timepoint": str(row.timepoint),  # Ensure timepoint is a string
-                        "graph_type": row.graph_type,
-                        "category": row.category if row.category else "",
-                        "size": row.size,
-                        "dmr_count": row.dmr_count,
-                        "gene_count": row.gene_count,
-                        "edge_count": row.edge_count,
-                        "density": float(row.density),  # Ensure density is a float
-                        "biclique_count": row.biclique_count,
-                        "biclique_categories": row.biclique_categories if row.biclique_categories else ""
+                        "component_id": int(row.component_id),
+                        "timepoint_id": int(row.timepoint_id),
+                        "timepoint": str(row.timepoint),
+                        "graph_type": str(row.graph_type),
+                        "category": str(row.category) if row.category else "",
+                        "size": int(row.size),
+                        "dmr_count": int(row.dmr_count),
+                        "gene_count": int(row.gene_count),
+                        "edge_count": int(row.edge_count),
+                        "density": float(row.density),
+                        "biclique_count": int(row.biclique_count),
+                        "biclique_categories": str(row.biclique_categories) if row.biclique_categories else ""
                     }
+                    
+                    # Validate with Pydantic
                     component = ComponentSummarySchema(**component_data)
                     components.append(component.dict())
+                except ValidationError as e:
+                    app.logger.error(f"Validation error for component {row.component_id}: {str(e)}")
+                    continue
                 except Exception as e:
-                    app.logger.error(f"Error validating component summary: {e}")
+                    app.logger.error(f"Unexpected error processing component {row.component_id}: {str(e)}")
                     continue
 
             return jsonify({
@@ -106,7 +112,7 @@ def get_component_summary_by_timepoint(timepoint_id):
 
 
 @component_bp.route(
-    "/<int:timepoint_id>/<int:component_id>/details", methods=["GET"]
+    "/<int:timepoint_id>/components/<int:component_id>/details", methods=["GET"]
 )
 def get_component_details(timepoint_id, component_id):
     app.logger.info(
@@ -416,7 +422,7 @@ def get_dmr_status():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/<int:timepoint_id>/details", methods=["GET"])
+@component_bp.route("/<int:timepoint_id>/components/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
     try:
         engine = get_db_engine()
