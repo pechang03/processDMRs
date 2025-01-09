@@ -105,6 +105,38 @@ class BicliqueMemberSchema(BaseModel):
     dmr_ids: str  # Comma-separated string of IDs
     gene_ids: str  # Comma-separated string of IDs
 
+    class Config:
+        from_attributes = True
+
+
+class DominatingSetSchema(BaseModel):
+    """Schema for dominating set data"""
+    dmr_id: int
+    dominated_gene_count: Optional[int] = None
+    utility_score: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ComponentDetailsSchema(BaseModel):
+    """Schema for component details including dominating sets"""
+    timepoint_id: int
+    timepoint: str
+    component_id: int
+    graph_type: str
+    categories: str
+    total_dmr_count: int
+    total_gene_count: int
+    biclique_count: int
+    all_dmr_ids: List[int]
+    all_gene_ids: List[int]
+    bicliques: List[BicliqueMemberSchema]
+    dominating_sets: Dict[str, DominatingSetSchema]
+
+    class Config:
+        from_attributes = True
+
 
 class GraphComponentSchema(BaseModel):
     """Schema for graph component data"""
