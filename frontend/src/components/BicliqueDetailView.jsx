@@ -21,10 +21,11 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from "@mui/material";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import BicliqueGraphView from './BicliqueGraphView.jsx';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import BicliqueGraphView from "./BicliqueGraphView.jsx";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "../styles/BicliqueDetailView.css";
+import "../config.js";
 
 const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   const [page, setPage] = useState(0);
@@ -34,7 +35,10 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   const parseGenes = (genesStr) => {
     if (!genesStr) return [];
     if (Array.isArray(genesStr)) return genesStr;
-    return genesStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+    return genesStr
+      .split(",")
+      .map((id) => parseInt(id.trim()))
+      .filter((id) => !isNaN(id));
   };
 
   const handleChangePage = (event, newPage) => {
@@ -52,24 +56,24 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   }
 
   // Parse the genes string before mapping
-  const geneArray = parseGenes(genes).map(geneId => {
+  const geneArray = parseGenes(genes).map((geneId) => {
     // Add defensive check for each gene ID
     const geneInfo = geneSymbols[geneId] || {
       symbol: `Gene ${geneId}`,
       is_split: false,
       is_hub: false,
       degree: 0,
-      biclique_count: 0
+      biclique_count: 0,
     };
 
     return {
       id: geneId,
       symbol: geneInfo.symbol || `Gene ${geneId}`,
-      type: geneInfo.is_split ? 'Split' : geneInfo.is_hub ? 'Hub' : 'Regular',
+      type: geneInfo.is_split ? "Split" : geneInfo.is_hub ? "Hub" : "Regular",
       degree: geneInfo.degree || 0,
       biclique_count: geneInfo.biclique_count || 0,
       is_hub: geneInfo.is_hub || false,
-      is_split: geneInfo.is_split || false
+      is_split: geneInfo.is_split || false,
     };
   });
 
@@ -104,12 +108,16 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
                   <TableCell align="right">{gene.biclique_count}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      {gene.is_hub && <Chip size="small" label="Hub" color="primary" />}
-                      {gene.is_split && <Chip size="small" label="Split" color="secondary" />}
+                      {gene.is_hub && (
+                        <Chip size="small" label="Hub" color="primary" />
+                      )}
+                      {gene.is_split && (
+                        <Chip size="small" label="Split" color="secondary" />
+                      )}
                     </Stack>
                   </TableCell>
                 </TableRow>
-            ))}
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -134,7 +142,7 @@ const DMRTable = ({ dmrs, dmrNames }) => {
   const parseDMRs = (dmrsStr) => {
     if (!dmrsStr) return [];
     if (Array.isArray(dmrsStr)) return dmrsStr;
-    return dmrsStr.split(',').map(id => parseInt(id.trim()));
+    return dmrsStr.split(",").map((id) => parseInt(id.trim()));
   };
 
   const handleChangePage = (event, newPage) => {
@@ -147,9 +155,9 @@ const DMRTable = ({ dmrs, dmrNames }) => {
   };
 
   // Parse the DMRs string before mapping
-  const dmrArray = parseDMRs(dmrs).map(dmrId => ({
+  const dmrArray = parseDMRs(dmrs).map((dmrId) => ({
     id: dmrId,
-    ...dmrNames[dmrId]
+    ...dmrNames[dmrId],
   }));
 
   return (
@@ -174,11 +182,13 @@ const DMRTable = ({ dmrs, dmrNames }) => {
                   <TableCell align="right">{dmr.biclique_count}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      {dmr.is_hub && <Chip size="small" label="Hub" color="primary" />}
+                      {dmr.is_hub && (
+                        <Chip size="small" label="Hub" color="primary" />
+                      )}
                     </Stack>
                   </TableCell>
                 </TableRow>
-            ))}
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -209,84 +219,93 @@ function BicliqueDetailView({ timepointId, componentId }) {
   const fetchGeneSymbols = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/component/genes/symbols`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           timepoint_id: timepointId,
-          component_id: componentId
-        })
+          component_id: componentId,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to fetch gene symbols');
+      if (!response.ok) throw new Error("Failed to fetch gene symbols");
       const data = await response.json();
-      if (data.status === 'success' && data.data) {
+      if (data.status === "success" && data.data) {
         setGeneSymbols(data.data);
       } else {
-        throw new Error('Invalid gene data received');
+        throw new Error("Invalid gene data received");
       }
     } catch (error) {
-      console.error('Error fetching gene symbols:', error);
+      console.error("Error fetching gene symbols:", error);
     }
   };
 
   // For detailed gene information
   const fetchGeneAnnotations = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/component/genes/annotations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${API_BASE_URL}/component/genes/annotations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            timepoint_id: timepointId,
+            component_id: componentId,
+          }),
         },
-        body: JSON.stringify({ 
-          timepoint_id: timepointId,
-          component_id: componentId
-        })
-      });
-      if (!response.ok) throw new Error('Failed to fetch gene annotations');
+      );
+      if (!response.ok) throw new Error("Failed to fetch gene annotations");
       const data = await response.json();
-      if (data.status === 'success' && data.gene_info) {
+      if (data.status === "success" && data.gene_info) {
         setGeneAnnotations(data.gene_info);
       }
     } catch (error) {
-      console.error('Error fetching gene annotations:', error);
+      console.error("Error fetching gene annotations:", error);
     }
   };
 
   const fetchDmrNames = async (dmrIds) => {
     try {
-      console.log('Fetching DMR status for:', dmrIds);
-      const response = await fetch(`http://localhost:5555/api/component/dmrs/status`, {
-        method: 'POST',
+      console.log("Fetching DMR status for:", dmrIds);
+      const response = await fetch(`${API_BASE_URL}/component/dmrs/status`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           dmr_ids: dmrIds,
-          timepoint_id: timepointId 
-        })
+          timepoint_id: timepointId,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to fetch DMR status');
+      if (!response.ok) throw new Error("Failed to fetch DMR status");
       const data = await response.json();
-      console.log('Received DMR data:', data);
+      console.log("Received DMR data:", data);
       setDmrNames(data.dmr_status);
     } catch (error) {
-      console.error('Error fetching DMR names:', error);
+      console.error("Error fetching DMR names:", error);
     }
   };
 
   const formatGeneSymbols = (geneIds) => {
     // Ensure geneIds is an array
-    const geneArray = Array.isArray(geneIds) ? geneIds :
-                     typeof geneIds === 'string' ? geneIds.split(',').map(id => parseInt(id.trim())) :
-                     [];
-    
-    return geneArray.map(id => {
+    const geneArray = Array.isArray(geneIds)
+      ? geneIds
+      : typeof geneIds === "string"
+        ? geneIds.split(",").map((id) => parseInt(id.trim()))
+        : [];
+
+    return geneArray.map((id) => {
       const info = geneSymbols[id];
       if (!info) return `Gene ${id}`;
-      
+
       return (
-        <Tooltip key={id} title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+        <Tooltip
+          key={id}
+          title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`}
+          arrow
+        >
           <span className="node-info">
             {info.symbol || `Gene ${id}`}
             {info.is_split && <span className="node-badge split">Split</span>}
@@ -299,16 +318,22 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const formatDmrNames = (dmrIds) => {
     // Ensure dmrIds is an array
-    const dmrArray = Array.isArray(dmrIds) ? dmrIds : 
-                    typeof dmrIds === 'string' ? dmrIds.split(',').map(id => parseInt(id.trim())) :
-                    [];
-    
-    return dmrArray.map(id => {
+    const dmrArray = Array.isArray(dmrIds)
+      ? dmrIds
+      : typeof dmrIds === "string"
+        ? dmrIds.split(",").map((id) => parseInt(id.trim()))
+        : [];
+
+    return dmrArray.map((id) => {
       const info = dmrNames[id];
       if (!info) return `DMR ${id}`;
-      
+
       return (
-        <Tooltip key={id} title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`} arrow>
+        <Tooltip
+          key={id}
+          title={`Degree: ${info.degree}, Bicliques: ${info.biclique_count}`}
+          arrow
+        >
           <span className="node-info">
             DMR {id}
             {info.is_hub && <span className="node-badge hub">Hub</span>}
@@ -320,19 +345,20 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const geneStats = useMemo(() => {
     if (!componentDetails?.all_gene_ids || !geneSymbols) return null;
-    
+
     const stats = {
       total: componentDetails.all_gene_ids.length,
       hubs: 0,
       splits: 0,
       maxDegree: 0,
       minDegree: Infinity,
-      totalBicliques: 0
+      totalBicliques: 0,
     };
-    
-    componentDetails.all_gene_ids.forEach(id => {
+
+    componentDetails.all_gene_ids.forEach((id) => {
       const info = geneSymbols[id];
-      if (info) {  // Add null check here
+      if (info) {
+        // Add null check here
         if (info.is_hub) stats.hubs++;
         if (info.is_split) stats.splits++;
         if (info.degree !== undefined) {
@@ -342,28 +368,28 @@ function BicliqueDetailView({ timepointId, componentId }) {
         stats.totalBicliques += info.biclique_count || 0;
       }
     });
-    
+
     // If no valid degrees were found, reset minDegree
     if (stats.minDegree === Infinity) {
       stats.minDegree = 0;
     }
-    
-    console.log('Calculated gene stats:', stats); // Debug log
+
+    console.log("Calculated gene stats:", stats); // Debug log
     return stats;
   }, [componentDetails, geneSymbols]);
 
   const dmrStats = useMemo(() => {
     if (!componentDetails?.all_dmr_ids) return null;
-    
+
     const stats = {
       total: componentDetails.all_dmr_ids.length,
       hubs: 0,
       maxDegree: 0,
       minDegree: Infinity,
-      totalBicliques: 0
+      totalBicliques: 0,
     };
-    
-    componentDetails.all_dmr_ids.forEach(id => {
+
+    componentDetails.all_dmr_ids.forEach((id) => {
       const info = dmrNames[id];
       if (info) {
         if (info.is_hub) stats.hubs++;
@@ -374,8 +400,8 @@ function BicliqueDetailView({ timepointId, componentId }) {
         stats.totalBicliques += info.biclique_count || 0;
       }
     });
-    
-    console.log('Calculated DMR stats:', stats); // Debug log
+
+    console.log("Calculated DMR stats:", stats); // Debug log
     return stats;
   }, [componentDetails, dmrNames]);
 
@@ -383,50 +409,50 @@ function BicliqueDetailView({ timepointId, componentId }) {
     if (timepointId && componentId) {
       setLoading(true);
       setError(null);
-      
+
       // Fetch component details
       fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to load component details');
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to load component details");
           return response.json();
         })
-        .then(data => {
-          if (data.status === 'success') {
+        .then((data) => {
+          if (data.status === "success") {
             setComponentDetails(data.data);
             // Fetch gene symbols and annotations
             return Promise.all([
-              fetch(`http://localhost:5555/api/component/genes/symbols`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+              fetch(`${API_BASE_URL}/component/genes/symbols`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                   timepoint_id: timepointId,
-                  component_id: componentId
-                })
+                  component_id: componentId,
+                }),
               }),
-              fetch(`http://localhost:5555/api/component/genes/annotations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+              fetch(`${API_BASE_URL}/component/genes/annotations`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                   timepoint_id: timepointId,
-                  component_id: componentId
-                })
-              })
+                  component_id: componentId,
+                }),
+              }),
             ]);
           }
         })
-        .then(([symbolsResponse, annotationsResponse]) => 
-          Promise.all([symbolsResponse.json(), annotationsResponse.json()])
+        .then(([symbolsResponse, annotationsResponse]) =>
+          Promise.all([symbolsResponse.json(), annotationsResponse.json()]),
         )
         .then(([symbolsData, annotationsData]) => {
-          if (symbolsData.status === 'success') {
+          if (symbolsData.status === "success") {
             setGeneSymbols(symbolsData.gene_info);
           }
-          if (annotationsData.status === 'success') {
+          if (annotationsData.status === "success") {
             setGeneAnnotations(annotationsData.gene_info);
           }
         })
-        .catch(error => {
-          console.error('Error:', error);
+        .catch((error) => {
+          console.error("Error:", error);
           setError(error.message);
         })
         .finally(() => {
@@ -437,7 +463,12 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="200px"
+      >
         <CircularProgress />
       </Box>
     );
@@ -459,27 +490,32 @@ function BicliqueDetailView({ timepointId, componentId }) {
     <Box sx={{ width: "100%", mt: 3 }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" gutterBottom>Split Genes</Typography>
+          <Typography variant="h6" gutterBottom>
+            Split Genes
+          </Typography>
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            {geneSymbols && Object.entries(geneSymbols || {})
-              .filter(([_, info]) => info?.is_split)
-              .map(([geneId, info]) => (
-                <Chip
-                  key={geneId}
-                  label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count || 0} bicliques)`}
-                  sx={{ m: 0.5 }}
-                  color="primary"
-                  variant="outlined"
-                  title={`Bicliques: ${info.biclique_ids ? info.biclique_ids.join(', ') : ''}`}
-                />
-              ))}
+            {geneSymbols &&
+              Object.entries(geneSymbols || {})
+                .filter(([_, info]) => info?.is_split)
+                .map(([geneId, info]) => (
+                  <Chip
+                    key={geneId}
+                    label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count || 0} bicliques)`}
+                    sx={{ m: 0.5 }}
+                    color="primary"
+                    variant="outlined"
+                    title={`Bicliques: ${info.biclique_ids ? info.biclique_ids.join(", ") : ""}`}
+                  />
+                ))}
           </Paper>
           <Typography variant="h5" gutterBottom>
             Component Analysis for Timepoint {componentDetails.timepoint}
           </Typography>
           <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
             <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">Genes</Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Genes
+              </Typography>
               <Stack direction="row" spacing={1} alignItems="baseline">
                 <Typography variant="h6">{geneStats?.total}</Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -491,7 +527,9 @@ function BicliqueDetailView({ timepointId, componentId }) {
               </Typography>
             </Paper>
             <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">DMRs</Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                DMRs
+              </Typography>
               <Stack direction="row" spacing={1} alignItems="baseline">
                 <Typography variant="h6">{dmrStats?.total}</Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -503,12 +541,15 @@ function BicliqueDetailView({ timepointId, componentId }) {
               </Typography>
             </Paper>
             <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">Bicliques</Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                Bicliques
+              </Typography>
               <Typography variant="h6">
                 {componentDetails.biclique_count}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {geneStats?.totalBicliques + dmrStats?.totalBicliques} total associations
+                {geneStats?.totalBicliques + dmrStats?.totalBicliques} total
+                associations
               </Typography>
             </Paper>
           </Stack>
@@ -524,35 +565,40 @@ function BicliqueDetailView({ timepointId, componentId }) {
           </TabList>
 
           <TabPanel className="bicliqueDetailTabs__tabPanel">
-            <Box sx={{ maxHeight: '500px', overflow: 'auto' }}>
-              <Typography variant="h6" gutterBottom>Biclique Details</Typography>
-              {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
-                <Accordion key={biclique.biclique_id}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>
-                      Biclique {index + 1} ({biclique.category}) - 
-                      {biclique.dmr_ids.split(',').length} DMRs, {biclique.gene_ids.split(',').length} Genes
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="h6" gutterBottom>Genes</Typography>
-                      <GeneTable 
-                        genes={biclique.gene_ids} 
-                        geneSymbols={geneSymbols}
-                        geneAnnotations={geneAnnotations}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" gutterBottom>DMRs</Typography>
-                      <DMRTable 
-                        dmrs={biclique.dmr_ids} 
-                        dmrNames={dmrNames}
-                      />
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
+            <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
+              <Typography variant="h6" gutterBottom>
+                Biclique Details
+              </Typography>
+              {componentDetails.bicliques &&
+                componentDetails.bicliques.map((biclique, index) => (
+                  <Accordion key={biclique.biclique_id}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>
+                        Biclique {index + 1} ({biclique.category}) -
+                        {biclique.dmr_ids.split(",").length} DMRs,{" "}
+                        {biclique.gene_ids.split(",").length} Genes
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                          Genes
+                        </Typography>
+                        <GeneTable
+                          genes={biclique.gene_ids}
+                          geneSymbols={geneSymbols}
+                          geneAnnotations={geneAnnotations}
+                        />
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" gutterBottom>
+                          DMRs
+                        </Typography>
+                        <DMRTable dmrs={biclique.dmr_ids} dmrNames={dmrNames} />
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
             </Box>
           </TabPanel>
           <TabPanel className="bicliqueDetailTabs__tabPanel">
@@ -560,7 +606,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
           </TabPanel>
         </Tabs>
       </Paper>
-      
+
       <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
         <BicliqueGraphView
           componentId={componentId}
