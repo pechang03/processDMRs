@@ -436,34 +436,40 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setLoading(true);
       setError(null);
 
+      console.log("Starting data fetch for:", {timepointId, componentId});
+
       // Fetch component details
       fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
         .then((response) => {
+          console.log("Component details response status:", response.status);
           if (!response.ok) throw new Error("Failed to load component details");
           return response.json();
         })
         .then((data) => {
+          console.log("Received component details:", data);
           if (data.status === "success") {
             setComponentDetails(data.data);
-            // Fetch gene symbols and annotations
-            return Promise.all([
-              fetch(`${API_BASE_URL}/component/genes/symbols`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  timepoint_id: timepointId,
-                  component_id: componentId,
-                }),
+            
+            // Fetch gene symbols
+            return fetch(`${API_BASE_URL}/component/genes/symbols`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                timepoint_id: timepointId,
+                component_id: componentId,
               }),
-              fetch(`${API_BASE_URL}/component/genes/annotations`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  timepoint_id: timepointId,
-                  component_id: componentId,
-                }),
-              }),
-            ]);
+            });
+          }
+        })
+        .then(response => {
+          console.log("Gene symbols response status:", response.status);
+          if (!response.ok) throw new Error("Failed to fetch gene symbols");
+          return response.json();
+        })
+        .then(data => {
+          console.log("Received gene symbols data:", data);
+          if (data.status === "success") {
+            setGeneSymbols(data.data);
           }
         })
         .then(([symbolsResponse, annotationsResponse]) =>
@@ -522,23 +528,42 @@ function BicliqueDetailView({ timepointId, componentId }) {
             Split Genes
           </Typography>
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            {geneSymbols ? (
-                Object.entries(geneSymbols)
-                    .filter(([_, info]) => info.is_split)
-                    .map(([geneId, info]) => (
-                        <Chip
-                            key={geneId}
-                            label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count} bicliques)`}
-                            sx={{ m: 0.5 }}
-                            color="primary"
-                            variant="outlined"
-                            title={`Gene ID: ${geneId}, Bicliques: ${info.biclique_ids?.join(", ") || "none"}`}
-                        />
-                    ))
+            {loading ? (
+              <Typography>Loading gene information...</Typography>
+            ) : error ? (
+              <Typography color="error">{error}</Typography>
+            ) : !geneSymbols ? (
+              <Typography>No gene information available</Typography>
             ) : (
-                <Typography color="text.secondary">Loading gene information...</Typography>
+              <>
+                <Typography>Debug: Found {Object.keys(geneSymbols).length} total genes</Typography>
+                {Object.entries(geneSymbols).map(([geneId, info]) => {
+                  console.log(`Processing gene ${geneId}:`, info);
+                  if (info.is_split || info.biclique_count > 1) {
+                    return (
+                      <Chip
+                        key={geneId}
+                        label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count} bicliques)`}
+                        sx={{ m: 0.5 }}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+              </>
             )}
           </Paper>
+          {/* Add debug section */}
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5' }}>
+            <Typography variant="h6">Debug Information</Typography>
+            <pre>
+              Loading: {loading.toString()}{'\n'}
+              Error: {error || 'none'}{'\n'}
+              Component Details: {componentDetails ? 'yes' : 'no'}{'\n'}
+              Gene Symbols Count: {geneSymbols ? Object.keys(geneSymbols).length : 0}{'\n'}
+              Raw Gene Symbols: {JSON.stringify(geneSymbols, null, 2)}
+            </pre>
+          </Box>
           <Typography variant="h5" gutterBottom>
             Component Analysis for Timepoint {componentDetails.timepoint}
           </Typography>
