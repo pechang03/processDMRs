@@ -26,13 +26,12 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             
             console.log(`Fetching components for timepoint ${selectedTimepoint}`);
             
-            fetch(`/api/components/${selectedTimepoint}/summary`)
+            fetch(`http://localhost:5555/api/components/${selectedTimepoint}/summary`)
                 .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers);
-                    console.log('Requesting URL:', `http://localhost:5555/api/components/${selectedTimepoint}/summary`);
-                    
                     if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error(`No components found for timepoint ${selectedTimepoint}`);
+                        }
                         throw new Error(`Network response was not ok (${response.status}): ${response.statusText}`);
                     }
                     return response.json();
@@ -74,7 +73,12 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
     if (error) {
         return (
             <Box sx={{ p: 2 }}>
-                <Typography color="error">Error: {error}</Typography>
+                <Alert severity="error">
+                    {error.includes('No components found') ? 
+                        `No components available for selected timepoint` :
+                        error
+                    }
+                </Alert>
             </Box>
         );
     }
