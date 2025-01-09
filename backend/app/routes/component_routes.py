@@ -17,7 +17,7 @@ from sqlalchemy import func, text
 from ..database.models import Timepoint
 from typing import List, Dict, Any
 
-component_bp = Blueprint("component_routes", __name__, url_prefix="/api/components")
+component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
 
 
 @component_bp.route("/<int:timepoint_id>/summary", methods=["GET"])
