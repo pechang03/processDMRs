@@ -99,6 +99,12 @@ class GraphManager:
                 if not timepoint:
                     raise ValueError(f"Timepoint {timepoint_id} not found")
 
+                # Get the timepoint-specific DMR offset
+                dmr_id_offset = timepoint.dmr_id_offset
+                if dmr_id_offset is None:
+                    print(f"Warning: No DMR ID offset defined for timepoint {timepoint.name}, using default 0")
+                    dmr_id_offset = 0
+
                 # Convert to pydantic model
                 timepoint_data = TimePointSchema.model_validate(timepoint)
 
@@ -126,8 +132,11 @@ class GraphManager:
                 if os.path.exists(original_graph_file):
                     try:
                         self.original_graphs[timepoint_name] = read_bipartite_graph(
-                            original_graph_file, timepoint_name
+                            original_graph_file, 
+                            timepoint_name,
+                            dmr_id_offset=dmr_id_offset  # Use timepoint-specific offset
                         )
+                        print(f"Loaded original graph for {timepoint_name} with DMR offset {dmr_id_offset}")
                         print(f"Loaded original graph for {timepoint_name}")
                     except Exception as e:
                         print(
@@ -142,8 +151,11 @@ class GraphManager:
                 if os.path.exists(split_graph_file):
                     try:
                         self.split_graphs[timepoint_name] = read_bipartite_graph(
-                            split_graph_file, timepoint_name
+                            split_graph_file, 
+                            timepoint_name,
+                            dmr_id_offset=dmr_id_offset  # Use timepoint-specific offset
                         )
+                        print(f"Loaded split graph for {timepoint_name} with DMR offset {dmr_id_offset}")
                         print(f"Loaded split graph for {timepoint_name}")
                     except Exception as e:
                         print(
