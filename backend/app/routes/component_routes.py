@@ -58,24 +58,15 @@ def get_component_summary_by_timepoint(timepoint_id):
                     c.edge_count,
                     c.density,
                     COUNT(DISTINCT cb.biclique_id) as biclique_count,
-                    GROUP_CONCAT(DISTINCT b.category) as biclique_categories
+                    group_concat(b.category) as biclique_categories
                 FROM components c
                 JOIN timepoints t ON c.timepoint_id = t.id
-                LEFT JOIN component_bicliques cb ON c.id = cb.component_id AND c.timepoint_id = cb.timepoint_id
+                LEFT JOIN component_bicliques cb ON c.id = cb.component_id 
+                    AND c.timepoint_id = cb.timepoint_id
                 LEFT JOIN bicliques b ON cb.biclique_id = b.id
                 WHERE c.timepoint_id = :timepoint_id 
                 AND LOWER(c.graph_type) = 'split'
-                GROUP BY 
-                    c.id,
-                    c.timepoint_id,
-                    t.name,
-                    c.graph_type,
-                    c.category,
-                    c.size,
-                    c.dmr_count,
-                    c.gene_count,
-                    c.edge_count,
-                    c.density
+                GROUP BY c.id
             """)
 
             app.logger.info("Executing component summary query")
