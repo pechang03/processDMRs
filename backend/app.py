@@ -8,9 +8,7 @@ from .database.connection import get_db_engine
 from .database.models import Timepoint
 from .routes.component_routes import component_bp
 from .core.graph_manager import GraphManager
-from flask import Flask
 from flask_cors import CORS
-
 
 def configure_app(app):
     """Configure application settings"""
@@ -141,12 +139,12 @@ def register_routes(app):
             return jsonify([{"id": t.id, "name": t.name} for t in timepoints])
 
 
-# Configure the app before any routes are defined
-configure_app(app)
-register_routes(app)
+# Remove the direct configure_app(app) call from here
 
 if __name__ == "__main__":
-    # App is already configured at import time
+    # Create app instance and run
+    from . import create_app
+    app = create_app()
     port = int(os.getenv("FLASK_PORT", 5555))
     app.run(host="0.0.0.0", port=port, debug=True)
 
