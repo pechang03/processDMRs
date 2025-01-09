@@ -218,25 +218,32 @@ function BicliqueDetailView({ timepointId, componentId }) {
   // For basic symbol lookup
   const fetchGeneSymbols = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/component/genes/symbols`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          timepoint_id: timepointId,
-          component_id: componentId,
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to fetch gene symbols");
-      const data = await response.json();
-      if (data.status === "success" && data.data) {
-        setGeneSymbols(data.data);
-      } else {
-        throw new Error("Invalid gene data received");
-      }
+        console.log(`Fetching gene symbols for timepoint=${timepointId}, component=${componentId}`);
+        const response = await fetch(`${API_BASE_URL}/component/genes/symbols`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                timepoint_id: timepointId,
+                component_id: componentId,
+            }),
+        });
+        if (!response.ok) throw new Error("Failed to fetch gene symbols");
+        const data = await response.json();
+        if (data.status === "success" && data.data) {
+            console.log("Received gene symbols data:", data.data);
+            // Log split genes for debugging
+            const splitGenes = Object.entries(data.data)
+                .filter(([_, info]) => info.is_split)
+                .map(([id, info]) => ({id, symbol: info.symbol}));
+            console.log("Split genes found:", splitGenes);
+            setGeneSymbols(data.data);
+        } else {
+            throw new Error("Invalid gene data received");
+        }
     } catch (error) {
-      console.error("Error fetching gene symbols:", error);
+        console.error("Error fetching gene symbols:", error);
     }
   };
 
@@ -349,7 +356,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
         return null;
     }
 
-    // Initialize stats object
     const stats = {
         total: 0,
         hubs: 0,
@@ -365,45 +371,36 @@ function BicliqueDetailView({ timepointId, componentId }) {
         : componentDetails.all_gene_ids.split(',').map(id => parseInt(id.trim()));
 
     stats.total = geneIds.length;
-
-    // Log initial data for debugging
-    console.log("Processing gene stats for ids:", geneIds);
-    console.log("Available gene symbols:", geneSymbols);
+    console.log(`Processing ${stats.total} genes`);
 
     geneIds.forEach(id => {
         const info = geneSymbols[id];
         if (info) {
-            console.log(`Processing gene ${id}:`, info);
-            
-            // Check for split genes (either by node_type or biclique_count)
-            if (info.node_type === 'split_gene' || info.biclique_count > 1) {
+            // A gene is split if it appears in multiple bicliques
+            if (info.biclique_count > 1) {
                 stats.splits++;
-                console.log(`Found split gene ${id} (${info.symbol})`);
+                console.log(`Found split gene ${id} (${info.symbol}) in ${info.biclique_count} bicliques`);
             }
             
-            // Check for hub genes
-            if (info.node_type === 'hub') {
+            if (info.is_hub) {
                 stats.hubs++;
                 console.log(`Found hub gene ${id} (${info.symbol})`);
             }
 
-            // Update degree statistics
             if (info.degree !== undefined) {
                 stats.maxDegree = Math.max(stats.maxDegree, info.degree);
                 stats.minDegree = Math.min(stats.minDegree, info.degree);
             }
 
-            // Update biclique count
             stats.totalBicliques += info.biclique_count || 0;
         }
     });
 
-    // Reset minDegree if no valid degrees were found
     if (stats.minDegree === Infinity) {
         stats.minDegree = 0;
     }
 
-    console.log("Final gene stats:", stats);
+    console.log("Calculated gene stats:", stats);
     return stats;
   }, [componentDetails, geneSymbols]);
 
@@ -525,19 +522,22 @@ function BicliqueDetailView({ timepointId, componentId }) {
             Split Genes
           </Typography>
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-            {geneSymbols &&
-              Object.entries(geneSymbols || {})
-                .filter(([_, info]) => info?.is_split)
-                .map(([geneId, info]) => (
-                  <Chip
-                    key={geneId}
-                    label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count || 0} bicliques)`}
-                    sx={{ m: 0.5 }}
-                    color="primary"
-                    variant="outlined"
-                    title={`Bicliques: ${info.biclique_ids ? info.biclique_ids.join(", ") : ""}`}
-                  />
-                ))}
+            {geneSymbols ? (
+                Object.entries(geneSymbols)
+                    .filter(([_, info]) => info.is_split)
+                    .map(([geneId, info]) => (
+                        <Chip
+                            key={geneId}
+                            label={`${info.symbol || `Gene ${geneId}`} (${info.biclique_count} bicliques)`}
+                            sx={{ m: 0.5 }}
+                            color="primary"
+                            variant="outlined"
+                            title={`Gene ID: ${geneId}, Bicliques: ${info.biclique_ids?.join(", ") || "none"}`}
+                        />
+                    ))
+            ) : (
+                <Typography color="text.secondary">Loading gene information...</Typography>
+            )}
           </Paper>
           <Typography variant="h5" gutterBottom>
             Component Analysis for Timepoint {componentDetails.timepoint}
