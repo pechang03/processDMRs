@@ -88,10 +88,6 @@ def configure_app(app):
 # Configure the app before any routes are defined
 configure_app(app)
 
-# Register blueprints
-app.register_blueprint(component_bp)
-
-
 @app.route("/api/graph-manager/status")
 def graph_manager_status():
     """Check GraphManager status"""
