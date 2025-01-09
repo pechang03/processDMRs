@@ -22,14 +22,6 @@ def list_prompts():
             'status': 'success',
             'prompts': prompts
         })
-def create_error_response(message, status_code=500, details=None):
-    response = {
-        "error": message,
-        "status": status_code
-    }
-    if details and current_app.debug:
-        response["details"] = str(details)
-    return jsonify(response), status_code
 
 @llm_bp.route('/prompts/<prompt_id>', methods=['GET'])
 def get_prompt(prompt_id):
