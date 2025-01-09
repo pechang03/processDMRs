@@ -385,7 +385,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
       setError(null);
       
       // Fetch component details
-      fetch(`http://localhost:5555/api/component/${timepointId}/components/${componentId}/details`)
+      fetch(`http://localhost:5555/api/components/${timepointId}/${componentId}/details`)
         .then(response => {
           if (!response.ok) throw new Error('Failed to load component details');
           return response.json();

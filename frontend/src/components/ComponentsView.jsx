@@ -26,7 +26,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             
             console.log(`Fetching components for timepoint ${selectedTimepoint}`);
             
-            fetch(`http://localhost:5555/api/components/${selectedTimepoint}/summary`)
+            fetch(`/api/components/${selectedTimepoint}/summary`)
                 .then(response => {
                     console.log('Response status:', response.status);
                     console.log('Response headers:', response.headers);
