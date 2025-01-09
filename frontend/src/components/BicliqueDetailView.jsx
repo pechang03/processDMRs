@@ -405,29 +405,45 @@ function BicliqueDetailView({ timepointId, componentId }) {
   }, [componentDetails, geneSymbols]);
 
   const dmrStats = useMemo(() => {
-    if (!componentDetails?.all_dmr_ids) return null;
+    if (!componentDetails?.all_dmr_ids || !dmrNames) return null;
 
     const stats = {
-      total: componentDetails.all_dmr_ids.length,
-      hubs: 0,
-      maxDegree: 0,
-      minDegree: Infinity,
-      totalBicliques: 0,
+        total: 0,
+        hubs: 0,
+        maxDegree: 0,
+        minDegree: Infinity,
+        totalBicliques: 0,
     };
 
-    componentDetails.all_dmr_ids.forEach((id) => {
-      const info = dmrNames[id];
-      if (info) {
-        if (info.is_hub) stats.hubs++;
-        if (info.degree !== undefined) {
-          stats.maxDegree = Math.max(stats.maxDegree, info.degree);
-          stats.minDegree = Math.min(stats.minDegree, info.degree);
+    // Convert all_dmr_ids to array if it's not already
+    const dmrIds = Array.isArray(componentDetails.all_dmr_ids) 
+        ? componentDetails.all_dmr_ids 
+        : componentDetails.all_dmr_ids.split(',').map(id => parseInt(id.trim()));
+
+    stats.total = dmrIds.length;
+
+    dmrIds.forEach(id => {
+        const info = dmrNames[id];
+        if (info) {
+            // Check both node_type and degree for hub status
+            if (info.node_type === 'HUB' || info.degree > 5) { // Adjust threshold as needed
+                stats.hubs++;
+                console.log(`Found hub DMR ${id} with degree ${info.degree}`);
+            }
+
+            if (info.degree !== undefined) {
+                stats.maxDegree = Math.max(stats.maxDegree, info.degree);
+                stats.minDegree = Math.min(stats.minDegree, info.degree);
+            }
+            stats.totalBicliques += info.biclique_count || 0;
         }
-        stats.totalBicliques += info.biclique_count || 0;
-      }
     });
 
-    console.log("Calculated DMR stats:", stats); // Debug log
+    if (stats.minDegree === Infinity) {
+        stats.minDegree = 0;
+    }
+
+    console.log("Calculated DMR stats:", stats);
     return stats;
   }, [componentDetails, dmrNames]);
 
@@ -614,40 +630,102 @@ function BicliqueDetailView({ timepointId, componentId }) {
               <Typography variant="h6" gutterBottom>
                 Biclique Details
               </Typography>
-              {componentDetails.bicliques &&
-                componentDetails.bicliques.map((biclique, index) => (
-                  <Accordion key={biclique.biclique_id}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>
-                        Biclique {index + 1} ({biclique.category}) -
-                        {biclique.dmr_ids.split(",").length} DMRs,{" "}
-                        {biclique.gene_ids.split(",").length} Genes
+              {componentDetails.bicliques && componentDetails.bicliques.map((biclique, index) => (
+                <Accordion key={biclique.biclique_id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>
+                      Biclique {index + 1} ({biclique.category}) - {
+                        biclique.dmr_ids.split(",").length} DMRs, {
+                        biclique.gene_ids.split(",").length} Genes
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" gutterBottom>
+                        Genes
                       </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                          Genes
-                        </Typography>
-                        <GeneTable
-                          genes={biclique.gene_ids}
-                          geneSymbols={geneSymbols}
-                          geneAnnotations={geneAnnotations}
-                        />
-                      </Box>
-                      <Box>
-                        <Typography variant="h6" gutterBottom>
-                          DMRs
-                        </Typography>
-                        <DMRTable dmrs={biclique.dmr_ids} dmrNames={dmrNames} />
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
+                      <GeneTable 
+                        genes={biclique.gene_ids}
+                        geneSymbols={geneSymbols}
+                        geneAnnotations={geneAnnotations}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" gutterBottom>
+                        DMRs
+                      </Typography>
+                      <DMRTable 
+                        dmrs={biclique.dmr_ids} 
+                        dmrNames={dmrNames}
+                      />
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
             </Box>
           </TabPanel>
           <TabPanel className="bicliqueDetailTabs__tabPanel">
-            {/* Add detailed view here */}
+            <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
+              <Typography variant="h6" gutterBottom>
+                Detailed Statistics
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Paper elevation={3} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Gene Statistics
+                    </Typography>
+                    <Table size="small">
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Total Genes</TableCell>
+                          <TableCell align="right">{geneStats?.total}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Hub Genes</TableCell>
+                          <TableCell align="right">{geneStats?.hubs}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Split Genes</TableCell>
+                          <TableCell align="right">{geneStats?.splits}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Degree Range</TableCell>
+                          <TableCell align="right">
+                            {geneStats?.minDegree} - {geneStats?.maxDegree}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper elevation={3} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      DMR Statistics
+                    </Typography>
+                    <Table size="small">
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Total DMRs</TableCell>
+                          <TableCell align="right">{dmrStats?.total}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Hub DMRs</TableCell>
+                          <TableCell align="right">{dmrStats?.hubs}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Degree Range</TableCell>
+                          <TableCell align="right">
+                            {dmrStats?.minDegree} - {dmrStats?.maxDegree}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Box>
           </TabPanel>
         </Tabs>
       </Paper>
