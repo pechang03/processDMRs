@@ -1,6 +1,5 @@
 from flask import jsonify, current_app
 import os
-from .utils.extensions import app
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -189,10 +188,3 @@ def register_routes(app):
         return jsonify({"results": [{"id": 1, "status": "complete", "data": {}}]})
 
 
-if __name__ == "__main__":
-    # Create app instance and run
-    # from . import create_app
-
-    app = create_app()
-    port = int(os.getenv("FLASK_PORT", 5555))
-    app.run(host="0.0.0.0", port=port, debug=True)

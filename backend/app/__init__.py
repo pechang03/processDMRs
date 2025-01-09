@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
 
-
 def create_app(test_config=None):
     """Application factory function"""
     app = Flask(__name__)
@@ -16,9 +15,3 @@ def create_app(test_config=None):
     register_routes(app)
 
     return app
-
-
-# Create default app instance
-app = create_app()
-
-__all__ = ["app", "create_app"]
