@@ -189,8 +189,9 @@ CREATE INDEX idx_component_dmr ON component(dmr_id);
 
 ### Directory Structure
 
-# USE find backend/app frontend/src backend/tests -type d -not -path "_/\.**pycache**_" -not -path "_/**pycache**_"
+# `USE find backend/app frontend/src backend/tests -type d -not -path "_/\.**pycache**_" -not -path "_/**pycache**_"`
 
+```
 project/
 ├── backend/
 │ ├── app/
@@ -211,7 +212,6 @@ project/
 ├── src/
 │ ├── styles/
 │ └── components/
-
 ```
 
 ### Resource Management
@@ -242,6 +242,7 @@ The following sections outline the planned LLM integration using MCP reference i
 ### Phase 1: Core Architecture
 
 #### Directory Structure
+
 ```
 
 backend/app/
@@ -253,12 +254,17 @@ backend/app/
 │ ├── chat_handler.py
 │ ├── llm_client.py
 │ └── system_prompt_generator.py
+```
 
-````
+```
+
+```
 
 #### Component Standards
+
 1. **LLM Message Handling**
-```python
+
+````python
 class LLMMessage(BaseModel):
     message_type: str
     content: dict
@@ -266,7 +272,7 @@ class LLMMessage(BaseModel):
 
     class Config:
         orm_mode = True
-````
+
 
 2. **Transport Layer**
 
@@ -292,7 +298,7 @@ const LLMAnalysisView = () => {
     // Implementation
   };
 };
-```
+````
 
 #### Integration Requirements
 
@@ -315,6 +321,7 @@ const LLMAnalysisView = () => {
 - Unit tests for message handling
 - Integration tests for LLM communication
 - End-to-end tests for UI integration
+
 # API Conventions
 
 ## URL Structure
@@ -322,6 +329,7 @@ const LLMAnalysisView = () => {
 All API endpoints follow the pattern: `/api/<resource>/<action>`
 
 ### Resources
+
 - component
 - graph
 - gene
@@ -330,20 +338,24 @@ All API endpoints follow the pattern: `/api/<resource>/<action>`
 ### URL Patterns
 
 #### Component Routes
+
 - GET `/api/component/:timepoint_id/components/summary` - Get component summary for timepoint
 - GET `/api/component/:timepoint_id/components/:component_id/details` - Get detailed component info
 - GET `/api/component/:timepoint_id/details` - Get timepoint component details
 
 #### Gene Routes
+
 - POST `/api/component/genes/symbols` - Get gene symbols
 - POST `/api/component/genes/annotations` - Get gene annotations
 
 #### DMR Routes
+
 - POST `/api/component/dmrs/status` - Get DMR status
 
 ### Response Format
 
 All API responses follow this structure:
+
 ```json
 {
     "status": "success" | "error",
@@ -355,6 +367,7 @@ All API responses follow this structure:
 ### Error Handling
 
 HTTP Status Codes:
+
 - 200: Success
 - 400: Bad Request
 - 404: Not Found
@@ -363,18 +376,21 @@ HTTP Status Codes:
 ### Query Parameters
 
 Common query parameters:
+
 - timepoint_id: Numeric ID of the timepoint
 - component_id: Numeric ID of the component
 
 ### Request Bodies
 
 POST requests should include:
+
 - Content-Type: application/json
 - Request body in JSON format
 
 ### Pagination
 
 When applicable, paginated responses include:
+
 ```json
 {
     "data": [...],
