@@ -4,19 +4,18 @@ from typing import List, Optional
 
 class ComponentSummarySchema(BaseModel):
     """Pydantic model matching component_summary_view"""
-
     component_id: int
     timepoint_id: int
     timepoint: str
     graph_type: str
-    category: Optional[str] = None  # Make optional
+    category: str = ""
     size: int
     dmr_count: int
     gene_count: int
     edge_count: int
     density: float
     biclique_count: int
-    biclique_categories: Optional[str] = None  # Make optional
+    biclique_categories: str = ""
 
     class Config:
         from_attributes = True

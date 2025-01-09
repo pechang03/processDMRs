@@ -75,7 +75,7 @@ def get_component_summary_by_timepoint(timepoint_id):
             components = []
             for row in results:
                 try:
-                    # Convert all values to appropriate types
+                    # Convert SQLAlchemy row to dictionary with explicit type conversion
                     component_data = {
                         "component_id": int(row.component_id),
                         "timepoint_id": int(row.timepoint_id),
@@ -88,14 +88,12 @@ def get_component_summary_by_timepoint(timepoint_id):
                         "edge_count": int(row.edge_count),
                         "density": float(row.density),
                         "biclique_count": int(row.biclique_count),
-                        "biclique_categories": str(row.biclique_categories)
-                        if row.biclique_categories
-                        else "",
+                        "biclique_categories": str(row.biclique_categories) if row.biclique_categories else ""
                     }
 
                     # Validate with Pydantic
                     component = ComponentSummarySchema(**component_data)
-                    components.append(component.dict())
+                    components.append(component.model_dump())  # Use model_dump() instead of dict()
                 except ValidationError as e:
                     app.logger.error(
                         f"Validation error for component {row.component_id}: {str(e)}"
