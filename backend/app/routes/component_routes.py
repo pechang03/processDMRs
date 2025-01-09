@@ -29,10 +29,12 @@ def get_component_summary_by_timepoint(timepoint_id):
             # First verify timepoint exists
             timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
             if not timepoint:
-                return jsonify({
-                    "status": "error",
-                    "message": f"Timepoint {timepoint_id} not found"
-                }), 404
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Timepoint {timepoint_id} not found",
+                    }
+                ), 404
 
             # Modified query to ensure all fields match the Pydantic model
             query = text("""
@@ -70,7 +72,7 @@ def get_component_summary_by_timepoint(timepoint_id):
             """)
 
             results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
-            
+
             components = []
             for row in results:
                 try:
@@ -87,33 +89,35 @@ def get_component_summary_by_timepoint(timepoint_id):
                         "edge_count": int(row.edge_count),
                         "density": float(row.density),
                         "biclique_count": int(row.biclique_count),
-                        "biclique_categories": str(row.biclique_categories) if row.biclique_categories else ""
+                        "biclique_categories": str(row.biclique_categories)
+                        if row.biclique_categories
+                        else "",
                     }
-                    
+
                     # Validate with Pydantic
                     component = ComponentSummarySchema(**component_data)
                     components.append(component.dict())
                 except ValidationError as e:
-                    app.logger.error(f"Validation error for component {row.component_id}: {str(e)}")
+                    app.logger.error(
+                        f"Validation error for component {row.component_id}: {str(e)}"
+                    )
                     continue
                 except Exception as e:
-                    app.logger.error(f"Unexpected error processing component {row.component_id}: {str(e)}")
+                    app.logger.error(
+                        f"Unexpected error processing component {row.component_id}: {str(e)}"
+                    )
                     continue
 
-            return jsonify({
-                "status": "success",
-                "timepoint": timepoint.name,
-                "data": components
-            })
+            return jsonify(
+                {"status": "success", "timepoint": timepoint.name, "data": components}
+            )
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route(
-    "/<int:timepoint_id>/<int:component_id>/details", methods=["GET"]
-)
+@component_bp.route("/<int:timepoint_id>/<int:component_id>/details", methods=["GET"])
 def get_component_details(timepoint_id, component_id):
     app.logger.info(
         f"Getting details for timepoint {timepoint_id}, component {component_id}"
@@ -217,6 +221,9 @@ def get_component_details(timepoint_id, component_id):
 
 @component_bp.route("/genes/symbols", methods=["POST"])
 def get_gene_symbols():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "success"}), 200
+
     try:
         data = request.get_json()
         timepoint_id = data.get("timepoint_id")
@@ -272,13 +279,17 @@ def get_gene_symbols():
                     "is_hub": row.node_type == "hub",
                     "degree": row.degree or 0,
                     "biclique_count": row.biclique_count or 0,
-                    "biclique_ids": row.biclique_ids.split(",") if row.biclique_ids else []
+                    "biclique_ids": row.biclique_ids.split(",")
+                    if row.biclique_ids
+                    else [],
                 }
 
-            return jsonify({
-                "status": "success",
-                "data": gene_info  # Return as data field
-            })
+            return jsonify(
+                {
+                    "status": "success",
+                    "data": gene_info,  # Return as data field
+                }
+            )
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -286,6 +297,8 @@ def get_gene_symbols():
 
 @component_bp.route("/genes/annotations", methods=["POST"])
 def get_gene_annotations():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "success"}), 200
     try:
         data = request.get_json()
         timepoint_id = data.get("timepoint_id")
