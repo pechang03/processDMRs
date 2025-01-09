@@ -29,6 +29,7 @@ def get_component_summary_by_timepoint(timepoint_id):
             # First verify timepoint exists
             timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
             if not timepoint:
+                app.logger.error(f"Timepoint {timepoint_id} not found")
                 return jsonify({
                     "status": "error",
                     "message": f"Timepoint {timepoint_id} not found",
@@ -70,44 +71,55 @@ def get_component_summary_by_timepoint(timepoint_id):
                     c.density
             """)
 
+            # Add debug logging for raw query results
+            app.logger.info("Executing component summary query...")
             results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
+            app.logger.info(f"Query returned {len(results)} rows")
 
             components = []
-            for row in results:
+            for idx, row in enumerate(results):
                 try:
-                    # Convert SQLAlchemy row to dictionary with explicit type conversion
+                    # Log raw row data
+                    app.logger.debug(f"Processing row {idx}: {row._asdict()}")
+                    
+                    # Convert SQLAlchemy row to dictionary with explicit type conversion and null checks
                     component_data = {
-                        "component_id": int(row.component_id),
-                        "timepoint_id": int(row.timepoint_id),
-                        "timepoint": str(row.timepoint),
-                        "graph_type": str(row.graph_type),
+                        "component_id": int(row.component_id) if row.component_id else 0,
+                        "timepoint_id": int(row.timepoint_id) if row.timepoint_id else 0,
+                        "timepoint": str(row.timepoint) if row.timepoint else "",
+                        "graph_type": str(row.graph_type) if row.graph_type else "",
                         "category": str(row.category) if row.category else "",
-                        "size": int(row.size),
-                        "dmr_count": int(row.dmr_count),
-                        "gene_count": int(row.gene_count),
-                        "edge_count": int(row.edge_count),
-                        "density": float(row.density),
-                        "biclique_count": int(row.biclique_count),
+                        "size": int(row.size) if row.size else 0,
+                        "dmr_count": int(row.dmr_count) if row.dmr_count else 0,
+                        "gene_count": int(row.gene_count) if row.gene_count else 0,
+                        "edge_count": int(row.edge_count) if row.edge_count else 0,
+                        "density": float(row.density) if row.density else 0.0,
+                        "biclique_count": int(row.biclique_count) if row.biclique_count else 0,
                         "biclique_categories": str(row.biclique_categories) if row.biclique_categories else ""
                     }
 
+                    # Log converted data
+                    app.logger.debug(f"Converted data for row {idx}: {component_data}")
+
                     # Validate with Pydantic
                     component = ComponentSummarySchema(**component_data)
-                    components.append(component.model_dump())  # Use model_dump() instead of dict()
+                    components.append(component.model_dump())
+                    app.logger.debug(f"Successfully processed component {component_data['component_id']}")
                 except ValidationError as e:
-                    app.logger.error(
-                        f"Validation error for component {row.component_id}: {str(e)}"
-                    )
+                    app.logger.error(f"Validation error for row {idx}: {str(e)}")
+                    app.logger.error(f"Problematic data: {component_data}")
                     continue
                 except Exception as e:
-                    app.logger.error(
-                        f"Unexpected error processing component {row.component_id}: {str(e)}"
-                    )
+                    app.logger.error(f"Unexpected error processing row {idx}: {str(e)}")
+                    app.logger.error(f"Raw row data: {row}")
                     continue
 
-            return jsonify(
-                {"status": "success", "timepoint": timepoint.name, "data": components}
-            )
+            app.logger.info(f"Successfully processed {len(components)} components")
+            return jsonify({
+                "status": "success", 
+                "timepoint": timepoint.name, 
+                "data": components
+            })
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
