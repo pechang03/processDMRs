@@ -215,7 +215,7 @@ def get_component_details(timepoint_id, component_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/genes/symbols", methods=["POST"], url_prefix="/api")
+@component_bp.route("/genes/symbols", methods=["POST"])
 def get_gene_symbols():
     try:
         data = request.get_json()
@@ -284,7 +284,7 @@ def get_gene_symbols():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/genes/annotations", methods=["POST"], url_prefix="/api")
+@component_bp.route("/genes/annotations", methods=["POST"])
 def get_gene_annotations():
     try:
         data = request.get_json()
@@ -354,7 +354,7 @@ def get_gene_annotations():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/dmrs/status", methods=["POST"], url_prefix="/api")
+@component_bp.route("/dmrs/status", methods=["POST"])
 def get_dmr_status():
     try:
         # Validate request data
