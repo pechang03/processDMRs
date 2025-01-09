@@ -433,61 +433,52 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   React.useEffect(() => {
     if (timepointId && componentId) {
-      setLoading(true);
-      setError(null);
+        setLoading(true);
+        setError(null);
 
-      console.log("Starting data fetch for:", {timepointId, componentId});
+        console.log("Starting data fetch for:", {timepointId, componentId});
 
-      // Fetch component details
-      fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
-        .then((response) => {
-          console.log("Component details response status:", response.status);
-          if (!response.ok) throw new Error("Failed to load component details");
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Received component details:", data);
-          if (data.status === "success") {
-            setComponentDetails(data.data);
-            
-            // Fetch gene symbols
-            return fetch(`${API_BASE_URL}/component/genes/symbols`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                timepoint_id: timepointId,
-                component_id: componentId,
-              }),
+        // First fetch component details
+        fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
+            .then((response) => {
+                console.log("Component details response status:", response.status);
+                if (!response.ok) throw new Error("Failed to load component details");
+                return response.json();
+            })
+            .then((data) => {
+                console.log("Received component details:", data);
+                if (data.status === "success") {
+                    setComponentDetails(data.data);
+                    
+                    // Fetch gene symbols
+                    return fetch(`${API_BASE_URL}/component/genes/symbols`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            timepoint_id: timepointId,
+                            component_id: componentId,
+                        }),
+                    });
+                }
+            })
+            .then(response => {
+                console.log("Gene symbols response status:", response.status);
+                if (!response.ok) throw new Error("Failed to fetch gene symbols");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received gene symbols data:", data);
+                if (data.status === "success") {
+                    setGeneSymbols(data.data);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                setError(error.message);
+            })
+            .finally(() => {
+                setLoading(false);
             });
-          }
-        })
-        .then(response => {
-          console.log("Gene symbols response status:", response.status);
-          if (!response.ok) throw new Error("Failed to fetch gene symbols");
-          return response.json();
-        })
-        .then(data => {
-          console.log("Received gene symbols data:", data);
-          if (data.status === "success") {
-            setGeneSymbols(data.data);
-          }
-        })
-        .then(([symbolsResponse, annotationsResponse]) =>
-          Promise.all([symbolsResponse.json(), annotationsResponse.json()]),
-        )
-        .then(([symbolsData, annotationsData]) => {
-          if (symbolsData.status === "success") {
-            console.log("Received gene symbols data:", symbolsData);
-            setGeneSymbols(symbolsData.gene_info);
-          }
-          if (annotationsData.status === "success") {
-            console.log("Received gene annotations data:", annotationsData);
-            setGeneAnnotations(annotationsData.gene_info);
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError(error.message);
         })
         .finally(() => {
           setLoading(false);
