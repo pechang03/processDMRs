@@ -170,29 +170,39 @@ def get_component_details(timepoint_id, component_id):
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
                     AND ds.dmr_id IN (
-                        SELECT CAST(value AS INTEGER)
+                        SELECT CAST(trim(value) AS INTEGER)
                         FROM json_each(
-                            (SELECT all_dmr_ids FROM component_info)
+                            CASE 
+                                WHEN json_valid((SELECT all_dmr_ids FROM component_info))
+                                THEN (SELECT all_dmr_ids FROM component_info)
+                                ELSE json_array((SELECT all_dmr_ids FROM component_info))
+                            END
                         )
                     )
                 )
                 SELECT 
                     ci.*,
-                    json_group_array(
-                        json_object(
-                            'biclique_id', bi.biclique_id,
-                            'category', bi.category,
-                            'dmr_ids', bi.dmr_ids,
-                            'gene_ids', bi.gene_ids
+                    CASE 
+                        WHEN bi.biclique_id IS NULL THEN '[]'
+                        ELSE json_group_array(
+                            json_object(
+                                'biclique_id', bi.biclique_id,
+                                'category', bi.category,
+                                'dmr_ids', bi.dmr_ids,
+                                'gene_ids', bi.gene_ids
+                            )
+                        ) 
+                    END as bicliques,
+                    CASE 
+                        WHEN di.dmr_id IS NULL THEN '[]'
+                        ELSE json_group_array(
+                            json_object(
+                                'dmr_id', di.dmr_id,
+                                'dominated_gene_count', di.dominated_gene_count,
+                                'utility_score', di.utility_score
+                            )
                         )
-                    ) as bicliques,
-                    json_group_array(
-                        json_object(
-                            'dmr_id', di.dmr_id,
-                            'dominated_gene_count', di.dominated_gene_count,
-                            'utility_score', di.utility_score
-                        )
-                    ) as dominating_sets
+                    END as dominating_sets
                 FROM component_info ci
                 LEFT JOIN biclique_info bi ON 1=1
                 LEFT JOIN dominating_info di ON 1=1
