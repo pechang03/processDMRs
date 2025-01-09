@@ -12,6 +12,7 @@ import {
     Box,
     CircularProgress
 } from '@mui/material';
+import { API_BASE_URL } from '../config.js';
 
 function ComponentsView({ selectedTimepoint, onSelectComponent }) {
     const [components, setComponents] = useState([]);
@@ -26,7 +27,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             
             console.log(`Fetching components for timepoint ${selectedTimepoint}`);
             
-            fetch(`${process.env.REACT_APP_API_URL}/component/components/${selectedTimepoint}/summary`)
+            fetch(`${API_BASE_URL}/component/components/${selectedTimepoint}/summary`)
                 .then(response => {
                     if (!response.ok) {
                         if (response.status === 404) {
