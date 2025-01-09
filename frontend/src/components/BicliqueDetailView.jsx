@@ -358,9 +358,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
     componentDetails.all_gene_ids.forEach((id) => {
       const info = geneSymbols[id];
       if (info) {
-        // Add null check here
-        if (info.is_hub) stats.hubs++;
-        if (info.is_split) stats.splits++;
+        // Check for SPLIT_GENE node type
+        if (info.node_type === 'SPLIT_GENE') stats.splits++;
+        // Check for HUB node type 
+        if (info.node_type === 'HUB') stats.hubs++;
+        
         if (info.degree !== undefined) {
           stats.maxDegree = Math.max(stats.maxDegree, info.degree);
           stats.minDegree = Math.min(stats.minDegree, info.degree);
