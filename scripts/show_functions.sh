@@ -1,2 +1,7 @@
-#find ./backend/app -type f -name "*.py" | xargs grep -h "def \s*" | sort
-find . -name "*.py" -type f -exec grep -H "^[[:space:]]*def" {} \; | sort
+#!/bin/zsh
+
+find backend/app frontend/src backend/tests -type f -name "*.py" \
+    -not -path "*/\.__pycache__*" \
+    -not -path "*/__pycache__*" \
+    -exec grep -H "^[[:space:]]*def" {} \; \
+    | sort

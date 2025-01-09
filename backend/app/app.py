@@ -65,7 +65,18 @@ def configure_app(app):
     app.graph_manager = GraphManager(config=app.config)
 
     # Initialize CORS
-    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    # CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    # Enable CORS for all routes
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": ["http://localhost:3000"],
+                "methods": ["GET", "POST", "OPTIONS"],
+                "allow_headers": ["Content-Type"],
+            }
+        },
+    )
 
     print("\n>>> FINAL CONFIGURATION:")
     print("-" * 30)
@@ -82,7 +93,6 @@ def configure_app(app):
     print("*" * 50 + "\n")
 
     return env_loaded
-
 
 
 def create_app(test_config=None):
@@ -173,5 +183,3 @@ def register_routes(app):
     def get_dmr_analysis():
         """Placeholder for DMR analysis endpoint"""
         return jsonify({"results": [{"id": 1, "status": "complete", "data": {}}]})
-
-

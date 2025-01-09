@@ -319,5 +319,6 @@ def get_component_graph(timepoint_id, component_id):
                 "error": "Failed to generate graph visualization",
                 "details": str(e) if current_app.debug else "Internal server error",
                 "status": 500,
-            }
+            },
+            500,
         )
