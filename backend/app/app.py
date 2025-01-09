@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, current_app
 import os
 from .utils.extensions import app
 from dotenv import load_dotenv
