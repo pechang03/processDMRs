@@ -19,7 +19,9 @@ from backend.app.core.data_loader import read_gene_mapping
 
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class GraphManager:
     def __init__(self):
@@ -33,13 +35,13 @@ class GraphManager:
     @classmethod
     def get_instance(cls):
         """Get or create GraphManager instance"""
-        if not hasattr(current_app, 'graph_manager'):
+        if not hasattr(current_app, "graph_manager"):
             current_app.graph_manager = cls()
         return current_app.graph_manager
 
     def is_initialized(self):
         """Check if GraphManager is properly initialized"""
-        return bool(self.data_dir and hasattr(self, 'original_graphs'))
+        return bool(self.data_dir and hasattr(self, "original_graphs"))
 
     def get_graph_paths(self, timepoint_name: str) -> Tuple[str, str]:
         """Get paths for original and split graph files"""
@@ -55,10 +57,10 @@ class GraphManager:
         else:
             # Regular timepoint
             original_graph_file = os.path.join(
-                self.data_dir, f"bipartite_graph_output_{timepoint_name}.txt"
+                self.data_dir, f"bipartite_graph_output_{timepoint_name}_TSS.txt"
             )
             split_graph_file = os.path.join(
-                self.data_dir, f"bipartite_graph_output_{timepoint_name}_split.txt"
+                self.data_dir, f"bipartite_graph_output_{timepoint_name}.txt.bicluster"
             )
 
         return original_graph_file, split_graph_file
