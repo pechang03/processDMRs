@@ -344,39 +344,66 @@ function BicliqueDetailView({ timepointId, componentId }) {
   };
 
   const geneStats = useMemo(() => {
-    if (!componentDetails?.all_gene_ids || !geneSymbols) return null;
-
-    const stats = {
-      total: componentDetails.all_gene_ids.length,
-      hubs: 0,
-      splits: 0,
-      maxDegree: 0,
-      minDegree: Infinity,
-      totalBicliques: 0,
-    };
-
-    componentDetails.all_gene_ids.forEach((id) => {
-      const info = geneSymbols[id];
-      if (info) {
-        // Check for SPLIT_GENE node type
-        if (info.node_type === 'SPLIT_GENE') stats.splits++;
-        // Check for HUB node type 
-        if (info.node_type === 'HUB') stats.hubs++;
-        
-        if (info.degree !== undefined) {
-          stats.maxDegree = Math.max(stats.maxDegree, info.degree);
-          stats.minDegree = Math.min(stats.minDegree, info.degree);
-        }
-        stats.totalBicliques += info.biclique_count || 0;
-      }
-    });
-
-    // If no valid degrees were found, reset minDegree
-    if (stats.minDegree === Infinity) {
-      stats.minDegree = 0;
+    if (!componentDetails?.all_gene_ids || !geneSymbols) {
+        console.log("Missing required data for gene stats");
+        return null;
     }
 
-    console.log("Calculated gene stats:", stats); // Debug log
+    // Initialize stats object
+    const stats = {
+        total: 0,
+        hubs: 0,
+        splits: 0,
+        maxDegree: 0,
+        minDegree: Infinity,
+        totalBicliques: 0,
+    };
+
+    // Convert all_gene_ids to array if it's not already
+    const geneIds = Array.isArray(componentDetails.all_gene_ids) 
+        ? componentDetails.all_gene_ids 
+        : componentDetails.all_gene_ids.split(',').map(id => parseInt(id.trim()));
+
+    stats.total = geneIds.length;
+
+    // Log initial data for debugging
+    console.log("Processing gene stats for ids:", geneIds);
+    console.log("Available gene symbols:", geneSymbols);
+
+    geneIds.forEach(id => {
+        const info = geneSymbols[id];
+        if (info) {
+            console.log(`Processing gene ${id}:`, info);
+            
+            // Check for split genes (either by node_type or biclique_count)
+            if (info.node_type === 'split_gene' || info.biclique_count > 1) {
+                stats.splits++;
+                console.log(`Found split gene ${id} (${info.symbol})`);
+            }
+            
+            // Check for hub genes
+            if (info.node_type === 'hub') {
+                stats.hubs++;
+                console.log(`Found hub gene ${id} (${info.symbol})`);
+            }
+
+            // Update degree statistics
+            if (info.degree !== undefined) {
+                stats.maxDegree = Math.max(stats.maxDegree, info.degree);
+                stats.minDegree = Math.min(stats.minDegree, info.degree);
+            }
+
+            // Update biclique count
+            stats.totalBicliques += info.biclique_count || 0;
+        }
+    });
+
+    // Reset minDegree if no valid degrees were found
+    if (stats.minDegree === Infinity) {
+        stats.minDegree = 0;
+    }
+
+    console.log("Final gene stats:", stats);
     return stats;
   }, [componentDetails, geneSymbols]);
 
