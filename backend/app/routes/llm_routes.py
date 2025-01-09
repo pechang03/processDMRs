@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from ..utils.extensions import app
 from ..llm.prompts import PromptManager
 from ..llm.config import LLMConfig
