@@ -20,7 +20,7 @@ from typing import List, Dict, Any
 component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
 
 
-@component_bp.route("/<int:timepoint_id>/summary", methods=["GET"])
+@component_bp.route("/components/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
@@ -29,12 +29,11 @@ def get_component_summary_by_timepoint(timepoint_id):
             # First verify timepoint exists
             timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
             if not timepoint:
-                return jsonify(
-                    {
-                        "status": "error",
-                        "message": f"Timepoint {timepoint_id} not found",
-                    }
-                ), 404
+                return jsonify({
+                    "status": "error",
+                    "message": f"Timepoint {timepoint_id} not found",
+                    "code": "TIMEPOINT_NOT_FOUND"
+                }), 404
 
             # Modified query to ensure all fields match the Pydantic model
             query = text("""

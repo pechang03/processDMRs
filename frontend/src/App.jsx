@@ -76,7 +76,7 @@ setDetailsLoading(true);
 setDetailsError(null);
 setTimepointDetails(null);
 
-fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
+fetch(`http://localhost:5555/api/component/components/${timepointId}/summary`)
     .then(res => {
         if (!res.ok) {
             if (res.status === 404) {
@@ -94,9 +94,13 @@ fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
     setSelectedComponent(null);  // Reset selected component when loading new timepoint
     })
     .catch(err => {
-    console.error('Error fetching timepoint details:', err);
-    setDetailsError(err.message);
-    setDetailsLoading(false);
+        console.error('Error fetching timepoint details:', err);
+        if (err.message.includes('Timepoint not found')) {
+            setDetailsError('The selected timepoint does not exist');
+        } else {
+            setDetailsError('Failed to load timepoint details');
+        }
+        setDetailsLoading(false);
     });
 };
             
