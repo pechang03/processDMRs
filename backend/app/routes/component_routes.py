@@ -51,14 +51,14 @@ def get_component_summary_by_timepoint(timepoint_id):
                     timepoint_id,
                     timepoint,
                     graph_type,
-                    category,
+                    COALESCE(category, '') as category,
                     size,
                     dmr_count,
                     gene_count,
                     edge_count,
                     density,
                     biclique_count,
-                    biclique_categories
+                    COALESCE(biclique_categories, '') as biclique_categories
                 FROM component_summary_view
                 WHERE timepoint_id = :timepoint_id AND LOWER(graph_type) = 'split'
             """)

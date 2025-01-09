@@ -9,14 +9,14 @@ class ComponentSummarySchema(BaseModel):
     timepoint_id: int
     timepoint: str
     graph_type: str
-    category: Optional[str]
+    category: Optional[str] = None  # Make optional
     size: int
     dmr_count: int
     gene_count: int
     edge_count: int
     density: float
     biclique_count: int
-    biclique_categories: Optional[str]
+    biclique_categories: Optional[str] = None  # Make optional
 
     class Config:
         from_attributes = True
