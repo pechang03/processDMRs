@@ -185,6 +185,29 @@ CREATE INDEX idx_component_dmr ON component(dmr_id);
 - Easy deployment configuration management
   All configuration values should be documented in a `.env.example` file.
 
+### Frontend Configuration
+
+- Runtime configuration is injected via `window.__RUNTIME_CONFIG__` in `index.html`
+- Configuration values are exported from `config.js`
+- API base URL is configured using `REACT_APP_API_URL` 
+- Default API endpoint is '/api' if no runtime config is present
+
+Example configuration:
+```html
+<!-- index.html -->
+<script>
+    window.__RUNTIME_CONFIG__ = {
+        REACT_APP_API_URL: 'http://localhost:5555/api'
+    };
+</script>
+```
+
+```javascript
+// config.js
+const apiBaseUrl = window.__RUNTIME_CONFIG__?.REACT_APP_API_URL || '/api';
+export const API_BASE_URL = apiBaseUrl;
+```
+
 ## Project Organization
 
 ### Directory Structure
