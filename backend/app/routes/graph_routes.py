@@ -127,20 +127,6 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Validated component data: {component_data}")
 
             # Get bicliques for this component
-            bicliques_query = text("""
-                SELECT 
-                    b.dmr_ids,
-                    b.gene_ids
-                FROM bicliques b
-                JOIN component_bicliques cb ON b.id = cb.biclique_id
-                WHERE cb.component_id = :component_id
-            """)
-
-            bicliques_result = session.execute(
-                bicliques_query, {"component_id": component_id}
-            ).fetchall()
-
-            current_app.logger.info(f"Found {len(bicliques_result)} bicliques")
 
             # Parse bicliques data
             bicliques = []

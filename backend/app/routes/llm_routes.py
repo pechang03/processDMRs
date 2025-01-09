@@ -22,11 +22,14 @@ def list_prompts():
             'status': 'success',
             'prompts': prompts
         })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+def create_error_response(message, status_code=500, details=None):
+    response = {
+        "error": message,
+        "status": status_code
+    }
+    if details and current_app.debug:
+        response["details"] = str(details)
+    return jsonify(response), status_code
 
 @llm_bp.route('/prompts/<prompt_id>', methods=['GET'])
 def get_prompt(prompt_id):
@@ -71,10 +74,7 @@ def chat():
             'response': response
         })
     except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+        return create_error_response(str(e), 500, e)
 
 @llm_bp.route('/analyze', methods=['POST'])
 def analyze_data():
