@@ -1,5 +1,10 @@
-from .app import create_app
+from flask import Flask
 
-app = create_app()
+app = Flask(__name__)
 
-__all__ = ["create_app", "app"]
+from .app import configure_app, register_routes
+
+configure_app(app)
+register_routes(app)
+
+__all__ = ["app"]
