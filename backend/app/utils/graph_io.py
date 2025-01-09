@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Set, List
 from .id_mapping import create_dmr_id
 
 
-def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> nx.Graph:
+def read_bipartite_graph(filepath: str, timepoint: str = "DSS1", dmr_id_offset: int = 0) -> nx.Graph:
     """
     Read a bipartite graph from file.
     First line contains: <num_dmrs> <num_genes> <first_gene_id>
@@ -12,6 +12,7 @@ def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> nx.Graph:
     Args:
         filepath: Path to graph file
         timepoint: Timepoint identifier
+        dmr_id_offset: Offset to add to DMR IDs for this timepoint
         
     Returns:
         NetworkX bipartite graph
@@ -26,8 +27,8 @@ def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> nx.Graph:
             # Read edges
             for line in f:
                 dmr_id, gene_id = map(int, line.strip().split())
-                # Map the DMR ID to its timepoint-specific range
-                actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id)
+                # Map the DMR ID to its timepoint-specific range using offset
+                actual_dmr_id = create_dmr_id(dmr_id, timepoint, first_gene_id) + dmr_id_offset
                 # Add nodes with proper bipartite attributes
                 B.add_node(actual_dmr_id, bipartite=0, timepoint=timepoint)
                 B.add_node(gene_id, bipartite=1)
@@ -38,6 +39,7 @@ def read_bipartite_graph(filepath: str, timepoint: str = "DSS1") -> nx.Graph:
         print(f"DMRs: {n_dmrs}")
         print(f"Genes: {n_genes}")
         print(f"First Gene ID: {first_gene_id}")
+        print(f"DMR ID Offset: {dmr_id_offset}")
         print(f"Edges: {B.number_of_edges()}")
 
         return B
