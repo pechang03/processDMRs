@@ -37,9 +37,9 @@ def parse_id_string(id_str):
     return {int(x.strip()) for x in cleaned.split(",") if x.strip()}
 
 
-graph_bp = Blueprint('graph', __name__)
+graph_bp = Blueprint('graph_routes', __name__, url_prefix="/api/graph")
 
-@graph_bp.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
+@graph_bp.route("/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
     """Get graph visualization data for a specific component."""
     current_app.logger.info(
@@ -335,33 +335,6 @@ def get_component_graph(timepoint_id, component_id):
             }
         ), 500
 
-@graph_bp.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
-def get_component_graph(timepoint_id, component_id):
-    """Get graph visualization data for a specific component."""
-    current_app.logger.info(
-        f"Fetching graph for timepoint={timepoint_id}, component={component_id}"
-    )
-
-    try:
-        # Get timepoint name from database
-        engine = get_db_engine()
-        with Session(engine) as session:
-            timepoint_query = text("""
-                SELECT name FROM timepoints WHERE id = :timepoint_id
-            """)
-            timepoint_name = session.execute(timepoint_query, {"timepoint_id": timepoint_id}).scalar()
-            
-            if not timepoint_name:
-                return jsonify({"error": "Timepoint not found", "status": 404}), 404
-                
-        # Get the graphs for this timepoint using app.graph_manager instead of current_app
-        original_graph = current_app.graph_manager.get_original_graph(timepoint_name)
-        split_graph = current_app.graph_manager.get_split_graph(timepoint_name)
-        
-        if not original_graph or not split_graph:
-            return jsonify({"error": "Graphs not found for timepoint", "status": 404}), 404
-            
-        # Rest of your existing code...
         with Session(engine) as session:
             # First verify component exists
             verify_query = text("""
