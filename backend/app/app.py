@@ -84,68 +84,6 @@ def configure_app(app):
     return env_loaded
 
 
-# Configure the app before any routes are defined
-configure_app(app)
-
-@app.route("/api/graph-manager/status")
-def graph_manager_status():
-    """Check GraphManager status"""
-    try:
-        graph_manager = current_app.graph_manager
-        return jsonify(
-            {
-                "status": "ok",
-                "initialized": graph_manager.is_initialized(),
-                "data_dir": graph_manager.data_dir,
-                "loaded_timepoints": list(graph_manager.original_graphs.keys()),
-            }
-        )
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)}), 500
-
-
-# Import and register routes
-
-
-@app.route("/api/health")
-def health_check():
-    """Health check endpoint that verifies system and database status."""
-    database_url = app.config.get("DATABASE_URL", "not configured")
-    print(f"\n>>> Health Check - Using database URL: {database_url}")
-
-    health_status = {
-        "status": "online",
-        "environment": app.config["FLASK_ENV"],
-        "database": "connected",
-        "database_url": database_url,
-    }
-
-    try:
-        print(">>> Attempting database connection...")
-        engine = get_db_engine()
-        with Session(engine) as session:
-            # Just open and close a session to verify connection
-            print(">>> Executing test query...")
-            session.execute(text("SELECT 1"))
-            print(">>> Database connection successful")
-    except Exception as e:
-        print(f">>> Database connection failed: {str(e)}")
-        print(f">>> Full exception: {repr(e)}")
-        health_status["database"] = "disconnected"
-        health_status["error"] = str(e)
-        return jsonify(health_status), 503
-
-    return jsonify(health_status)
-
-
-@app.route("/api/timepoints")
-def get_timepoints():
-    """Get all timepoint names from the database."""
-    engine = get_db_engine()
-    with Session(engine) as session:
-        timepoints = session.query(Timepoint.id, Timepoint.name).all()
-        return jsonify([{"id": t.id, "name": t.name} for t in timepoints])
-
 
 def create_app(test_config=None):
     """Application factory function"""
@@ -173,18 +111,67 @@ def create_app(test_config=None):
 
 def register_routes(app):
     """Register application routes"""
-
     # Register all blueprints
     app.register_blueprint(graph_bp)
     app.register_blueprint(component_bp)
 
     @app.route("/api/health")
     def health_check():
-        return jsonify({"status": "healthy"})
+        """Health check endpoint that verifies system and database status."""
+        database_url = app.config.get("DATABASE_URL", "not configured")
+        print(f"\n>>> Health Check - Using database URL: {database_url}")
+
+        health_status = {
+            "status": "online",
+            "environment": app.config["FLASK_ENV"],
+            "database": "connected",
+            "database_url": database_url,
+        }
+
+        try:
+            print(">>> Attempting database connection...")
+            engine = get_db_engine()
+            with Session(engine) as session:
+                # Just open and close a session to verify connection
+                print(">>> Executing test query...")
+                session.execute(text("SELECT 1"))
+                print(">>> Database connection successful")
+        except Exception as e:
+            print(f">>> Database connection failed: {str(e)}")
+            print(f">>> Full exception: {repr(e)}")
+            health_status["database"] = "disconnected"
+            health_status["error"] = str(e)
+            return jsonify(health_status), 503
+
+        return jsonify(health_status)
+
+    @app.route("/api/graph-manager/status")
+    def graph_manager_status():
+        """Check GraphManager status"""
+        try:
+            graph_manager = current_app.graph_manager
+            return jsonify(
+                {
+                    "status": "ok",
+                    "initialized": graph_manager.is_initialized(),
+                    "data_dir": graph_manager.data_dir,
+                    "loaded_timepoints": list(graph_manager.original_graphs.keys()),
+                }
+            )
+        except Exception as e:
+            return jsonify({"status": "error", "error": str(e)}), 500
+
+    @app.route("/api/timepoints")
+    def get_timepoints():
+        """Get all timepoint names from the database."""
+        engine = get_db_engine()
+        with Session(engine) as session:
+            timepoints = session.query(Timepoint.id, Timepoint.name).all()
+            return jsonify([{"id": t.id, "name": t.name} for t in timepoints])
 
     @app.route("/api/dmr/analysis")
     def get_dmr_analysis():
-        # Placeholder for DMR analysis endpoint
+        """Placeholder for DMR analysis endpoint"""
         return jsonify({"results": [{"id": 1, "status": "complete", "data": {}}]})
 
 
