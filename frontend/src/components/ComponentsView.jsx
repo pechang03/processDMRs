@@ -26,7 +26,7 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
             
             console.log(`Fetching components for timepoint ${selectedTimepoint}`);
             
-            fetch(`http://localhost:5555/api/component/components/${selectedTimepoint}/summary`)
+            fetch(`${process.env.REACT_APP_API_URL}/component/components/${selectedTimepoint}/summary`)
                 .then(response => {
                     if (!response.ok) {
                         if (response.status === 404) {

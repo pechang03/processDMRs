@@ -27,7 +27,7 @@ useEffect(() => {
     // Fetch available prompts from backend
     const fetchPrompts = async () => {
     try {
-        const response = await fetch('/api/llm/prompts');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/llm/prompts`);
         const data = await response.json();
         setPrompts(data);
     } catch (error) {
@@ -51,7 +51,7 @@ const handlePromptChange = async (event) => {
     
     try {
     setIsLoading(true);
-    const response = await fetch(`/api/llm/load-prompt/${promptId}`);
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/llm/load-prompt/${promptId}`);
     const data = await response.json();
     
     // Add system message with loaded prompt
@@ -79,7 +79,7 @@ const handleSendMessage = async () => {
     setIsLoading(true);
 
     try {
-    const response = await fetch('/api/llm/chat', {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/llm/chat`, {
         method: 'POST',
         headers: {
         'Content-Type': 'application/json',

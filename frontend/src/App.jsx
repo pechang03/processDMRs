@@ -47,13 +47,13 @@ const [detailsError, setDetailsError] = React.useState(null);
 
   React.useEffect(() => {
     // Check backend status
-    fetch('http://localhost:5555/api/health')
+    fetch(`${process.env.REACT_APP_API_URL}/health`)
       .then(res => res.json())
       .then(data => setBackendStatus(data.status))
       .catch(err => setBackendStatus('offline'));
 
     // Fetch timepoints
-    fetch('http://localhost:5555/api/timepoints')
+    fetch(`${process.env.REACT_APP_API_URL}/timepoints`)
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch timepoints');
@@ -76,7 +76,7 @@ setDetailsLoading(true);
 setDetailsError(null);
 setTimepointDetails(null);
 
-fetch(`http://localhost:5555/api/component/components/${timepointId}/summary`)
+fetch(`${process.env.REACT_APP_API_URL}/component/components/${timepointId}/summary`)
     .then(res => {
         if (!res.ok) {
             if (res.status === 404) {

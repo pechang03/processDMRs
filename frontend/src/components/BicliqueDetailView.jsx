@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { API_BASE_URL } from '../config';
 import {
   Box,
   Paper,
