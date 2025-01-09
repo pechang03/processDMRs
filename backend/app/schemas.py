@@ -1,12 +1,16 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
 
 class DominatingSetSchema(BaseModel):
     """Schema for dominating set data"""
+    timepoint_id: int
     dmr_id: int
-    dominated_gene_count: Optional[int] = None
+    area_stat: Optional[float] = None
     utility_score: Optional[float] = None
+    dominated_gene_count: Optional[int] = None
+    calculation_timestamp: Optional[datetime] = None
 
     class Config:
         from_attributes = True
