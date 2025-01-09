@@ -237,6 +237,8 @@ def get_gene_symbols():
         timepoint_id = data.get("timepoint_id")
         component_id = data.get("component_id")
 
+        app.logger.info(f"Fetching gene symbols for timepoint={timepoint_id}, component={component_id}")
+
         if not all([timepoint_id, component_id]):
             return jsonify(
                 {"status": "error", "message": "Missing required parameters"}
@@ -277,27 +279,29 @@ def get_gene_symbols():
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
 
+            app.logger.info(f"Found {len(results)} genes")
+
             # Convert results to dictionary with string keys
             gene_info = {}
             for row in results:
+                app.logger.debug(f"Processing gene {row.gene_id}: node_type={row.node_type}, gene_type={row.gene_type}, biclique_count={row.biclique_count}")
                 gene_info[str(row.gene_id)] = {
-                    "gene_id": row.gene_id,  # Add this line to include gene_id
+                    "gene_id": row.gene_id,
                     "symbol": row.symbol or f"Gene_{row.gene_id}",
-                    "is_split": bool(row.is_split),
-                    "is_hub": row.node_type == "hub",
+                    "node_type": row.node_type,  # Include raw node_type
+                    "gene_type": row.gene_type,  # Include raw gene_type 
+                    "is_split": row.node_type == 'SPLIT_GENE' or row.biclique_count > 1,
+                    "is_hub": row.node_type == 'HUB',
                     "degree": row.degree or 0,
                     "biclique_count": row.biclique_count or 0,
-                    "biclique_ids": row.biclique_ids.split(",")
-                    if row.biclique_ids
-                    else [],
+                    "biclique_ids": row.biclique_ids.split(",") if row.biclique_ids else [],
                 }
 
-            return jsonify(
-                {
-                    "status": "success",
-                    "data": gene_info,  # Return as data field
-                }
-            )
+            app.logger.info(f"Processed gene info: {gene_info}")
+            return jsonify({
+                "status": "success",
+                "data": gene_info,
+            })
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
