@@ -21,7 +21,7 @@ import BicliqueDetailView from "./components/BicliqueDetailView.jsx";
 import LLMAnalysisView from "./components/LLMAnalysisView.jsx";
 import ComponentsView from "./components/ComponentsView";
 
-import "./config.js";
+import { API_BASE_URL } from "./config.js";
 
 const theme = createTheme({
   palette: {

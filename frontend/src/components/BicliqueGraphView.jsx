@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Plot from "react-plotly.js";
 import { Box, Paper, CircularProgress, Alert, Typography } from "@mui/material";
-import "../config.js";
+import { API_BASE_URL } from "../config.js";
 
 const BicliqueGraphView = ({ componentId, timepointId }) => {
   const [plotData, setPlotData] = useState(null);
