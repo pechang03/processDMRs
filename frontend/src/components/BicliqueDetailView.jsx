@@ -395,7 +395,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
             setComponentDetails(data.data);
             // Fetch gene symbols and annotations
             return Promise.all([
-              fetch(`http://localhost:5555/api/genes/symbols`, {
+              fetch(`http://localhost:5555/api/component/genes/symbols`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -403,7 +403,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                   component_id: componentId
                 })
               }),
-              fetch(`http://localhost:5555/api/genes/annotations`, {
+              fetch(`http://localhost:5555/api/component/genes/annotations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
