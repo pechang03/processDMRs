@@ -42,14 +42,14 @@ def get_component_summary_by_timepoint(timepoint_id):
                     c.id as component_id,
                     c.timepoint_id,
                     t.name as timepoint,
-                    c.graph_type,
+                    COALESCE(c.graph_type, 'split') as graph_type,
                     COALESCE(c.category, '') as category,
-                    c.size,
+                    COALESCE(c.size, 0) as size,
                     COALESCE(c.dmr_count, 0) as dmr_count,
                     COALESCE(c.gene_count, 0) as gene_count,
                     COALESCE(c.edge_count, 0) as edge_count,
                     COALESCE(c.density, 0.0) as density,
-                    COUNT(DISTINCT cb.biclique_id) as biclique_count,
+                    COALESCE(COUNT(DISTINCT cb.biclique_id), 0) as biclique_count,
                     COALESCE(group_concat(DISTINCT b.category), '') as biclique_categories
                 FROM components c
                 JOIN timepoints t ON c.timepoint_id = t.id
@@ -57,7 +57,6 @@ def get_component_summary_by_timepoint(timepoint_id):
                     AND c.timepoint_id = cb.timepoint_id
                 LEFT JOIN bicliques b ON cb.biclique_id = b.id
                 WHERE c.timepoint_id = :timepoint_id 
-                AND LOWER(c.graph_type) = 'split'
                 GROUP BY 
                     c.id,
                     c.timepoint_id,

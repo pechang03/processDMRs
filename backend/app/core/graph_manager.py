@@ -87,106 +87,64 @@ class GraphManager:
     def load_graphs(self, timepoint_id: int) -> None:
         """Load graphs for a specific timepoint"""
         try:
-            # Get database session
             engine = get_db_engine()
             with Session(engine) as session:
-                # Query timepoint data
-                timepoint = (
-                    session.query(Timepoint)
-                    .filter(Timepoint.id == timepoint_id)
-                    .first()
-                )
+                timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
                 if not timepoint:
                     raise ValueError(f"Timepoint {timepoint_id} not found")
 
-                # Get the timepoint-specific DMR offset
-                dmr_id_offset = timepoint.dmr_id_offset
-                if dmr_id_offset is None:
-                    print(f"Warning: No DMR ID offset defined for timepoint {timepoint.name}, using default 0")
-                    dmr_id_offset = 0
-
-                # Convert to pydantic model
                 timepoint_data = TimePointSchema.model_validate(timepoint)
-
-                # Get timepoint name without _TSS suffix
                 timepoint_name = (
                     timepoint_data.name.replace("_TSS", "")
                     if timepoint_data.name.endswith("_TSS")
                     else timepoint_data.name
                 )
 
-                # Get file paths
-                original_graph_file, split_graph_file = self.get_graph_paths(
-                    timepoint_name
-                )
+                original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
 
-                # Load gene mapping
-                gene_mapping_path = os.path.join(self.data_dir, "master_gene_ids.csv")
-                gene_id_mapping = read_gene_mapping(gene_mapping_path)
-                if not gene_id_mapping:
-                    raise ValueError(
-                        f"Failed to read gene mapping from {gene_mapping_path}"
-                    )
-
-                # Try to load original graph
+                # Load original graph
                 if os.path.exists(original_graph_file):
                     try:
                         self.original_graphs[timepoint_name] = read_bipartite_graph(
                             original_graph_file, 
                             timepoint_name,
-                            dmr_id_offset=dmr_id_offset  # Use timepoint-specific offset
+                            dmr_id_offset=timepoint.dmr_id_offset or 0
                         )
-                        print(f"Loaded original graph for {timepoint_name} with DMR offset {dmr_id_offset}")
-                        print(f"Loaded original graph for {timepoint_name}")
+                        logger.info(f"Loaded original graph for {timepoint_name}")
                     except Exception as e:
-                        print(
-                            f"Error loading original graph for {timepoint_name}: {str(e)}"
-                        )
-                else:
-                    print(
-                        f"Warning: Original graph file not found: {original_graph_file}"
-                    )
+                        logger.error(f"Error loading original graph for {timepoint_name}: {str(e)}")
+                        return
 
-                # Try to load split graph
+                # Handle split graph
                 if os.path.exists(split_graph_file):
                     try:
                         self.split_graphs[timepoint_name] = read_bipartite_graph(
                             split_graph_file, 
                             timepoint_name,
-                            dmr_id_offset=dmr_id_offset  # Use timepoint-specific offset
+                            dmr_id_offset=timepoint.dmr_id_offset or 0
                         )
-                        print(f"Loaded split graph for {timepoint_name} with DMR offset {dmr_id_offset}")
-                        print(f"Loaded split graph for {timepoint_name}")
+                        logger.info(f"Loaded split graph for {timepoint_name}")
                     except Exception as e:
-                        print(
-                            f"Error loading split graph for {timepoint_name}: {str(e)}"
-                        )
-                        # If split graph fails to load but we have original graph,
-                        # create a copy as fallback
+                        logger.warning(f"Error loading split graph for {timepoint_name}: {str(e)}")
                         if timepoint_name in self.original_graphs:
-                            print(
-                                f"Creating split graph copy from original for {timepoint_name}"
+                            logger.info(f"Creating empty split graph for {timepoint_name}")
+                            # Create empty graph with same nodes but no edges
+                            self.split_graphs[timepoint_name] = nx.Graph()
+                            self.split_graphs[timepoint_name].add_nodes_from(
+                                self.original_graphs[timepoint_name].nodes()
                             )
-                            self.split_graphs[timepoint_name] = self.original_graphs[
-                                timepoint_name
-                            ].copy()
                 else:
-                    print(f"Split graph file not found: {split_graph_file}")
-                    # For timepoints other than first, create split graph from original
+                    logger.warning(f"Split graph file not found: {split_graph_file}")
                     if timepoint_name in self.original_graphs:
-                        print(
-                            f"Creating split graph copy from original for {timepoint_name}"
-                        )
-                        self.split_graphs[timepoint_name] = self.original_graphs[
-                            timepoint_name
-                        ].copy()
-                    else:
-                        print(
-                            f"Warning: Cannot create split graph for {timepoint_name} - no original graph available"
+                        logger.info(f"Creating empty split graph for {timepoint_name}")
+                        # Create empty graph with same nodes but no edges
+                        self.split_graphs[timepoint_name] = nx.Graph()
+                        self.split_graphs[timepoint_name].add_nodes_from(
+                            self.original_graphs[timepoint_name].nodes()
                         )
 
         except Exception as e:
-            print(f"Error in load_graphs for timepoint {timepoint_id}: {str(e)}")
+            logger.error(f"Error in load_graphs for timepoint {timepoint_id}: {str(e)}")
             raise
 
     def get_original_graph(self, timepoint: str) -> Optional[nx.Graph]:
