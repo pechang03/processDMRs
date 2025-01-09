@@ -24,27 +24,18 @@ CORS(component_bp)  # Enable CORS for all routes in this blueprint
 @component_bp.route("/api/components/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
-    app.logger.debug(f"Request headers: {request.headers}")
     try:
         engine = get_db_engine()
-        app.logger.info("Database engine created successfully")
-
-        # First verify timepoint exists
         with Session(engine) as session:
+            # First verify timepoint exists
             timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
-
             if not timepoint:
-                app.logger.error(f"Timepoint {timepoint_id} not found")
-                return jsonify(
-                    {
-                        "status": "error",
-                        "message": f"Timepoint {timepoint_id} not found",
-                    }
-                ), 404
+                return jsonify({
+                    "status": "error",
+                    "message": f"Timepoint {timepoint_id} not found"
+                }), 404
 
-            app.logger.info(f"Found timepoint: {timepoint.name}")
-
-            # Execute component summary query in same session
+            # Modified query to ensure all fields match the Pydantic model
             query = text("""
                 SELECT 
                     c.id as component_id,
@@ -53,12 +44,12 @@ def get_component_summary_by_timepoint(timepoint_id):
                     c.graph_type,
                     COALESCE(c.category, '') as category,
                     c.size,
-                    c.dmr_count,
-                    c.gene_count,
-                    c.edge_count,
-                    c.density,
+                    COALESCE(c.dmr_count, 0) as dmr_count,
+                    COALESCE(c.gene_count, 0) as gene_count,
+                    COALESCE(c.edge_count, 0) as edge_count,
+                    COALESCE(c.density, 0.0) as density,
                     COUNT(DISTINCT cb.biclique_id) as biclique_count,
-                    group_concat(b.category) as biclique_categories
+                    COALESCE(group_concat(DISTINCT b.category), '') as biclique_categories
                 FROM components c
                 JOIN timepoints t ON c.timepoint_id = t.id
                 LEFT JOIN component_bicliques cb ON c.id = cb.component_id 
@@ -66,43 +57,49 @@ def get_component_summary_by_timepoint(timepoint_id):
                 LEFT JOIN bicliques b ON cb.biclique_id = b.id
                 WHERE c.timepoint_id = :timepoint_id 
                 AND LOWER(c.graph_type) = 'split'
-                GROUP BY c.id
+                GROUP BY 
+                    c.id,
+                    c.timepoint_id,
+                    t.name,
+                    c.graph_type,
+                    c.category,
+                    c.size,
+                    c.dmr_count,
+                    c.gene_count,
+                    c.edge_count,
+                    c.density
             """)
 
-            app.logger.info("Executing component summary query")
             results = session.execute(query, {"timepoint_id": timepoint_id}).fetchall()
-            app.logger.info(f"Query returned {len(results)} rows")
-
+            
             components = []
             for row in results:
-                component_data = {
-                    "component_id": row.component_id,
-                    "timepoint_id": row.timepoint_id,
-                    "timepoint": row.timepoint,
-                    "graph_type": row.graph_type,
-                    "category": row.category,
-                    "size": row.size,
-                    "dmr_count": row.dmr_count,
-                    "gene_count": row.gene_count,
-                    "edge_count": row.edge_count,
-                    "density": row.density,
-                    "biclique_count": row.biclique_count,
-                    "biclique_categories": row.biclique_categories,
-                }
                 try:
+                    component_data = {
+                        "component_id": row.component_id,
+                        "timepoint_id": row.timepoint_id,
+                        "timepoint": str(row.timepoint),  # Ensure timepoint is a string
+                        "graph_type": row.graph_type,
+                        "category": row.category if row.category else "",
+                        "size": row.size,
+                        "dmr_count": row.dmr_count,
+                        "gene_count": row.gene_count,
+                        "edge_count": row.edge_count,
+                        "density": float(row.density),  # Ensure density is a float
+                        "biclique_count": row.biclique_count,
+                        "biclique_categories": row.biclique_categories if row.biclique_categories else ""
+                    }
                     component = ComponentSummarySchema(**component_data)
                     components.append(component.dict())
-                    # app.logger.debug(f"Processed component summary: {component.dict()}")
                 except Exception as e:
                     app.logger.error(f"Error validating component summary: {e}")
                     continue
 
-            app.logger.info(f"Returning {len(components)} component summaries")
-            response = jsonify(
-                {"status": "success", "timepoint": timepoint.name, "data": components}
-            )
-            response.headers.add("Access-Control-Allow-Origin", "*")
-            return response
+            return jsonify({
+                "status": "success",
+                "timepoint": timepoint.name,
+                "data": components
+            })
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
