@@ -462,11 +462,13 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 }
             })
             .then(response => {
+                if (!response) return; // Skip if previous promise didn't return a response
                 console.log("Gene symbols response status:", response.status);
                 if (!response.ok) throw new Error("Failed to fetch gene symbols");
                 return response.json();
             })
             .then(data => {
+                if (!data) return; // Skip if no data
                 console.log("Received gene symbols data:", data);
                 if (data.status === "success") {
                     setGeneSymbols(data.data);
@@ -479,10 +481,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
             .finally(() => {
                 setLoading(false);
             });
-        })
-        .finally(() => {
-          setLoading(false);
-        });
     }
   }, [timepointId, componentId]);
 
