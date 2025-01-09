@@ -39,6 +39,16 @@ def parse_id_string(id_str):
 
 graph_bp = Blueprint('graph', __name__)
 
+@graph_bp.route("/api/graph/<int:timepoint_id>/<int:component_id>", methods=["GET"])
+def get_component_graph(timepoint_id, component_id):
+    """Get graph visualization data for a specific component."""
+    current_app.logger.info(
+        f"Fetching graph for timepoint={timepoint_id}, component={component_id}"
+    )
+
+    try:
+        # Get timepoint name from database
+        engine = get_db_engine()
         with Session(engine) as session:
             # First verify component exists
             verify_query = text("""
