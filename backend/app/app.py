@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from .database.connection import get_db_engine
 from .database.models import Timepoint
-from .routes.component_routes import component_bp
+from .core.graph_manager import GraphManager
+from flask import Flask
+from flask_cors import CORS
 
-print("\n" + "=" * 50)
-print(">>> IMPORTING app.py MODULE")
-print("=" * 50 + "\n")
+from .routes.graph_routes import graph_bp
+from .routes.component_routes import component_bp
 
 
 def configure_app(app):
@@ -42,15 +43,30 @@ def configure_app(app):
 
     # Get database path from environment or use default in project root
     db_path = os.getenv("DATABASE_PATH", os.path.join(project_root, "dmr_analysis.db"))
-    database_url = f"sqlite:///{db_path}"
+    data_dir = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
+    graph_data_dir = os.getenv("GRAPH_DATA_DIR", os.path.join(data_dir, "graphs"))
 
     # Set configuration
-    app.config["DATABASE_URL"] = database_url
-    app.config["FLASK_ENV"] = os.getenv("FLASK_ENV", "development")
-    # Add DATA_DIR to app config
-    app.config["DATA_DIR"] = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
-    # Add DATA_DIR to app config
-    app.config["DATA_DIR"] = os.getenv("DATA_DIR", os.path.join(project_root, "data"))
+    app.config.update(
+        DATABASE_URL=f"sqlite:///{db_path}",
+        FLASK_ENV=os.getenv("FLASK_ENV", "development"),
+        DATA_DIR=data_dir,
+        GRAPH_DATA_DIR=graph_data_dir,
+        SECRET_KEY=os.getenv("SECRET_KEY", "dev"),
+        DEBUG=os.getenv("DEBUG", "true").lower() == "true",
+        CORS_ORIGINS=os.getenv("CORS_ORIGINS", "http://localhost:3000"),
+    )
+
+    # Ensure required directories exist
+    os.makedirs(app.config["DATA_DIR"], exist_ok=True)
+    os.makedirs(app.config["GRAPH_DATA_DIR"], exist_ok=True)
+    # database_url = f"sqlite:///{db_path}"
+
+    # Set configuration
+    app.graph_manager = GraphManager(config=app.config)
+
+    # Initialize CORS
+    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
 
     print("\n>>> FINAL CONFIGURATION:")
     print("-" * 30)
@@ -58,8 +74,11 @@ def configure_app(app):
     print(f">>> Database URL: {app.config['DATABASE_URL']}")
     print(f">>> Environment: {app.config['FLASK_ENV']}")
     print(f">>> Data directory: {app.config['DATA_DIR']}")
+    print(f">>> Graph data directory: {app.config['GRAPH_DATA_DIR']}")
     print("-" * 30)
+    """Configure application settings"""
 
+    # Initialize graph manager with app config
     print("\n>>> CONFIGURATION COMPLETE")
     print("*" * 50 + "\n")
 
@@ -69,30 +88,26 @@ def configure_app(app):
 # Configure the app before any routes are defined
 configure_app(app)
 
-# Initialize GraphManager
-from backend.app.core.graph_manager import GraphManager
-with app.app_context():
-    app.graph_manager = GraphManager()
-
 # Register blueprints
 app.register_blueprint(component_bp)
+
 
 @app.route("/api/graph-manager/status")
 def graph_manager_status():
     """Check GraphManager status"""
     try:
         graph_manager = current_app.graph_manager
-        return jsonify({
-            "status": "ok",
-            "initialized": graph_manager.is_initialized(),
-            "data_dir": graph_manager.data_dir,
-            "loaded_timepoints": list(graph_manager.original_graphs.keys())
-        })
+        return jsonify(
+            {
+                "status": "ok",
+                "initialized": graph_manager.is_initialized(),
+                "data_dir": graph_manager.data_dir,
+                "loaded_timepoints": list(graph_manager.original_graphs.keys()),
+            }
+        )
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "error": str(e)
-        }), 500
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 
 # Import and register routes
 
@@ -137,77 +152,51 @@ def get_timepoints():
         return jsonify([{"id": t.id, "name": t.name} for t in timepoints])
 
 
-if __name__ == "__main__":
-    # App is already configured at import time
-    port = int(os.environ.get("FLASK_PORT", 5555))
-    app.run(host="0.0.0.0", port=port, debug=True)
-import os
-from flask import Flask, jsonify
-from flask_cors import CORS
-from dotenv import load_dotenv
-
 def create_app(test_config=None):
     """Application factory function"""
     app = Flask(__name__)
-    
+
     # Load environment variables from .env file if it exists
-    load_dotenv()
-    
+    # load_dotenv()
+
     # Configure the app
-    configure_app(app, test_config)
-    
+    configure_app(app)
+
     # Initialize extensions
-    CORS(app, resources={r"/*": {"origins": os.getenv('CORS_ORIGINS', 'http://localhost:3000')}})
-    
+    # CORS(
+    #    app,
+    #    resources={
+    #        r"/*": {"origins": os.getenv("CORS_ORIGINS", "http://localhost:3000")}
+    #    },
+    # )
+
     # Register routes
     register_routes(app)
-    
+
     return app
 
-def configure_app(app, test_config=None):
-    """Configure application settings"""
-    # Default configuration
-    app.config.from_mapping(
-        SECRET_KEY=os.getenv('SECRET_KEY', 'dev'),
-        GRAPH_DATA_DIR=os.getenv('GRAPH_DATA_DIR', './data/graphs'),
-        DATABASE_URI=os.getenv('DATABASE_URI', 'sqlite:///data.db'),
-        DEBUG=os.getenv('DEBUG', 'true').lower() == 'true',
-        DATA_DIR=os.getenv('DATA_DIR', './data')  # Add DATA_DIR config
-    )
-    
-    # Override with test config if provided
-    if test_config:
-        app.config.from_mapping(test_config)
-    
-    # Ensure graph data directory exists
-    os.makedirs(app.config['GRAPH_DATA_DIR'], exist_ok=True)
-    
-    # Initialize graph manager with app config
-    from .core.graph_manager import GraphManager
-    app.graph_manager = GraphManager(config=app.config)
 
 def register_routes(app):
     """Register application routes"""
-    from .routes.graph_routes import graph_bp
-    from .routes.component_routes import component_bp
-    
+
     # Register all blueprints
     app.register_blueprint(graph_bp)
     app.register_blueprint(component_bp)
 
-    @app.route('/api/health')
+    @app.route("/api/health")
     def health_check():
         return jsonify({"status": "healthy"})
 
-    @app.route('/api/dmr/analysis')
+    @app.route("/api/dmr/analysis")
     def get_dmr_analysis():
         # Placeholder for DMR analysis endpoint
-        return jsonify({
-            "results": [
-                {"id": 1, "status": "complete", "data": {}}
-            ]
-        })
+        return jsonify({"results": [{"id": 1, "status": "complete", "data": {}}]})
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+    # Create app instance and run
+    # from . import create_app
+
     app = create_app()
-    app.run(debug=app.config['DEBUG'], port=int(os.getenv('PORT', 5000)))
+    port = int(os.getenv("FLASK_PORT", 5555))
+    app.run(host="0.0.0.0", port=port, debug=True)
