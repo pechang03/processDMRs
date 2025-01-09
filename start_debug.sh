@@ -23,6 +23,7 @@ export DATABASE_URL=sqlite:///$PWD/dmr_analysis.db
 
 # Add API base URL for frontend
 export REACT_APP_API_URL=http://localhost:5555/api
+echo "Setting REACT_APP_API_URL to: $REACT_APP_API_URL"
 
 # Start backend
 echo "Starting Flask backend..."
@@ -32,8 +33,8 @@ python -m flask run --host=0.0.0.0 --port=5555 &
 echo "Backend will be available at: http://localhost:5555"
 sleep 2
 
-# Start frontend
-echo "Starting React frontend..."
+# Start frontend with environment variable
+echo "Starting React frontend with REACT_APP_API_URL=$REACT_APP_API_URL"
 cd frontend
 REACT_APP_API_URL=$REACT_APP_API_URL npm start &
 

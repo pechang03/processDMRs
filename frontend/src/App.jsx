@@ -22,6 +22,7 @@ import LLMAnalysisView from "./components/LLMAnalysisView.jsx";
 import ComponentsView from "./components/ComponentsView";
 
 import { API_BASE_URL } from "./config.js";
+console.log('App.jsx - API_BASE_URL:', API_BASE_URL);
 
 const theme = createTheme({
   palette: {
