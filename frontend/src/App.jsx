@@ -76,7 +76,7 @@ setDetailsLoading(true);
 setDetailsError(null);
 setTimepointDetails(null);
 
-fetch(`http://localhost:5555/api/component/${timepointId}/components/summary`)
+fetch(`http://localhost:5555/api/components/${timepointId}/summary`)
     .then(res => {
         if (!res.ok) {
             if (res.status === 404) {
