@@ -39,13 +39,17 @@ def configure_app(app, test_config=None):
     os.makedirs(app.config['GRAPH_DATA_DIR'], exist_ok=True)
     
     # Initialize graph manager
-    from .core.graph_manager import GraphManager
+    from backend.app.core.graph_manager import GraphManager
     app.graph_manager = GraphManager()
 
 def register_routes(app):
     """Register application routes"""
-    from .routes.graph_routes import graph_bp
+    from backend.app.routes.graph_routes import graph_bp
+    from backend.app.routes.component_routes import component_bp
+    
+    # Register all blueprints
     app.register_blueprint(graph_bp)
+    app.register_blueprint(component_bp)
 
     @app.route('/api/health')
     def health_check():
