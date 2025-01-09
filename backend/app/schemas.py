@@ -1,5 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
+
+
+class DominatingSetSchema(BaseModel):
+    """Schema for dominating set data"""
+    dmr_id: int
+    dominated_gene_count: Optional[int] = None
+    utility_score: Optional[float] = None
+
+    class Config:
+        from_attributes = True
 
 
 class ComponentSummarySchema(BaseModel):

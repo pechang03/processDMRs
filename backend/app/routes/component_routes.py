@@ -161,6 +161,20 @@ def get_component_details(timepoint_id, component_id):
                     JOIN component_bicliques cb ON b.id = cb.biclique_id
                     WHERE cb.component_id = :component_id
                     AND cb.timepoint_id = :timepoint_id
+                ),
+                dominating_info AS (
+                    SELECT 
+                        ds.dmr_id,
+                        ds.dominated_gene_count,
+                        ds.utility_score
+                    FROM dominating_sets ds
+                    WHERE ds.timepoint_id = :timepoint_id
+                    AND ds.dmr_id IN (
+                        SELECT CAST(value AS INTEGER)
+                        FROM json_each(
+                            (SELECT all_dmr_ids FROM component_info)
+                        )
+                    )
                 )
                 SELECT 
                     ci.*,
@@ -171,9 +185,17 @@ def get_component_details(timepoint_id, component_id):
                             'dmr_ids', bi.dmr_ids,
                             'gene_ids', bi.gene_ids
                         )
-                    ) as bicliques
+                    ) as bicliques,
+                    json_group_array(
+                        json_object(
+                            'dmr_id', di.dmr_id,
+                            'dominated_gene_count', di.dominated_gene_count,
+                            'utility_score', di.utility_score
+                        )
+                    ) as dominating_sets
                 FROM component_info ci
                 LEFT JOIN biclique_info bi ON 1=1
+                LEFT JOIN dominating_info di ON 1=1
                 GROUP BY ci.component_id
             """)
 
@@ -190,37 +212,55 @@ def get_component_details(timepoint_id, component_id):
                     }
                 ), 500
 
-            # Parse arrays
-            def parse_array_string(arr_str):
-                if not arr_str:
-                    return []
-                cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
+            try:
+                # Parse arrays and JSON
+                def parse_array_string(arr_str):
+                    if not arr_str:
+                        return []
+                    cleaned = arr_str.replace("[", "").replace("]", "").strip()
+                    return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
 
-            all_dmr_ids = parse_array_string(result.all_dmr_ids)
-            all_gene_ids = parse_array_string(result.all_gene_ids)
+                # Parse bicliques
+                bicliques_data = json.loads(result.bicliques) if result.bicliques else []
+                bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
 
-            # Parse the bicliques JSON array
-            bicliques = json.loads(result.bicliques) if result.bicliques else []
+                # Parse dominating sets
+                dominating_sets_data = json.loads(result.dominating_sets) if result.dominating_sets else []
+                dominating_sets = {
+                    str(ds['dmr_id']): DominatingSetSchema(**ds)
+                    for ds in dominating_sets_data
+                    if ds and 'dmr_id' in ds
+                }
 
-            component_data = {
-                "timepoint_id": result.timepoint_id,
-                "timepoint": result.timepoint,
-                "component_id": result.component_id,
-                "graph_type": result.graph_type,
-                "categories": result.categories,
-                "total_dmr_count": result.total_dmr_count,
-                "total_gene_count": result.total_gene_count,
-                "biclique_count": len(bicliques),
-                "all_dmr_ids": all_dmr_ids,
-                "all_gene_ids": all_gene_ids,
-                "bicliques": bicliques,
-            }
+                # Create component details with Pydantic model
+                component_details = ComponentDetailsSchema(
+                    timepoint_id=result.timepoint_id,
+                    timepoint=result.timepoint,
+                    component_id=result.component_id,
+                    graph_type=result.graph_type,
+                    categories=result.categories,
+                    total_dmr_count=result.total_dmr_count,
+                    total_gene_count=result.total_gene_count,
+                    biclique_count=len(bicliques),
+                    all_dmr_ids=parse_array_string(result.all_dmr_ids),
+                    all_gene_ids=parse_array_string(result.all_gene_ids),
+                    bicliques=bicliques,
+                    dominating_sets=dominating_sets
+                )
 
-            app.logger.info(f"Returning details for component {component_id}")
-            app.logger.debug(f"Component data: {component_data}")
+                app.logger.info(f"Successfully processed component {component_id} details")
+                return jsonify({
+                    "status": "success",
+                    "data": component_details.model_dump()
+                })
 
-            return jsonify({"status": "success", "data": component_data})
+            except ValidationError as e:
+                app.logger.error(f"Validation error: {str(e)}")
+                return jsonify({
+                    "status": "error",
+                    "message": "Invalid component data",
+                    "details": e.errors()
+                }), 400
 
     except Exception as e:
         app.logger.error(f"Error getting component details: {str(e)}")
