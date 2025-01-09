@@ -1,9 +1,23 @@
 from flask import Flask
 from .app import configure_app, register_routes
 
-app = Flask(__name__)
+def create_app(test_config=None):
+    """Application factory function"""
+    app = Flask(__name__)
+    
+    # Configure app
+    configure_app(app)
+    
+    # Apply test config if provided
+    if test_config:
+        app.config.update(test_config)
+    
+    # Register routes
+    register_routes(app)
+    
+    return app
 
-configure_app(app)
-register_routes(app)
+# Create default app instance
+app = create_app()
 
-__all__ = ["app"]
+__all__ = ["app", "create_app"]

@@ -12,7 +12,7 @@ from flask import Flask
 from flask_cors import CORS
 
 
-def configure_app(app, test_config=None):
+def configure_app(app):
     """Configure application settings"""
     print("\n" + "*" * 50)
     print(">>> STARTING APP CONFIGURATION")
