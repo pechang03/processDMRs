@@ -8,6 +8,8 @@ from ..schemas import (
     DmrTimepointAnnotationSchema,
     NodeSymbolRequest,
     NodeStatusRequest,
+    BicliqueMemberSchema,
+    DominatingSetSchema,
 )
 from flask_cors import CORS
 from ..utils.extensions import app
