@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 class GraphManager:
-    def __init__(self):
+    def __init__(self, config=None):
         logger.info("Initializing GraphManager")
         self.original_graphs: Dict[str, nx.Graph] = {}
         self.split_graphs: Dict[str, nx.Graph] = {}
-        self.data_dir = current_app.config.get("DATA_DIR", "./data")
+        self.data_dir = config.get("DATA_DIR", "./data") if config else "./data"
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
 
