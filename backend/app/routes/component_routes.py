@@ -17,10 +17,10 @@ from sqlalchemy import func, text
 from ..database.models import Timepoint
 from typing import List, Dict, Any
 
-component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
+component_bp = Blueprint("component_routes", __name__, url_prefix="/api/components")
 
 
-@component_bp.route("/<int:timepoint_id>/components/summary", methods=["GET"])
+@component_bp.route("/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
@@ -112,7 +112,7 @@ def get_component_summary_by_timepoint(timepoint_id):
 
 
 @component_bp.route(
-    "/<int:timepoint_id>/components/<int:component_id>/details", methods=["GET"]
+    "/<int:timepoint_id>/<int:component_id>/details", methods=["GET"]
 )
 def get_component_details(timepoint_id, component_id):
     app.logger.info(
@@ -215,7 +215,7 @@ def get_component_details(timepoint_id, component_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/genes/symbols", methods=["POST"])
+@component_bp.route("/genes/symbols", methods=["POST"], url_prefix="/api")
 def get_gene_symbols():
     try:
         data = request.get_json()
@@ -284,7 +284,7 @@ def get_gene_symbols():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/genes/annotations", methods=["POST"])
+@component_bp.route("/genes/annotations", methods=["POST"], url_prefix="/api")
 def get_gene_annotations():
     try:
         data = request.get_json()
@@ -354,7 +354,7 @@ def get_gene_annotations():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/dmrs/status", methods=["POST"])
+@component_bp.route("/dmrs/status", methods=["POST"], url_prefix="/api")
 def get_dmr_status():
     try:
         # Validate request data
@@ -422,7 +422,7 @@ def get_dmr_status():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/<int:timepoint_id>/components/details", methods=["GET"])
+@component_bp.route("/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
     try:
         engine = get_db_engine()
