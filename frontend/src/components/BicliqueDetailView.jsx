@@ -837,6 +837,64 @@ function BicliqueDetailView({ timepointId, componentId }) {
                   </TableContainer>
                 </Paper>
               </Box>
+
+              {/* Add DMR Details Table */}
+              <Box sx={{ mt: 4 }}>
+                <Paper elevation={3} sx={{ p: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    DMR Details
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>DMR ID</TableCell>
+                          <TableCell>Type</TableCell>
+                          <TableCell>Bicliques</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(dmrNames).map(([dmrId, info]) => {
+                          // Parse biclique IDs string and clean it up
+                          const bicliqueIds = info.biclique_ids 
+                            ? Array.isArray(info.biclique_ids)
+                              ? info.biclique_ids
+                              : info.biclique_ids.replace(/[\[\]"\\]/g, '').split(',')
+                            : [];
+                          
+                          return (
+                            <TableRow key={dmrId}>
+                              <TableCell>DMR_{dmrId}</TableCell>
+                              <TableCell>
+                                {info.node_type || 'Regular'}
+                              </TableCell>
+                              <TableCell>
+                                {bicliqueIds.length > 0 ? (
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {bicliqueIds.map((bicliqueId, index) => (
+                                      <Chip
+                                        key={index}
+                                        label={bicliqueId.trim()}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ fontSize: '0.75rem' }}
+                                      />
+                                    ))}
+                                  </Box>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    None
+                                  </Typography>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              </Box>
             </Box>
           </TabPanel>
         </Tabs>
