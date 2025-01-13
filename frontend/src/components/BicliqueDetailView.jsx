@@ -28,6 +28,7 @@ import "../styles/BicliqueDetailView.css";
 import { API_BASE_URL } from "../config.js";
 
 const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
+  console.log('GeneTable props:', { genes, geneSymbols, geneAnnotations });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -135,6 +136,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
 };
 
 const DMRTable = ({ dmrs, dmrNames }) => {
+  console.log('DMRTable props:', { dmrs, dmrNames });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -625,7 +627,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
             <Tab className="bicliqueDetailTabs__tab">Details</Tab>
           </TabList>
 
-          <TabPanel className="bicliqueDetailTabs__tabPanel">
+          <TabPanel className="bicliqueDetailTabs__tabPanel" style={{ display: 'block' }}>
             <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
               <Typography variant="h6" gutterBottom>
                 Biclique Details
@@ -644,6 +646,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
                       <Typography variant="h6" gutterBottom>
                         Genes
                       </Typography>
+                      {console.log('Passing to GeneTable:', {
+                        genes: biclique.gene_ids,
+                        geneSymbols,
+                        geneAnnotations
+                      })}
                       <GeneTable 
                         genes={biclique.gene_ids}
                         geneSymbols={geneSymbols}
@@ -654,6 +661,10 @@ function BicliqueDetailView({ timepointId, componentId }) {
                       <Typography variant="h6" gutterBottom>
                         DMRs
                       </Typography>
+                      {console.log('Passing to DMRTable:', {
+                        dmrs: biclique.dmr_ids,
+                        dmrNames
+                      })}
                       <DMRTable 
                         dmrs={biclique.dmr_ids} 
                         dmrNames={dmrNames}
@@ -730,7 +741,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
         </Tabs>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mt: 3, position: 'relative', zIndex: 1 }}>
         <BicliqueGraphView
           componentId={componentId}
           timepointId={timepointId}
