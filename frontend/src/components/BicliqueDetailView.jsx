@@ -468,26 +468,46 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 if (data.status === "success") {
                     setComponentDetails(data.data);
                     
-                    // Fetch gene symbols
-                    return fetch(`${API_BASE_URL}/component/genes/symbols`, {
+                    // Fetch DMR data
+                    return fetch(`${API_BASE_URL}/component/dmrs/status`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
+                            dmr_ids: data.data.all_dmr_ids,
                             timepoint_id: timepointId,
-                            component_id: componentId,
                         }),
                     });
                 }
             })
             .then(response => {
                 if (!response) return; // Skip if previous promise didn't return a response
-                console.log("Gene symbols response status:", response.status);
+                if (!response.ok) throw new Error("Failed to fetch DMR status");
+                return response.json();
+            })
+            .then(dmrData => {
+                if (!dmrData) return; // Skip if no data
+                console.log("Received DMR data:", dmrData);
+                if (dmrData.status === "success") {
+                    setDmrNames(dmrData.dmr_status);
+                }
+                
+                // Now fetch gene symbols
+                return fetch(`${API_BASE_URL}/component/genes/symbols`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        timepoint_id: timepointId,
+                        component_id: componentId,
+                    }),
+                });
+            })
+            .then(response => {
+                if (!response) return;
                 if (!response.ok) throw new Error("Failed to fetch gene symbols");
                 return response.json();
             })
             .then(data => {
-                if (!data) return; // Skip if no data
-                console.log("Received gene symbols data:", data);
+                if (!data) return;
                 if (data.status === "success") {
                     setGeneSymbols(data.data);
                 }
