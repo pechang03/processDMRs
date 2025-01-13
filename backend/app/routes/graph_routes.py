@@ -41,26 +41,36 @@ def get_component_graph(timepoint_id, component_id):
         # Get timepoint name from database
         engine = get_db_engine()
         with Session(engine) as session:
-            # First verify component exists
+            # First verify component exists and get timepoint name
             verify_query = text("""
-                SELECT COUNT(*)
+                SELECT t.name as timepoint_name
                 FROM components c
+                JOIN timepoints t ON c.timepoint_id = t.id
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.id = :component_id
             """)
 
-            count = session.execute(
+            result = session.execute(
                 verify_query,
                 {"timepoint_id": timepoint_id, "component_id": component_id},
-            ).scalar()
+            ).first()
 
-            current_app.logger.info(f"Found {count} matching components")
-
-            if count == 0:
+            if not result:
                 current_app.logger.error(
                     f"Component {component_id} not found for timepoint {timepoint_id}"
                 )
                 return jsonify({"error": "Component not found", "status": 404}), 404
+
+            timepoint_name = result.timepoint_name
+            current_app.logger.info(f"Found timepoint name: {timepoint_name}")
+
+            # Get the split graph from GraphManager
+            graph_manager = current_app.graph_manager
+            split_graph = graph_manager.get_split_graph(timepoint_name)
+
+            if not split_graph:
+                current_app.logger.error(f"No split graph found for timepoint {timepoint_name}")
+                return jsonify({"error": "Split graph not found", "status": 404}), 404
 
             # Get component data
             query = text("""
@@ -260,12 +270,8 @@ def get_component_graph(timepoint_id, component_id):
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
-            # Create graph and calculate layout
-            graph = nx.Graph()
-            for dmr_set, gene_set in bicliques:
-                for dmr in dmr_set:
-                    for gene in gene_set:
-                        graph.add_edge(dmr, gene)
+            # Use the split graph from GraphManager
+            graph = split_graph
 
             # Add debug logging for node IDs before creating NodeInfo
             current_app.logger.debug(
