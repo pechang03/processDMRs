@@ -45,14 +45,14 @@ class GraphManager:
 
     def get_graph_paths(self, timepoint_name: str) -> Tuple[str, str]:
         """Get paths for original and split graph files"""
-        if timepoint_name == "DSS_Time_Series":
+        # Normalize timepoint name
+        if timepoint_name.lower() in ["dsstimeseries", "dss_time_series"]:
             # Special case for time series
             original_graph_file = os.path.join(
                 self.data_dir, "bipartite_graph_output_DSS_overall.txt"
             )
             split_graph_file = os.path.join(
-                self.data_dir,
-                "bipartite_graph_output.txt",  # Only available for first timepoint
+                self.data_dir, "bipartite_graph_output_DSS1.txt.bicluster"
             )
         else:
             # Regular timepoint
@@ -63,6 +63,7 @@ class GraphManager:
                 self.data_dir, f"bipartite_graph_output_{timepoint_name}.txt.bicluster"
             )
 
+        logger.info(f"Looking for graphs at:\nOriginal: {original_graph_file}\nSplit: {split_graph_file}")
         return original_graph_file, split_graph_file
 
     def load_all_timepoints(self):
