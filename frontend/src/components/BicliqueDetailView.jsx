@@ -136,75 +136,68 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
 };
 
 const DMRTable = ({ dmrs, dmrNames }) => {
-  console.log('DMRTable props:', { dmrs, dmrNames });
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+    console.log('DMRTable props:', { dmrs, dmrNames });
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Parse the DMRs string into an array of integers
-  const parseDMRs = (dmrsStr) => {
-    if (!dmrsStr) return [];
-    if (Array.isArray(dmrsStr)) return dmrsStr;
-    return dmrsStr.split(",").map((id) => parseInt(id.trim()));
-  };
+    // Parse the DMRs string into an array of integers
+    const parseDMRs = (dmrsStr) => {
+        if (!dmrsStr) return [];
+        if (Array.isArray(dmrsStr)) return dmrsStr;
+        return dmrsStr.replace(/[\[\]]/g, '').split(",").map(id => parseInt(id.trim()));
+    };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    const dmrArray = parseDMRs(dmrs);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  // Parse the DMRs string before mapping
-  const dmrArray = parseDMRs(dmrs).map((dmrId) => ({
-    id: dmrId,
-    ...dmrNames[dmrId],
-  }));
-
-  return (
-    <Box>
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>DMR ID</TableCell>
-              <TableCell align="right">Degree</TableCell>
-              <TableCell align="right">Biclique Count</TableCell>
-              <TableCell>Properties</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {dmrArray
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((dmr) => (
-                <TableRow key={dmr.id}>
-                  <TableCell>DMR_{dmr.id}</TableCell>
-                  <TableCell align="right">{dmr.degree}</TableCell>
-                  <TableCell align="right">{dmr.biclique_count}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      {dmr.is_hub && (
-                        <Chip size="small" label="Hub" color="primary" />
-                      )}
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={dmrArray.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </Box>
-  );
+    return (
+        <Box>
+            <TableContainer>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>DMR ID</TableCell>
+                            <TableCell align="right">Degree</TableCell>
+                            <TableCell align="right">Biclique Count</TableCell>
+                            <TableCell>Properties</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {dmrArray
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((dmrId) => {
+                                const info = dmrNames[dmrId] || {};
+                                return (
+                                    <TableRow key={dmrId}>
+                                        <TableCell>DMR_{dmrId}</TableCell>
+                                        <TableCell align="right">{info.degree || 0}</TableCell>
+                                        <TableCell align="right">{info.biclique_count || 0}</TableCell>
+                                        <TableCell>
+                                            <Stack direction="row" spacing={1}>
+                                                {info.is_hub && (
+                                                    <Chip size="small" label="Hub" color="primary" />
+                                                )}
+                                            </Stack>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={dmrArray.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                    setRowsPerPage(parseInt(event.target.value, 10));
+                    setPage(0);
+                }}
+            />
+        </Box>
+    );
 };
 
 function BicliqueDetailView({ timepointId, componentId }) {
@@ -459,57 +452,12 @@ function BicliqueDetailView({ timepointId, componentId }) {
         // First fetch component details
         fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
             .then((response) => {
-                console.log("Component details response status:", response.status);
                 if (!response.ok) throw new Error("Failed to load component details");
                 return response.json();
             })
             .then((data) => {
-                console.log("Received component details:", data);
                 if (data.status === "success") {
                     setComponentDetails(data.data);
-                    
-                    // Fetch DMR data
-                    return fetch(`${API_BASE_URL}/component/dmrs/status`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            dmr_ids: data.data.all_dmr_ids,
-                            timepoint_id: timepointId,
-                        }),
-                    });
-                }
-            })
-            .then(response => {
-                if (!response) return; // Skip if previous promise didn't return a response
-                if (!response.ok) throw new Error("Failed to fetch DMR status");
-                return response.json();
-            })
-            .then(dmrData => {
-                if (!dmrData) return; // Skip if no data
-                console.log("Received DMR data:", dmrData);
-                if (dmrData.status === "success") {
-                    setDmrNames(dmrData.dmr_status);
-                }
-                
-                // Now fetch gene symbols
-                return fetch(`${API_BASE_URL}/component/genes/symbols`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        timepoint_id: timepointId,
-                        component_id: componentId,
-                    }),
-                });
-            })
-            .then(response => {
-                if (!response) return;
-                if (!response.ok) throw new Error("Failed to fetch gene symbols");
-                return response.json();
-            })
-            .then(data => {
-                if (!data) return;
-                if (data.status === "success") {
-                    setGeneSymbols(data.data);
                 }
             })
             .catch((error) => {
@@ -518,6 +466,28 @@ function BicliqueDetailView({ timepointId, componentId }) {
             })
             .finally(() => {
                 setLoading(false);
+            });
+
+        // Fetch gene symbols separately
+        fetch(`${API_BASE_URL}/component/genes/symbols`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                timepoint_id: timepointId,
+                component_id: componentId,
+            }),
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to fetch gene symbols");
+                return response.json();
+            })
+            .then((data) => {
+                if (data.status === "success") {
+                    setGeneSymbols(data.data);
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching gene symbols:", error);
             });
     }
   }, [timepointId, componentId]);
