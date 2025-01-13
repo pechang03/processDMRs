@@ -777,6 +777,66 @@ function BicliqueDetailView({ timepointId, componentId }) {
                   </Paper>
                 </Grid>
               </Grid>
+
+              {/* Gene Details Table */}
+              <Box sx={{ mt: 4 }}>
+                <Paper elevation={3} sx={{ p: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Gene Details
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Symbol</TableCell>
+                          <TableCell>Type</TableCell>
+                          <TableCell align="right">Degree</TableCell>
+                          <TableCell>Bicliques</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(geneSymbols).map(([geneId, info]) => {
+                          // Parse biclique IDs string and clean it up
+                          const bicliqueIds = info.biclique_ids 
+                            ? Array.isArray(info.biclique_ids)
+                              ? info.biclique_ids
+                              : info.biclique_ids.replace(/[\[\]"\\]/g, '').split(',')
+                            : [];
+                          
+                          return (
+                            <TableRow key={geneId}>
+                              <TableCell>{info.symbol || `Gene_${geneId}`}</TableCell>
+                              <TableCell>
+                                {info.is_split ? 'Split' : info.is_hub ? 'Hub' : 'Regular'}
+                              </TableCell>
+                              <TableCell align="right">{info.degree || 0}</TableCell>
+                              <TableCell>
+                                {bicliqueIds.length > 0 ? (
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {bicliqueIds.map((bicliqueId, index) => (
+                                      <Chip
+                                        key={index}
+                                        label={bicliqueId.trim()}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ fontSize: '0.75rem' }}
+                                      />
+                                    ))}
+                                  </Box>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    None
+                                  </Typography>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              </Box>
             </Box>
           </TabPanel>
         </Tabs>
