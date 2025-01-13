@@ -675,7 +675,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
               ))}
             </Box>
           </TabPanel>
-          <TabPanel className="bicliqueDetailTabs__tabPanel">
+          <TabPanel className="bicliqueDetailTabs__tabPanel" style={{ display: 'block' }}>
             <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
               <Typography variant="h6" gutterBottom>
                 Detailed Statistics
@@ -706,6 +706,10 @@ function BicliqueDetailView({ timepointId, componentId }) {
                             {geneStats?.minDegree} - {geneStats?.maxDegree}
                           </TableCell>
                         </TableRow>
+                        <TableRow>
+                          <TableCell>Total Biclique Participation</TableCell>
+                          <TableCell align="right">{geneStats?.totalBicliques}</TableCell>
+                        </TableRow>
                       </TableBody>
                     </Table>
                   </Paper>
@@ -731,6 +735,43 @@ function BicliqueDetailView({ timepointId, componentId }) {
                             {dmrStats?.minDegree} - {dmrStats?.maxDegree}
                           </TableCell>
                         </TableRow>
+                        <TableRow>
+                          <TableCell>Total Biclique Participation</TableCell>
+                          <TableCell align="right">{dmrStats?.totalBicliques}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </Grid>
+                
+                {/* Add Biclique Summary Section */}
+                <Grid item xs={12}>
+                  <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Biclique Summary
+                    </Typography>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Biclique ID</TableCell>
+                          <TableCell align="right">DMRs</TableCell>
+                          <TableCell align="right">Genes</TableCell>
+                          <TableCell>Category</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {componentDetails?.bicliques?.map((biclique, index) => (
+                          <TableRow key={biclique.biclique_id}>
+                            <TableCell>{biclique.biclique_id}</TableCell>
+                            <TableCell align="right">
+                              {biclique.dmr_ids?.split(',').length || 0}
+                            </TableCell>
+                            <TableCell align="right">
+                              {biclique.gene_ids?.split(',').length || 0}
+                            </TableCell>
+                            <TableCell>{biclique.category}</TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </Paper>
