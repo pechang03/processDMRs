@@ -212,28 +212,27 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
             else:
                 biclique_groups[primary_biclique]['genes'].add(node)
 
-        # Ensure we have at least one biclique group
-        if not biclique_groups:
-            biclique_groups[0] = {
-                'dmrs': dmr_nodes,
-                'genes': gene_nodes - split_genes,
-                'split_genes': split_genes
-            }
+        # Special case: if there's only one DMR and it's not in any biclique,
+        # add it to biclique group 0
+        if len(dmr_nodes) == 1 and not any(group['dmrs'] for group in biclique_groups.values()):
+            dmr = next(iter(dmr_nodes))
+            if 0 not in biclique_groups:
+                biclique_groups[0] = {'dmrs': set(), 'genes': set(), 'split_genes': set()}
+            biclique_groups[0]['dmrs'].add(dmr)
 
         # Calculate angular ranges for each biclique
-        num_bicliques = max(1, len(biclique_groups))
+        num_bicliques = len(biclique_groups)
         angle_per_biclique = 2 * math.pi / num_bicliques
-
-        # Position nodes for each biclique
+        
+        # Position DMRs and regular genes for each biclique
         for biclique_idx, group in biclique_groups.items():
-            # Calculate base angle for this biclique
             base_angle = biclique_idx * angle_per_biclique
             
             # Position DMRs in middle circle
             dmr_count = len(group['dmrs'])
             for i, node in enumerate(sorted(group['dmrs'])):
-                angle = base_angle + (i / max(1, dmr_count - 1)) * (angle_per_biclique * 0.8)
-                radius = 1.75  # Middle circle (unchanged)
+                angle = base_angle + (i / max(1, dmr_count)) * angle_per_biclique
+                radius = 1.75
                 positions[node] = (
                     radius * math.cos(angle),
                     radius * math.sin(angle)
@@ -242,25 +241,27 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
             # Position regular genes in outer circle
             gene_count = len(group['genes'])
             for i, node in enumerate(sorted(group['genes'])):
-                angle = base_angle + (i / max(1, gene_count - 1)) * (angle_per_biclique * 0.8)
-                radius = 2.5  # Outer circle (was 1.0)
+                angle = base_angle + (i / max(1, gene_count)) * angle_per_biclique
+                radius = 2.5
                 positions[node] = (
                     radius * math.cos(angle),
                     radius * math.sin(angle)
                 )
-        
-        # Position split genes in inner circle
+    
+        # Position split genes between their bicliques
         for node in split_genes:
             if node in node_biclique_map:
-                bicliques = node_biclique_map[node]
+                bicliques = sorted(node_biclique_map[node])
                 if len(bicliques) > 1:
                     # Calculate average angle between involved bicliques
-                    angles = [biclique_idx * angle_per_biclique for biclique_idx in bicliques]
-                    avg_angle = sum(angles) / len(angles)
-                    radius = 1.0  # Inner circle (was 2.5)
+                    angles = [idx * angle_per_biclique for idx in bicliques]
+                    start_angle = min(angles)
+                    end_angle = max(angles)
+                    avg_angle = (start_angle + end_angle) / 2
+                    radius = 1.0  # Inner circle
                     positions[node] = (
                         radius * math.cos(avg_angle),
                         radius * math.sin(avg_angle)
                     )
-        
+    
         return positions
