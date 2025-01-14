@@ -140,6 +140,7 @@ def get_component_graph(timepoint_id, component_id):
             # Parse bicliques data
             bicliques = []
             biclique_id_map = {}  # Add this to map database IDs to sequential numbers
+            node_biclique_map = {}  # Initialize node-to-biclique mapping
 
             # First, create the mapping of database IDs to sequential numbers
             for idx, b in enumerate(component_data.bicliques):
