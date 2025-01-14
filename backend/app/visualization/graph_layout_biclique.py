@@ -116,21 +116,38 @@ class CircularBicliqueLayout(BaseLogicalLayout):
     
         # Position split genes
         for bicliques, nodes in split_gene_groups.items():
-            # Calculate average angle between involved bicliques
+            # Calculate angles for all involved bicliques
             angles = [idx * angle_per_biclique for idx in bicliques]
-            start_angle = min(angles)
-            end_angle = max(angles)
-            angle_range = end_angle - start_angle
+        
+            # For each pair of consecutive bicliques in the set
+            for i in range(len(bicliques) - 1):
+                start_biclique = bicliques[i]
+                end_biclique = bicliques[i + 1]
             
-            # Distribute split genes evenly within their angle range
-            for i, node in enumerate(sorted(nodes)):
-                # Calculate position along the arc between bicliques
-                angle = start_angle + (i / max(1, len(nodes) - 1)) * angle_range
-                radius = 1.0  # Inner circle
-                positions[node] = (
-                    radius * math.cos(angle),
-                    radius * math.sin(angle)
-                )
+                # Calculate start and end angles
+                start_angle = start_biclique * angle_per_biclique
+                end_angle = end_biclique * angle_per_biclique
+            
+                # Handle case where angles cross the 2π boundary
+                if end_angle < start_angle:
+                    end_angle += 2 * math.pi
+            
+                # Calculate total angular range
+                angle_range = end_angle - start_angle
+            
+                # Calculate number of nodes to position in this range
+                nodes_in_range = len(nodes)
+            
+                # Distribute nodes evenly across the full range
+                for j, node in enumerate(sorted(nodes)):
+                    angle = start_angle + (j / max(1, nodes_in_range - 1)) * angle_range
+                    # Normalize angle back to [0, 2π]
+                    angle = angle % (2 * math.pi)
+                    radius = 1.0  # Inner circle
+                    positions[node] = (
+                        radius * math.cos(angle),
+                        radius * math.sin(angle)
+                    )
     
         return positions
 
