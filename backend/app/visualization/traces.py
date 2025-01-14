@@ -33,21 +33,11 @@ def create_node_traces(
         
         Quadrants:
         Q2 | Q1     0° is at 3 o'clock position
-        ---|---     Q1: 0° to 90° (right top) -> text right
-        Q3 | Q4     Q2: 90° to 180° (left top) -> text right
-                    Q3: 180° to 270° (left bottom) -> text left
-                    Q4: 270° to 360° (right bottom) -> text left
+        ---|---     Q2 & Q3: text on left (x < 0)
+        Q3 | Q4     Q1 & Q4: text on right (x > 0)
         """
-        angle = math.atan2(y, x)
-        # Convert angle to degrees and normalize to 0-360
-        degrees = (math.degrees(angle) + 360) % 360
-        
-        # Upper half (Q1 and Q2: 0° to 180°)
-        if 0 <= degrees <= 180:
-            return "middle right"
-        # Lower half (Q3 and Q4: 180° to 360°)
-        else:
-            return "middle left"
+        # Simply check if x is positive (right half) or negative (left half)
+        return "middle right" if x > 0 else "middle left"
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
