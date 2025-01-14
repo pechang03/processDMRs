@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, List
 import networkx as nx
 from .base_layout import BaseLogicalLayout
 from backend.app.utils.node_info import NodeInfo
