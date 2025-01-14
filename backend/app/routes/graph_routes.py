@@ -328,25 +328,46 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Generated positions for {len(node_positions)} nodes")
             current_app.logger.debug(f"Sample positions: {list(node_positions.items())[:5]}")
 
-            # Get dominating set from component details
+            # Get dominating set for this timepoint's DMRs
             try:
-                component_details_response = session.execute(
-                    text("""
-                        SELECT dominating_sets
-                        FROM component_details_view
-                        WHERE timepoint_id = :timepoint_id 
-                        AND component_id = :component_id
-                    """),
-                    {"timepoint_id": timepoint_id, "component_id": component_id}
-                ).first()
+                dominating_set_query = text("""
+                    SELECT ds.dmr_id
+                    FROM dominating_sets ds
+                    WHERE ds.timepoint_id = :timepoint_id
+                    AND ds.dmr_id IN (
+                        SELECT CAST(trim(value) AS INTEGER)
+                        FROM json_each(
+                            CASE 
+                                WHEN json_valid(:dmr_ids)
+                                THEN :dmr_ids
+                                ELSE json_array(:dmr_ids)
+                            END
+                        )
+                    )
+                """)
                 
-                if component_details_response and component_details_response.dominating_sets:
-                    dominating_sets = json.loads(component_details_response.dominating_sets)
-                    dominating_set = {int(ds["dmr_id"]) for ds in dominating_sets if "dmr_id" in ds}
-                else:
-                    dominating_set = set()
-                    
-                current_app.logger.debug(f"Found dominating set: {dominating_set}")
+                # Get the DMR IDs as a JSON array string
+                dmr_ids_json = json.dumps(list(all_dmr_ids))
+                
+                dominating_set_results = session.execute(
+                    dominating_set_query, 
+                    {
+                        "timepoint_id": timepoint_id,
+                        "dmr_ids": dmr_ids_json
+                    }
+                ).fetchall()
+                
+                dominating_set = {int(row.dmr_id) for row in dominating_set_results}
+                current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
+                
+                # Validate that each biclique has at most one dominating set DMR
+                for dmr_nodes, _ in bicliques:
+                    dom_dmrs = dmr_nodes & dominating_set
+                    if len(dom_dmrs) > 1:
+                        current_app.logger.warning(
+                            f"Biclique contains multiple dominating set DMRs: {dom_dmrs}"
+                        )
+
             except Exception as e:
                 current_app.logger.error(f"Error getting dominating set: {e}")
                 dominating_set = set()
