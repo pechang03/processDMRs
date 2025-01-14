@@ -139,13 +139,33 @@ def get_component_graph(timepoint_id, component_id):
 
             # Parse bicliques data
             bicliques = []
+            biclique_id_map = {}  # Add this to map database IDs to sequential numbers
+
+            # First, create the mapping of database IDs to sequential numbers
+            for idx, b in enumerate(component_data.bicliques):
+                biclique_id = b.biclique_id
+                biclique_id_map[biclique_id] = idx + 1  # Use 1-based indexing to match overview
+
+            # Then process the bicliques
             for b in component_data.bicliques:
                 try:
-                    current_app.logger.debug(f"Component {b}")
+                    current_app.logger.debug(f"Processing biclique {b}")
                     # Parse DMR and gene IDs using the helper function
                     dmr_set = parse_id_string(b.dmr_ids)
                     gene_set = parse_id_string(b.gene_ids)
                     bicliques.append((dmr_set, gene_set))
+                    
+                    # Update node_biclique_map with the correct sequential IDs
+                    for dmr_id in dmr_set:
+                        if dmr_id not in node_biclique_map:
+                            node_biclique_map[dmr_id] = []
+                        node_biclique_map[dmr_id].append(biclique_id_map[b.biclique_id] - 1)  # Convert back to 0-based for internal use
+                    
+                    for gene_id in gene_set:
+                        if gene_id not in node_biclique_map:
+                            node_biclique_map[gene_id] = []
+                        node_biclique_map[gene_id].append(biclique_id_map[b.biclique_id] - 1)  # Convert back to 0-based for internal use
+                        
                 except Exception as e:
                     current_app.logger.error(f"Error parsing biclique data: {str(e)}")
                     current_app.logger.error(f"DMR IDs: {b.dmr_ids}")
