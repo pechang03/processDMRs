@@ -173,9 +173,24 @@ def get_component_graph(timepoint_id, component_id):
                     current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # Extract all DMR and gene IDs from the component data
-            all_dmr_ids = parse_id_string(component_data.dmr_ids)
-            all_gene_ids = parse_id_string(component_data.gene_ids)
+            # First, collect all DMR IDs from all bicliques, including simple ones
+            all_dmr_ids = set()
+            for b in component_data.bicliques:
+                dmr_set = parse_id_string(b.dmr_ids)
+                all_dmr_ids.update(dmr_set)
+
+            # Similarly for genes
+            all_gene_ids = set()
+            for b in component_data.bicliques:
+                gene_set = parse_id_string(b.gene_ids)
+                all_gene_ids.update(gene_set)
+
+            current_app.logger.debug(f"Collected DMR IDs from all bicliques: {all_dmr_ids}")
+            current_app.logger.debug(f"Collected gene IDs from all bicliques: {all_gene_ids}")
+
+            # Update component_data with the complete sets
+            component_data.dmr_ids = list(all_dmr_ids)
+            component_data.gene_ids = list(all_gene_ids)
 
             # Get node metadata
             dmr_query = text("""
