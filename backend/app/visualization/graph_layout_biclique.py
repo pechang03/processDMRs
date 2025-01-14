@@ -22,17 +22,23 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         self, graph: nx.Graph, node_info: NodeInfo, **kwargs
     ) -> Dict[int, Tuple[float, float]]:
         """Calculate positions for biclique visualization."""
-        # Get initial positions using circular layout
-        initial_pos = nx.circular_layout(graph)
+        # Create a subgraph containing only the nodes we want to position
+        nodes_to_position = node_info.all_nodes
+        subgraph = graph.subgraph(nodes_to_position)
+        
+        # Get initial positions using circular layout for the subgraph
+        initial_pos = nx.circular_layout(subgraph)
 
         # Apply logical constraints
-        return self.position_nodes(
+        positions = self.position_nodes(
             node_info.dmr_nodes,
             node_info.regular_genes,
             node_info.split_genes,
             initial_positions=initial_pos,
             **kwargs,
         )
+
+        return positions
 
     def position_nodes(
         self,
@@ -42,40 +48,29 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         initial_positions: Dict[int, Tuple[float, float]] = None,
         **kwargs,
     ) -> Dict[int, Tuple[float, float]]:
-        """Position nodes in three concentric circles:
-        - Regular genes (innermost circle, radius=1.0)
-        - DMRs (middle circle, radius=1.75)
-        - Split genes (outer circle, radius=2.5)
-        """
+        """Position nodes in three concentric circles."""
         positions = {}
-
-        # Use initial positions as base
-        if initial_positions:
-            positions.update(initial_positions)
-
-        # Adjust positions to maintain three-circle separation
-        for node in positions:
-            x, y = positions[node]
-
-            # Normalize angle
-            angle = (y + 1) * 3.14159  # Convert to radians
-
-            # Adjust radius based on node type
-            if node in gene_nodes:
-                radius = 1.0  # Regular genes on inner circle
+        
+        # Calculate angles based on initial positions
+        for node, (x, y) in initial_positions.items():
+            # Calculate angle from initial position
+            import math
+            angle = math.atan2(y, x)
+            
+            # Determine radius based on node type
+            if node in split_genes:
+                radius = 2.5  # Outer circle
             elif node in dmr_nodes:
-                radius = 1.75  # DMRs in middle circle
-            elif node in split_genes:
-                radius = 2.5  # Split genes on outer circle
+                radius = 1.75  # Middle circle
             else:
-                radius = 1.0  # Default to inner circle
-
+                radius = 1.0  # Inner circle (regular genes)
+                
             # Calculate new position
-            new_x = radius * x
-            new_y = radius * y
-
-            positions[node] = (new_x, new_y)
-
+            positions[node] = (
+                radius * math.cos(angle),
+                radius * math.sin(angle)
+            )
+        
         return positions
 
 
