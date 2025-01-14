@@ -91,9 +91,8 @@ def get_component_graph(timepoint_id, component_id):
                             )
                         )
                         FROM bicliques b
-                        JOIN component_bicliques cb ON b.id = cb.biclique_id
-                        WHERE cb.component_id = c.component_id
-                        AND cb.timepoint_id = c.timepoint_id
+                        WHERE b.component_id = c.component_id
+                        AND b.timepoint_id = c.timepoint_id
                     ) as bicliques
                 FROM component_details_view c
                 WHERE c.timepoint_id = :timepoint_id 
