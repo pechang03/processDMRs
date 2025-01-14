@@ -188,9 +188,6 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
         if node_biclique_map is None:
             node_biclique_map = {}
         
-        # Add debug logging
-        print(f"Positioning {len(dmr_nodes)} DMRs, {len(gene_nodes)} genes, {len(split_genes)} split genes")
-        
         # Group nodes by their primary biclique
         biclique_groups = {}
         for node in (dmr_nodes | gene_nodes):
@@ -212,26 +209,36 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
             else:
                 biclique_groups[primary_biclique]['genes'].add(node)
 
-        # Special case: if there's only one DMR and it's not in any biclique,
-        # add it to biclique group 0
-        if len(dmr_nodes) == 1 and not any(group['dmrs'] for group in biclique_groups.values()):
-            dmr = next(iter(dmr_nodes))
-            if 0 not in biclique_groups:
-                biclique_groups[0] = {'dmrs': set(), 'genes': set(), 'split_genes': set()}
-            biclique_groups[0]['dmrs'].add(dmr)
-
-        # Calculate angular ranges for each biclique
-        num_bicliques = len(biclique_groups)
-        angle_per_biclique = 2 * math.pi / num_bicliques
-        
-        # Position DMRs and regular genes for each biclique
+        # Calculate total angle needed for each biclique based on maximum count
+        biclique_angles = {}
+        total_angle_needed = 0
         for biclique_idx, group in biclique_groups.items():
-            base_angle = biclique_idx * angle_per_biclique
+            max_count = max(
+                len(group['dmrs']),
+                len(group['genes']),
+                len(group['split_genes'])
+            )
+            biclique_angles[biclique_idx] = max_count
+            total_angle_needed += max_count
+
+        # Calculate angle per unit to distribute full circle
+        angle_per_unit = 2 * math.pi / total_angle_needed if total_angle_needed > 0 else 0
+        
+        # Calculate starting angle for each biclique
+        current_angle = 0
+        biclique_start_angles = {}
+        for biclique_idx in sorted(biclique_groups.keys()):
+            biclique_start_angles[biclique_idx] = current_angle
+            current_angle += biclique_angles[biclique_idx] * angle_per_unit
+
+        # Position nodes for each biclique
+        for biclique_idx, group in biclique_groups.items():
+            start_angle = biclique_start_angles[biclique_idx]
+            total_angle = biclique_angles[biclique_idx] * angle_per_unit
             
             # Position DMRs in middle circle
-            dmr_count = len(group['dmrs'])
             for i, node in enumerate(sorted(group['dmrs'])):
-                angle = base_angle + (i / max(1, dmr_count)) * angle_per_biclique
+                angle = start_angle + (i / max(1, len(group['dmrs']))) * total_angle
                 radius = 1.75
                 positions[node] = (
                     radius * math.cos(angle),
@@ -239,22 +246,21 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
                 )
             
             # Position regular genes in outer circle
-            gene_count = len(group['genes'])
             for i, node in enumerate(sorted(group['genes'])):
-                angle = base_angle + (i / max(1, gene_count)) * angle_per_biclique
+                angle = start_angle + (i / max(1, len(group['genes']))) * total_angle
                 radius = 2.5
                 positions[node] = (
                     radius * math.cos(angle),
                     radius * math.sin(angle)
                 )
-    
+
         # Position split genes between their bicliques
         for node in split_genes:
             if node in node_biclique_map:
                 bicliques = sorted(node_biclique_map[node])
                 if len(bicliques) > 1:
                     # Calculate average angle between involved bicliques
-                    angles = [idx * angle_per_biclique for idx in bicliques]
+                    angles = [biclique_start_angles[idx] for idx in bicliques]
                     start_angle = min(angles)
                     end_angle = max(angles)
                     avg_angle = (start_angle + end_angle) / 2
