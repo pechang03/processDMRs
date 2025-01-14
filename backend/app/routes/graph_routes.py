@@ -387,6 +387,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Debug logging
             current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
+            current_app.logger.debug(f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}")
 
             # Create visualization with the new layout
             visualization_data = create_biclique_visualization(
