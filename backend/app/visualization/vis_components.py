@@ -24,32 +24,34 @@ def create_component_visualization(
     dmr_metadata: Dict = None,
     gene_metadata: Dict = None,
 ) -> Dict:
-    """
-    Create visualization data for a component.
+    """Create visualization data for a component."""
+    from .traces import create_node_traces, create_edge_traces
+    from .layout import create_circular_layout
     
-    Args:
-        component: Component data dictionary
-        node_positions: Dictionary mapping node IDs to (x,y) coordinates
-        node_labels: Dictionary mapping node IDs to display labels
-        node_biclique_map: Dictionary mapping nodes to their biclique indices
-        edge_classifications: Edge classification results
-        dmr_metadata: Optional metadata for DMR nodes
-        gene_metadata: Optional metadata for gene nodes
-        
-    Returns:
-        Dictionary containing Plotly visualization data
-    """
     # Get nodes from component
     dmr_nodes = {n for n in component["component"] if n in component.get("dmrs", set())}
     gene_nodes = {n for n in component["component"] if n not in dmr_nodes}
+    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
+    
+    # Create NodeInfo object
+    node_info = NodeInfo(
+        all_nodes=dmr_nodes | gene_nodes,
+        dmr_nodes=dmr_nodes,
+        regular_genes=gene_nodes - split_genes,
+        split_genes=split_genes,
+        node_degrees={node: len(node_biclique_map.get(node, [])) for node in (dmr_nodes | gene_nodes)},
+        min_gene_id=min(gene_nodes) if gene_nodes else 0
+    )
     
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(component.get("raw_bicliques", [])))
     
-    # Create node traces
+    # Create traces using the unified trace creation functions
+    traces = []
+    
+    # Add node traces
     node_traces = create_node_traces(
-        dmr_nodes=dmr_nodes,
-        gene_nodes=gene_nodes,
+        node_info=node_info,
         node_positions=node_positions,
         node_labels=node_labels,
         node_biclique_map=node_biclique_map,
@@ -57,33 +59,20 @@ def create_component_visualization(
         dmr_metadata=dmr_metadata,
         gene_metadata=gene_metadata
     )
+    traces.extend(node_traces)
     
-    # Create edge traces
+    # Add edge traces
     edge_traces = create_edge_traces(
-        component["component"],
-        node_positions,
         edge_classifications,
-        node_biclique_map,
-        biclique_colors
+        node_positions,
+        node_labels,
+        component["component"],
+        edge_style={"width": 1, "color": "gray"}
     )
+    traces.extend(edge_traces)
     
-    # Create biclique box traces if component has raw_bicliques
-    box_traces = []
-    if "raw_bicliques" in component:
-        box_traces = create_biclique_boxes(
-            component["raw_bicliques"],
-            node_positions,
-            biclique_colors
-        )
-    
-    # Combine all traces
-    traces = [*node_traces, *edge_traces, *box_traces]
-    
-    # Create layout
-    layout = create_plot_layout(
-        title=f"Component {component['id']} Visualization",
-        node_positions=node_positions
-    )
+    # Create layout using the unified layout function
+    layout = create_circular_layout(node_info)
     
     return {
         "data": traces,

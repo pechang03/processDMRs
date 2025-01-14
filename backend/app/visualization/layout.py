@@ -20,6 +20,32 @@ def create_plot_layout() -> dict:
         "yaxis": dict(showgrid=False, zeroline=False, showticklabels=False),
     }
 
+def create_circular_layout(node_info: NodeInfo) -> dict:
+    """Create layout configuration for circular visualization."""
+    return {
+        "showlegend": True,
+        "hovermode": "closest",
+        "margin": dict(b=40, l=40, r=40, t=40),
+        "xaxis": dict(
+            showgrid=False, 
+            zeroline=False, 
+            showticklabels=False,
+            scaleanchor="y",
+            scaleratio=1,
+            range=[-3, 3]
+        ),
+        "yaxis": dict(
+            showgrid=False, 
+            zeroline=False, 
+            showticklabels=False,
+            range=[-3, 3]
+        ),
+        "width": 800,
+        "height": 800,
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "paper_bgcolor": "rgba(0,0,0,0)",
+    }
+
 
 def create_visual_layout(
     node_positions: Dict[int, Tuple[float, float]], node_info: NodeInfo

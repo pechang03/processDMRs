@@ -19,45 +19,71 @@ def create_node_traces(
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
-    dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
 ) -> List[go.Scatter]:
-    """Create node traces with proper styling based on node type."""
+    """Create node traces with consistent styling."""
     traces = []
+    
+    # Helper function to create transparent version of color
+    def make_transparent(color: str, alpha: float = 0.6) -> str:
+        if color.startswith('#'):
+            r = int(color[1:3], 16)
+            g = int(color[3:5], 16)
+            b = int(color[5:7], 16)
+            return f"rgba({r},{g},{b},{alpha})"
+        return color
 
-    # Handle empty or None inputs
-    if not node_info or not node_positions:
-        return []
+    # Create DMR trace
+    dmr_x, dmr_y, dmr_colors = [], [], []
+    for node in node_info.dmr_nodes:
+        if node in node_positions:
+            x, y = node_positions[node]
+            dmr_x.append(x)
+            dmr_y.append(y)
+            biclique_idx = node_biclique_map.get(node, [0])[0]
+            dmr_colors.append(biclique_colors[biclique_idx % len(biclique_colors)])
+    
+    if dmr_x:
+        traces.append(go.Scatter(
+            x=dmr_x,
+            y=dmr_y,
+            mode="markers+text",
+            marker=dict(
+                size=12,
+                color=dmr_colors,
+                symbol="circle",
+                line=dict(color="black", width=1)
+            ),
+            text=[node_labels.get(n) for n in node_info.dmr_nodes if n in node_positions],
+            name="DMRs"
+        ))
 
-    # Ensure we have at least one color
-    if not biclique_colors:
-        biclique_colors = ["gray"]
-
-    # Create DMR trace first
-    dmr_trace = create_dmr_trace(
-        node_info.dmr_nodes,
-        node_positions,
-        node_labels,
-        node_biclique_map or {},  # Handle None case
-        biclique_colors,
-        dominating_set,
-        dmr_metadata,
-    )
-    if dmr_trace:
-        traces.append(dmr_trace)
-
-    # Create gene trace
-    gene_trace = create_gene_trace(
-        node_info.regular_genes | node_info.split_genes,  # Combine regular and split genes
-        node_positions,
-        node_labels,
-        node_biclique_map or {},  # Handle None case
-        biclique_colors,
-        gene_metadata,
-    )
-    if gene_trace:
-        traces.append(gene_trace)
+    # Create gene trace with transparent colors
+    gene_x, gene_y, gene_colors = [], [], []
+    for node in node_info.regular_genes | node_info.split_genes:
+        if node in node_positions:
+            x, y = node_positions[node]
+            gene_x.append(x)
+            gene_y.append(y)
+            biclique_idx = node_biclique_map.get(node, [0])[0]
+            color = biclique_colors[biclique_idx % len(biclique_colors)]
+            gene_colors.append(make_transparent(color))
+    
+    if gene_x:
+        traces.append(go.Scatter(
+            x=gene_x,
+            y=gene_y,
+            mode="markers+text",
+            marker=dict(
+                size=10,
+                color=gene_colors,
+                symbol="circle",
+                line=dict(color="black", width=1)
+            ),
+            text=[node_labels.get(n) for n in (node_info.regular_genes | node_info.split_genes) if n in node_positions],
+            name="Genes"
+        ))
 
     return traces
 
