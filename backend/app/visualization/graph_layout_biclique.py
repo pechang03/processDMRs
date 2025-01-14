@@ -19,7 +19,11 @@ class CircularBicliqueLayout(BaseLogicalLayout):
     """Circular layout algorithm for biclique visualization."""
 
     def calculate_positions(
-        self, graph: nx.Graph, node_info: NodeInfo, **kwargs
+        self, 
+        graph: nx.Graph, 
+        node_info: NodeInfo, 
+        node_biclique_map: Dict[int, List[int]] = None,
+        **kwargs
     ) -> Dict[int, Tuple[float, float]]:
         """Calculate positions for biclique visualization."""
         # Create a subgraph containing only the nodes we want to position
@@ -29,12 +33,13 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         # Get initial positions using circular layout for the subgraph
         initial_pos = nx.circular_layout(subgraph)
 
-        # Apply logical constraints
+        # Apply logical constraints with biclique information
         positions = self.position_nodes(
             node_info.dmr_nodes,
             node_info.regular_genes,
             node_info.split_genes,
             initial_positions=initial_pos,
+            node_biclique_map=node_biclique_map,
             **kwargs,
         )
 

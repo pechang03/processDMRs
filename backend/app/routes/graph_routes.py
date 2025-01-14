@@ -311,7 +311,22 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Regular genes: {len(all_gene_ids - split_genes)}")
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
-            # Calculate positions using the layout
+            # Create node-to-biclique mapping first
+            node_biclique_map = {}
+            for idx, (dmr_set, gene_set) in enumerate(bicliques):
+                for dmr_id in dmr_set:
+                    if dmr_id not in node_biclique_map:
+                        node_biclique_map[dmr_id] = []
+                    node_biclique_map[dmr_id].append(idx)
+                
+                for gene_id in gene_set:
+                    if gene_id not in node_biclique_map:
+                        node_biclique_map[gene_id] = []
+                    node_biclique_map[gene_id].append(idx)
+
+            current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
+
+            # Then calculate positions, passing the node_biclique_map
             node_positions = layout.calculate_positions(
                 graph=split_graph,
                 node_info=NodeInfo(
@@ -321,7 +336,8 @@ def get_component_graph(timepoint_id, component_id):
                     split_genes=split_genes,
                     node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
                     min_gene_id=min(all_gene_ids) if all_gene_ids else 0
-                )
+                ),
+                node_biclique_map=node_biclique_map  # Add this parameter
             )
 
             # Debug the positions
