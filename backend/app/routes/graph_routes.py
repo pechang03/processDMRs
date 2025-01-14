@@ -299,19 +299,33 @@ def get_component_graph(timepoint_id, component_id):
                 min_gene_id=min_gene_id,
             )
 
-            # Calculate positions using CircularBicliqueLayout
+            from ..visualization.graph_layout_biclique import CircularBicliqueLayout
+            
+            # Initialize the circular layout
             layout = CircularBicliqueLayout()
-            node_positions = layout.calculate_positions(graph, node_info)
+            
+            # Calculate positions using the layout
+            node_positions = layout.calculate_positions(
+                graph=split_graph,
+                node_info=NodeInfo(
+                    all_nodes=all_dmr_ids | all_gene_ids,
+                    dmr_nodes=all_dmr_ids,
+                    regular_genes=all_gene_ids - split_genes,  # Regular genes are those not in split_genes
+                    split_genes=split_genes,
+                    node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
+                    min_gene_id=min(all_gene_ids) if all_gene_ids else 0
+                )
+            )
 
-            # Create visualization
+            # Create visualization with the new layout
             visualization_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
                 node_positions=node_positions,
-                node_biclique_map={},  # You might want to calculate this
+                node_biclique_map={},  # This could be enhanced if needed
                 edge_classifications={},
-                original_graph=graph,
-                bipartite_graph=graph,
+                original_graph=split_graph,
+                bipartite_graph=split_graph,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )

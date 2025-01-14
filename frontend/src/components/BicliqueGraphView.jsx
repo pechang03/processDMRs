@@ -78,13 +78,27 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             showlegend: true,
             hovermode: "closest",
             margin: { l: 50, r: 50, t: 50, b: 50 },
-            xaxis: { showgrid: false, zeroline: false, showticklabels: false },
-            yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+            xaxis: {
+              showgrid: false,
+              zeroline: false,
+              showticklabels: false,
+              scaleanchor: "y",
+              scaleratio: 1
+            },
+            yaxis: {
+              showgrid: false,
+              zeroline: false,
+              showticklabels: false
+            },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
           }}
           config={{
             displayModeBar: true,
             scrollZoom: true,
             responsive: true,
+            modeBarButtonsToAdd: ['select2d', 'lasso2d'],
+            modeBarButtonsToRemove: ['autoScale2d']
           }}
           style={{ width: "100%", height: "100%" }}
         />
