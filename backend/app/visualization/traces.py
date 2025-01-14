@@ -27,16 +27,27 @@ def create_node_traces(
     traces = []
     import math
     
-    # Helper function to determine text position based on angle
     def get_text_position(x: float, y: float) -> str:
+        """
+        Determine text position based on node's quadrant position.
+        
+        Quadrants:
+        Q2 | Q1     0° is at 3 o'clock position
+        ---|---     Q1: 0° to 90° (right top) -> text right
+        Q3 | Q4     Q2: 90° to 180° (left top) -> text right
+                    Q3: 180° to 270° (left bottom) -> text left
+                    Q4: 270° to 360° (right bottom) -> text left
+        """
         angle = math.atan2(y, x)
         # Convert angle to degrees and normalize to 0-360
         degrees = (math.degrees(angle) + 360) % 360
-        # If node is in the right half of the circle (between -90 and 90 degrees)
-        if -90 <= degrees <= 90:
-            return "middle left"
-        else:
+        
+        # Upper half (Q1 and Q2: 0° to 180°)
+        if 0 <= degrees <= 180:
             return "middle right"
+        # Lower half (Q3 and Q4: 180° to 360°)
+        else:
+            return "middle left"
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
