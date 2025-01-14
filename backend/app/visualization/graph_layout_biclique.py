@@ -46,30 +46,74 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         gene_nodes: Set[int],
         split_genes: Set[int],
         initial_positions: Dict[int, Tuple[float, float]] = None,
+        node_biclique_map: Dict[int, List[int]] = None,
         **kwargs,
     ) -> Dict[int, Tuple[float, float]]:
-        """Position nodes in three concentric circles."""
+        """Position nodes in concentric circles with biclique-based angular positioning."""
         positions = {}
+        import math
         
-        # Calculate angles based on initial positions
-        for node, (x, y) in initial_positions.items():
-            # Calculate angle from initial position
-            import math
-            angle = math.atan2(y, x)
-            
-            # Determine radius based on node type
-            if node in split_genes:
-                radius = 2.5  # Outer circle
-            elif node in dmr_nodes:
-                radius = 1.75  # Middle circle
-            else:
-                radius = 1.0  # Inner circle (regular genes)
+        # Group nodes by their primary biclique
+        biclique_groups = {}
+        for node in (dmr_nodes | gene_nodes):
+            if node in node_biclique_map and node_biclique_map[node]:
+                primary_biclique = min(node_biclique_map[node])  # Use first biclique as primary
+                if primary_biclique not in biclique_groups:
+                    biclique_groups[primary_biclique] = {
+                        'dmrs': set(),
+                        'genes': set(),
+                        'split_genes': set()
+                    }
                 
-            # Calculate new position
-            positions[node] = (
-                radius * math.cos(angle),
-                radius * math.sin(angle)
-            )
+                if node in dmr_nodes:
+                    biclique_groups[primary_biclique]['dmrs'].add(node)
+                elif node in split_genes:
+                    biclique_groups[primary_biclique]['split_genes'].add(node)
+                else:
+                    biclique_groups[primary_biclique]['genes'].add(node)
+
+        # Calculate angular ranges for each biclique
+        num_bicliques = len(biclique_groups)
+        angle_per_biclique = 2 * math.pi / num_bicliques
+        
+        # Position nodes for each biclique
+        for biclique_idx, group in biclique_groups.items():
+            # Calculate base angle for this biclique
+            base_angle = biclique_idx * angle_per_biclique
+            
+            # Position DMRs in middle circle
+            dmr_count = len(group['dmrs'])
+            for i, node in enumerate(sorted(group['dmrs'])):
+                angle = base_angle + (i / max(1, dmr_count - 1)) * (angle_per_biclique * 0.8)
+                radius = 1.75  # Middle circle (unchanged)
+                positions[node] = (
+                    radius * math.cos(angle),
+                    radius * math.sin(angle)
+                )
+            
+            # Position regular genes in outer circle
+            gene_count = len(group['genes'])
+            for i, node in enumerate(sorted(group['genes'])):
+                angle = base_angle + (i / max(1, gene_count - 1)) * (angle_per_biclique * 0.8)
+                radius = 2.5  # Outer circle (was 1.0)
+                positions[node] = (
+                    radius * math.cos(angle),
+                    radius * math.sin(angle)
+                )
+        
+        # Position split genes in inner circle
+        for node in split_genes:
+            if node in node_biclique_map:
+                bicliques = node_biclique_map[node]
+                if len(bicliques) > 1:
+                    # Calculate average angle between involved bicliques
+                    angles = [biclique_idx * angle_per_biclique for biclique_idx in bicliques]
+                    avg_angle = sum(angles) / len(angles)
+                    radius = 1.0  # Inner circle (was 2.5)
+                    positions[node] = (
+                        radius * math.cos(avg_angle),
+                        radius * math.sin(avg_angle)
+                    )
         
         return positions
 
