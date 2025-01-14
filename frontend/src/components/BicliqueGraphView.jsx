@@ -65,11 +65,11 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 2, m: 2 }}>
+    <Paper elevation={3} sx={{ p: 2, m: 2, width: '100%' }}>
       <Typography variant="h6" gutterBottom>
         Component {componentId} Visualization
       </Typography>
-      <Box sx={{ width: "100%", height: "600px" }}>
+      <Box sx={{ width: "100%", height: "800px" }}>
         <Plot
           data={plotData.data}
           layout={{
@@ -83,15 +83,19 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
               zeroline: false,
               showticklabels: false,
               scaleanchor: "y",
-              scaleratio: 1
+              scaleratio: 1,
+              range: [-3, 3]
             },
             yaxis: {
               showgrid: false,
               zeroline: false,
-              showticklabels: false
+              showticklabels: false,
+              range: [-3, 3]
             },
             plot_bgcolor: 'rgba(0,0,0,0)',
             paper_bgcolor: 'rgba(0,0,0,0)',
+            width: null,
+            height: 800
           }}
           config={{
             displayModeBar: true,
@@ -101,6 +105,7 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             modeBarButtonsToRemove: ['autoScale2d']
           }}
           style={{ width: "100%", height: "100%" }}
+          useResizeHandler={true}
         />
       </Box>
     </Paper>

@@ -120,12 +120,9 @@ def create_gene_trace(
         y.append(y_pos)
 
         # Set node color based on biclique membership
-        if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
-            biclique_idx = node_biclique_map[node_id][0]
-            # Add validation to check if biclique_idx is valid
-            color = (biclique_colors[biclique_idx % len(biclique_colors)] 
-                    if biclique_colors and biclique_idx < len(biclique_colors) 
-                    else "gray")
+        if node_id in node_biclique_map and node_biclique_map[node_id]:
+            biclique_idx = node_biclique_map[node_id][0]  # Use first biclique for color
+            color = biclique_colors[biclique_idx % len(biclique_colors)]
         else:
             color = "gray"
         colors.append(color)
@@ -188,15 +185,19 @@ def create_split_gene_trace(
         y.append(y_pos)
 
         # Set node color based on first biclique membership
-        if node_id in node_biclique_map and biclique_colors:
+        if node_id in node_biclique_map and node_biclique_map[node_id]:
             biclique_idx = node_biclique_map[node_id][0]
-            color = (
-                biclique_colors[biclique_idx]
-                if biclique_idx < len(biclique_colors)
-                else "gray"
-            )
+            base_color = biclique_colors[biclique_idx % len(biclique_colors)]
+            # Convert to rgba with transparency
+            if base_color.startswith('#'):
+                r = int(base_color[1:3], 16)
+                g = int(base_color[3:5], 16)
+                b = int(base_color[5:7], 16)
+                color = f"rgba({r},{g},{b},0.6)"
+            else:
+                color = base_color
         else:
-            color = "gray"
+            color = "rgba(128,128,128,0.6)"  # transparent gray
         colors.append(color)
 
         # Create label and hover text
