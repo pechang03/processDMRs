@@ -94,7 +94,14 @@ class GraphManager:
                 if not timepoint:
                     raise ValueError(f"Timepoint {timepoint_id} not found")
 
-                timepoint_data = TimePointSchema.model_validate(timepoint)
+                # Convert SQLAlchemy model to dict before validation
+                timepoint_dict = {
+                    "id": timepoint.id,
+                    "name": timepoint.name,
+                    "components": []  # Empty list since we don't need components here
+                }
+                
+                timepoint_data = TimePointSchema.model_validate(timepoint_dict)
                 timepoint_name = (
                     timepoint_data.name.replace("_TSS", "")
                     if timepoint_data.name.endswith("_TSS")
