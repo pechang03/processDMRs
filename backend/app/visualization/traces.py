@@ -25,7 +25,19 @@ def create_node_traces(
 ) -> List[go.Scatter]:
     """Create node traces with consistent styling."""
     traces = []
+    import math
     
+    # Helper function to determine text position based on angle
+    def get_text_position(x: float, y: float) -> str:
+        angle = math.atan2(y, x)
+        # Convert angle to degrees and normalize to 0-360
+        degrees = (math.degrees(angle) + 360) % 360
+        # If node is in the right half of the circle (between -90 and 90 degrees)
+        if -90 <= degrees <= 90:
+            return "middle left"
+        else:
+            return "middle right"
+
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
         if color.startswith('#'):
@@ -36,7 +48,7 @@ def create_node_traces(
         return color
 
     # Create DMR trace
-    dmr_x, dmr_y, dmr_colors = [], [], []
+    dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
     for node in node_info.dmr_nodes:
         if node in node_positions:
             x, y = node_positions[node]
@@ -44,6 +56,7 @@ def create_node_traces(
             dmr_y.append(y)
             biclique_idx = node_biclique_map.get(node, [0])[0]
             dmr_colors.append(biclique_colors[biclique_idx % len(biclique_colors)])
+            dmr_text_positions.append(get_text_position(x, y))
     
     if dmr_x:
         traces.append(go.Scatter(
@@ -57,11 +70,12 @@ def create_node_traces(
                 line=dict(color="black", width=1)
             ),
             text=[node_labels.get(n) for n in node_info.dmr_nodes if n in node_positions],
+            textposition=dmr_text_positions,  # Use calculated positions
             name="DMRs"
         ))
 
     # Create gene trace with transparent colors
-    gene_x, gene_y, gene_colors = [], [], []
+    gene_x, gene_y, gene_colors, gene_text_positions = [], [], [], []
     for node in node_info.regular_genes | node_info.split_genes:
         if node in node_positions:
             x, y = node_positions[node]
@@ -70,6 +84,7 @@ def create_node_traces(
             biclique_idx = node_biclique_map.get(node, [0])[0]
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             gene_colors.append(make_transparent(color))
+            gene_text_positions.append(get_text_position(x, y))
     
     if gene_x:
         traces.append(go.Scatter(
@@ -83,6 +98,7 @@ def create_node_traces(
                 line=dict(color="black", width=1)
             ),
             text=[node_labels.get(n) for n in (node_info.regular_genes | node_info.split_genes) if n in node_positions],
+            textposition=gene_text_positions,  # Use calculated positions
             name="Genes"
         ))
 
