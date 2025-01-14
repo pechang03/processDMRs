@@ -188,10 +188,18 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
         if node_biclique_map is None:
             node_biclique_map = {}
         
+        # First, calculate split gene weights for each biclique
+        split_gene_weights = {}  # biclique_id -> weight
+        for gene in split_genes:
+            bicliques = node_biclique_map.get(gene, [])
+            if bicliques:
+                weight = 1.0 / len(bicliques)  # Split weight across bicliques
+                for b in bicliques:
+                    split_gene_weights[b] = split_gene_weights.get(b, 0) + weight
+
         # Group nodes by their primary biclique
         biclique_groups = {}
         for node in (dmr_nodes | gene_nodes):
-            # Get bicliques for this node, defaulting to [0] if none found
             node_bicliques = node_biclique_map.get(node, [0])
             primary_biclique = min(node_bicliques)
             
@@ -209,15 +217,15 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
             else:
                 biclique_groups[primary_biclique]['genes'].add(node)
 
-        # Calculate total angle needed for each biclique based on maximum count
+        # Calculate angles based on weighted counts
         biclique_angles = {}
         total_angle_needed = 0
         for biclique_idx, group in biclique_groups.items():
-            max_count = max(
-                len(group['dmrs']),
-                len(group['genes']),
-                len(group['split_genes'])
-            )
+            dmr_count = len(group['dmrs'])
+            gene_count = len(group['genes'])
+            split_count = split_gene_weights.get(biclique_idx, 0)
+            
+            max_count = max(dmr_count, gene_count, split_count)
             biclique_angles[biclique_idx] = max_count
             total_angle_needed += max_count
 
