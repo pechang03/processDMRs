@@ -139,7 +139,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Parse bicliques data
             bicliques = []
-            biclique_id_map = {}  # Add this to map database IDs to sequential numbers
+            biclique_id_map = {}  # Map database IDs to sequential numbers
             node_biclique_map = {}  # Initialize node-to-biclique mapping
 
             # First, create the mapping of database IDs to sequential numbers
@@ -147,7 +147,7 @@ def get_component_graph(timepoint_id, component_id):
                 biclique_id = b.biclique_id
                 biclique_id_map[biclique_id] = idx + 1  # Use 1-based indexing to match overview
 
-            # Then process the bicliques
+            # Then process all bicliques, including simple ones
             for b in component_data.bicliques:
                 try:
                     current_app.logger.debug(f"Processing biclique {b}")
@@ -160,12 +160,12 @@ def get_component_graph(timepoint_id, component_id):
                     for dmr_id in dmr_set:
                         if dmr_id not in node_biclique_map:
                             node_biclique_map[dmr_id] = []
-                        node_biclique_map[dmr_id].append(biclique_id_map[b.biclique_id] - 1)  # Convert back to 0-based for internal use
+                        node_biclique_map[dmr_id].append(biclique_id_map[b.biclique_id] - 1)
                     
                     for gene_id in gene_set:
                         if gene_id not in node_biclique_map:
                             node_biclique_map[gene_id] = []
-                        node_biclique_map[gene_id].append(biclique_id_map[b.biclique_id] - 1)  # Convert back to 0-based for internal use
+                        node_biclique_map[gene_id].append(biclique_id_map[b.biclique_id] - 1)
                         
                 except Exception as e:
                     current_app.logger.error(f"Error parsing biclique data: {str(e)}")
@@ -173,16 +173,13 @@ def get_component_graph(timepoint_id, component_id):
                     current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # First, collect all DMR IDs from all bicliques, including simple ones
+            # Collect all DMR and gene IDs from all bicliques
             all_dmr_ids = set()
-            for b in component_data.bicliques:
-                dmr_set = parse_id_string(b.dmr_ids)
-                all_dmr_ids.update(dmr_set)
-
-            # Similarly for genes
             all_gene_ids = set()
             for b in component_data.bicliques:
+                dmr_set = parse_id_string(b.dmr_ids)
                 gene_set = parse_id_string(b.gene_ids)
+                all_dmr_ids.update(dmr_set)
                 all_gene_ids.update(gene_set)
 
             current_app.logger.debug(f"Collected DMR IDs from all bicliques: {all_dmr_ids}")
