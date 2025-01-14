@@ -241,7 +241,6 @@ def create_dmr_trace(
     dmr_metadata: Dict[str, Dict] = None,
 ) -> go.Scatter:
     """Create trace for DMR nodes."""
-    # Add at start of function:
     if not dmr_nodes or not node_positions:
         return None
 
@@ -250,24 +249,23 @@ def create_dmr_trace(
     text = []
     hover_text = []
     colors = []
+    sizes = []
+    symbols = []
 
     # Convert dominating_set to empty set if None
     dominating_set = dominating_set or set()
 
-    # Process all DMRs
     for node_id in sorted(dmr_nodes):
-        position = node_positions.get(node_id)
-        if not position or not isinstance(position, tuple) or len(position) != 2:
+        if node_id not in node_positions:
             continue
 
-        x_pos, y_pos = position
+        x_pos, y_pos = node_positions[node_id]
         x.append(x_pos)
         y.append(y_pos)
 
         # Set node color based on biclique membership
         if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            # Add validation to check if biclique_idx is valid
             color = (biclique_colors[biclique_idx % len(biclique_colors)]
                     if biclique_colors and biclique_idx < len(biclique_colors)
                     else "gray")
@@ -275,18 +273,23 @@ def create_dmr_trace(
             color = "gray"
         colors.append(color)
 
+        # Adjust size and symbol for hub nodes
+        is_hub = node_id in dominating_set
+        sizes.append(15 if is_hub else 10)
+        symbols.append("star" if is_hub else "circle")
+
         # Create label and hover text
         label = node_labels.get(node_id, str(node_id))
         text.append(label)
 
         # Add metadata to hover text
-        meta = dmr_metadata.get(label, {}) if dmr_metadata else {}
-        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}<br>Description: {meta.get('description', 'N/A')}"
-        if node_id in dominating_set:
-            hover += "<br>(Dominating Set Member)"
+        meta = dmr_metadata.get(str(node_id), {}) if dmr_metadata else {}
+        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}"
+        if is_hub:
+            hover += "<br>(Hub Node)"
         hover_text.append(hover)
 
-    if not x:  # Return None if no nodes to show
+    if not x:
         return None
 
     return go.Scatter(
@@ -294,20 +297,16 @@ def create_dmr_trace(
         y=y,
         mode="markers+text",
         marker=dict(
-            size=[
-                15 if n in dominating_set else 10
-                for n in dmr_nodes
-                if n in node_positions
-            ],
+            size=sizes,
             color=colors,
-            symbol="star" if dominating_set else "circle",
+            symbol=symbols,
             line=dict(color="black", width=1),
         ),
         text=text,
         hovertext=hover_text,
         textposition="middle left",
         hoverinfo="text",
-        name="Dominating DMRs" if dominating_set else "Regular DMRs",
+        name="DMR Nodes",
         showlegend=True,
     )
 

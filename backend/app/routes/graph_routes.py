@@ -328,17 +328,41 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Generated positions for {len(node_positions)} nodes")
             current_app.logger.debug(f"Sample positions: {list(node_positions.items())[:5]}")
 
+            # Get dominating set from component details
+            try:
+                component_details_response = session.execute(
+                    text("""
+                        SELECT dominating_sets
+                        FROM component_details_view
+                        WHERE timepoint_id = :timepoint_id 
+                        AND component_id = :component_id
+                    """),
+                    {"timepoint_id": timepoint_id, "component_id": component_id}
+                ).first()
+                
+                if component_details_response and component_details_response.dominating_sets:
+                    dominating_sets = json.loads(component_details_response.dominating_sets)
+                    dominating_set = {int(ds["dmr_id"]) for ds in dominating_sets if "dmr_id" in ds}
+                else:
+                    dominating_set = set()
+                    
+                current_app.logger.debug(f"Found dominating set: {dominating_set}")
+            except Exception as e:
+                current_app.logger.error(f"Error getting dominating set: {e}")
+                dominating_set = set()
+
             # Create visualization with the new layout
             visualization_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
-                node_positions=node_positions,  # Verify this is being used
+                node_positions=node_positions,
                 node_biclique_map={},
                 edge_classifications={},
                 original_graph=split_graph,
                 bipartite_graph=split_graph,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
+                dominating_set=dominating_set  # Add this parameter
             )
 
             return visualization_data
