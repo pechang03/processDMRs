@@ -2,6 +2,17 @@ from typing import Dict, Tuple, Set
 import networkx as nx
 from .base_layout import BaseLogicalLayout
 from backend.app.utils.node_info import NodeInfo
+from .graph_layout_logical import (
+    calculate_node_positions,
+    collect_node_information,
+    position_nodes_by_biclique,
+)
+from .graph_layout import (
+    adjust_positions_for_display,
+    create_visual_layout,
+    create_axis_layout,
+    calculate_plot_height,
+)
 
 
 class CircularBicliqueLayout(BaseLogicalLayout):
@@ -68,7 +79,7 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         return positions
 
 
-class CircularBicliqueLayout(BaseLogicalLayout):
+class RectangularBicliqueLayout(BaseLogicalLayout):
     """Circular layout algorithm for biclique visualization."""
 
     def calculate_positions(
@@ -96,31 +107,10 @@ class CircularBicliqueLayout(BaseLogicalLayout):
         **kwargs,
     ) -> Dict[int, Tuple[float, float]]:
         """Position nodes in circular layout with logical constraints."""
-        positions = {}
+        base_positions = {}
 
         # Use initial positions as base
         if initial_positions:
-            positions.update(initial_positions)
+            base_positions.update(initial_positions)
 
-        # Adjust positions to maintain DMR/gene separation
-        for node in positions:
-            x, y = positions[node]
-
-            # Normalize angle
-            angle = (y + 1) * 3.14159  # Convert to radians
-
-            # Adjust radius based on node type
-            if node in dmr_nodes:
-                radius = 1.0  # DMRs on inner circle
-            elif node in split_genes:
-                radius = 2.5  # Split genes on outer circle
-            else:
-                radius = 1.75  # Regular genes on middle circle
-
-            # Calculate new position
-            new_x = radius * x
-            new_y = radius * y
-
-            positions[node] = (new_x, new_y)
-
-        return positions
+        return adjust_positions_for_display(base_positions)
