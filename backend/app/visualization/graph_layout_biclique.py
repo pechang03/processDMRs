@@ -188,14 +188,12 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
         if node_biclique_map is None:
             node_biclique_map = {}
         
-        # First, calculate split gene weights for each biclique
-        split_gene_weights = {}  # biclique_id -> weight
-        for gene in split_genes:
-            bicliques = node_biclique_map.get(gene, [])
-            if bicliques:
-                weight = 1.0 / len(bicliques)  # Split weight across bicliques
-                for b in bicliques:
-                    split_gene_weights[b] = split_gene_weights.get(b, 0) + weight
+        # First, calculate total genes per biclique (including split genes)
+        biclique_gene_counts = {}
+        for node in gene_nodes:  # This includes both regular and split genes
+            bicliques = node_biclique_map.get(node, [0])
+            for b in bicliques:
+                biclique_gene_counts[b] = biclique_gene_counts.get(b, 0) + 1
 
         # Group nodes by their primary biclique
         biclique_groups = {}
@@ -217,19 +215,22 @@ class RectangularBicliqueLayout(BaseLogicalLayout):
             else:
                 biclique_groups[primary_biclique]['genes'].add(node)
 
-        # Calculate angles based on weighted counts
+        # Calculate angles based on actual maximum counts
         biclique_angles = {}
         total_angle_needed = 0
         for biclique_idx, group in biclique_groups.items():
             dmr_count = len(group['dmrs'])
-            gene_count = len(group['genes'])
-            split_count = split_gene_weights.get(biclique_idx, 0)
+            total_gene_count = biclique_gene_counts.get(biclique_idx, 0)  # Total genes in this biclique
             
-            max_count = max(dmr_count, gene_count, split_count)
+            # The max count should be the larger of:
+            # - DMR count
+            # - Total genes in this biclique (which includes both regular and split genes)
+            max_count = max(dmr_count, total_gene_count)
+            
             biclique_angles[biclique_idx] = max_count
             total_angle_needed += max_count
 
-        # Calculate angle per unit to distribute full circle
+        # Calculate angle per unit and starting angles
         angle_per_unit = 2 * math.pi / total_angle_needed if total_angle_needed > 0 else 0
         
         # Calculate starting angle for each biclique
