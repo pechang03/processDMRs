@@ -303,26 +303,37 @@ def get_component_graph(timepoint_id, component_id):
             
             # Initialize the circular layout
             layout = CircularBicliqueLayout()
-            
+
+            # Debug logging
+            current_app.logger.debug(f"Using CircularBicliqueLayout for graph visualization")
+            current_app.logger.debug(f"Number of nodes to position: {len(all_dmr_ids | all_gene_ids)}")
+            current_app.logger.debug(f"DMR nodes: {len(all_dmr_ids)}")
+            current_app.logger.debug(f"Regular genes: {len(all_gene_ids - split_genes)}")
+            current_app.logger.debug(f"Split genes: {len(split_genes)}")
+
             # Calculate positions using the layout
             node_positions = layout.calculate_positions(
                 graph=split_graph,
                 node_info=NodeInfo(
                     all_nodes=all_dmr_ids | all_gene_ids,
                     dmr_nodes=all_dmr_ids,
-                    regular_genes=all_gene_ids - split_genes,  # Regular genes are those not in split_genes
+                    regular_genes=all_gene_ids - split_genes,
                     split_genes=split_genes,
                     node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
                     min_gene_id=min(all_gene_ids) if all_gene_ids else 0
                 )
             )
 
+            # Debug the positions
+            current_app.logger.debug(f"Generated positions for {len(node_positions)} nodes")
+            current_app.logger.debug(f"Sample positions: {list(node_positions.items())[:5]}")
+
             # Create visualization with the new layout
             visualization_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
-                node_positions=node_positions,
-                node_biclique_map={},  # This could be enhanced if needed
+                node_positions=node_positions,  # Verify this is being used
+                node_biclique_map={},
                 edge_classifications={},
                 original_graph=split_graph,
                 bipartite_graph=split_graph,
