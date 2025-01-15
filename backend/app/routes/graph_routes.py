@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from ..visualization.core import create_biclique_visualization
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
+from ..biclique_analysis.edge_classification import classify_edges
 from ..utils.node_info import NodeInfo
 import networkx as nx
 
