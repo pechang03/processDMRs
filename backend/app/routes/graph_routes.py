@@ -332,7 +332,7 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_nodes=all_dmr_ids,
                 regular_genes={int(g) for g in all_gene_ids},
                 split_genes=split_genes,  # Using split genes from annotations
-                node_degrees={int(node): graph.degree(node) for node in graph.nodes()},
+                node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
                 min_gene_id=min_gene_id,
             )
 
