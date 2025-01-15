@@ -346,7 +346,7 @@ def create_edge_traces(
     edge_style = edge_style or {}
 
     color_map = {
-        "permanent": "green",
+        "permanent": "#D3D3D3",  # Light grey
         "false_positive": "red",
         "false_negative": "blue",
     }
