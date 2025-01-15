@@ -72,10 +72,10 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get component subgraphs
             graph_manager = current_app.graph_manager
-            original_graph = graph_manager.get_original_graph_component(timepoint_name, all_component_nodes)
-            split_graph = graph_manager.get_split_graph_component(timepoint_name, all_component_nodes)
+            original_graph_component = graph_manager.get_original_graph_component(timepoint_name, all_component_nodes)
+            split_graph_component = graph_manager.get_split_graph_component(timepoint_name, all_component_nodes)
 
-            if not original_graph or not split_graph:
+            if not original_graph_component or not split_graph_component:
                 current_app.logger.error(f"Failed to load graphs for component {component_id}")
                 return jsonify({
                     "error": "Failed to load component graphs", 
@@ -84,8 +84,8 @@ def get_component_graph(timepoint_id, component_id):
 
             # Validate component graphs
             if not graph_manager.validate_component_graphs(
-                set(original_graph.nodes()), 
-                set(split_graph.nodes())
+                set(original_graph_component.nodes()), 
+                set(split_graph_component.nodes())
             ):
                 return jsonify({
                     "error": "Component graph mismatch", 
@@ -322,8 +322,8 @@ def get_component_graph(timepoint_id, component_id):
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
-            # Get node degrees from split graph
-            node_degrees = {int(node): split_graph.degree(node) for node in split_graph.nodes()}
+            # Get node degrees from split graph component
+            node_degrees = {int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()}
 
             # Add debug logging for min_gene_id calculation
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
@@ -335,7 +335,7 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_nodes=all_dmr_ids,
                 regular_genes={int(g) for g in all_gene_ids},
                 split_genes=split_genes,  # Using split genes from annotations
-                node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
+                node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
                 min_gene_id=min_gene_id,
             )
 
@@ -368,7 +368,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Then calculate positions, passing the node_biclique_map
             node_positions = layout.calculate_positions(
-                graph=split_graph,
+                graph=split_graph_component,
                 node_info=NodeInfo(
                     all_nodes=all_dmr_ids | all_gene_ids,
                     dmr_nodes=all_dmr_ids,
@@ -448,8 +448,8 @@ def get_component_graph(timepoint_id, component_id):
             # Create visualization with the new layout
             # Classify edges between original and split graphs
             edge_classifications = classify_edges(
-                original_graph=original_graph,
-                biclique_graph=split_graph,
+                original_graph=original_graph_component,
+                biclique_graph=split_graph_component,
                 edge_sources={},  # TODO: Add edge sources if available
                 bicliques=bicliques
             )
@@ -460,8 +460,8 @@ def get_component_graph(timepoint_id, component_id):
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
                 edge_classifications=edge_classifications,
-                original_graph=original_graph,
-                bipartite_graph=split_graph,
+                original_graph=original_graph_component,
+                bipartite_graph=split_graph_component,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
                 dominating_set=dominating_set
