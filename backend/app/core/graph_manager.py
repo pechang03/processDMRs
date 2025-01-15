@@ -198,19 +198,40 @@ class GraphManager:
         self.original_graphs.clear()
         self.split_graphs.clear()
 
-    def get_original_graph_component(self, timepoint: str, component_nodes: set) -> nx.Graph:
-        """Get component subgraph from original graph."""
-        original_graph = self.get_original_graph(timepoint)
-        if not original_graph:
-            return None
-        return original_graph.subgraph(component_nodes).copy()
+    def get_timepoint_name(self, timepoint_id: int) -> str:
+        """Get timepoint name from ID."""
+        engine = get_db_engine()
+        with Session(engine) as session:
+            timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
+            if not timepoint:
+                raise ValueError(f"Timepoint {timepoint_id} not found")
+            return timepoint.name
 
-    def get_split_graph_component(self, timepoint: str, component_nodes: set) -> nx.Graph:
-        """Get component subgraph from split graph."""
-        split_graph = self.get_split_graph(timepoint)
-        if not split_graph:
+    def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
+        """Get component subgraph from original graph."""
+        try:
+            timepoint_name = self.get_timepoint_name(timepoint_id)
+            original_graph = self.get_original_graph(timepoint_name)
+            if not original_graph:
+                logger.error(f"No original graph found for timepoint {timepoint_name}")
+                return None
+            return original_graph.subgraph(component_nodes).copy()
+        except Exception as e:
+            logger.error(f"Error getting original graph component: {str(e)}")
             return None
-        return split_graph.subgraph(component_nodes).copy()
+
+    def get_split_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
+        """Get component subgraph from split graph."""
+        try:
+            timepoint_name = self.get_timepoint_name(timepoint_id)
+            split_graph = self.get_split_graph(timepoint_name)
+            if not split_graph:
+                logger.error(f"No split graph found for timepoint {timepoint_name}")
+                return None
+            return split_graph.subgraph(component_nodes).copy()
+        except Exception as e:
+            logger.error(f"Error getting split graph component: {str(e)}")
+            return None
 
     def validate_component_graphs(self, original_nodes: set, split_nodes: set) -> bool:
         """Validate that component nodes match between graphs."""
