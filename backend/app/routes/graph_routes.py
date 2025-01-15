@@ -351,7 +351,7 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Regular genes: {len(all_gene_ids - split_genes)}")
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
-            # Create node-to-biclique mapping first
+            # Create node-to-biclique mapping
             node_biclique_map = {}
             for idx, (dmr_set, gene_set) in enumerate(bicliques):
                 for dmr_id in dmr_set:
@@ -366,18 +366,21 @@ def get_component_graph(timepoint_id, component_id):
 
             current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
 
-            # Then calculate positions, passing the node_biclique_map
+            # Create NodeInfo object
+            node_info = NodeInfo(
+                all_nodes=all_dmr_ids | all_gene_ids,
+                dmr_nodes=all_dmr_ids,
+                regular_genes=all_gene_ids - split_genes,
+                split_genes=split_genes,
+                node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0
+            )
+
+            # Calculate positions using existing node_info and node_biclique_map
             node_positions = layout.calculate_positions(
                 graph=split_graph_component,
-                node_info=NodeInfo(
-                    all_nodes=all_dmr_ids | all_gene_ids,
-                    dmr_nodes=all_dmr_ids,
-                    regular_genes=all_gene_ids - split_genes,
-                    split_genes=split_genes,
-                    node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
-                    min_gene_id=min(all_gene_ids) if all_gene_ids else 0
-                ),
-                node_biclique_map=node_biclique_map  # Add this parameter
+                node_info=node_info,
+                node_biclique_map=node_biclique_map
             )
 
             # Debug the positions
@@ -428,30 +431,19 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(f"Error getting dominating set: {e}")
                 dominating_set = set()
 
-            # Create node-to-biclique mapping
-            node_biclique_map = {}
-            for idx, (dmr_set, gene_set) in enumerate(bicliques):
-                for dmr_id in dmr_set:
-                    if dmr_id not in node_biclique_map:
-                        node_biclique_map[dmr_id] = []
-                    node_biclique_map[dmr_id].append(idx)
-                
-                for gene_id in gene_set:
-                    if gene_id not in node_biclique_map:
-                        node_biclique_map[gene_id] = []
-                    node_biclique_map[gene_id].append(idx)
-
-            # Debug logging
-            current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
-            current_app.logger.debug(f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}")
-
-            # Create visualization with the new layout
             # Classify edges between original and split graphs
             edge_classifications = classify_edges(
                 original_graph=original_graph_component,
                 biclique_graph=split_graph_component,
                 edge_sources={},  # TODO: Add edge sources if available
                 bicliques=bicliques
+            )
+
+            # Log edge classification results
+            current_app.logger.debug(
+                f"Edge classification results: "
+                f"{len(edge_classifications.get('false_negative', []))} false negative edges, "
+                f"{len(edge_classifications.get('false_positive', []))} false positive edges"
             )
 
             visualization_data = create_biclique_visualization(
