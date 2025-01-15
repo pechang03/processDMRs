@@ -64,13 +64,32 @@ def get_component_graph(timepoint_id, component_id):
             timepoint_name = result.timepoint_name
             current_app.logger.info(f"Found timepoint name: {timepoint_name}")
 
-            # Get the split graph from GraphManager
+            # Get both graphs from GraphManager
             graph_manager = current_app.graph_manager
             split_graph = graph_manager.get_split_graph(timepoint_name)
+            original_graph = graph_manager.get_original_graph(timepoint_name)
 
-            if not split_graph:
-                current_app.logger.error(f"No split graph found for timepoint {timepoint_name}")
-                return jsonify({"error": "Split graph not found", "status": 404}), 404
+            if not split_graph or not original_graph:
+                current_app.logger.error(f"Missing required graphs for timepoint {timepoint_name}")
+                return jsonify({
+                    "error": "Required graphs not found", 
+                    "status": 404
+                }), 404
+
+            # Validate that nodes match between graphs
+            original_nodes = set(original_graph.nodes())
+            split_nodes = set(split_graph.nodes())
+
+            if original_nodes != split_nodes:
+                current_app.logger.warning(
+                    f"Node mismatch between graphs for {timepoint_name}: "
+                    f"Original has {len(original_nodes)} nodes, "
+                    f"Split has {len(split_nodes)} nodes"
+                )
+                # Only use nodes present in both graphs
+                common_nodes = original_nodes & split_nodes
+                original_graph = original_graph.subgraph(common_nodes)
+                split_graph = split_graph.subgraph(common_nodes)
 
             # Get component data
             query = text("""
@@ -302,25 +321,8 @@ def get_component_graph(timepoint_id, component_id):
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
-            # Get both original and split graphs from GraphManager
-            original_graph = graph_manager.get_original_graph(timepoint_name)
-            split_graph = graph_manager.get_split_graph(timepoint_name)
-            
-            # Validate nodes match between graphs
-            if original_graph and split_graph:
-                original_nodes = set(original_graph.nodes())
-                split_nodes = set(split_graph.nodes())
-                
-                if original_nodes != split_nodes:
-                    current_app.logger.warning(
-                        f"Node mismatch between graphs for {timepoint_name}: "
-                        f"Original has {len(original_nodes)} nodes, "
-                        f"Split has {len(split_nodes)} nodes"
-                    )
-                    # Only use nodes present in both graphs
-                    common_nodes = original_nodes & split_nodes
-                    original_graph = original_graph.subgraph(common_nodes)
-                    split_graph = split_graph.subgraph(common_nodes)
+            # Get node degrees from split graph
+            node_degrees = {int(node): split_graph.degree(node) for node in split_graph.nodes()}
 
             # Add debug logging for min_gene_id calculation
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
@@ -443,18 +445,32 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}")
 
             # Create visualization with the new layout
+            # Classify edges between original and split graphs
+            edge_classifications = classify_edges(
+                original_graph=original_graph,
+                biclique_graph=split_graph,
+                edge_sources={},  # TODO: Add edge sources if available
+                bicliques=bicliques
+            )
+
             visualization_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
-                edge_classifications={},
-                original_graph=split_graph,
+                edge_classifications=edge_classifications,
+                original_graph=original_graph,
                 bipartite_graph=split_graph,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
                 dominating_set=dominating_set
             )
+
+            # Add false negative statistics to visualization data
+            visualization_data['biclique_stats'] = {
+                'false_negatives': edge_classifications.get('biclique_stats', {}).get('false_negatives', {}),
+                'total_false_negatives': edge_classifications.get('biclique_stats', {}).get('total_false_negatives', 0)
+            }
 
             return visualization_data
 
