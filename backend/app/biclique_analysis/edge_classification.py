@@ -58,9 +58,20 @@ def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
-    triconnected_info: Dict = None,  # Add this parameter
+    triconnected_info: Dict = None,
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> Dict[str, List[EdgeInfo]]:
+    """Classify edges and calculate per-biclique false negative statistics."""
+    
+    # First validate node sets match
+    original_nodes = set(original_graph.nodes())
+    biclique_nodes = set(biclique_graph.nodes())
+    
+    if original_nodes != biclique_nodes:
+        raise ValueError(
+            f"Node mismatch: Original graph has {len(original_nodes)} nodes, "
+            f"Biclique graph has {len(biclique_nodes)} nodes"
+        )
     """
     Classify edges using both graph comparison and triconnected analysis.
     
@@ -117,6 +128,17 @@ def classify_edges(
                 edge_info = EdgeInfo(edge, label="false_negative", sources=set())
                 false_negative_edges.append(edge_info)
 
+    # Calculate per-biclique false negative statistics
+    biclique_false_negatives = defaultdict(int)
+    for edge_info in false_negative_edges:
+        u, v = edge_info.edge
+        # Find which biclique(s) this edge belongs to
+        for idx, (dmrs, genes) in enumerate(bicliques):
+            if u in dmrs and v in genes:
+                biclique_false_negatives[idx] += 1
+            elif v in dmrs and u in genes:
+                biclique_false_negatives[idx] += 1
+
     return {
         "permanent": permanent_edges,
         "false_positive": false_positive_edges,
@@ -124,6 +146,10 @@ def classify_edges(
         "bridge_edges": {
             "false_positives": bridge_false_positives,
             "potential_true_bridges": potential_true_bridges
+        },
+        "biclique_stats": {
+            "false_negatives": dict(biclique_false_negatives),
+            "total_false_negatives": len(false_negative_edges)
         }
     }
 

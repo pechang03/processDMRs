@@ -302,20 +302,25 @@ def get_component_graph(timepoint_id, component_id):
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
-            # Use the split graph from GraphManager
-            graph = split_graph
-
-            # Add debug logging for node IDs before creating NodeInfo
-            current_app.logger.debug(
-                f"all_dmr_ids type: {type(all_dmr_ids)}, content: {all_dmr_ids}"
-            )
-            current_app.logger.debug(
-                f"all_gene_ids type: {type(all_gene_ids)}, content: {all_gene_ids}"
-            )
-
-            # Ensure all IDs are integers
-            all_dmr_ids = {int(x) for x in all_dmr_ids}
-            all_gene_ids = {int(x) for x in all_gene_ids}
+            # Get both original and split graphs from GraphManager
+            original_graph = graph_manager.get_original_graph(timepoint_name)
+            split_graph = graph_manager.get_split_graph(timepoint_name)
+            
+            # Validate nodes match between graphs
+            if original_graph and split_graph:
+                original_nodes = set(original_graph.nodes())
+                split_nodes = set(split_graph.nodes())
+                
+                if original_nodes != split_nodes:
+                    current_app.logger.warning(
+                        f"Node mismatch between graphs for {timepoint_name}: "
+                        f"Original has {len(original_nodes)} nodes, "
+                        f"Split has {len(split_nodes)} nodes"
+                    )
+                    # Only use nodes present in both graphs
+                    common_nodes = original_nodes & split_nodes
+                    original_graph = original_graph.subgraph(common_nodes)
+                    split_graph = split_graph.subgraph(common_nodes)
 
             # Add debug logging for min_gene_id calculation
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
