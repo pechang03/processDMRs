@@ -42,18 +42,14 @@ def get_component_graph(timepoint_id, component_id):
         # Get timepoint name from database
         engine = get_db_engine()
         with Session(engine) as session:
-            # First verify component exists and get timepoint name
+            # Simplify to just get DMR and gene IDs for the component
             verify_query = text("""
                 SELECT 
-                    t.name as timepoint_name,
-                    c.all_dmr_ids as dmr_ids,
-                    c.all_gene_ids as gene_ids
-                FROM components c
-                JOIN timepoints t ON c.timepoint_id = t.id
-                JOIN component_details_view cdv ON c.id = cdv.component_id 
-                    AND c.timepoint_id = cdv.timepoint_id
-                WHERE c.timepoint_id = :timepoint_id 
-                AND c.id = :component_id
+                    all_dmr_ids as dmr_ids,
+                    all_gene_ids as gene_ids
+                FROM component_details_view
+                WHERE timepoint_id = :timepoint_id 
+                AND component_id = :component_id
             """)
 
             result = session.execute(
@@ -67,18 +63,15 @@ def get_component_graph(timepoint_id, component_id):
                 )
                 return jsonify({"error": "Component not found", "status": 404}), 404
 
-            timepoint_name = result.timepoint_name
-            current_app.logger.info(f"Found timepoint name: {timepoint_name}")
-
             # Get component nodes
             all_dmr_ids = set(parse_id_string(result.dmr_ids))
             all_gene_ids = set(parse_id_string(result.gene_ids))
             all_component_nodes = all_dmr_ids | all_gene_ids
 
-            # Get component subgraphs
+            # Get component subgraphs directly from graph manager
             graph_manager = current_app.graph_manager
-            original_graph_component = graph_manager.get_original_graph_component(timepoint_name, all_component_nodes)
-            split_graph_component = graph_manager.get_split_graph_component(timepoint_name, all_component_nodes)
+            original_graph_component = graph_manager.get_original_graph_component(timepoint_id, all_component_nodes)
+            split_graph_component = graph_manager.get_split_graph_component(timepoint_id, all_component_nodes)
 
             if not original_graph_component or not split_graph_component:
                 current_app.logger.error(f"Failed to load graphs for component {component_id}")
