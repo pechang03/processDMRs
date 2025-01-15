@@ -171,9 +171,19 @@ def get_component_graph(timepoint_id, component_id):
                 try:
                     current_app.logger.debug(f"Processing biclique {b}")
                     # Parse DMR and gene IDs using the helper function
-                    dmr_set = parse_id_string(b.dmr_ids)
-                    gene_set = parse_id_string(b.gene_ids)
-                    bicliques.append((dmr_set, gene_set))
+                    dmr_set = parse_id_string(b.dmr_ids) if b.dmr_ids else set()
+                    gene_set = parse_id_string(b.gene_ids) if b.gene_ids else set()
+                    
+                    # Ensure we have valid sets
+                    if not isinstance(dmr_set, set):
+                        dmr_set = set(dmr_set) if dmr_set else set()
+                    if not isinstance(gene_set, set):
+                        gene_set = set(gene_set) if gene_set else set()
+                        
+                    if dmr_set and gene_set:
+                        bicliques.append((dmr_set, gene_set))
+                    else:
+                        current_app.logger.warning(f"Skipping biclique with empty sets: DMRs={dmr_set}, Genes={gene_set}")
                     
                     # Update node_biclique_map with the correct sequential IDs
                     for dmr_id in dmr_set:
