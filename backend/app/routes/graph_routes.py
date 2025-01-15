@@ -65,32 +65,32 @@ def get_component_graph(timepoint_id, component_id):
             timepoint_name = result.timepoint_name
             current_app.logger.info(f"Found timepoint name: {timepoint_name}")
 
-            # Get both graphs from GraphManager
-            graph_manager = current_app.graph_manager
-            split_graph = graph_manager.get_split_graph(timepoint_name)
-            original_graph = graph_manager.get_original_graph(timepoint_name)
+            # Get component nodes
+            all_dmr_ids = set(parse_id_string(result.dmr_ids))
+            all_gene_ids = set(parse_id_string(result.gene_ids))
+            all_component_nodes = all_dmr_ids | all_gene_ids
 
-            if not split_graph or not original_graph:
-                current_app.logger.error(f"Missing required graphs for timepoint {timepoint_name}")
+            # Get component subgraphs
+            graph_manager = current_app.graph_manager
+            original_graph = graph_manager.get_original_graph_component(timepoint_name, all_component_nodes)
+            split_graph = graph_manager.get_split_graph_component(timepoint_name, all_component_nodes)
+
+            if not original_graph or not split_graph:
+                current_app.logger.error(f"Failed to load graphs for component {component_id}")
                 return jsonify({
-                    "error": "Required graphs not found", 
+                    "error": "Failed to load component graphs", 
                     "status": 404
                 }), 404
 
-            # Validate that nodes match between graphs
-            original_nodes = set(original_graph.nodes())
-            split_nodes = set(split_graph.nodes())
-
-            if original_nodes != split_nodes:
-                current_app.logger.warning(
-                    f"Node mismatch between graphs for {timepoint_name}: "
-                    f"Original has {len(original_nodes)} nodes, "
-                    f"Split has {len(split_nodes)} nodes"
-                )
-                # Only use nodes present in both graphs
-                common_nodes = original_nodes & split_nodes
-                original_graph = original_graph.subgraph(common_nodes)
-                split_graph = split_graph.subgraph(common_nodes)
+            # Validate component graphs
+            if not graph_manager.validate_component_graphs(
+                set(original_graph.nodes()), 
+                set(split_graph.nodes())
+            ):
+                return jsonify({
+                    "error": "Component graph mismatch", 
+                    "status": 400
+                }), 400
 
             # Get component data
             query = text("""

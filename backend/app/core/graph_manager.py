@@ -197,3 +197,32 @@ class GraphManager:
         """Clear all loaded graphs"""
         self.original_graphs.clear()
         self.split_graphs.clear()
+
+    def get_original_graph_component(self, timepoint: str, component_nodes: set) -> nx.Graph:
+        """Get component subgraph from original graph."""
+        original_graph = self.get_original_graph(timepoint)
+        if not original_graph:
+            return None
+        return original_graph.subgraph(component_nodes).copy()
+
+    def get_split_graph_component(self, timepoint: str, component_nodes: set) -> nx.Graph:
+        """Get component subgraph from split graph."""
+        split_graph = self.get_split_graph(timepoint)
+        if not split_graph:
+            return None
+        return split_graph.subgraph(component_nodes).copy()
+
+    def validate_component_graphs(self, original_nodes: set, split_nodes: set) -> bool:
+        """Validate that component nodes match between graphs."""
+        if not original_nodes or not split_nodes:
+            return False
+        
+        if original_nodes != split_nodes:
+            logger.warning(
+                f"Node mismatch in component: "
+                f"Original has {len(original_nodes)} nodes, "
+                f"Split has {len(split_nodes)} nodes. "
+                f"Difference: {original_nodes.symmetric_difference(split_nodes)}"
+            )
+            return False
+        return True
