@@ -44,9 +44,14 @@ def get_component_graph(timepoint_id, component_id):
         with Session(engine) as session:
             # First verify component exists and get timepoint name
             verify_query = text("""
-                SELECT t.name as timepoint_name
+                SELECT 
+                    t.name as timepoint_name,
+                    c.all_dmr_ids as dmr_ids,
+                    c.all_gene_ids as gene_ids
                 FROM components c
                 JOIN timepoints t ON c.timepoint_id = t.id
+                JOIN component_details_view cdv ON c.id = cdv.component_id 
+                    AND c.timepoint_id = cdv.timepoint_id
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.id = :component_id
             """)
