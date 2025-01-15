@@ -37,19 +37,32 @@ def create_biclique_visualization(
     edge_classifications: Dict[str, List[EdgeInfo]],
     original_graph: nx.Graph,
     bipartite_graph: nx.Graph,
-    original_node_positions: Dict[
-        int, Tuple[float, float]
-    ] = None,
+    original_node_positions: Dict[int, Tuple[float, float]] = None,
     false_positive_edges: Set[Tuple[int, int]] = None,
     false_negative_edges: Set[Tuple[int, int]] = None,
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
-    gene_id_mapping: Dict[str, int] = None,
-    edge_classification: Dict[str, Set[Tuple[int, int]]] = None,
 ) -> str:
     """Create interactive Plotly visualization with colored bicliques."""
-    print(f"\nCreating visualization for {len(bicliques)} bicliques")  # Debug logging
+    print(f"\nCreating visualization for {len(bicliques)} bicliques")
+    
+    # Validate and format bicliques
+    formatted_bicliques = []
+    for biclique in bicliques:
+        if isinstance(biclique, (list, tuple)) and len(biclique) == 2:
+            # Convert to sets if needed
+            dmr_set = set(biclique[0]) if isinstance(biclique[0], (list, set)) else {biclique[0]}
+            gene_set = set(biclique[1]) if isinstance(biclique[1], (list, set)) else {biclique[1]}
+            formatted_bicliques.append((dmr_set, gene_set))
+        else:
+            print(f"Warning: Skipping invalid biclique format: {biclique}")
+            continue
+            
+    if not formatted_bicliques:
+        raise ValueError("No valid bicliques found for visualization")
+        
+    bicliques = formatted_bicliques
 
     # Preprocess graphs for visualization
 
