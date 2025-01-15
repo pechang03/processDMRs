@@ -1,4 +1,5 @@
 import json
+import time
 from flask import jsonify, current_app, Blueprint
 from pydantic import ValidationError
 from ..schemas import (
@@ -327,14 +328,30 @@ def get_component_graph(timepoint_id, component_id):
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
             current_app.logger.debug(f"min_gene_id: {min_gene_id}")
 
+            # Add size validation before processing
+            if len(original_graph_component) == 0 or len(split_graph_component) == 0:
+                current_app.logger.error("Empty graph components")
+                return jsonify({
+                    "error": "Empty graph components", 
+                    "status": 400
+                }), 400
+
+            # Validate bicliques before processing
+            if not bicliques:
+                current_app.logger.error("No bicliques found for component")
+                return jsonify({
+                    "error": "No bicliques found",
+                    "status": 400
+                }), 400
+
             # Create NodeInfo object using annotated split genes
             node_info = NodeInfo(
                 all_nodes=all_dmr_ids | all_gene_ids,
                 dmr_nodes=all_dmr_ids,
-                regular_genes={int(g) for g in all_gene_ids},
-                split_genes=split_genes,  # Using split genes from annotations
+                regular_genes=all_gene_ids - split_genes,
+                split_genes=split_genes,
                 node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
-                min_gene_id=min_gene_id,
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0
             )
 
             from ..visualization.graph_layout_biclique import CircularBicliqueLayout
@@ -433,17 +450,20 @@ def get_component_graph(timepoint_id, component_id):
             edge_classifications = classify_edges(
                 original_graph=original_graph_component,
                 biclique_graph=split_graph_component,
-                edge_sources={},  # TODO: Add edge sources if available
+                edge_sources={},
                 bicliques=bicliques
             )
 
-            # Log edge classification results
-            current_app.logger.debug(
+            # Add detailed logging for edge classification
+            current_app.logger.info(
                 f"Edge classification results: "
                 f"{len(edge_classifications.get('false_negative', []))} false negative edges, "
-                f"{len(edge_classifications.get('false_positive', []))} false positive edges"
+                f"{len(edge_classifications.get('false_positive', []))} false positive edges, "
+                f"{len(edge_classifications.get('permanent', []))} permanent edges"
             )
 
+            # Add timing for performance monitoring
+            start_time = time.time()
             visualization_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
@@ -455,6 +475,11 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
                 dominating_set=dominating_set
+            )
+            end_time = time.time()
+
+            current_app.logger.info(
+                f"Visualization created in {end_time - start_time:.2f} seconds"
             )
 
             # Add false negative statistics to visualization data
