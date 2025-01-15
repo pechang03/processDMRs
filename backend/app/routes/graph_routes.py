@@ -374,7 +374,7 @@ def get_component_graph(timepoint_id, component_id):
                     dmr_nodes=all_dmr_ids,
                     regular_genes=all_gene_ids - split_genes,
                     split_genes=split_genes,
-                    node_degrees={int(node): split_graph.degree(node) for node in split_graph.nodes()},
+                    node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
                     min_gene_id=min(all_gene_ids) if all_gene_ids else 0
                 ),
                 node_biclique_map=node_biclique_map  # Add this parameter
