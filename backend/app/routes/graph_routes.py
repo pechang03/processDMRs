@@ -74,18 +74,30 @@ def get_component_graph(timepoint_id, component_id):
             original_graph_component = graph_manager.get_original_graph_component(timepoint_id, all_component_nodes)
             split_graph_component = graph_manager.get_split_graph_component(timepoint_id, all_component_nodes)
 
+            # Add validation and debugging
             if not original_graph_component or not split_graph_component:
                 current_app.logger.error(f"Failed to load graphs for component {component_id}")
-                return jsonify({
-                    "error": "Failed to load component graphs", 
-                    "status": 404
-                }), 404
+                return jsonify({"error": "Failed to load component graphs", "status": 404}), 404
+
+            # Add debug logging for graph properties
+            current_app.logger.info(f"Original graph component: {len(original_graph_component.nodes())} nodes, {len(original_graph_component.edges())} edges")
+            current_app.logger.info(f"Split graph component: {len(split_graph_component.nodes())} nodes, {len(split_graph_component.edges())} edges")
+
+            # Validate that both graphs have edges
+            if len(original_graph_component.edges()) == 0:
+                current_app.logger.error("Original graph component has no edges!")
+                return jsonify({"error": "Invalid original graph component", "status": 400}), 400
+
+            if len(split_graph_component.edges()) == 0:
+                current_app.logger.error("Split graph component has no edges!")
+                return jsonify({"error": "Invalid split graph component", "status": 400}), 400
 
             # Validate component graphs
             if not graph_manager.validate_component_graphs(
                 set(original_graph_component.nodes()), 
                 set(split_graph_component.nodes())
             ):
+                current_app.logger.error("Component graph node mismatch")
                 return jsonify({
                     "error": "Component graph mismatch", 
                     "status": 400
