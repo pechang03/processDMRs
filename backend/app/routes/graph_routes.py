@@ -465,12 +465,26 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Add detailed logging for edge classification
+            total_edges = len(original_graph_component.edges())
+            permanent_edges = len(edge_classifications.get('permanent', []))
+            false_positives = len(edge_classifications.get('false_positive', []))
+            false_negatives = len(edge_classifications.get('false_negative', []))
+
             current_app.logger.info(
-                f"Edge classification results: "
-                f"{len(edge_classifications.get('false_negative', []))} false negative edges, "
-                f"{len(edge_classifications.get('false_positive', []))} false positive edges, "
-                f"{len(edge_classifications.get('permanent', []))} permanent edges"
+                f"Edge classification results:\n"
+                f"Total edges in original graph: {total_edges}\n"
+                f"Permanent edges: {permanent_edges}\n"
+                f"False positives: {false_positives}\n"
+                f"False negatives: {false_negatives}"
             )
+
+            # Validate edge classification results
+            if permanent_edges == 0 and total_edges > 0:
+                current_app.logger.error(
+                    f"Invalid edge classification: Connected component with {total_edges} edges "
+                    f"but no permanent edges detected!"
+                )
+                return jsonify({"error": "Invalid edge classification", "status": 400}), 400
 
             # Add timing for performance monitoring
             start_time = time.time()
