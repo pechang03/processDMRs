@@ -7,6 +7,7 @@ import networkx as nx
 
 from backend.app.utils.edge_info import EdgeInfo
 from backend.app.biclique_analysis.classifier import BicliqueSizeCategory
+from backend.app.utils.json_utils import convert_for_json
 
 
 def analyze_bridge_edges(
