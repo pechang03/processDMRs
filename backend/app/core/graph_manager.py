@@ -16,9 +16,17 @@ class TimepointInfo:
     id: int
     name: str
     dmr_id_offset: int
+    sheet_name: Optional[str] = None  # Add sheet_name field
     description: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+
+    def get_graph_name(self) -> str:
+        """Get the name to use for graph files"""
+        if self.sheet_name:
+            return self.sheet_name
+        # Default to adding _TSS if no sheet name specified
+        return f"{self.name}_TSS"
 
 from backend.app.utils.graph_io import read_bipartite_graph
 from backend.app.core.data_loader import create_bipartite_graph
@@ -59,10 +67,11 @@ class GraphManager:
         """Check if GraphManager is properly initialized"""
         return bool(self.data_dir and hasattr(self, "original_graphs"))
 
-    def get_graph_paths(self, timepoint_name: str) -> Tuple[str, str]:
+    def get_graph_paths(self, timepoint_info: TimepointInfo) -> Tuple[str, str]:
         """Get paths for original and split graph files"""
-        # Normalize timepoint name
-        if timepoint_name.lower() in ["dsstimeseries", "dss_time_series"]:
+        graph_name = timepoint_info.get_graph_name()
+        
+        if timepoint_info.name.lower() in ["dsstimeseries", "dss_time_series"]:
             # Special case for time series
             original_graph_file = os.path.join(
                 self.data_dir, "bipartite_graph_output_DSS_overall.txt"
@@ -73,10 +82,10 @@ class GraphManager:
         else:
             # Regular timepoint
             original_graph_file = os.path.join(
-                self.data_dir, f"bipartite_graph_output_{timepoint_name}_TSS.txt"
+                self.data_dir, f"bipartite_graph_output_{graph_name}.txt"
             )
             split_graph_file = os.path.join(
-                self.data_dir, f"bipartite_graph_output_{timepoint_name}.txt.bicluster"
+                self.data_dir, f"bipartite_graph_output_{timepoint_info.name}.txt.bicluster"
             )
 
         logger.info(f"Looking for graphs at:\nOriginal: {original_graph_file}\nSplit: {split_graph_file}")
@@ -120,13 +129,7 @@ class GraphManager:
             if not timepoint_info:
                 raise ValueError(f"Timepoint {timepoint_id} not found")
 
-            timepoint_name = (
-                timepoint_info.name.replace("_TSS", "")
-                if timepoint_info.name.endswith("_TSS")
-                else timepoint_info.name
-            )
-
-            original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
+            original_graph_file, split_graph_file = self.get_graph_paths(timepoint_info)
 
             # Load original graph
                 if os.path.exists(original_graph_file):
