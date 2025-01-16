@@ -93,31 +93,39 @@ class GraphManager:
         try:
             engine = get_db_engine()
             with Session(engine) as session:
+                # Get all timepoints with complete information
                 timepoints = session.query(Timepoint).all()
                 print(f"\nLoading graphs for {len(timepoints)} timepoints...")
 
-                # Cache timepoint data and load graphs in a single loop
+                # Debug logging
+                logger.info(f"Found timepoints: {[(tp.id, tp.name) for tp in timepoints]}")
+
+                # Cache timepoint data first
                 for timepoint in timepoints:
-                    # Create TimepointInfo object
                     timepoint_info = TimepointInfo(
                         id=int(timepoint.id),
                         name=timepoint.name,
                         dmr_id_offset=timepoint.dmr_id_offset or 0,
                         description=timepoint.description,
                         created_at=timepoint.created_at,
-                        updated_at=timepoint.updated_at
+                        updated_at=timepoint.updated_at,
+                        sheet_name=timepoint.sheet_name if hasattr(timepoint, 'sheet_name') else None
                     )
-                    self.timepoints[timepoint_info.id] = timepoint_info
-                    
+                    self.timepoints[int(timepoint.id)] = timepoint_info
+                    logger.info(f"Cached timepoint {timepoint.id}: {timepoint.name}")
+
                     try:
-                        self.load_graphs(timepoint_info.id)
+                        self.load_graphs(int(timepoint.id))
                     except Exception as e:
-                        print(f"Error loading graphs for timepoint {timepoint_info.name}: {str(e)}")
+                        logger.error(f"Error loading graphs for timepoint {timepoint.name} (ID: {timepoint.id}): {str(e)}")
                         continue
 
                 logger.info(f"Cached {len(self.timepoints)} timepoint records")
+                logger.info(f"Available timepoint IDs: {list(self.timepoints.keys())}")
+
         except Exception as e:
-            print(f"Error loading timepoints: {str(e)}")
+            logger.error(f"Error loading timepoints: {str(e)}")
+            raise
 
     def load_graphs(self, timepoint_id: int) -> None:
         """Load graphs for a specific timepoint"""
@@ -198,8 +206,14 @@ class GraphManager:
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
         """Get timepoint name from cached mapping."""
+        timepoint_id = int(timepoint_id)  # Ensure integer type
+        logger.debug(f"Getting name for timepoint_id {timepoint_id}")
+        logger.debug(f"Available timepoints: {list(self.timepoints.keys())}")
+        
         if timepoint_id not in self.timepoints:
-            raise ValueError(f"Timepoint {timepoint_id} not found in cache")
+            available_ids = list(self.timepoints.keys())
+            raise ValueError(f"Timepoint {timepoint_id} not found in cache. Available IDs: {available_ids}")
+        
         return self.timepoints[timepoint_id].name
 
     def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
