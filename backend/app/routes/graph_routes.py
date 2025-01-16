@@ -588,11 +588,30 @@ def get_component_graph(timepoint_id, component_id):
                 f"Visualization created in {end_time - start_time:.2f} seconds"
             )
 
-            # Add false negative statistics to visualization data
+            # Add statistics to visualization data using new structure
+            stats = edge_classifications.get('stats', {})
+            visualization_data['edge_stats'] = stats.get('component', {})
             visualization_data['biclique_stats'] = {
-                'false_negatives': edge_classifications.get('biclique_stats', {}).get('false_negatives', {}),
-                'total_false_negatives': edge_classifications.get('biclique_stats', {}).get('total_false_negatives', 0)
+                'edge_counts': stats.get('bicliques', {}).get('edge_counts', {}),
+                'reliability': stats.get('bicliques', {}).get('reliability', {}),
+                'total_false_negatives': stats.get('bicliques', {}).get('total_false_negatives', 0),
+                # Calculate averages for display
+                'average_accuracy': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'accuracy'),
+                'average_noise': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'noise_percentage'),
+                'average_fp_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_positive_rate'),
+                'average_fn_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_negative_rate')
             }
+
+def calculate_average(reliability_data: Dict, key: str) -> float:
+    """Calculate average value for a specific metric across all bicliques"""
+    if not reliability_data:
+        return 0.0
+    
+    values = [stats.get(key, 0) for stats in reliability_data.values()]
+    if not values:
+        return 0.0
+        
+    return sum(values) / len(values)
 
             return visualization_data
 
