@@ -126,9 +126,9 @@ class GraphManager:
                 else timepoint_info.name
             )
 
-                original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
+            original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
 
-                # Load original graph
+            # Load original graph
                 if os.path.exists(original_graph_file):
                     try:
                         self.original_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
