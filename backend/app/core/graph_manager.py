@@ -150,14 +150,14 @@ class GraphManager:
                 self.data_dir, "bipartite_graph_output_DSS_overall.txt"
             )
             split_graph_file = os.path.join(
-                self.data_dir, "bipartite_graph_output_DSS1.txt.bicluster"
+                self.data_dir, "bipartite_graph_output_DSS.txt.bicluster"  # Changed from DSS1 to DSS
             )
         else:
             original_graph_file = os.path.join(
                 self.data_dir, f"bipartite_graph_output_{graph_name}.txt"
             )
             split_graph_file = os.path.join(
-                self.data_dir, f"bipartite_graph_output_{timepoint_info.name}.txt.bicluster"
+                self.data_dir, f"bipartite_graph_output_{timepoint_info.name}.txt.bicluster"  # Use base name for bicluster file
             )
 
         logger.info(f"Looking for graphs at:\nOriginal: {original_graph_file}\nSplit: {split_graph_file}")
