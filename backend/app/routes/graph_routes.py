@@ -468,7 +468,8 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(f"Error getting dominating set: {e}")
                 dominating_set = set()
 
-            # Classify edges between original and split graphs
+            # Get component mapping and classify edges
+            component_mapping = graph_manager.load_timepoint_components(timepoint_id)
             edge_classifications = classify_edges(
                 original_graph=original_graph_component,
                 biclique_graph=split_graph_component,

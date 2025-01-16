@@ -53,39 +53,15 @@ class ComponentMapping:
         orig_id = self.split_to_original.get(split_component_id)
         return self.original_components.get(orig_id, set())
         
-    def categorize_edges(self, split_component_id: int) -> Dict[str, Set[Tuple[int, int]]]:
-        """Categorize edges for a split component"""
+    def get_component_graphs(self, split_component_id: int) -> Tuple[nx.Graph, nx.Graph]:
+        """Get subgraphs for a component pair"""
         split_nodes = self.split_components[split_component_id]
         orig_nodes = self.get_original_component(split_component_id)
         
-        # Get subgraphs for the components
-        split_subgraph = self.split_graph.subgraph(split_nodes)
-        orig_subgraph = self.original_graph.subgraph(orig_nodes)
-        
-        # Categorize edges
-        permanent = set()
-        false_positive = set()
-        false_negative = set()
-        
-        # Check edges in original graph
-        for u, v in orig_subgraph.edges():
-            edge = (min(u,v), max(u,v))
-            if split_subgraph.has_edge(u, v):
-                permanent.add(edge)
-            else:
-                false_positive.add(edge)
-                
-        # Check edges in split graph
-        for u, v in split_subgraph.edges():
-            edge = (min(u,v), max(u,v))
-            if not orig_subgraph.has_edge(u, v):
-                false_negative.add(edge)
-                
-        return {
-            "permanent": permanent,
-            "false_positive": false_positive,
-            "false_negative": false_negative
-        }
+        return (
+            self.original_graph.subgraph(orig_nodes),
+            self.split_graph.subgraph(split_nodes)
+        )
 
 @dataclass
 class TimepointInfo:
