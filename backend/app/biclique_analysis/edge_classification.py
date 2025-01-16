@@ -58,7 +58,6 @@ def classify_edges(
     original_graph: nx.Graph,
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
-    triconnected_info: Dict = None,
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> Dict[str, List[EdgeInfo]]:
     """Classify edges and calculate per-biclique false negative statistics."""
@@ -72,27 +71,11 @@ def classify_edges(
             f"Node mismatch: Original graph has {len(original_nodes)} nodes, "
             f"Biclique graph has {len(biclique_nodes)} nodes"
         )
-    """
-    Classify edges using both graph comparison and triconnected analysis.
-    
-    Args:
-        original_graph: Original input graph
-        biclique_graph: Graph constructed from bicliques
-        edge_sources: Sources for each edge
-        triconnected_info: Results from triconnected component analysis
-        bicliques: Optional list of bicliques for additional context
-    """
+
     # Initialize classification containers
     permanent_edges: List[EdgeInfo] = []
     false_positive_edges: List[EdgeInfo] = []
     false_negative_edges: List[EdgeInfo] = []
-    bridge_false_positives: List[EdgeInfo] = []
-    potential_true_bridges: List[EdgeInfo] = []
-
-    # Get bridge edges from triconnected analysis if available
-    bridge_edges = set()
-    if triconnected_info and 'bridge_edges' in triconnected_info:
-        bridge_edges = set(triconnected_info['bridge_edges'])
 
     # Process each connected component from original graph
     for component in nx.connected_components(original_graph):
@@ -104,22 +87,12 @@ def classify_edges(
             edge = (min(u, v), max(u, v))
             sources = edge_sources.get(edge, set())
             
-            if edge in bridge_edges:
-                # This is a bridge edge - classify based on biclique presence
-                if bic_subgraph.has_edge(u, v):
-                    edge_info = EdgeInfo(edge, label="potential_true_bridge", sources=sources)
-                    potential_true_bridges.append(edge_info)
-                else:
-                    edge_info = EdgeInfo(edge, label="bridge_false_positive", sources=sources)
-                    bridge_false_positives.append(edge_info)
+            if bic_subgraph.has_edge(u, v):
+                edge_info = EdgeInfo(edge, label="permanent", sources=sources)
+                permanent_edges.append(edge_info)
             else:
-                # Regular edge classification
-                if bic_subgraph.has_edge(u, v):
-                    edge_info = EdgeInfo(edge, label="permanent", sources=sources)
-                    permanent_edges.append(edge_info)
-                else:
-                    edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
-                    false_positive_edges.append(edge_info)
+                edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
+                false_positive_edges.append(edge_info)
 
         # Check for edges in biclique graph not in original
         for u, v in bic_subgraph.edges():
@@ -130,23 +103,21 @@ def classify_edges(
 
     # Calculate per-biclique false negative statistics
     biclique_false_negatives = defaultdict(int)
-    for edge_info in false_negative_edges:
-        u, v = edge_info.edge
-        # Find which biclique(s) this edge belongs to
-        for idx, (dmrs, genes) in enumerate(bicliques):
-            if u in dmrs and v in genes:
-                biclique_false_negatives[idx] += 1
-            elif v in dmrs and u in genes:
-                biclique_false_negatives[idx] += 1
+    if bicliques:
+        for edge_info in false_negative_edges:
+            u, v = edge_info.edge
+            # Find which biclique(s) this edge belongs to
+            for idx, biclique in enumerate(bicliques):
+                # Safely unpack biclique tuple, expecting only dmrs and genes
+                if len(biclique) >= 2:  # Check if we have at least 2 elements
+                    dmrs, genes = biclique[:2]  # Take first two elements only
+                    if (u in dmrs and v in genes) or (v in dmrs and u in genes):
+                        biclique_false_negatives[idx] += 1
 
     return {
         "permanent": permanent_edges,
         "false_positive": false_positive_edges,
         "false_negative": false_negative_edges,
-        "bridge_edges": {
-            "false_positives": bridge_false_positives,
-            "potential_true_bridges": potential_true_bridges
-        },
         "biclique_stats": {
             "false_negatives": dict(biclique_false_negatives),
             "total_false_negatives": len(false_negative_edges)
