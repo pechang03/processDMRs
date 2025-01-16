@@ -3,16 +3,6 @@ import time
 from flask import jsonify, current_app, Blueprint
 from typing import Dict
 
-def calculate_average(reliability_data: Dict, key: str) -> float:
-    """Calculate average value for a specific metric across all bicliques"""
-    if not reliability_data:
-        return 0.0
-    
-    values = [stats.get(key, 0) for stats in reliability_data.values()]
-    if not values:
-        return 0.0
-        
-    return sum(values) / len(values)
 from pydantic import ValidationError
 from ..schemas import (
     GraphComponentSchema,
@@ -29,6 +19,18 @@ from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..biclique_analysis.edge_classification import classify_edges
 from ..utils.node_info import NodeInfo
 import networkx as nx
+
+
+def calculate_average(reliability_data: Dict, key: str) -> float:
+    """Calculate average value for a specific metric across all bicliques"""
+    if not reliability_data:
+        return 0.0
+
+    values = [stats.get(key, 0) for stats in reliability_data.values()]
+    if not values:
+        return 0.0
+
+    return sum(values) / len(values)
 
 
 def parse_id_string(id_str):
@@ -83,73 +85,112 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get component subgraphs directly from graph manager
             graph_manager = current_app.graph_manager
-            original_graph_component = graph_manager.get_original_graph_component(timepoint_id, all_component_nodes)
-            split_graph_component = graph_manager.get_split_graph_component(timepoint_id, all_component_nodes)
+            original_graph_component = graph_manager.get_original_graph_component(
+                timepoint_id, all_component_nodes
+            )
+            split_graph_component = graph_manager.get_split_graph_component(
+                timepoint_id, all_component_nodes
+            )
 
             # Add validation and debugging
             if not original_graph_component or not split_graph_component:
-                current_app.logger.error(f"Failed to load graphs for component {component_id}")
-                return jsonify({"error": "Failed to load component graphs", "status": 404}), 404
+                current_app.logger.error(
+                    f"Failed to load graphs for component {component_id}"
+                )
+                return jsonify(
+                    {"error": "Failed to load component graphs", "status": 404}
+                ), 404
 
             # Add debug logging for graph properties
-            current_app.logger.info(f"Original graph component: {len(original_graph_component.nodes())} nodes, {len(original_graph_component.edges())} edges")
-            current_app.logger.info(f"Split graph component: {len(split_graph_component.nodes())} nodes, {len(split_graph_component.edges())} edges")
+            current_app.logger.info(
+                f"Original graph component: {len(original_graph_component.nodes())} nodes, {len(original_graph_component.edges())} edges"
+            )
+            current_app.logger.info(
+                f"Split graph component: {len(split_graph_component.nodes())} nodes, {len(split_graph_component.edges())} edges"
+            )
 
             # Validate that both graphs have edges
             if len(original_graph_component.edges()) == 0:
                 current_app.logger.error("Original graph component has no edges!")
-                return jsonify({"error": "Invalid original graph component", "status": 400}), 400
+                return jsonify(
+                    {"error": "Invalid original graph component", "status": 400}
+                ), 400
 
             if len(split_graph_component.edges()) == 0:
                 current_app.logger.error("Split graph component has no edges!")
-                return jsonify({"error": "Invalid split graph component", "status": 400}), 400
+                return jsonify(
+                    {"error": "Invalid split graph component", "status": 400}
+                ), 400
 
             # Validate bipartite graph structure
-            def validate_bipartite_graphs(original_graph: nx.Graph, split_graph: nx.Graph) -> bool:
+            def validate_bipartite_graphs(
+                original_graph: nx.Graph, split_graph: nx.Graph
+            ) -> bool:
                 """Validate that both graphs have same nodes and maintain bipartite structure"""
                 # Check node sets are identical
                 if set(original_graph.nodes()) != set(split_graph.nodes()):
-                    current_app.logger.error("Node sets differ between original and split graphs")
-                    current_app.logger.debug(f"Original only: {set(original_graph.nodes()) - set(split_graph.nodes())}")
-                    current_app.logger.debug(f"Split only: {set(split_graph.nodes()) - set(original_graph.nodes())}")
+                    current_app.logger.error(
+                        "Node sets differ between original and split graphs"
+                    )
+                    current_app.logger.debug(
+                        f"Original only: {set(original_graph.nodes()) - set(split_graph.nodes())}"
+                    )
+                    current_app.logger.debug(
+                        f"Split only: {set(split_graph.nodes()) - set(original_graph.nodes())}"
+                    )
                     return False
-                
+
                 # Get DMR nodes (nodes with ID < min_gene_id)
                 min_gene_id = min(all_gene_ids) if all_gene_ids else 0
                 dmr_nodes = {n for n in original_graph.nodes() if n < min_gene_id}
                 gene_nodes = {n for n in original_graph.nodes() if n >= min_gene_id}
-                
+
                 # Verify DMR nodes are consistent
                 if any(n >= min_gene_id for n in dmr_nodes):
                     current_app.logger.error("Found gene IDs in DMR node set")
                     return False
-                    
+
                 if any(n < min_gene_id for n in gene_nodes):
                     current_app.logger.error("Found DMR IDs in gene node set")
                     return False
-                
+
                 # Verify bipartite structure - DMRs should only connect to genes
                 for graph in [original_graph, split_graph]:
                     for dmr in dmr_nodes:
-                        if any(neighbor < min_gene_id for neighbor in graph.neighbors(dmr)):
-                            current_app.logger.error(f"Found DMR-DMR connection in {'original' if graph == original_graph else 'split'} graph")
+                        if any(
+                            neighbor < min_gene_id for neighbor in graph.neighbors(dmr)
+                        ):
+                            current_app.logger.error(
+                                f"Found DMR-DMR connection in {'original' if graph == original_graph else 'split'} graph"
+                            )
                             return False
-                            
+
                     for gene in gene_nodes:
-                        if any(neighbor >= min_gene_id for neighbor in graph.neighbors(gene)):
-                            current_app.logger.error(f"Found gene-gene connection in {'original' if graph == original_graph else 'split'} graph")
+                        if any(
+                            neighbor >= min_gene_id
+                            for neighbor in graph.neighbors(gene)
+                        ):
+                            current_app.logger.error(
+                                f"Found gene-gene connection in {'original' if graph == original_graph else 'split'} graph"
+                            )
                             return False
-                
+
                 return True
 
             # Use the validation
-            if not validate_bipartite_graphs(original_graph_component, split_graph_component):
-                return jsonify({
-                    "error": "Invalid graph structure - bipartite property violation",
-                    "status": 400
-                }), 400
+            if not validate_bipartite_graphs(
+                original_graph_component, split_graph_component
+            ):
+                return jsonify(
+                    {
+                        "error": "Invalid graph structure - bipartite property violation",
+                        "status": 400,
+                    }
+                ), 400
 
-            current_app.logger.info("Graph validation passed - bipartite structure maintained")
+            current_app.logger.info(
+                "Graph validation passed - bipartite structure maintained"
+            )
 
             # Get component data
             query = text("""
@@ -224,7 +265,9 @@ def get_component_graph(timepoint_id, component_id):
             # First, create the mapping of database IDs to sequential numbers
             for idx, b in enumerate(component_data.bicliques):
                 biclique_id = b.biclique_id
-                biclique_id_map[biclique_id] = idx + 1  # Use 1-based indexing to match overview
+                biclique_id_map[biclique_id] = (
+                    idx + 1
+                )  # Use 1-based indexing to match overview
 
             # Then process all bicliques, including simple ones
             for b in component_data.bicliques:
@@ -233,29 +276,35 @@ def get_component_graph(timepoint_id, component_id):
                     # Parse DMR and gene IDs using the helper function
                     dmr_set = parse_id_string(b.dmr_ids) if b.dmr_ids else set()
                     gene_set = parse_id_string(b.gene_ids) if b.gene_ids else set()
-                    
+
                     # Ensure we have valid sets
                     if not isinstance(dmr_set, set):
                         dmr_set = set(dmr_set) if dmr_set else set()
                     if not isinstance(gene_set, set):
                         gene_set = set(gene_set) if gene_set else set()
-                        
+
                     if dmr_set and gene_set:
                         bicliques.append((dmr_set, gene_set))
                     else:
-                        current_app.logger.warning(f"Skipping biclique with empty sets: DMRs={dmr_set}, Genes={gene_set}")
-                    
+                        current_app.logger.warning(
+                            f"Skipping biclique with empty sets: DMRs={dmr_set}, Genes={gene_set}"
+                        )
+
                     # Update node_biclique_map with the correct sequential IDs
                     for dmr_id in dmr_set:
                         if dmr_id not in node_biclique_map:
                             node_biclique_map[dmr_id] = []
-                        node_biclique_map[dmr_id].append(biclique_id_map[b.biclique_id] - 1)
-                    
+                        node_biclique_map[dmr_id].append(
+                            biclique_id_map[b.biclique_id] - 1
+                        )
+
                     for gene_id in gene_set:
                         if gene_id not in node_biclique_map:
                             node_biclique_map[gene_id] = []
-                        node_biclique_map[gene_id].append(biclique_id_map[b.biclique_id] - 1)
-                        
+                        node_biclique_map[gene_id].append(
+                            biclique_id_map[b.biclique_id] - 1
+                        )
+
                 except Exception as e:
                     current_app.logger.error(f"Error parsing biclique data: {str(e)}")
                     current_app.logger.error(f"DMR IDs: {b.dmr_ids}")
@@ -271,8 +320,12 @@ def get_component_graph(timepoint_id, component_id):
                 all_dmr_ids.update(dmr_set)
                 all_gene_ids.update(gene_set)
 
-            current_app.logger.debug(f"Collected DMR IDs from all bicliques: {all_dmr_ids}")
-            current_app.logger.debug(f"Collected gene IDs from all bicliques: {all_gene_ids}")
+            current_app.logger.debug(
+                f"Collected DMR IDs from all bicliques: {all_dmr_ids}"
+            )
+            current_app.logger.debug(
+                f"Collected gene IDs from all bicliques: {all_gene_ids}"
+            )
 
             # Update component_data with the complete sets
             component_data.dmr_ids = list(all_dmr_ids)
@@ -392,7 +445,10 @@ def get_component_graph(timepoint_id, component_id):
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
             # Get node degrees from split graph component
-            node_degrees = {int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()}
+            node_degrees = {
+                int(node): split_graph_component.degree(node)
+                for node in split_graph_component.nodes()
+            }
 
             # Add debug logging for min_gene_id calculation
             min_gene_id = min(all_gene_ids) if all_gene_ids else 0
@@ -401,18 +457,12 @@ def get_component_graph(timepoint_id, component_id):
             # Add size validation before processing
             if len(original_graph_component) == 0 or len(split_graph_component) == 0:
                 current_app.logger.error("Empty graph components")
-                return jsonify({
-                    "error": "Empty graph components", 
-                    "status": 400
-                }), 400
+                return jsonify({"error": "Empty graph components", "status": 400}), 400
 
             # Validate bicliques before processing
             if not bicliques:
                 current_app.logger.error("No bicliques found for component")
-                return jsonify({
-                    "error": "No bicliques found",
-                    "status": 400
-                }), 400
+                return jsonify({"error": "No bicliques found", "status": 400}), 400
 
             # Create NodeInfo object using annotated split genes
             node_info = NodeInfo(
@@ -420,20 +470,29 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_nodes=all_dmr_ids,
                 regular_genes=all_gene_ids - split_genes,
                 split_genes=split_genes,
-                node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
-                min_gene_id=min(all_gene_ids) if all_gene_ids else 0
+                node_degrees={
+                    int(node): split_graph_component.degree(node)
+                    for node in split_graph_component.nodes()
+                },
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
             )
 
             from ..visualization.graph_layout_biclique import CircularBicliqueLayout
-            
+
             # Initialize the circular layout
             layout = CircularBicliqueLayout()
 
             # Debug logging
-            current_app.logger.debug(f"Using CircularBicliqueLayout for graph visualization")
-            current_app.logger.debug(f"Number of nodes to position: {len(all_dmr_ids | all_gene_ids)}")
+            current_app.logger.debug(
+                f"Using CircularBicliqueLayout for graph visualization"
+            )
+            current_app.logger.debug(
+                f"Number of nodes to position: {len(all_dmr_ids | all_gene_ids)}"
+            )
             current_app.logger.debug(f"DMR nodes: {len(all_dmr_ids)}")
-            current_app.logger.debug(f"Regular genes: {len(all_gene_ids - split_genes)}")
+            current_app.logger.debug(
+                f"Regular genes: {len(all_gene_ids - split_genes)}"
+            )
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
             # Create node-to-biclique mapping from database annotations
@@ -441,18 +500,22 @@ def get_component_graph(timepoint_id, component_id):
 
             # Process DMR annotations
             for dmr_id, info in dmr_metadata.items():
-                if info.get('biclique_ids'):
+                if info.get("biclique_ids"):
                     try:
-                        raw_value = info['biclique_ids']
+                        raw_value = info["biclique_ids"]
                         # If it's a string, split by comma and convert each part to int
                         if isinstance(raw_value, str):
                             # Remove any quotes and split
-                            cleaned = raw_value.strip('"\'')
-                            biclique_ids = [int(bid.strip()) for bid in cleaned.split(',') if bid.strip()]
+                            cleaned = raw_value.strip("\"'")
+                            biclique_ids = [
+                                int(bid.strip())
+                                for bid in cleaned.split(",")
+                                if bid.strip()
+                            ]
                         else:
                             # Handle case where it might already be a list
                             biclique_ids = [int(bid) for bid in raw_value]
-                            
+
                         node_biclique_map[int(dmr_id)] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
@@ -462,18 +525,22 @@ def get_component_graph(timepoint_id, component_id):
 
             # Process gene annotations
             for gene_id, info in gene_metadata.items():
-                if info.get('biclique_ids'):
+                if info.get("biclique_ids"):
                     try:
-                        raw_value = info['biclique_ids']
+                        raw_value = info["biclique_ids"]
                         # If it's a string, split by comma and convert each part to int
                         if isinstance(raw_value, str):
                             # Remove any quotes and split
-                            cleaned = raw_value.strip('"\'')
-                            biclique_ids = [int(bid.strip()) for bid in cleaned.split(',') if bid.strip()]
+                            cleaned = raw_value.strip("\"'")
+                            biclique_ids = [
+                                int(bid.strip())
+                                for bid in cleaned.split(",")
+                                if bid.strip()
+                            ]
                         else:
                             # Handle case where it might already be a list
                             biclique_ids = [int(bid) for bid in raw_value]
-                            
+
                         node_biclique_map[int(gene_id)] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
@@ -481,8 +548,12 @@ def get_component_graph(timepoint_id, component_id):
                             f"Raw value: {info['biclique_ids']}"
                         )
 
-            current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
-            current_app.logger.debug(f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}")
+            current_app.logger.debug(
+                f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes"
+            )
+            current_app.logger.debug(
+                f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}"
+            )
 
             # Create NodeInfo object
             node_info = NodeInfo(
@@ -490,20 +561,27 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_nodes=all_dmr_ids,
                 regular_genes=all_gene_ids - split_genes,
                 split_genes=split_genes,
-                node_degrees={int(node): split_graph_component.degree(node) for node in split_graph_component.nodes()},
-                min_gene_id=min(all_gene_ids) if all_gene_ids else 0
+                node_degrees={
+                    int(node): split_graph_component.degree(node)
+                    for node in split_graph_component.nodes()
+                },
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
             )
 
             # Calculate positions using existing node_info and node_biclique_map
             node_positions = layout.calculate_positions(
                 graph=split_graph_component,
                 node_info=node_info,
-                node_biclique_map=node_biclique_map
+                node_biclique_map=node_biclique_map,
             )
 
             # Debug the positions
-            current_app.logger.debug(f"Generated positions for {len(node_positions)} nodes")
-            current_app.logger.debug(f"Sample positions: {list(node_positions.items())[:5]}")
+            current_app.logger.debug(
+                f"Generated positions for {len(node_positions)} nodes"
+            )
+            current_app.logger.debug(
+                f"Sample positions: {list(node_positions.items())[:5]}"
+            )
 
             # Get dominating set for this timepoint's DMRs
             try:
@@ -522,21 +600,18 @@ def get_component_graph(timepoint_id, component_id):
                         )
                     )
                 """)
-                
+
                 # Get the DMR IDs as a JSON array string
                 dmr_ids_json = json.dumps(list(all_dmr_ids))
-                
+
                 dominating_set_results = session.execute(
-                    dominating_set_query, 
-                    {
-                        "timepoint_id": timepoint_id,
-                        "dmr_ids": dmr_ids_json
-                    }
+                    dominating_set_query,
+                    {"timepoint_id": timepoint_id, "dmr_ids": dmr_ids_json},
                 ).fetchall()
-                
+
                 dominating_set = {int(row.dmr_id) for row in dominating_set_results}
                 current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
-                
+
                 # Validate that each biclique has at most one dominating set DMR
                 for dmr_nodes, _ in bicliques:
                     dom_dmrs = dmr_nodes & dominating_set
@@ -555,15 +630,17 @@ def get_component_graph(timepoint_id, component_id):
                 original_graph=original_graph_component,
                 biclique_graph=split_graph_component,
                 edge_sources={},
-                bicliques=bicliques
+                bicliques=bicliques,
             )
 
             # Add detailed logging for edge classification
             total_edges = len(original_graph_component.edges())
-            classifications = edge_classifications["classifications"]  # Get the nested dict
-            permanent_edges = len(classifications.get('permanent', []))
-            false_positives = len(classifications.get('false_positive', []))
-            false_negatives = len(classifications.get('false_negative', []))
+            classifications = edge_classifications[
+                "classifications"
+            ]  # Get the nested dict
+            permanent_edges = len(classifications.get("permanent", []))
+            false_positives = len(classifications.get("false_positive", []))
+            false_negatives = len(classifications.get("false_negative", []))
 
             current_app.logger.info(
                 f"Edge classification results:\n"
@@ -579,7 +656,9 @@ def get_component_graph(timepoint_id, component_id):
                     f"Invalid edge classification: Connected component with {total_edges} edges "
                     f"but no permanent edges detected!"
                 )
-                return jsonify({"error": "Invalid edge classification", "status": 400}), 400
+                return jsonify(
+                    {"error": "Invalid edge classification", "status": 400}
+                ), 400
 
             # Add timing for performance monitoring
             start_time = time.time()
@@ -588,12 +667,14 @@ def get_component_graph(timepoint_id, component_id):
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
-                edge_classifications=edge_classifications["classifications"],  # Use the classifications sub-dictionary
+                edge_classifications=edge_classifications[
+                    "classifications"
+                ],  # Use the classifications sub-dictionary
                 original_graph=original_graph_component,
                 bipartite_graph=split_graph_component,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
-                dominating_set=dominating_set
+                dominating_set=dominating_set,
             )
             end_time = time.time()
 
@@ -602,8 +683,12 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Add statistics to visualization data
-            visualization_data['edge_stats'] = edge_classifications['stats']['component']
-            visualization_data['biclique_stats'] = edge_classifications['stats']['bicliques']
+            visualization_data["edge_stats"] = edge_classifications["stats"][
+                "component"
+            ]
+            visualization_data["biclique_stats"] = edge_classifications["stats"][
+                "bicliques"
+            ]
 
             return visualization_data
 
