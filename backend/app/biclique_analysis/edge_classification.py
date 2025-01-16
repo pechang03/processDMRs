@@ -195,15 +195,18 @@ def classify_edges(
             false_negatives=stats["false_negatives"]
         )
 
+    # Structure the return to match what BicliqueGraphView expects
     return {
         "permanent": permanent_edges,
         "false_positive": false_positive_edges,
         "false_negative": false_negative_edges,
-        "component_stats": component_stats,
-        "biclique_stats": {
-            "edge_counts": dict(biclique_stats),
-            "reliability": biclique_reliability,
-            "total_false_negatives": len(false_negative_edges)
+        "stats": {
+            "component": convert_for_json(component_stats),
+            "bicliques": convert_for_json({
+                "edge_counts": dict(biclique_stats),
+                "reliability": biclique_reliability,
+                "total_false_negatives": len(false_negative_edges)
+            })
         }
     }
 
