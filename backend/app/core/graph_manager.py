@@ -229,45 +229,49 @@ class GraphManager:
                 raise ValueError(f"Timepoint {timepoint_id} not found")
 
             original_graph_file, split_graph_file = self.get_graph_paths(timepoint_info)
+            
+            logger.info(f"Loading graphs for timepoint {timepoint_id}")
+            logger.info(f"Original graph file: {original_graph_file}")
+            logger.info(f"Split graph file: {split_graph_file}")
 
             # Load original graph
             if os.path.exists(original_graph_file):
                 try:
-                    self.original_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
+                    self.original_graphs[timepoint_id] = read_bipartite_graph(
                         original_graph_file, 
                         timepoint_info.name,
                         dmr_id_offset=timepoint_info.dmr_id_offset or 0
                     )
                     logger.info(f"Loaded original graph for timepoint_id={timepoint_id}")
+                    logger.info(f"Original graph has {len(self.original_graphs[timepoint_id].nodes())} nodes and {len(self.original_graphs[timepoint_id].edges())} edges")
                 except Exception as e:
                     logger.error(f"Error loading original graph for timepoint_id={timepoint_id}: {str(e)}")
                     return
+            else:
+                logger.error(f"Original graph file not found: {original_graph_file}")
+                return
 
             # Handle split graph
             if os.path.exists(split_graph_file):
                 try:
-                    self.split_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
+                    self.split_graphs[timepoint_id] = read_bipartite_graph(
                         split_graph_file, 
                         timepoint_info.name,
                         dmr_id_offset=timepoint_info.dmr_id_offset or 0
                     )
                     logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
+                    logger.info(f"Split graph has {len(self.split_graphs[timepoint_id].nodes())} nodes and {len(self.split_graphs[timepoint_id].edges())} edges")
+                    
+                    # Validate split graph structure
+                    if len(self.split_graphs[timepoint_id].edges()) == 0:
+                        logger.error(f"Split graph has 0 edges! This indicates a problem with the input file or parsing logic")
+                        return
                 except Exception as e:
-                    logger.warning(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
-                    if timepoint_id in self.original_graphs:
-                        logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
-                        self.split_graphs[timepoint_id] = nx.Graph()
-                        self.split_graphs[timepoint_id].add_nodes_from(
-                            self.original_graphs[timepoint_id].nodes()
-                        )
+                    logger.error(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
+                    return
             else:
-                logger.warning(f"Split graph file not found: {split_graph_file}")
-                if timepoint_id in self.original_graphs:
-                    logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
-                    self.split_graphs[timepoint_id] = nx.Graph()
-                    self.split_graphs[timepoint_id].add_nodes_from(
-                        self.original_graphs[timepoint_id].nodes()
-                    )
+                logger.error(f"Split graph file not found: {split_graph_file}")
+                return
 
         except Exception as e:
             logger.error(f"Error in load_graphs for timepoint {timepoint_id}: {str(e)}")
