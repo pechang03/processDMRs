@@ -92,16 +92,52 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error("Split graph component has no edges!")
                 return jsonify({"error": "Invalid split graph component", "status": 400}), 400
 
-            # Validate component graphs
-            if not graph_manager.validate_component_graphs(
-                set(original_graph_component.nodes()), 
-                set(split_graph_component.nodes())
-            ):
-                current_app.logger.error("Component graph node mismatch")
+            # Validate bipartite graph structure
+            def validate_bipartite_graphs(original_graph: nx.Graph, split_graph: nx.Graph) -> bool:
+                """Validate that both graphs have same nodes and maintain bipartite structure"""
+                # Check node sets are identical
+                if set(original_graph.nodes()) != set(split_graph.nodes()):
+                    current_app.logger.error("Node sets differ between original and split graphs")
+                    current_app.logger.debug(f"Original only: {set(original_graph.nodes()) - set(split_graph.nodes())}")
+                    current_app.logger.debug(f"Split only: {set(split_graph.nodes()) - set(original_graph.nodes())}")
+                    return False
+                
+                # Get DMR nodes (nodes with ID < min_gene_id)
+                min_gene_id = min(all_gene_ids) if all_gene_ids else 0
+                dmr_nodes = {n for n in original_graph.nodes() if n < min_gene_id}
+                gene_nodes = {n for n in original_graph.nodes() if n >= min_gene_id}
+                
+                # Verify DMR nodes are consistent
+                if any(n >= min_gene_id for n in dmr_nodes):
+                    current_app.logger.error("Found gene IDs in DMR node set")
+                    return False
+                    
+                if any(n < min_gene_id for n in gene_nodes):
+                    current_app.logger.error("Found DMR IDs in gene node set")
+                    return False
+                
+                # Verify bipartite structure - DMRs should only connect to genes
+                for graph in [original_graph, split_graph]:
+                    for dmr in dmr_nodes:
+                        if any(neighbor < min_gene_id for neighbor in graph.neighbors(dmr)):
+                            current_app.logger.error(f"Found DMR-DMR connection in {'original' if graph == original_graph else 'split'} graph")
+                            return False
+                            
+                    for gene in gene_nodes:
+                        if any(neighbor >= min_gene_id for neighbor in graph.neighbors(gene)):
+                            current_app.logger.error(f"Found gene-gene connection in {'original' if graph == original_graph else 'split'} graph")
+                            return False
+                
+                return True
+
+            # Use the validation
+            if not validate_bipartite_graphs(original_graph_component, split_graph_component):
                 return jsonify({
-                    "error": "Component graph mismatch", 
+                    "error": "Invalid graph structure - bipartite property violation",
                     "status": 400
                 }), 400
+
+            current_app.logger.info("Graph validation passed - bipartite structure maintained")
 
             # Get component data
             query = text("""
