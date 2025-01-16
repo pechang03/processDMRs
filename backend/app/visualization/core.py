@@ -94,8 +94,7 @@ def create_biclique_visualization(
         positions,
         node_labels,
         original_graph,
-        edge_style={"width": 1},
-        false_negative_edges=false_negative_edges  # Pass false negative edges if available
+        edge_style={"width": 1}
     )
     traces.extend(edge_traces)
 

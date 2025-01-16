@@ -335,7 +335,6 @@ def create_edge_traces(
     node_labels: Dict[int, str],
     original_graph: nx.Graph,
     edge_style: Dict = None,
-    false_negative_edges: Set[Tuple[int, int]] = None,  # Add this parameter
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
     traces = []
@@ -390,37 +389,6 @@ def create_edge_traces(
                     name=f"Edges ({label})",
                 ))
 
-    # Add false negative edges if provided separately
-    if false_negative_edges:
-        fn_x = []
-        fn_y = []
-        fn_texts = []
-        
-        for u, v in false_negative_edges:
-            if u in node_positions and v in node_positions:
-                x0, y0 = node_positions[u]
-                x1, y1 = node_positions[v]
-                fn_x.extend([x0, x1, None])
-                fn_y.extend([y0, y1, None])
-                
-                hover_text = f"False Negative Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}"
-                fn_texts.extend([hover_text, hover_text, None])
-
-        if fn_x:
-            traces.append(go.Scatter(
-                x=fn_x,
-                y=fn_y,
-                mode="lines",
-                line=dict(
-                    color=color_map["false_negative"],
-                    width=edge_style.get("width", 1),
-                    dash="dot",
-                ),
-                hoverinfo="text",
-                text=fn_texts,
-                name="False Negative Edges",
-            ))
-    else:
         # List case - handle as biclique edges
         x_coords = []
         y_coords = []
