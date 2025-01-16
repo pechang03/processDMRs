@@ -107,109 +107,75 @@ def classify_edges(
     false_positive_edges: List[EdgeInfo] = []
     false_negative_edges: List[EdgeInfo] = []
 
-    # Process each connected component from original graph
-    for component in nx.connected_components(original_graph):
-        orig_subgraph = original_graph.subgraph(component)
-        bic_subgraph = biclique_graph.subgraph(component)
+    # Get all edges from both graphs
+    original_edges = set(original_graph.edges())
+    biclique_edges = set(biclique_graph.edges())
 
-        # Process edges within this component
-        for u, v in orig_subgraph.edges():
-            edge = (min(u, v), max(u, v))
-            sources = edge_sources.get(edge, set())
-            
-            if bic_subgraph.has_edge(u, v):
-                edge_info = EdgeInfo(edge, label="permanent", sources=sources)
-                permanent_edges.append(edge_info)
-            else:
-                edge_info = EdgeInfo(edge, label="false_positive", sources=sources)
-                false_positive_edges.append(edge_info)
+    # Classify each edge
+    # 1. Edges in both graphs are permanent
+    for u, v in original_edges & biclique_edges:
+        edge = (min(u, v), max(u, v))
+        sources = edge_sources.get(edge, set())
+        permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
 
-        # Check for edges in biclique graph not in original
-        for u, v in bic_subgraph.edges():
-            if not orig_subgraph.has_edge(u, v):
-                edge = (min(u, v), max(u, v))
-                edge_info = EdgeInfo(edge, label="false_negative", sources=set())
-                false_negative_edges.append(edge_info)
+    # 2. Edges only in original graph are false positives
+    for u, v in original_edges - biclique_edges:
+        edge = (min(u, v), max(u, v))
+        sources = edge_sources.get(edge, set())
+        false_positive_edges.append(EdgeInfo(edge, label="false_positive", sources=sources))
 
-    # Calculate per-biclique false negative statistics
-    biclique_false_negatives = defaultdict(int)
-    if bicliques:
-        for edge_info in false_negative_edges:
-            u, v = edge_info.edge
-            # Find which biclique(s) this edge belongs to
-            for idx, biclique in enumerate(bicliques):
-                # Safely unpack biclique tuple, expecting only dmrs and genes
-                if len(biclique) >= 2:  # Check if we have at least 2 elements
-                    dmrs, genes = biclique[:2]  # Take first two elements only
-                    if (u in dmrs and v in genes) or (v in dmrs and u in genes):
-                        biclique_false_negatives[idx] += 1
-
-    # Initialize per-biclique statistics
-    biclique_stats = defaultdict(lambda: {
-        "total_edges": 0,
-        "permanent": 0,
-        "false_positives": 0,
-        "false_negatives": 0
-    })
-
-    # Calculate per-biclique statistics
-    if bicliques:
-        for idx, biclique in enumerate(bicliques):
-            if len(biclique) >= 2:
-                dmrs, genes = biclique[:2]
-                # Count edges in original graph for this biclique
-                biclique_edges = set()
-                for u in dmrs:
-                    for v in genes:
-                        if original_graph.has_edge(u, v):
-                            biclique_edges.add((min(u, v), max(u, v)))
-                            if biclique_graph.has_edge(u, v):
-                                biclique_stats[idx]["permanent"] += 1
-                            else:
-                                biclique_stats[idx]["false_positives"] += 1
-                
-                # Count false negatives
-                for u in dmrs:
-                    for v in genes:
-                        edge = (min(u, v), max(u, v))
-                        if (biclique_graph.has_edge(u, v) and 
-                            not original_graph.has_edge(u, v)):
-                            biclique_stats[idx]["false_negatives"] += 1
-                
-                biclique_stats[idx]["total_edges"] = len(biclique_edges)
+    # 3. Edges only in biclique graph are false negatives
+    for u, v in biclique_edges - original_edges:
+        edge = (min(u, v), max(u, v))
+        false_negative_edges.append(EdgeInfo(edge, label="false_negative", sources=set()))
 
     # Calculate component-wide statistics
     component_stats = calculate_edge_statistics(
-        total_edges=len(original_graph.edges()),
+        total_edges=len(original_edges),
         permanent_edges=len(permanent_edges),
         false_positives=len(false_positive_edges),
         false_negatives=len(false_negative_edges)
     )
 
-    # Calculate per-biclique statistics
-    biclique_reliability = {}
-    for idx, stats in biclique_stats.items():
-        biclique_reliability[idx] = calculate_edge_statistics(
-            total_edges=stats["total_edges"],
-            permanent_edges=stats["permanent"], 
-            false_positives=stats["false_positives"],
-            false_negatives=stats["false_negatives"]
-        )
+    # Calculate per-biclique statistics if bicliques are provided
+    biclique_stats = {
+        "edge_counts": {},
+        "reliability": {},
+        "total_false_negatives": len(false_negative_edges)
+    }
 
-    # Structure the return to match what BicliqueGraphView expects
+    if bicliques:
+        for idx, (dmrs, genes) in enumerate(bicliques):
+            biclique_edges = set()
+            for dmr in dmrs:
+                for gene in genes:
+                    edge = (min(dmr, gene), max(dmr, gene))
+                    biclique_edges.add(edge)
+
+            stats = {
+                "total_edges": len(biclique_edges),
+                "permanent": sum(1 for e in permanent_edges if e.edge in biclique_edges),
+                "false_positives": sum(1 for e in false_positive_edges if e.edge in biclique_edges),
+                "false_negatives": sum(1 for e in false_negative_edges if e.edge in biclique_edges)
+            }
+            
+            biclique_stats["edge_counts"][idx] = stats
+            biclique_stats["reliability"][idx] = calculate_edge_statistics(
+                total_edges=stats["total_edges"],
+                permanent_edges=stats["permanent"],
+                false_positives=stats["false_positives"],
+                false_negatives=stats["false_negatives"]
+            )
+
     return {
-        "classifications": {  # Wrap edge classifications in a sub-dictionary
+        "classifications": {
             "permanent": permanent_edges,
             "false_positive": false_positive_edges,
             "false_negative": false_negative_edges
         },
         "stats": {
             "component": convert_for_json(component_stats),
-            "bicliques": convert_for_json({
-                "edge_counts": dict(biclique_stats),
-                "reliability": biclique_reliability,
-                "total_false_negatives": len(false_negative_edges)
-            })
+            "bicliques": convert_for_json(biclique_stats)
         }
     }
 
