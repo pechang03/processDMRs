@@ -89,7 +89,7 @@ def classify_edges(
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
-) -> Dict[str, List[EdgeInfo]]:
+) -> Dict[str, Union[List[EdgeInfo], Dict[str, Any]]]:
     """Classify edges and calculate edge classification statistics."""
     
     # First validate node sets match

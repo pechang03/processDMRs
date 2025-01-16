@@ -5,7 +5,7 @@
 """Node trace creation functionality"""
 
 import os
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union, Any
 from backend.app.utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
