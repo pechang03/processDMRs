@@ -234,7 +234,7 @@ class GraphManager:
             logger.info(f"Original graph file: {original_graph_file}")
             logger.info(f"Split graph file: {split_graph_file}")
 
-            # Load original graph
+            # Load original graph using read_bipartite_graph
             if os.path.exists(original_graph_file):
                 try:
                     self.original_graphs[timepoint_id] = read_bipartite_graph(
@@ -243,7 +243,7 @@ class GraphManager:
                         dmr_id_offset=timepoint_info.dmr_id_offset or 0
                     )
                     logger.info(f"Loaded original graph for timepoint_id={timepoint_id}")
-                    logger.info(f"Original graph has {len(self.original_graphs[timepoint_id].nodes())} nodes and {len(self.original_graphs[timepoint_id].edges())} edges")
+                    logger.info(f"Original graph has {len(self.original_graphs[timepoint_id].edges())} edges")
                 except Exception as e:
                     logger.error(f"Error loading original graph for timepoint_id={timepoint_id}: {str(e)}")
                     return
@@ -251,21 +251,29 @@ class GraphManager:
                 logger.error(f"Original graph file not found: {original_graph_file}")
                 return
 
-            # Handle split graph
+            # Load split graph using read_bicliques_file
             if os.path.exists(split_graph_file):
                 try:
-                    self.split_graphs[timepoint_id] = read_bipartite_graph(
-                        split_graph_file, 
-                        timepoint_info.name,
-                        dmr_id_offset=timepoint_info.dmr_id_offset or 0
+                    from backend.app.biclique_analysis.reader import read_bicliques_file
+                    bicliques_result = read_bicliques_file(
+                        split_graph_file,
+                        self.original_graphs[timepoint_id]  # Pass the original graph for reference
                     )
-                    logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
-                    logger.info(f"Split graph has {len(self.split_graphs[timepoint_id].nodes())} nodes and {len(self.split_graphs[timepoint_id].edges())} edges")
+                    # Create graph from bicliques
+                    split_graph = nx.Graph()
+                    # Add all nodes from original graph to maintain node set consistency
+                    split_graph.add_nodes_from(self.original_graphs[timepoint_id].nodes(data=True))
                     
-                    # Validate split graph structure
-                    if len(self.split_graphs[timepoint_id].edges()) == 0:
-                        logger.error(f"Split graph has 0 edges! This indicates a problem with the input file or parsing logic")
-                        return
+                    # Add edges from bicliques
+                    for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+                        for dmr in dmr_nodes:
+                            for gene in gene_nodes:
+                                split_graph.add_edge(dmr, gene)
+                    
+                    self.split_graphs[timepoint_id] = split_graph
+                    logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
+                    logger.info(f"Split graph has {len(split_graph.edges())} edges")
+                    
                 except Exception as e:
                     logger.error(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
                     return
