@@ -6,9 +6,19 @@
 import os
 import networkx as nx
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 from sqlalchemy.orm import Session
 from flask import current_app
+from dataclasses import dataclass
+
+@dataclass
+class TimepointInfo:
+    id: int
+    name: str
+    dmr_id_offset: int
+    description: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 from backend.app.utils.graph_io import read_bipartite_graph
 from backend.app.core.data_loader import create_bipartite_graph
