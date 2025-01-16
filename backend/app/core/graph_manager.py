@@ -281,7 +281,16 @@ class GraphManager:
             if not original_graph:
                 logger.error(f"No original graph found for timepoint_id={timepoint_id}")
                 return None
-            return original_graph.subgraph(component_nodes).copy()
+
+            # Create subgraph and explicitly copy the edges
+            subgraph = original_graph.subgraph(component_nodes)
+            component_graph = nx.Graph()
+            component_graph.add_nodes_from(subgraph.nodes())
+            component_graph.add_edges_from(subgraph.edges())
+
+            logger.info(f"Created original graph component with {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
+            return component_graph
+
         except Exception as e:
             logger.error(f"Error getting original graph component: {str(e)}")
             return None
@@ -293,7 +302,16 @@ class GraphManager:
             if not split_graph:
                 logger.error(f"No split graph found for timepoint_id={timepoint_id}")
                 return None
-            return split_graph.subgraph(component_nodes).copy()
+
+            # Create subgraph and explicitly copy the edges
+            subgraph = split_graph.subgraph(component_nodes)
+            component_graph = nx.Graph()
+            component_graph.add_nodes_from(subgraph.nodes())
+            component_graph.add_edges_from(subgraph.edges())
+
+            logger.info(f"Created split graph component with {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
+            return component_graph
+
         except Exception as e:
             logger.error(f"Error getting split graph component: {str(e)}")
             return None
