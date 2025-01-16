@@ -28,6 +28,7 @@ class GraphManager:
         logger.info("Initializing GraphManager")
         self.original_graphs: Dict[int, nx.Graph] = {}  # Change key to int (timepoint_id)
         self.split_graphs: Dict[int, nx.Graph] = {}     # Change key to int (timepoint_id)
+        self.timepoints: Dict[int, str] = {}  # Add timepoint mapping cache
         self.data_dir = config.get("DATA_DIR", "./data") if config else "./data"
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
@@ -73,6 +74,10 @@ class GraphManager:
             with Session(engine) as session:
                 timepoints = session.query(Timepoint).all()
                 print(f"\nLoading graphs for {len(timepoints)} timepoints...")
+
+                # Cache timepoint data first
+                self.timepoints = {tp.id: tp.name for tp in timepoints}
+                logger.info(f"Cached {len(self.timepoints)} timepoint names")
 
                 for timepoint in timepoints:
                     try:
@@ -171,13 +176,10 @@ class GraphManager:
         self.split_graphs.clear()
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
-        """Get timepoint name from ID."""
-        engine = get_db_engine()
-        with Session(engine) as session:
-            timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
-            if not timepoint:
-                raise ValueError(f"Timepoint {timepoint_id} not found")
-            return timepoint.name
+        """Get timepoint name from cached mapping."""
+        if timepoint_id not in self.timepoints:
+            raise ValueError(f"Timepoint {timepoint_id} not found in cache")
+        return self.timepoints[timepoint_id]
 
     def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from original graph."""
