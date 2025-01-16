@@ -431,23 +431,16 @@ def get_component_graph(timepoint_id, component_id):
             for dmr_id, info in dmr_metadata.items():
                 if info.get('biclique_ids'):
                     try:
-                        # First parse the JSON string if needed
-                        if isinstance(info['biclique_ids'], str):
-                            try:
-                                # Try to parse as JSON first
-                                biclique_ids_raw = json.loads(info['biclique_ids'])
-                            except json.JSONDecodeError:
-                                # If not JSON, split by comma
-                                biclique_ids_raw = info['biclique_ids'].split(',')
+                        raw_value = info['biclique_ids']
+                        # If it's a string, split by comma and convert each part to int
+                        if isinstance(raw_value, str):
+                            # Remove any quotes and split
+                            cleaned = raw_value.strip('"\'')
+                            biclique_ids = [int(bid.strip()) for bid in cleaned.split(',') if bid.strip()]
                         else:
-                            biclique_ids_raw = info['biclique_ids']
-
-                        # Clean and convert to integers
-                        biclique_ids = [
-                            int(str(bid).strip().strip('"')) 
-                            for bid in biclique_ids_raw 
-                            if str(bid).strip().strip('"')
-                        ]
+                            # Handle case where it might already be a list
+                            biclique_ids = [int(bid) for bid in raw_value]
+                            
                         node_biclique_map[int(dmr_id)] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
@@ -459,23 +452,16 @@ def get_component_graph(timepoint_id, component_id):
             for gene_id, info in gene_metadata.items():
                 if info.get('biclique_ids'):
                     try:
-                        # First parse the JSON string if needed
-                        if isinstance(info['biclique_ids'], str):
-                            try:
-                                # Try to parse as JSON first
-                                biclique_ids_raw = json.loads(info['biclique_ids'])
-                            except json.JSONDecodeError:
-                                # If not JSON, split by comma
-                                biclique_ids_raw = info['biclique_ids'].split(',')
+                        raw_value = info['biclique_ids']
+                        # If it's a string, split by comma and convert each part to int
+                        if isinstance(raw_value, str):
+                            # Remove any quotes and split
+                            cleaned = raw_value.strip('"\'')
+                            biclique_ids = [int(bid.strip()) for bid in cleaned.split(',') if bid.strip()]
                         else:
-                            biclique_ids_raw = info['biclique_ids']
-
-                        # Clean and convert to integers
-                        biclique_ids = [
-                            int(str(bid).strip().strip('"')) 
-                            for bid in biclique_ids_raw 
-                            if str(bid).strip().strip('"')
-                        ]
+                            # Handle case where it might already be a list
+                            biclique_ids = [int(bid) for bid in raw_value]
+                            
                         node_biclique_map[int(gene_id)] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
