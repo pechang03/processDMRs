@@ -1,6 +1,18 @@
 import json
 import time
 from flask import jsonify, current_app, Blueprint
+from typing import Dict
+
+def calculate_average(reliability_data: Dict, key: str) -> float:
+    """Calculate average value for a specific metric across all bicliques"""
+    if not reliability_data:
+        return 0.0
+    
+    values = [stats.get(key, 0) for stats in reliability_data.values()]
+    if not values:
+        return 0.0
+        
+    return sum(values) / len(values)
 from pydantic import ValidationError
 from ..schemas import (
     GraphComponentSchema,
@@ -601,17 +613,6 @@ def get_component_graph(timepoint_id, component_id):
                 'average_fp_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_positive_rate'),
                 'average_fn_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_negative_rate')
             }
-
-def calculate_average(reliability_data: Dict, key: str) -> float:
-    """Calculate average value for a specific metric across all bicliques"""
-    if not reliability_data:
-        return 0.0
-    
-    values = [stats.get(key, 0) for stats in reliability_data.values()]
-    if not values:
-        return 0.0
-        
-    return sum(values) / len(values)
 
             return visualization_data
 
