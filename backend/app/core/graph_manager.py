@@ -8,6 +8,7 @@ import networkx as nx
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from flask import current_app
 from dataclasses import dataclass
 from typing import Dict, Set, Tuple
