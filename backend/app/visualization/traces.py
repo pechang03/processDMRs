@@ -340,54 +340,64 @@ def create_edge_traces(
     traces = []
     edge_style = edge_style or {}
 
-    color_map = {
-        "permanent": "#D3D3D3",  # Light grey
-        "false_positive": "red",
-        "false_negative": "blue",
+    # Define style mappings
+    style_map = {
+        "permanent": {
+            "color": "#D3D3D3",  # Light grey
+            "dash": "solid"
+        },
+        "false_positive": {
+            "color": "red",
+            "dash": "dash"
+        },
+        "false_negative": {
+            "color": "blue", 
+            "dash": "dash"
+        }
     }
 
-    # Process edge classifications from the dictionary
-    if isinstance(edge_classifications, dict):
-        for label, edges_info in edge_classifications.items():
-            x_coords = []
-            y_coords = []
-            hover_texts = []
+    # Process each edge classification type
+    for edge_type, edges in edge_classifications.items():
+        x_coords = []
+        y_coords = []
+        hover_texts = []
+        
+        # Get style for this edge type
+        style = style_map.get(edge_type, {"color": "gray", "dash": "solid"})
 
-            color = color_map.get(label, "gray")
-
-            for edge_info in edges_info:
-                if not isinstance(edge_info, EdgeInfo):
-                    continue
-                    
-                u, v = edge_info.edge
-                if u not in node_positions or v not in node_positions:
-                    continue
-                    
-                x0, y0 = node_positions[u]
-                x1, y1 = node_positions[v]
-                x_coords.extend([x0, x1, None])
-                y_coords.extend([y0, y1, None])
-
-                sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
-                hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
-                hover_texts.extend([hover_text, hover_text, None])
-
-            if x_coords:
-                line_style = dict(
-                    color=color,
-                    width=edge_style.get("width", 1),
-                    dash="solid" if label == "permanent" else "dash" if label == "false_positive" else "dot"
-                )
+        for edge_info in edges:
+            if not isinstance(edge_info, EdgeInfo):
+                continue
                 
-                traces.append(go.Scatter(
-                    x=x_coords,
-                    y=y_coords,
-                    mode="lines",
-                    line=line_style,
-                    hoverinfo="text",
-                    text=hover_texts,
-                    name=f"Edges ({label})",
-                ))
+            u, v = edge_info.edge
+            if u not in node_positions or v not in node_positions:
+                continue
+                
+            x0, y0 = node_positions[u]
+            x1, y1 = node_positions[v]
+            x_coords.extend([x0, x1, None])
+            y_coords.extend([y0, y1, None])
+
+            sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
+            hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Type: {edge_type}<br>Sources: {sources}"
+            hover_texts.extend([hover_text, hover_text, None])
+
+        if x_coords:
+            line_style = dict(
+                color=style["color"],
+                width=edge_style.get("width", 1),
+                dash=style["dash"]
+            )
+            
+            traces.append(go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="lines",
+                line=line_style,
+                hoverinfo="text",
+                text=hover_texts,
+                name=f"{edge_type.replace('_', ' ').title()} Edges",
+            ))
 
         # List case - handle as biclique edges
         x_coords = []
