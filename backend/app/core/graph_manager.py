@@ -195,24 +195,24 @@ class GraphManager:
 
                     # Initialize component mapping
                     try:
-                        component_mapping = graph_manager.initialize_timepoint_mapping(timepoint_id)
+                        component_mapping = self.initialize_timepoint_mapping(timepoint.id)
                         if not component_mapping:
                             raise ValueError("Component mapping initialization failed")
                     
-                        app.logger.info(f"Successfully initialized component mapping for timepoint {timepoint_id}")
-                        app.logger.info(f"Found {len(component_mapping.original_components)} original components")
-                        app.logger.info(f"Found {len(component_mapping.split_components)} split components")
+                        logger.info(f"Successfully initialized component mapping for timepoint {timepoint.id}")
+                        logger.info(f"Found {len(component_mapping.original_components)} original components")
+                        logger.info(f"Found {len(component_mapping.split_components)} split components")
                 
                         # Validate the mapping
                         if not component_mapping.original_components or not component_mapping.split_components:
                             raise ValueError("Component mapping contains no components")
                     
                     except Exception as e:
-                        app.logger.error(f"Error initializing component mapping: {str(e)}")
-                        return jsonify({
+                        logger.error(f"Error initializing component mapping: {str(e)}")
+                        return {
                             "status": "error",
                             "message": f"Failed to initialize component mapping: {str(e)}"
-                        }), 500
+                        }
 
                 logger.info(f"Cached {len(self.timepoints)} timepoint records")
                 logger.info(f"Available timepoint IDs: {list(self.timepoints.keys())}")
