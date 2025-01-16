@@ -132,43 +132,43 @@ class GraphManager:
             original_graph_file, split_graph_file = self.get_graph_paths(timepoint_info)
 
             # Load original graph
-                if os.path.exists(original_graph_file):
-                    try:
-                        self.original_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
-                            original_graph_file, 
-                            timepoint_name,
-                            dmr_id_offset=timepoint.dmr_id_offset or 0
-                        )
-                        logger.info(f"Loaded original graph for timepoint_id={timepoint_id}")
-                    except Exception as e:
-                        logger.error(f"Error loading original graph for timepoint_id={timepoint_id}: {str(e)}")
-                        return
+            if os.path.exists(original_graph_file):
+                try:
+                    self.original_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
+                        original_graph_file, 
+                        timepoint_info.name,
+                        dmr_id_offset=timepoint_info.dmr_id_offset or 0
+                    )
+                    logger.info(f"Loaded original graph for timepoint_id={timepoint_id}")
+                except Exception as e:
+                    logger.error(f"Error loading original graph for timepoint_id={timepoint_id}: {str(e)}")
+                    return
 
-                # Handle split graph
-                if os.path.exists(split_graph_file):
-                    try:
-                        self.split_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
-                            split_graph_file, 
-                            timepoint_name,
-                            dmr_id_offset=timepoint.dmr_id_offset or 0
-                        )
-                        logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
-                    except Exception as e:
-                        logger.warning(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
-                        if timepoint_id in self.original_graphs:
-                            logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
-                            self.split_graphs[timepoint_id] = nx.Graph()
-                            self.split_graphs[timepoint_id].add_nodes_from(
-                                self.original_graphs[timepoint_id].nodes()
-                            )
-                else:
-                    logger.warning(f"Split graph file not found: {split_graph_file}")
+            # Handle split graph
+            if os.path.exists(split_graph_file):
+                try:
+                    self.split_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
+                        split_graph_file, 
+                        timepoint_info.name,
+                        dmr_id_offset=timepoint_info.dmr_id_offset or 0
+                    )
+                    logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
+                except Exception as e:
+                    logger.warning(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
                     if timepoint_id in self.original_graphs:
                         logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
                         self.split_graphs[timepoint_id] = nx.Graph()
                         self.split_graphs[timepoint_id].add_nodes_from(
                             self.original_graphs[timepoint_id].nodes()
                         )
+            else:
+                logger.warning(f"Split graph file not found: {split_graph_file}")
+                if timepoint_id in self.original_graphs:
+                    logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
+                    self.split_graphs[timepoint_id] = nx.Graph()
+                    self.split_graphs[timepoint_id].add_nodes_from(
+                        self.original_graphs[timepoint_id].nodes()
+                    )
 
         except Exception as e:
             logger.error(f"Error in load_graphs for timepoint {timepoint_id}: {str(e)}")
