@@ -80,18 +80,18 @@ class GraphManager:
                 timepoints = session.query(Timepoint).all()
                 print(f"\nLoading graphs for {len(timepoints)} timepoints...")
 
-                # Cache timepoint data first
-                self.timepoints = {tp.id: tp.name for tp in timepoints}
-                logger.info(f"Cached {len(self.timepoints)} timepoint names")
-
+                # Cache timepoint data and load graphs in a single loop
                 for timepoint in timepoints:
+                    # Cast the ID to int to satisfy type checker
+                    timepoint_id = int(timepoint.id)
+                    self.timepoints[timepoint_id] = timepoint.name
                     try:
-                        self.load_graphs(timepoint.id)
+                        self.load_graphs(timepoint_id)
                     except Exception as e:
-                        print(
-                            f"Error loading graphs for timepoint {timepoint.name}: {str(e)}"
-                        )
+                        print(f"Error loading graphs for timepoint {timepoint.name}: {str(e)}")
                         continue
+
+                logger.info(f"Cached {len(self.timepoints)} timepoint names")
         except Exception as e:
             print(f"Error loading timepoints: {str(e)}")
 
