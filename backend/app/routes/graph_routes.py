@@ -560,9 +560,10 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add detailed logging for edge classification
             total_edges = len(original_graph_component.edges())
-            permanent_edges = len(edge_classifications.get('permanent', []))
-            false_positives = len(edge_classifications.get('false_positive', []))
-            false_negatives = len(edge_classifications.get('false_negative', []))
+            classifications = edge_classifications["classifications"]  # Get the nested dict
+            permanent_edges = len(classifications.get('permanent', []))
+            false_positives = len(classifications.get('false_positive', []))
+            false_negatives = len(classifications.get('false_negative', []))
 
             current_app.logger.info(
                 f"Edge classification results:\n"
