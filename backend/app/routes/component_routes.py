@@ -32,11 +32,13 @@ def get_component_summary_by_timepoint(timepoint_id):
             timepoint = session.query(Timepoint).filter_by(id=timepoint_id).first()
             if not timepoint:
                 app.logger.error(f"Timepoint {timepoint_id} not found")
-                return jsonify({
-                    "status": "error",
-                    "message": f"Timepoint {timepoint_id} not found",
-                    "code": "TIMEPOINT_NOT_FOUND"
-                }), 404
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": f"Timepoint {timepoint_id} not found",
+                        "code": "TIMEPOINT_NOT_FOUND",
+                    }
+                ), 404
 
             # Modified query to ensure all fields match the Pydantic model
             query = text("""
@@ -81,12 +83,16 @@ def get_component_summary_by_timepoint(timepoint_id):
             for idx, row in enumerate(results):
                 try:
                     # Log raw row data
-                    app.logger.debug(f"Processing row {idx}: {row._asdict()}")
-                    
+                    # app.logger.debug(f"Processing row {idx}: {row._asdict()}")
+
                     # Convert SQLAlchemy row to dictionary with explicit type conversion and null checks
                     component_data = {
-                        "component_id": int(row.component_id) if row.component_id else 0,
-                        "timepoint_id": int(row.timepoint_id) if row.timepoint_id else 0,
+                        "component_id": int(row.component_id)
+                        if row.component_id
+                        else 0,
+                        "timepoint_id": int(row.timepoint_id)
+                        if row.timepoint_id
+                        else 0,
                         "timepoint": str(row.timepoint) if row.timepoint else "",
                         "graph_type": str(row.graph_type) if row.graph_type else "",
                         "category": str(row.category) if row.category else "",
@@ -95,17 +101,21 @@ def get_component_summary_by_timepoint(timepoint_id):
                         "gene_count": int(row.gene_count) if row.gene_count else 0,
                         "edge_count": int(row.edge_count) if row.edge_count else 0,
                         "density": float(row.density) if row.density else 0.0,
-                        "biclique_count": int(row.biclique_count) if row.biclique_count else 0,
-                        "biclique_categories": str(row.biclique_categories) if row.biclique_categories else ""
+                        "biclique_count": int(row.biclique_count)
+                        if row.biclique_count
+                        else 0,
+                        "biclique_categories": str(row.biclique_categories)
+                        if row.biclique_categories
+                        else "",
                     }
 
                     # Log converted data
-                    app.logger.debug(f"Converted data for row {idx}: {component_data}")
+                    # app.logger.debug(f"Converted data for row {idx}: {component_data}")
 
                     # Validate with Pydantic
                     component = ComponentSummarySchema(**component_data)
                     components.append(component.model_dump())
-                    app.logger.debug(f"Successfully processed component {component_data['component_id']}")
+                    # app.logger.debug(f"Successfully processed component {component_data['component_id']}")
                 except ValidationError as e:
                     app.logger.error(f"Validation error for row {idx}: {str(e)}")
                     app.logger.error(f"Problematic data: {component_data}")
@@ -116,11 +126,9 @@ def get_component_summary_by_timepoint(timepoint_id):
                     continue
 
             app.logger.info(f"Successfully processed {len(components)} components")
-            return jsonify({
-                "status": "success", 
-                "timepoint": timepoint.name, 
-                "data": components
-            })
+            return jsonify(
+                {"status": "success", "timepoint": timepoint.name, "data": components}
+            )
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
@@ -233,15 +241,19 @@ def get_component_details(timepoint_id, component_id):
                     return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
 
                 # Parse bicliques
-                bicliques_data = json.loads(result.bicliques) if result.bicliques else []
+                bicliques_data = (
+                    json.loads(result.bicliques) if result.bicliques else []
+                )
                 bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
 
                 # Parse dominating sets
-                dominating_sets_data = json.loads(result.dominating_sets) if result.dominating_sets else []
+                dominating_sets_data = (
+                    json.loads(result.dominating_sets) if result.dominating_sets else []
+                )
                 dominating_sets = {
-                    str(ds['dmr_id']): DominatingSetSchema(**ds)
+                    str(ds["dmr_id"]): DominatingSetSchema(**ds)
                     for ds in dominating_sets_data
-                    if ds and 'dmr_id' in ds
+                    if ds and "dmr_id" in ds
                 }
 
                 # Create component details with Pydantic model
@@ -257,22 +269,25 @@ def get_component_details(timepoint_id, component_id):
                     all_dmr_ids=parse_array_string(result.all_dmr_ids),
                     all_gene_ids=parse_array_string(result.all_gene_ids),
                     bicliques=bicliques,
-                    dominating_sets=dominating_sets
+                    dominating_sets=dominating_sets,
                 )
 
-                app.logger.info(f"Successfully processed component {component_id} details")
-                return jsonify({
-                    "status": "success",
-                    "data": component_details.model_dump()
-                })
+                app.logger.info(
+                    f"Successfully processed component {component_id} details"
+                )
+                return jsonify(
+                    {"status": "success", "data": component_details.model_dump()}
+                )
 
             except ValidationError as e:
                 app.logger.error(f"Validation error: {str(e)}")
-                return jsonify({
-                    "status": "error",
-                    "message": "Invalid component data",
-                    "details": e.errors()
-                }), 400
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": "Invalid component data",
+                        "details": e.errors(),
+                    }
+                ), 400
 
     except Exception as e:
         app.logger.error(f"Error getting component details: {str(e)}")
@@ -289,7 +304,9 @@ def get_gene_symbols():
         timepoint_id = data.get("timepoint_id")
         component_id = data.get("component_id")
 
-        app.logger.info(f"Fetching gene symbols for timepoint={timepoint_id}, component={component_id}")
+        app.logger.info(
+            f"Fetching gene symbols for timepoint={timepoint_id}, component={component_id}"
+        )
 
         if not all([timepoint_id, component_id]):
             return jsonify(
@@ -336,24 +353,28 @@ def get_gene_symbols():
             # Convert results to dictionary with string keys
             gene_info = {}
             for row in results:
-                app.logger.debug(f"Processing gene {row.gene_id}: node_type={row.node_type}, gene_type={row.gene_type}, biclique_count={row.biclique_count}")
+                # app.logger.debug(f"Processing gene {row.gene_id}: node_type={row.node_type}, gene_type={row.gene_type}, biclique_count={row.biclique_count}")
                 gene_info[str(row.gene_id)] = {
                     "gene_id": row.gene_id,
                     "symbol": row.symbol or f"Gene_{row.gene_id}",
                     "node_type": row.node_type,  # Include raw node_type
-                    "gene_type": row.gene_type,  # Include raw gene_type 
-                    "is_split": row.node_type == 'SPLIT_GENE' or row.biclique_count > 1,
-                    "is_hub": row.node_type == 'HUB',
+                    "gene_type": row.gene_type,  # Include raw gene_type
+                    "is_split": row.node_type == "SPLIT_GENE" or row.biclique_count > 1,
+                    "is_hub": row.node_type == "HUB",
                     "degree": row.degree or 0,
                     "biclique_count": row.biclique_count or 0,
-                    "biclique_ids": row.biclique_ids.split(",") if row.biclique_ids else [],
+                    "biclique_ids": row.biclique_ids.split(",")
+                    if row.biclique_ids
+                    else [],
                 }
 
             app.logger.info(f"Processed gene info: {gene_info}")
-            return jsonify({
-                "status": "success",
-                "data": gene_info,
-            })
+            return jsonify(
+                {
+                    "status": "success",
+                    "data": gene_info,
+                }
+            )
     except Exception as e:
         app.logger.error(f"Error getting gene symbols: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
