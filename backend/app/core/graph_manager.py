@@ -305,15 +305,23 @@ class GraphManager:
                 logger.error(f"No split graph found for timepoint_id={timepoint_id}")
                 return None
 
+            # Log full split graph stats
+            logger.info(f"Full split graph has {len(split_graph.nodes())} nodes and {len(split_graph.edges())} edges")
+
             # Create subgraph of the component nodes
             subgraph = split_graph.subgraph(component_nodes)
             
+            # Log subgraph stats
+            logger.info(f"Subgraph has {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges")
+
             # Create a new graph and copy both nodes AND edges
             component_graph = nx.Graph()
             component_graph.add_nodes_from(subgraph.nodes())
-            component_graph.add_edges_from(subgraph.edges())  # This line was missing!
+            component_graph.add_edges_from(subgraph.edges())
 
-            logger.info(f"Created split graph component with {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
+            # Log final component graph stats
+            logger.info(f"Final component graph has {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
+            
             return component_graph
 
         except Exception as e:
