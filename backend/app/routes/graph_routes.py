@@ -587,7 +587,7 @@ def get_component_graph(timepoint_id, component_id):
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
-                edge_classifications=edge_classifications,
+                edge_classifications=edge_classifications["classifications"],  # Use the classifications sub-dictionary
                 original_graph=original_graph_component,
                 bipartite_graph=split_graph_component,
                 dmr_metadata=dmr_metadata,
@@ -600,19 +600,9 @@ def get_component_graph(timepoint_id, component_id):
                 f"Visualization created in {end_time - start_time:.2f} seconds"
             )
 
-            # Add statistics to visualization data using new structure
-            stats = edge_classifications.get('stats', {})
-            visualization_data['edge_stats'] = stats.get('component', {})
-            visualization_data['biclique_stats'] = {
-                'edge_counts': stats.get('bicliques', {}).get('edge_counts', {}),
-                'reliability': stats.get('bicliques', {}).get('reliability', {}),
-                'total_false_negatives': stats.get('bicliques', {}).get('total_false_negatives', 0),
-                # Calculate averages for display
-                'average_accuracy': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'accuracy'),
-                'average_noise': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'noise_percentage'),
-                'average_fp_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_positive_rate'),
-                'average_fn_rate': calculate_average(stats.get('bicliques', {}).get('reliability', {}), 'false_negative_rate')
-            }
+            # Add statistics to visualization data
+            visualization_data['edge_stats'] = edge_classifications['stats']['component']
+            visualization_data['biclique_stats'] = edge_classifications['stats']['bicliques']
 
             return visualization_data
 
