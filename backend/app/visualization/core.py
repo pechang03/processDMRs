@@ -90,7 +90,7 @@ def create_biclique_visualization(
 
     # Create edge traces with EdgeInfo using the appropriate positions
     edge_traces = create_edge_traces(
-        edge_classifications["classifications"],  # Use the classifications sub-dictionary
+        edge_classifications,  # Pass the full classifications dictionary
         positions,
         node_labels,
         original_graph,

@@ -667,9 +667,7 @@ def get_component_graph(timepoint_id, component_id):
                 node_labels=node_labels,
                 node_positions=node_positions,
                 node_biclique_map=node_biclique_map,
-                edge_classifications=edge_classifications[
-                    "classifications"
-                ],  # Use the classifications sub-dictionary
+                edge_classifications=edge_classifications["classifications"],  # Pass just the classifications
                 original_graph=original_graph_component,
                 bipartite_graph=split_graph_component,
                 dmr_metadata=dmr_metadata,
