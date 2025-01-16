@@ -736,6 +736,97 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 
                 {/* Add Biclique Summary Section */}
                 <Grid item xs={12}>
+                  <Paper elevation={3} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Edge Classification Statistics
+                    </Typography>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Category</TableCell>
+                          <TableCell align="right">Component</TableCell>
+                          <TableCell align="right">Per Biclique (Average)</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Accuracy</TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.edge_stats?.accuracy * 100).toFixed(1)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.biclique_stats?.average_accuracy * 100).toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Noise Percentage</TableCell>
+                          <TableCell align="right">
+                            {componentDetails?.edge_stats?.noise_percentage.toFixed(1)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {componentDetails?.biclique_stats?.average_noise.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>False Positive Rate</TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.edge_stats?.false_positive_rate * 100).toFixed(1)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.biclique_stats?.average_fp_rate * 100).toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>False Negative Rate</TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.edge_stats?.false_negative_rate * 100).toFixed(1)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {(componentDetails?.biclique_stats?.average_fn_rate * 100).toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Paper>
+
+                  <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Per-Biclique Edge Statistics
+                    </Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Biclique ID</TableCell>
+                            <TableCell align="right">Total Edges</TableCell>
+                            <TableCell align="right">Permanent</TableCell>
+                            <TableCell align="right">False Positives</TableCell>
+                            <TableCell align="right">False Negatives</TableCell>
+                            <TableCell align="right">Noise %</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {componentDetails?.bicliques?.map((biclique) => {
+                            const stats = componentDetails?.biclique_stats?.reliability[biclique.biclique_id] || {};
+                            const counts = componentDetails?.biclique_stats?.edge_counts[biclique.biclique_id] || {};
+                            return (
+                              <TableRow key={biclique.biclique_id}>
+                                <TableCell>{biclique.biclique_id}</TableCell>
+                                <TableCell align="right">{counts.total_edges}</TableCell>
+                                <TableCell align="right">{counts.permanent}</TableCell>
+                                <TableCell align="right">{counts.false_positives}</TableCell>
+                                <TableCell align="right">{counts.false_negatives}</TableCell>
+                                <TableCell align="right">
+                                  {stats.noise_percentage?.toFixed(1)}%
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+
                   <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
                     <Typography variant="subtitle1" gutterBottom>
                       Biclique Summary
