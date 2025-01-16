@@ -388,20 +388,38 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Regular genes: {len(all_gene_ids - split_genes)}")
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
-            # Create node-to-biclique mapping
+            # Create node-to-biclique mapping from database annotations
             node_biclique_map = {}
-            for idx, (dmr_set, gene_set) in enumerate(bicliques):
-                for dmr_id in dmr_set:
-                    if dmr_id not in node_biclique_map:
-                        node_biclique_map[dmr_id] = []
-                    node_biclique_map[dmr_id].append(idx)
-                
-                for gene_id in gene_set:
-                    if gene_id not in node_biclique_map:
-                        node_biclique_map[gene_id] = []
-                    node_biclique_map[gene_id].append(idx)
+
+            # Process DMR annotations
+            for dmr_id, info in dmr_metadata.items():
+                if info.get('biclique_ids'):
+                    # Convert string of biclique IDs to list of integers
+                    try:
+                        biclique_ids = [
+                            int(bid.strip()) 
+                            for bid in info['biclique_ids'].split(',') 
+                            if bid.strip()
+                        ]
+                        node_biclique_map[int(dmr_id)] = biclique_ids
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing DMR {dmr_id} biclique IDs: {e}")
+
+            # Process gene annotations
+            for gene_id, info in gene_metadata.items():
+                if info.get('biclique_ids'):
+                    try:
+                        biclique_ids = [
+                            int(bid.strip()) 
+                            for bid in info['biclique_ids'].split(',') 
+                            if bid.strip()
+                        ]
+                        node_biclique_map[int(gene_id)] = biclique_ids
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing gene {gene_id} biclique IDs: {e}")
 
             current_app.logger.debug(f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes")
+            current_app.logger.debug(f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}")
 
             # Create NodeInfo object
             node_info = NodeInfo(
