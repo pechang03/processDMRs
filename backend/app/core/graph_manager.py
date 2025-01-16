@@ -16,7 +16,7 @@ class TimepointInfo:
     id: int
     name: str
     dmr_id_offset: int
-    sheet_name: Optional[str] = None  # Add sheet_name field
+    sheet_name: Optional[str] = None
     description: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -25,7 +25,6 @@ class TimepointInfo:
         """Get the name to use for graph files"""
         if self.sheet_name:
             return self.sheet_name
-        # Default to adding _TSS if no sheet name specified
         return f"{self.name}_TSS"
 
 from backend.app.utils.graph_io import read_bipartite_graph
@@ -72,7 +71,6 @@ class GraphManager:
         graph_name = timepoint_info.get_graph_name()
         
         if timepoint_info.name.lower() in ["dsstimeseries", "dss_time_series"]:
-            # Special case for time series
             original_graph_file = os.path.join(
                 self.data_dir, "bipartite_graph_output_DSS_overall.txt"
             )
@@ -80,7 +78,6 @@ class GraphManager:
                 self.data_dir, "bipartite_graph_output_DSS1.txt.bicluster"
             )
         else:
-            # Regular timepoint
             original_graph_file = os.path.join(
                 self.data_dir, f"bipartite_graph_output_{graph_name}.txt"
             )
