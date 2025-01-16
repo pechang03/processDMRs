@@ -26,10 +26,37 @@ component_bp = Blueprint("component_routes", __name__, url_prefix="/api/componen
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
-        # Initialize component mapping for this timepoint
+        # Get graph manager and initialize mapping
         graph_manager = current_app.graph_manager
-        graph_manager.initialize_timepoint_mapping(timepoint_id)
         
+        # Load and validate graphs first
+        original_graph = graph_manager.get_original_graph(timepoint_id)
+        split_graph = graph_manager.get_split_graph(timepoint_id)
+        
+        if not original_graph or not split_graph:
+            app.logger.error(f"Failed to load graphs for timepoint {timepoint_id}")
+            return jsonify({
+                "status": "error",
+                "message": "Failed to load required graphs"
+            }), 500
+
+        # Log graph sizes for debugging
+        app.logger.info(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
+        app.logger.info(f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges")
+
+        # Initialize component mapping
+        try:
+            component_mapping = graph_manager.initialize_timepoint_mapping(timepoint_id)
+            app.logger.info(f"Successfully initialized component mapping for timepoint {timepoint_id}")
+            app.logger.info(f"Found {len(component_mapping.original_components)} original components")
+            app.logger.info(f"Found {len(component_mapping.split_components)} split components")
+        except Exception as e:
+            app.logger.error(f"Error initializing component mapping: {str(e)}")
+            return jsonify({
+                "status": "error",
+                "message": f"Failed to initialize component mapping: {str(e)}"
+            }), 500
+
         engine = get_db_engine()
         with Session(engine) as session:
             # First verify timepoint exists
@@ -129,10 +156,20 @@ def get_component_summary_by_timepoint(timepoint_id):
                     app.logger.error(f"Raw row data: {row}")
                     continue
 
-            app.logger.info(f"Successfully processed {len(components)} components")
-            return jsonify(
-                {"status": "success", "timepoint": timepoint.name, "data": components}
-            )
+            # Add component mapping info to response
+            response_data = {
+                "status": "success",
+                "timepoint": timepoint.name,
+                "data": components,
+                "mapping_info": {
+                    "original_components": len(component_mapping.original_components),
+                    "split_components": len(component_mapping.split_components),
+                    "mapped_components": len(component_mapping.split_to_original)
+                }
+            }
+
+            app.logger.info(f"Successfully processed {len(components)} components with mapping")
+            return jsonify(response_data)
 
     except Exception as e:
         app.logger.error(f"Error processing component summary request: {str(e)}")
