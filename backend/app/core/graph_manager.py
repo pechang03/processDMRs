@@ -106,7 +106,7 @@ class GraphManager:
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
 
-    def initialize_timepoint_mapping(self, timepoint_id: int) -> None:
+    def initialize_timepoint_mapping(self, timepoint_id: int) -> ComponentMapping:
         """Initialize component mapping when timepoint is selected"""
         logger.info(f"Initializing component mapping for timepoint {timepoint_id}")
         
@@ -116,15 +116,19 @@ class GraphManager:
         
         if not original_graph or not split_graph:
             logger.error(f"Could not load graphs for timepoint {timepoint_id}")
-            return
+            raise ValueError(f"Failed to load graphs for timepoint {timepoint_id}")
             
         logger.info(f"Creating component mapping for timepoint {timepoint_id}")
         logger.info(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
         logger.info(f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges")
         
         # Create and store the mapping
-        self.component_mappings[timepoint_id] = ComponentMapping(original_graph, split_graph)
+        mapping = ComponentMapping(original_graph, split_graph)
+        self.component_mappings[timepoint_id] = mapping
         logger.info(f"Component mapping created for timepoint {timepoint_id}")
+        
+        # Return the mapping
+        return mapping
 
     @classmethod
     def get_instance(cls):
@@ -188,6 +192,27 @@ class GraphManager:
                     except Exception as e:
                         logger.error(f"Error loading graphs for timepoint {timepoint.name} (ID: {timepoint.id}): {str(e)}")
                         continue
+
+                    # Initialize component mapping
+                    try:
+                        component_mapping = graph_manager.initialize_timepoint_mapping(timepoint_id)
+                        if not component_mapping:
+                            raise ValueError("Component mapping initialization failed")
+                    
+                        app.logger.info(f"Successfully initialized component mapping for timepoint {timepoint_id}")
+                        app.logger.info(f"Found {len(component_mapping.original_components)} original components")
+                        app.logger.info(f"Found {len(component_mapping.split_components)} split components")
+                
+                        # Validate the mapping
+                        if not component_mapping.original_components or not component_mapping.split_components:
+                            raise ValueError("Component mapping contains no components")
+                    
+                    except Exception as e:
+                        app.logger.error(f"Error initializing component mapping: {str(e)}")
+                        return jsonify({
+                            "status": "error",
+                            "message": f"Failed to initialize component mapping: {str(e)}"
+                        }), 500
 
                 logger.info(f"Cached {len(self.timepoints)} timepoint records")
                 logger.info(f"Available timepoint IDs: {list(self.timepoints.keys())}")
