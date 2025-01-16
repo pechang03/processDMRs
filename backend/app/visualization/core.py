@@ -90,22 +90,12 @@ def create_biclique_visualization(
 
     # Create edge traces with EdgeInfo using the appropriate positions
     edge_traces = create_edge_traces(
-        edge_classifications,
-        positions,  # Use the selected positions
-        node_labels,  # Add this required argument
-        original_graph,  # Add this required argument
+        edge_classifications["classifications"],  # Use the classifications sub-dictionary
+        positions,
+        node_labels,
+        original_graph,
         edge_style={"width": 1},
-    )
-    traces.extend(edge_traces)
-    edge_traces = create_edge_traces(
-        bicliques,
-        positions,  # Use the selected positions
-        node_labels,  # Add this required argument
-        original_graph,  # Add this required argument
-        false_positive_edges,
-        false_negative_edges,
-        edge_type="biclique",
-        edge_style={"color": "black", "width": 1, "dash": "solid"},
+        false_negative_edges=false_negative_edges  # Pass false negative edges if available
     )
     traces.extend(edge_traces)
 

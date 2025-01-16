@@ -335,6 +335,7 @@ def create_edge_traces(
     node_labels: Dict[int, str],
     original_graph: nx.Graph,
     edge_style: Dict = None,
+    false_negative_edges: Set[Tuple[int, int]] = None,  # Add this parameter
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
     traces = []
@@ -346,47 +347,78 @@ def create_edge_traces(
         "false_negative": "blue",
     }
 
-    # Process classified edges from the dictionary
-    traces = []
-    color_map = {
-        "permanent": "#D3D3D3",  # Light grey
-        "false_positive": "red",
-        "false_negative": "blue",
-    }
+    # Process edge classifications from the dictionary
+    if isinstance(edge_classifications, dict):
+        for label, edges_info in edge_classifications.items():
+            x_coords = []
+            y_coords = []
+            hover_texts = []
 
-    for label, edges_info in edge_classifications.items():
-        x_coords = []
-        y_coords = []
-        hover_texts = []
+            color = color_map.get(label, "gray")
 
-        color = color_map.get(label, "gray")
+            for edge_info in edges_info:
+                if not isinstance(edge_info, EdgeInfo):
+                    continue
+                    
+                u, v = edge_info.edge
+                if u not in node_positions or v not in node_positions:
+                    continue
+                    
+                x0, y0 = node_positions[u]
+                x1, y1 = node_positions[v]
+                x_coords.extend([x0, x1, None])
+                y_coords.extend([y0, y1, None])
 
-        for edge_info in edges_info:
-            if not isinstance(edge_info, EdgeInfo):
-                continue
+                sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
+                hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
+                hover_texts.extend([hover_text, hover_text, None])
+
+            if x_coords:
+                line_style = dict(
+                    color=color,
+                    width=edge_style.get("width", 1),
+                    dash="solid" if label == "permanent" else "dash" if label == "false_positive" else "dot"
+                )
                 
-            u, v = edge_info.edge
-            if u not in node_positions or v not in node_positions:
-                continue
+                traces.append(go.Scatter(
+                    x=x_coords,
+                    y=y_coords,
+                    mode="lines",
+                    line=line_style,
+                    hoverinfo="text",
+                    text=hover_texts,
+                    name=f"Edges ({label})",
+                ))
+
+    # Add false negative edges if provided separately
+    if false_negative_edges:
+        fn_x = []
+        fn_y = []
+        fn_texts = []
+        
+        for u, v in false_negative_edges:
+            if u in node_positions and v in node_positions:
+                x0, y0 = node_positions[u]
+                x1, y1 = node_positions[v]
+                fn_x.extend([x0, x1, None])
+                fn_y.extend([y0, y1, None])
                 
-            x0, y0 = node_positions[u]
-            x1, y1 = node_positions[v]
-            x_coords.extend([x0, x1, None])
-            y_coords.extend([y0, y1, None])
+                hover_text = f"False Negative Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}"
+                fn_texts.extend([hover_text, hover_text, None])
 
-            sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
-            hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
-            hover_texts.extend([hover_text, hover_text, None])
-
-        if x_coords:
+        if fn_x:
             traces.append(go.Scatter(
-                x=x_coords,
-                y=y_coords,
+                x=fn_x,
+                y=fn_y,
                 mode="lines",
-                line=dict(color=color, width=edge_style.get("width", 1)),
+                line=dict(
+                    color=color_map["false_negative"],
+                    width=edge_style.get("width", 1),
+                    dash="dot",
+                ),
                 hoverinfo="text",
-                text=hover_texts,
-                name=f"Edges ({label})",
+                text=fn_texts,
+                name="False Negative Edges",
             ))
     else:
         # List case - handle as biclique edges
