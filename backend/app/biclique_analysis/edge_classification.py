@@ -191,7 +191,7 @@ def classify_edges(
     for idx, stats in biclique_stats.items():
         biclique_reliability[idx] = calculate_edge_statistics(
             total_edges=stats["total_edges"],
-            permanent_edges=stats["permanent"],
+            permanent_edges=stats["permanent"], 
             false_positives=stats["false_positives"],
             false_negatives=stats["false_negatives"]
         )
