@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class GraphManager:
     original_graphs: Dict[int, nx.Graph]
     split_graphs: Dict[int, nx.Graph] 
-    timepoints: Dict[int, str]
+    timepoints: Dict[int, TimepointInfo]  # Change type annotation
     data_dir: str
 
     def __init__(self, config=None):
@@ -82,33 +82,39 @@ class GraphManager:
 
                 # Cache timepoint data and load graphs in a single loop
                 for timepoint in timepoints:
-                    # Cast the ID to int to satisfy type checker
-                    timepoint_id = int(timepoint.id)
-                    self.timepoints[timepoint_id] = timepoint.name
+                    # Create TimepointInfo object
+                    timepoint_info = TimepointInfo(
+                        id=int(timepoint.id),
+                        name=timepoint.name,
+                        dmr_id_offset=timepoint.dmr_id_offset or 0,
+                        description=timepoint.description,
+                        created_at=timepoint.created_at,
+                        updated_at=timepoint.updated_at
+                    )
+                    self.timepoints[timepoint_info.id] = timepoint_info
+                    
                     try:
-                        self.load_graphs(timepoint_id)
+                        self.load_graphs(timepoint_info.id)
                     except Exception as e:
-                        print(f"Error loading graphs for timepoint {timepoint.name}: {str(e)}")
+                        print(f"Error loading graphs for timepoint {timepoint_info.name}: {str(e)}")
                         continue
 
-                logger.info(f"Cached {len(self.timepoints)} timepoint names")
+                logger.info(f"Cached {len(self.timepoints)} timepoint records")
         except Exception as e:
             print(f"Error loading timepoints: {str(e)}")
 
     def load_graphs(self, timepoint_id: int) -> None:
         """Load graphs for a specific timepoint"""
         try:
-            engine = get_db_engine()
-            with Session(engine) as session:
-                timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
-                if not timepoint:
-                    raise ValueError(f"Timepoint {timepoint_id} not found")
+            timepoint_info = self.timepoints.get(timepoint_id)
+            if not timepoint_info:
+                raise ValueError(f"Timepoint {timepoint_id} not found")
 
-                timepoint_name = (
-                    timepoint.name.replace("_TSS", "")
-                    if timepoint.name.endswith("_TSS")
-                    else timepoint.name
-                )
+            timepoint_name = (
+                timepoint_info.name.replace("_TSS", "")
+                if timepoint_info.name.endswith("_TSS")
+                else timepoint_info.name
+            )
 
                 original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
 
@@ -184,7 +190,7 @@ class GraphManager:
         """Get timepoint name from cached mapping."""
         if timepoint_id not in self.timepoints:
             raise ValueError(f"Timepoint {timepoint_id} not found in cache")
-        return self.timepoints[timepoint_id]
+        return self.timepoints[timepoint_id].name
 
     def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from original graph."""
