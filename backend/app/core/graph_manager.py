@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 class GraphManager:
     def __init__(self, config=None):
         logger.info("Initializing GraphManager")
-        self.original_graphs: Dict[str, nx.Graph] = {}
-        self.split_graphs: Dict[str, nx.Graph] = {}
+        self.original_graphs: Dict[int, nx.Graph] = {}  # Change key to int (timepoint_id)
+        self.split_graphs: Dict[int, nx.Graph] = {}     # Change key to int (timepoint_id)
         self.data_dir = config.get("DATA_DIR", "./data") if config else "./data"
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
@@ -94,18 +94,10 @@ class GraphManager:
                 if not timepoint:
                     raise ValueError(f"Timepoint {timepoint_id} not found")
 
-                # Convert SQLAlchemy model to dict before validation
-                timepoint_dict = {
-                    "id": timepoint.id,
-                    "name": timepoint.name,
-                    "components": []  # Empty list since we don't need components here
-                }
-                
-                timepoint_data = TimePointSchema.model_validate(timepoint_dict)
                 timepoint_name = (
-                    timepoint_data.name.replace("_TSS", "")
-                    if timepoint_data.name.endswith("_TSS")
-                    else timepoint_data.name
+                    timepoint.name.replace("_TSS", "")
+                    if timepoint.name.endswith("_TSS")
+                    else timepoint.name
                 )
 
                 original_graph_file, split_graph_file = self.get_graph_paths(timepoint_name)
@@ -113,85 +105,65 @@ class GraphManager:
                 # Load original graph
                 if os.path.exists(original_graph_file):
                     try:
-                        self.original_graphs[timepoint_name] = read_bipartite_graph(
+                        self.original_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
                             original_graph_file, 
                             timepoint_name,
                             dmr_id_offset=timepoint.dmr_id_offset or 0
                         )
-                        logger.info(f"Loaded original graph for {timepoint_name}")
+                        logger.info(f"Loaded original graph for timepoint_id={timepoint_id}")
                     except Exception as e:
-                        logger.error(f"Error loading original graph for {timepoint_name}: {str(e)}")
+                        logger.error(f"Error loading original graph for timepoint_id={timepoint_id}: {str(e)}")
                         return
 
                 # Handle split graph
                 if os.path.exists(split_graph_file):
                     try:
-                        self.split_graphs[timepoint_name] = read_bipartite_graph(
+                        self.split_graphs[timepoint_id] = read_bipartite_graph(  # Use timepoint_id as key
                             split_graph_file, 
                             timepoint_name,
                             dmr_id_offset=timepoint.dmr_id_offset or 0
                         )
-                        logger.info(f"Loaded split graph for {timepoint_name}")
+                        logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
                     except Exception as e:
-                        logger.warning(f"Error loading split graph for {timepoint_name}: {str(e)}")
-                        if timepoint_name in self.original_graphs:
-                            logger.info(f"Creating empty split graph for {timepoint_name}")
-                            # Create empty graph with same nodes but no edges
-                            self.split_graphs[timepoint_name] = nx.Graph()
-                            self.split_graphs[timepoint_name].add_nodes_from(
-                                self.original_graphs[timepoint_name].nodes()
+                        logger.warning(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
+                        if timepoint_id in self.original_graphs:
+                            logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
+                            self.split_graphs[timepoint_id] = nx.Graph()
+                            self.split_graphs[timepoint_id].add_nodes_from(
+                                self.original_graphs[timepoint_id].nodes()
                             )
                 else:
                     logger.warning(f"Split graph file not found: {split_graph_file}")
-                    if timepoint_name in self.original_graphs:
-                        logger.info(f"Creating empty split graph for {timepoint_name}")
-                        # Create empty graph with same nodes but no edges
-                        self.split_graphs[timepoint_name] = nx.Graph()
-                        self.split_graphs[timepoint_name].add_nodes_from(
-                            self.original_graphs[timepoint_name].nodes()
+                    if timepoint_id in self.original_graphs:
+                        logger.info(f"Creating empty split graph for timepoint_id={timepoint_id}")
+                        self.split_graphs[timepoint_id] = nx.Graph()
+                        self.split_graphs[timepoint_id].add_nodes_from(
+                            self.original_graphs[timepoint_id].nodes()
                         )
 
         except Exception as e:
             logger.error(f"Error in load_graphs for timepoint {timepoint_id}: {str(e)}")
             raise
 
-    def get_original_graph(self, timepoint: str) -> Optional[nx.Graph]:
+    def get_original_graph(self, timepoint_id: int) -> Optional[nx.Graph]:
         """Get the original graph for a timepoint"""
-        if timepoint not in self.original_graphs:
+        if timepoint_id not in self.original_graphs:
             try:
-                # Find timepoint ID from name
-                engine = get_db_engine()
-                with Session(engine) as session:
-                    tp = (
-                        session.query(Timepoint)
-                        .filter(Timepoint.name == timepoint)
-                        .first()
-                    )
-                    if tp:
-                        self.load_graphs(tp.id)
+                self.load_graphs(timepoint_id)
             except Exception as e:
-                print(f"Error loading graphs for timepoint {timepoint}: {str(e)}")
+                logger.error(f"Error loading graphs for timepoint_id={timepoint_id}: {str(e)}")
                 return None
-        return self.original_graphs.get(timepoint)
+        return self.original_graphs.get(timepoint_id)
 
-    def get_split_graph(self, timepoint: str) -> Optional[nx.Graph]:
+    def get_split_graph(self, timepoint_id: int) -> Optional[nx.Graph]:
         """Get the split graph for a timepoint"""
-        if timepoint not in self.split_graphs:
+        if timepoint_id not in self.split_graphs:
             try:
-                # Find timepoint ID from name
-                engine = get_db_engine()
-                with Session(engine) as session:
-                    tp = (
-                        session.query(Timepoint)
-                        .filter(Timepoint.name == timepoint)
-                        .first()
-                    )
-                    if tp:
-                        self.load_graphs(tp.id)
+                self.load_graphs(timepoint_id)
             except Exception as e:
-                print(f"Error loading graphs for timepoint {timepoint}: {str(e)}")
+                logger.error(f"Error loading graphs for timepoint_id={timepoint_id}: {str(e)}")
                 return None
-        return self.split_graphs.get(timepoint)
+        return self.split_graphs.get(timepoint_id)
 
     def clear_graphs(self):
         """Clear all loaded graphs"""
@@ -210,10 +182,9 @@ class GraphManager:
     def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from original graph."""
         try:
-            timepoint_name = self.get_timepoint_name(timepoint_id)
-            original_graph = self.get_original_graph(timepoint_name)
+            original_graph = self.get_original_graph(timepoint_id)  # Use timepoint_id directly
             if not original_graph:
-                logger.error(f"No original graph found for timepoint {timepoint_name}")
+                logger.error(f"No original graph found for timepoint_id={timepoint_id}")
                 return None
             return original_graph.subgraph(component_nodes).copy()
         except Exception as e:
@@ -223,10 +194,9 @@ class GraphManager:
     def get_split_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from split graph."""
         try:
-            timepoint_name = self.get_timepoint_name(timepoint_id)
-            split_graph = self.get_split_graph(timepoint_name)
+            split_graph = self.get_split_graph(timepoint_id)  # Use timepoint_id directly
             if not split_graph:
-                logger.error(f"No split graph found for timepoint {timepoint_name}")
+                logger.error(f"No split graph found for timepoint_id={timepoint_id}")
                 return None
             return split_graph.subgraph(component_nodes).copy()
         except Exception as e:
