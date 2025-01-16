@@ -168,6 +168,16 @@ class NodeStatusRequest(BaseModel):
     timepoint_id: int
 
 
+class MasterGeneIDSchema(BaseModel):
+    """Schema for master gene ID mapping."""
+    id: int
+    gene_symbol: str
+
+    class Config:
+        """Configure schema to work with SQLAlchemy models."""
+        from_attributes = True
+
+
 class DmrComponentSchema(BaseModel):
     """Schema for DMR component data"""
 
