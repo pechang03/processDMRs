@@ -662,7 +662,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add timing for performance monitoring
             start_time = time.time()
-            visualization_data = create_biclique_visualization(
+            vis_data = create_biclique_visualization(
                 bicliques=bicliques,
                 node_labels=node_labels,
                 node_positions=node_positions,
@@ -680,15 +680,15 @@ def get_component_graph(timepoint_id, component_id):
                 f"Visualization created in {end_time - start_time:.2f} seconds"
             )
 
-            # Add statistics to visualization data
-            visualization_data["edge_stats"] = edge_classifications["stats"][
-                "component"
-            ]
-            visualization_data["biclique_stats"] = edge_classifications["stats"][
-                "bicliques"
-            ]
+            # Parse the JSON string back to a dictionary
+            vis_dict = json.loads(vis_data)
 
-            return visualization_data
+            # Add the statistics
+            vis_dict["edge_stats"] = edge_classifications["stats"]["component"]
+            vis_dict["biclique_stats"] = edge_classifications["stats"]["bicliques"]
+
+            # Return the complete dictionary
+            return jsonify(vis_dict)
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")
