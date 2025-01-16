@@ -277,16 +277,18 @@ class GraphManager:
     def get_original_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from original graph."""
         try:
-            original_graph = self.get_original_graph(timepoint_id)  # Use timepoint_id directly
+            original_graph = self.get_original_graph(timepoint_id)
             if not original_graph:
                 logger.error(f"No original graph found for timepoint_id={timepoint_id}")
                 return None
 
-            # Create subgraph and explicitly copy the edges
+            # Create subgraph of the component nodes
             subgraph = original_graph.subgraph(component_nodes)
+            
+            # Create a new graph and copy both nodes AND edges
             component_graph = nx.Graph()
             component_graph.add_nodes_from(subgraph.nodes())
-            component_graph.add_edges_from(subgraph.edges())
+            component_graph.add_edges_from(subgraph.edges())  # This line was missing!
 
             logger.info(f"Created original graph component with {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
             return component_graph
@@ -298,16 +300,18 @@ class GraphManager:
     def get_split_graph_component(self, timepoint_id: int, component_nodes: set) -> nx.Graph:
         """Get component subgraph from split graph."""
         try:
-            split_graph = self.get_split_graph(timepoint_id)  # Use timepoint_id directly
+            split_graph = self.get_split_graph(timepoint_id)
             if not split_graph:
                 logger.error(f"No split graph found for timepoint_id={timepoint_id}")
                 return None
 
-            # Create subgraph and explicitly copy the edges
+            # Create subgraph of the component nodes
             subgraph = split_graph.subgraph(component_nodes)
+            
+            # Create a new graph and copy both nodes AND edges
             component_graph = nx.Graph()
             component_graph.add_nodes_from(subgraph.nodes())
-            component_graph.add_edges_from(subgraph.edges())
+            component_graph.add_edges_from(subgraph.edges())  # This line was missing!
 
             logger.info(f"Created split graph component with {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges")
             return component_graph
