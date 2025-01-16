@@ -101,9 +101,30 @@ class GraphManager:
         self.original_graphs = {}
         self.split_graphs = {}
         self.timepoints = {}  # Add timepoint mapping cache
+        self.component_mappings = {}  # Add this to store mappings per timepoint
         self.data_dir = config.get("DATA_DIR", "./data") if config else "./data"
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
+
+    def initialize_timepoint_mapping(self, timepoint_id: int) -> None:
+        """Initialize component mapping when timepoint is selected"""
+        logger.info(f"Initializing component mapping for timepoint {timepoint_id}")
+        
+        # Get the full graphs for this timepoint
+        original_graph = self.get_original_graph(timepoint_id)
+        split_graph = self.get_split_graph(timepoint_id)
+        
+        if not original_graph or not split_graph:
+            logger.error(f"Could not load graphs for timepoint {timepoint_id}")
+            return
+            
+        logger.info(f"Creating component mapping for timepoint {timepoint_id}")
+        logger.info(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
+        logger.info(f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges")
+        
+        # Create and store the mapping
+        self.component_mappings[timepoint_id] = ComponentMapping(original_graph, split_graph)
+        logger.info(f"Component mapping created for timepoint {timepoint_id}")
 
     @classmethod
     def get_instance(cls):

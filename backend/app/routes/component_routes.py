@@ -26,6 +26,10 @@ component_bp = Blueprint("component_routes", __name__, url_prefix="/api/componen
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
+        # Initialize component mapping for this timepoint
+        graph_manager = current_app.graph_manager
+        graph_manager.initialize_timepoint_mapping(timepoint_id)
+        
         engine = get_db_engine()
         with Session(engine) as session:
             # First verify timepoint exists
