@@ -257,22 +257,46 @@ class GraphManager:
                     from backend.app.biclique_analysis.reader import read_bicliques_file
                     bicliques_result = read_bicliques_file(
                         split_graph_file,
-                        self.original_graphs[timepoint_id]  # Pass the original graph for reference
+                        self.original_graphs[timepoint_id],  # Pass the original graph for reference
+                        file_format="gene_name"  # Explicitly set the format
                     )
+                    
+                    # Debug logging
+                    logger.info(f"Read bicliques result keys: {bicliques_result.keys()}")
+                    logger.info(f"Found {len(bicliques_result.get('bicliques', []))} bicliques")
+                    
                     # Create graph from bicliques
                     split_graph = nx.Graph()
                     # Add all nodes from original graph to maintain node set consistency
                     split_graph.add_nodes_from(self.original_graphs[timepoint_id].nodes(data=True))
                     
-                    # Add edges from bicliques
-                    for dmr_nodes, gene_nodes in bicliques_result['bicliques']:
+                    # Get bicliques from the result
+                    bicliques = bicliques_result['bicliques']
+                    
+                    # Add edges from bicliques with validation
+                    edge_count = 0
+                    for dmr_nodes, gene_nodes in bicliques:
+                        # Log first few bicliques for debugging
+                        if edge_count == 0:
+                            logger.info(f"Sample biclique - DMRs: {list(dmr_nodes)[:5]}, Genes: {list(gene_nodes)[:5]}")
+                        
                         for dmr in dmr_nodes:
                             for gene in gene_nodes:
                                 split_graph.add_edge(dmr, gene)
+                                edge_count += 1
+                                
+                        if edge_count % 1000 == 0:
+                            logger.info(f"Added {edge_count} edges so far...")
                     
                     self.split_graphs[timepoint_id] = split_graph
                     logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
                     logger.info(f"Split graph has {len(split_graph.edges())} edges")
+                    logger.info(f"Split graph has {len(split_graph.nodes())} nodes")
+                    logger.info(f"Bicliques coverage: {bicliques_result.get('coverage', {})}")
+                    
+                    # Validate the graph is non-empty
+                    if len(split_graph.edges()) == 0:
+                        raise ValueError("Split graph has no edges after processing bicliques")
                     
                 except Exception as e:
                     logger.error(f"Error loading split graph for timepoint_id={timepoint_id}: {str(e)}")
