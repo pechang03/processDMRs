@@ -1,6 +1,6 @@
 """Component visualization functionality"""
 
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union, Any
 import json
 from plotly.utils import PlotlyJSONEncoder
 
