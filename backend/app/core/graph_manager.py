@@ -10,6 +10,82 @@ from typing import Dict, Optional, Tuple, List
 from sqlalchemy.orm import Session
 from flask import current_app
 from dataclasses import dataclass
+from typing import Dict, Set, Tuple
+import networkx as nx
+
+class ComponentMapping:
+    """Maps components between original and split graphs"""
+    def __init__(self, original_graph: nx.Graph, split_graph: nx.Graph):
+        self.original_components: Dict[int, Set[int]] = {}  # component_id -> node_ids
+        self.split_components: Dict[int, Set[int]] = {}     # component_id -> node_ids
+        self.split_to_original: Dict[int, int] = {}         # split_component_id -> original_component_id
+        
+        # Remove isolated nodes from both graphs
+        self.original_graph = original_graph.subgraph([n for n, d in original_graph.degree() if d > 0])
+        self.split_graph = split_graph.subgraph([n for n, d in split_graph.degree() if d > 0])
+        
+        # Get components
+        self._compute_components()
+        
+    def _compute_components(self):
+        """Compute components and establish mapping between them"""
+        # Get connected components
+        orig_components = list(nx.connected_components(self.original_graph))
+        split_components = list(nx.connected_components(self.split_graph))
+        
+        # Store components with IDs
+        for i, comp in enumerate(orig_components):
+            self.original_components[i] = comp
+            
+        for i, comp in enumerate(split_components):
+            self.split_components[i] = comp
+            
+        # Map split components to original components
+        for split_id, split_nodes in self.split_components.items():
+            # Find which original component contains these nodes
+            for orig_id, orig_nodes in self.original_components.items():
+                if split_nodes.issubset(orig_nodes):
+                    self.split_to_original[split_id] = orig_id
+                    break
+                    
+    def get_original_component(self, split_component_id: int) -> Set[int]:
+        """Get the original component containing a split component"""
+        orig_id = self.split_to_original.get(split_component_id)
+        return self.original_components.get(orig_id, set())
+        
+    def categorize_edges(self, split_component_id: int) -> Dict[str, Set[Tuple[int, int]]]:
+        """Categorize edges for a split component"""
+        split_nodes = self.split_components[split_component_id]
+        orig_nodes = self.get_original_component(split_component_id)
+        
+        # Get subgraphs for the components
+        split_subgraph = self.split_graph.subgraph(split_nodes)
+        orig_subgraph = self.original_graph.subgraph(orig_nodes)
+        
+        # Categorize edges
+        permanent = set()
+        false_positive = set()
+        false_negative = set()
+        
+        # Check edges in original graph
+        for u, v in orig_subgraph.edges():
+            edge = (min(u,v), max(u,v))
+            if split_subgraph.has_edge(u, v):
+                permanent.add(edge)
+            else:
+                false_positive.add(edge)
+                
+        # Check edges in split graph
+        for u, v in split_subgraph.edges():
+            edge = (min(u,v), max(u,v))
+            if not orig_subgraph.has_edge(u, v):
+                false_negative.add(edge)
+                
+        return {
+            "permanent": permanent,
+            "false_positive": false_positive,
+            "false_negative": false_negative
+        }
 
 @dataclass
 class TimepointInfo:
@@ -199,6 +275,16 @@ class GraphManager:
         """Clear all loaded graphs"""
         self.original_graphs.clear()
         self.split_graphs.clear()
+        
+    def load_timepoint_components(self, timepoint_id: int) -> ComponentMapping:
+        """Load and map components for a timepoint"""
+        original_graph = self.get_original_graph(timepoint_id)
+        split_graph = self.get_split_graph(timepoint_id)
+        
+        if not original_graph or not split_graph:
+            raise ValueError(f"Graphs not found for timepoint {timepoint_id}")
+            
+        return ComponentMapping(original_graph, split_graph)
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
         """Get timepoint name from cached mapping."""
