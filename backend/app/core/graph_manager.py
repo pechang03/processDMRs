@@ -24,11 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 class GraphManager:
+    original_graphs: Dict[int, nx.Graph]
+    split_graphs: Dict[int, nx.Graph] 
+    timepoints: Dict[int, str]
+    data_dir: str
+
     def __init__(self, config=None):
         logger.info("Initializing GraphManager")
-        self.original_graphs: Dict[int, nx.Graph] = {}  # Change key to int (timepoint_id)
-        self.split_graphs: Dict[int, nx.Graph] = {}     # Change key to int (timepoint_id)
-        self.timepoints: Dict[int, str] = {}  # Add timepoint mapping cache
+        self.original_graphs = {}
+        self.split_graphs = {}
+        self.timepoints = {}  # Add timepoint mapping cache
         self.data_dir = config.get("DATA_DIR", "./data") if config else "./data"
         logger.info(f"Using data directory: {self.data_dir}")
         self.load_all_timepoints()
