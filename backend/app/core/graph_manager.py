@@ -279,14 +279,18 @@ class GraphManager:
             # Get gene mapping from database
             engine = get_db_engine()
             with Session(engine) as session:
-                # Query master_gene_ids table
-                gene_mapping_query = text("""
-                    SELECT gene_symbol, id 
-                    FROM master_gene_ids
-                """)
-                gene_mapping_results = session.execute(gene_mapping_query).fetchall()
-                gene_id_mapping = {row.gene_symbol.lower(): row.id for row in gene_mapping_results}
-            
+                from ..database.models import MasterGeneID
+                from ..schemas import MasterGeneIDSchema
+                
+                # Query using SQLAlchemy model
+                gene_mapping_results = session.query(MasterGeneID).all()
+                
+                # Convert to Pydantic models and create mapping
+                gene_id_mapping = {
+                    gene.gene_symbol.lower(): gene.id 
+                    for gene in gene_mapping_results
+                }
+                
                 logger.info(f"Loaded gene mapping with {len(gene_id_mapping)} entries")
                 logger.info(f"Sample gene mappings: {list(gene_id_mapping.items())[:5]}")
 
