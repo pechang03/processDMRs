@@ -1,7 +1,7 @@
 # File : edge_classification.py
 # Description : Edge classification module
 
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union, Any
 from collections import defaultdict
 import networkx as nx
 
