@@ -198,9 +198,11 @@ def classify_edges(
 
     # Structure the return to match what BicliqueGraphView expects
     return {
-        "permanent": permanent_edges,
-        "false_positive": false_positive_edges,
-        "false_negative": false_negative_edges,
+        "classifications": {  # Wrap edge classifications in a sub-dictionary
+            "permanent": permanent_edges,
+            "false_positive": false_positive_edges,
+            "false_negative": false_negative_edges
+        },
         "stats": {
             "component": convert_for_json(component_stats),
             "bicliques": convert_for_json({
