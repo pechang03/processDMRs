@@ -71,9 +71,9 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
       </Typography>
       <Box sx={{ width: "100%", height: "800px" }}>
         <Plot
-          data={plotData.data}
+          data={plotData?.data || []}
           layout={{
-            ...plotData.layout,
+            ...(plotData?.layout || {}),
             autosize: true,
             showlegend: true,
             hovermode: "closest",
@@ -84,13 +84,13 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
               showticklabels: false,
               scaleanchor: "y",
               scaleratio: 1,
-              range: [-3, 3]
+              range: plotData?.layout?.xaxis?.range || [-3, 3]
             },
             yaxis: {
               showgrid: false,
               zeroline: false,
               showticklabels: false,
-              range: [-3, 3]
+              range: plotData?.layout?.yaxis?.range || [-3, 3]
             },
             plot_bgcolor: 'rgba(0,0,0,0)',
             paper_bgcolor: 'rgba(0,0,0,0)',

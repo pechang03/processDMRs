@@ -330,15 +330,10 @@ def create_dmr_trace(
 
 
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]]
-    | List[Tuple[Set[int], Set[int], Set[int]]]
-    | List[Tuple[int, int]],
+    edge_classifications: Dict[str, List[EdgeInfo]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     original_graph: nx.Graph,
-    false_positive_edges: Set[Tuple[int, int]] = None,
-    false_negative_edges: Set[Tuple[int, int]] = None,
-    edge_type: str = "biclique",
     edge_style: Dict = None,
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
@@ -351,49 +346,48 @@ def create_edge_traces(
         "false_negative": "blue",
     }
 
-    # Handle different input types
-    if isinstance(edge_classifications, dict):
-        # Dictionary case - process classified edges
-        for label, edges_info in edge_classifications.items():
-            x_coords = []
-            y_coords = []
-            hover_texts = []
+    # Process classified edges from the dictionary
+    traces = []
+    color_map = {
+        "permanent": "#D3D3D3",  # Light grey
+        "false_positive": "red",
+        "false_negative": "blue",
+    }
 
-            color = color_map.get(label, "gray")
+    for label, edges_info in edge_classifications.items():
+        x_coords = []
+        y_coords = []
+        hover_texts = []
 
-            for edge_info in edges_info:
-                # Handle both EdgeInfo objects and raw tuples
-                if isinstance(edge_info, EdgeInfo):
-                    u, v = edge_info.edge
-                    sources = (
-                        ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
-                    )
-                    edge_label = edge_info.label
-                else:
-                    u, v = edge_info
-                    sources = "Unknown"
-                    edge_label = label
+        color = color_map.get(label, "gray")
 
-                if u in node_positions and v in node_positions:
-                    x0, y0 = node_positions[u]
-                    x1, y1 = node_positions[v]
-                    x_coords.extend([x0, x1, None])
-                    y_coords.extend([y0, y1, None])
+        for edge_info in edges_info:
+            if not isinstance(edge_info, EdgeInfo):
+                continue
+                
+            u, v = edge_info.edge
+            if u not in node_positions or v not in node_positions:
+                continue
+                
+            x0, y0 = node_positions[u]
+            x1, y1 = node_positions[v]
+            x_coords.extend([x0, x1, None])
+            y_coords.extend([y0, y1, None])
 
-                    hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_label}<br>Sources: {sources}"
-                    hover_texts.extend([hover_text, hover_text, None])
+            sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
+            hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Label: {edge_info.label}<br>Sources: {sources}"
+            hover_texts.extend([hover_text, hover_text, None])
 
-            if x_coords:
-                trace = go.Scatter(
-                    x=x_coords,
-                    y=y_coords,
-                    mode="lines",
-                    line=dict(color=color, width=edge_style.get("width", 1)),
-                    hoverinfo="text",
-                    text=hover_texts,
-                    name=f"Edges ({label})",
-                )
-                traces.append(trace)
+        if x_coords:
+            traces.append(go.Scatter(
+                x=x_coords,
+                y=y_coords,
+                mode="lines",
+                line=dict(color=color, width=edge_style.get("width", 1)),
+                hoverinfo="text",
+                text=hover_texts,
+                name=f"Edges ({label})",
+            ))
     else:
         # List case - handle as biclique edges
         x_coords = []
