@@ -110,6 +110,9 @@ class GraphManager:
         """Initialize component mapping when timepoint is selected"""
         logger.info(f"Initializing component mapping for timepoint {timepoint_id}")
         
+        # Ensure graphs are loaded first
+        self.load_graphs(timepoint_id)
+        
         # Get the full graphs for this timepoint
         original_graph = self.get_original_graph(timepoint_id)
         split_graph = self.get_split_graph(timepoint_id)
@@ -118,17 +121,38 @@ class GraphManager:
             logger.error(f"Could not load graphs for timepoint {timepoint_id}")
             raise ValueError(f"Failed to load graphs for timepoint {timepoint_id}")
             
+        # Add detailed graph validation
+        if len(original_graph.edges()) == 0:
+            logger.error(f"Original graph for timepoint {timepoint_id} has no edges!")
+            raise ValueError(f"Original graph has no edges for timepoint {timepoint_id}")
+            
+        if len(split_graph.edges()) == 0:
+            logger.error(f"Split graph for timepoint {timepoint_id} has no edges!")
+            raise ValueError(f"Split graph has no edges for timepoint {timepoint_id}")
+            
         logger.info(f"Creating component mapping for timepoint {timepoint_id}")
         logger.info(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
         logger.info(f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges")
         
         # Create and store the mapping
-        mapping = ComponentMapping(original_graph, split_graph)
-        self.component_mappings[timepoint_id] = mapping
-        logger.info(f"Component mapping created for timepoint {timepoint_id}")
-        
-        # Return the mapping
-        return mapping
+        try:
+            mapping = ComponentMapping(original_graph, split_graph)
+            self.component_mappings[timepoint_id] = mapping
+            logger.info(f"Component mapping created for timepoint {timepoint_id}")
+            
+            # Validate the mapping
+            if not mapping.original_components or not mapping.split_components:
+                logger.error(f"Component mapping contains no components for timepoint {timepoint_id}")
+                raise ValueError(f"No components found in mapping for timepoint {timepoint_id}")
+                
+            logger.info(f"Found {len(mapping.original_components)} original components")
+            logger.info(f"Found {len(mapping.split_components)} split components")
+            
+            return mapping
+            
+        except Exception as e:
+            logger.error(f"Error creating component mapping: {str(e)}")
+            raise ValueError(f"Failed to create component mapping: {str(e)}")
 
     @classmethod
     def get_instance(cls):

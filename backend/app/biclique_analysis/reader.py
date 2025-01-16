@@ -7,6 +7,10 @@ import networkx as nx
 import json
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def read_bicliques_file(
     filename: str,
     original_graph: nx.Graph,
@@ -14,14 +18,14 @@ def read_bicliques_file(
     file_format: str = "gene_name",
 ) -> Dict:
     """Read and process bicliques from a .biclusters file for any bipartite graph."""
-    print(f"\nReading bicliques file: {filename}")
-    print(f"File exists: {os.path.exists(filename)}")
-    print(f"Reading bicliques file in {file_format} format")
-    print(f"Gene mapping provided: {gene_id_mapping is not None}")
+    logger.info(f"\nReading bicliques file: {filename}")
+    logger.info(f"File exists: {os.path.exists(filename)}")
+    logger.info(f"Reading bicliques file in {file_format} format")
+    logger.info(f"Gene mapping provided: {gene_id_mapping is not None}")
     if gene_id_mapping:
-        print(f"Gene mapping size: {len(gene_id_mapping)}")
-        print("First 5 genes in mapping:", list(gene_id_mapping.keys())[:5])
-    print(f"Reading bicliques file in {file_format} format")
+        logger.info(f"Gene mapping size: {len(gene_id_mapping)}")
+        logger.info(f"First 5 genes in mapping: {list(gene_id_mapping.keys())[:5]}")
+    logger.info(f"Reading bicliques file in {file_format} format")
     
     # Derive max_DMR_id from graph
     max_DMR_id = max(n for n, d in original_graph.nodes(data=True) if d['bipartite'] == 0) + 1
