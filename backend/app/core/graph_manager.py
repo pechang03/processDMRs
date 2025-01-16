@@ -18,8 +18,6 @@ class TimepointInfo:
     dmr_id_offset: int
     sheet_name: Optional[str] = None
     description: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
 
     def get_graph_name(self) -> str:
         """Get the name to use for graph files"""
@@ -107,8 +105,6 @@ class GraphManager:
                         name=timepoint.name,
                         dmr_id_offset=timepoint.dmr_id_offset or 0,
                         description=timepoint.description,
-                        created_at=timepoint.created_at,
-                        updated_at=timepoint.updated_at,
                         sheet_name=timepoint.sheet_name if hasattr(timepoint, 'sheet_name') else None
                     )
                     self.timepoints[int(timepoint.id)] = timepoint_info
