@@ -158,7 +158,10 @@ WITH component_genes AS (
         g.id as gene_id,
         COUNT(DISTINCT cb.biclique_id) as biclique_count
     FROM genes g
-    JOIN bicliques b ON instr(',' || b.gene_ids || ',', ',' || g.id || ',') > 0
+    JOIN bicliques b ON EXISTS (
+        SELECT 1 FROM json_each(b.gene_ids) 
+        WHERE CAST(value AS INTEGER) = g.id
+    )
     JOIN component_bicliques cb ON b.id = cb.biclique_id
     GROUP BY g.id
 )
@@ -197,7 +200,7 @@ component_genes AS (
     JOIN timepoints t ON cb.timepoint_id = t.id
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.gene_ids) gene_ids
-    JOIN genes g ON CAST(gene_ids.value AS INTEGER) = g.id
+    JOIN genes g ON TRY_CAST(gene_ids.value AS INTEGER) = g.id
     GROUP BY cb.component_id, cb.timepoint_id, t.name
 ),
 -- CTE to get all DMRs associated with components
@@ -210,7 +213,7 @@ component_dmrs AS (
     FROM component_bicliques cb
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.dmr_ids) dmr_ids
-    JOIN dmrs d ON CAST(dmr_ids.value AS INTEGER) = d.id
+    JOIN dmrs d ON TRY_CAST(dmr_ids.value AS INTEGER) = d.id
     GROUP BY cb.component_id, cb.timepoint_id
 ),
 -- CTE to get all categories associated with components
@@ -253,7 +256,7 @@ SELECT
 FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON g.id IN (
-    SELECT CAST(value AS INTEGER)
+    SELECT TRY_CAST(value AS INTEGER)
     FROM json_each(
         COALESCE(
             (SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id),
@@ -313,10 +316,10 @@ SELECT
     COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) AS hub_dmrs,
     COUNT(DISTINCT b.id) AS biclique_count,
     COUNT(DISTINCT c.id) AS component_count,
-    AVG(COALESCE(CAST(c.density AS FLOAT), 0.0)) AS avg_component_density,
-    AVG(COALESCE(CAST(c.size AS FLOAT), 0.0)) AS avg_component_size,
-    AVG(COALESCE(CAST(c.dmr_count AS FLOAT), 0.0)) AS avg_dmr_count,
-    AVG(COALESCE(CAST(c.gene_count AS FLOAT), 0.0)) AS avg_gene_count
+    COALESCE(AVG(TRY_CAST(c.density AS FLOAT)), 0.0) AS avg_component_density,
+    COALESCE(AVG(TRY_CAST(c.size AS FLOAT)), 0.0) AS avg_component_size,
+    COALESCE(AVG(TRY_CAST(c.dmr_count AS FLOAT)), 0.0) AS avg_dmr_count,
+    COALESCE(AVG(TRY_CAST(c.gene_count AS FLOAT)), 0.0) AS avg_gene_count
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
