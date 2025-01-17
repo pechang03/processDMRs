@@ -141,6 +141,13 @@ def create_biclique_visualization(
     # Create figure and convert to JSON
     fig = {"data": traces, "layout": layout}
 
+    # Add debug logging
+    print("Final visualization configuration:")
+    print("Trace count:", len(traces))
+    for i, trace in enumerate(traces):
+        if 'marker' in trace:
+            print(f"Trace {i} marker config:", trace['marker'])
+    
     print(f"Created visualization with {len(traces)} traces")  # Debug logging
     return json.dumps(fig, cls=PlotlyJSONEncoder)
 

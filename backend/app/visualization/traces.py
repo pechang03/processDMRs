@@ -348,6 +348,16 @@ def create_dmr_trace(
     if not x:
         return None
 
+    # Add debug logging
+    print("DMR trace marker configuration:")
+    print("Symbols:", symbols)
+    print("Marker configuration:", {
+        "size": sizes,
+        "color": colors,
+        "symbol": symbols,
+        "line": dict(color="black", width=1),
+    })
+    
     return go.Scatter(
         x=x,
         y=y,

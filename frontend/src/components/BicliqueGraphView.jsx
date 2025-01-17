@@ -105,6 +105,14 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             modeBarButtonsToAdd: ['select2d', 'lasso2d'],
             modeBarButtonsToRemove: ['autoScale2d']
           }}
+          onInitialized={(figure) => {
+            console.log('Plotly initialized with figure:', figure);
+            console.log('Trace shapes:', figure.data.map(t => t.marker?.symbol));
+          }}
+          onUpdate={(figure) => {
+            console.log('Plotly updated with figure:', figure);
+            console.log('Trace shapes:', figure.data.map(t => t.marker?.symbol));
+          }}
           style={{ width: "100%", height: "100%" }}
           useResizeHandler={true}
         />
