@@ -1,6 +1,8 @@
 -- Base component details view
 CREATE VIEW IF NOT EXISTS component_details_view AS
-WITH component_genes AS (
+WITH 
+-- CTE to get all genes associated with components
+component_genes AS (
     SELECT 
         cb.component_id,
         cb.timepoint_id,
@@ -14,6 +16,7 @@ WITH component_genes AS (
     JOIN genes g ON CAST(gene_ids.value AS INTEGER) = g.id
     GROUP BY cb.component_id, cb.timepoint_id, t.name
 ),
+-- CTE to get all DMRs associated with components
 component_dmrs AS (
     SELECT 
         cb.component_id,
@@ -26,6 +29,7 @@ component_dmrs AS (
     JOIN dmrs d ON CAST(dmr_ids.value AS INTEGER) = d.id
     GROUP BY cb.component_id, cb.timepoint_id
 ),
+-- CTE to get all categories associated with components
 component_categories AS (
     SELECT 
         cb.component_id,
@@ -66,7 +70,12 @@ FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON g.id IN (
     SELECT CAST(value AS INTEGER)
-    FROM json_each((SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id))
+    FROM json_each(
+        COALESCE(
+            (SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id),
+            '[]'
+        )
+    )
 )
 GROUP BY g.id, g.symbol, gta.timepoint_id, gta.node_type, gta.gene_type, 
          gta.degree, gta.is_isolate, gta.biclique_ids;
@@ -85,7 +94,12 @@ FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN component_bicliques cb ON d.id IN (
     SELECT CAST(value AS INTEGER)
-    FROM json_each((SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id))
+    FROM json_each(
+        COALESCE(
+            (SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id),
+            '[]'
+        )
+    )
 )
 GROUP BY d.id, dta.timepoint_id, dta.node_type, dta.degree, dta.is_isolate, dta.biclique_ids;
 
