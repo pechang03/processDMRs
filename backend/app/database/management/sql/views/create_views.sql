@@ -83,45 +83,77 @@ JOIN timepoints t ON tc.timepoint_id = t.id
 JOIN components c ON tc.component_id = c.id;
 
 CREATE VIEW component_details_view AS
-WITH component_dmrs AS (
-    SELECT
+WITH component_info AS (
+    SELECT 
         c.id AS component_id,
-        GROUP_CONCAT(
-            DISTINCT d.unit_id, ', '
-            ORDER BY d.unit_id)
-            AS dmr_ids,
-        COUNT(DISTINCT d.unit_id) AS dmr_count
+        c.timepoint_id,
+        t.name AS timepoint,
+        c.graph_type,
+        c.category,
+        c.size,
+        c.dmr_count AS total_dmr_count,
+        c.gene_count AS total_gene_count,
+        (SELECT GROUP_CONCAT(d.id) 
+         FROM component_dmrs cd
+         JOIN dmrs d ON cd.dmr_id = d.id
+         WHERE cd.component_id = c.id) AS all_dmr_ids,
+        (SELECT GROUP_CONCAT(g.id)
+         FROM component_genes cg
+         JOIN genes g ON cg.gene_id = g.id
+         WHERE cg.component_id = c.id) AS all_gene_ids
     FROM components c
-    JOIN component_dmrs cd ON c.id = cd.component_id
-    JOIN dmrs d ON cd.dmr_id = d.id
-    GROUP BY c.id
+    JOIN timepoints t ON c.timepoint_id = t.id
 ),
-
-component_bicliques AS (
-    SELECT
-        c.id AS component_id,
-        COUNT(DISTINCT b.id) AS biclique_count,
-        GROUP_CONCAT(
-            DISTINCT b.category, ', '
-            ORDER BY b.category)
-            AS biclique_categories
-    FROM components c
-    LEFT JOIN bicliques b ON c.id = b.component_id
-    GROUP BY c.id
+biclique_info AS (
+    SELECT 
+        b.id as biclique_id,
+        b.dmr_ids,
+        b.gene_ids,
+        b.category
+    FROM bicliques b
+    JOIN component_bicliques cb ON b.id = cb.biclique_id
+),
+dominating_info AS (
+    SELECT 
+        ds.dmr_id,
+        ds.dominated_gene_count,
+        ds.utility_score
+    FROM dominating_sets ds
+    WHERE ds.dmr_id IN (
+        SELECT CAST(trim(value) AS INTEGER)
+        FROM json_each(
+            CASE 
+                WHEN json_valid((SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id))
+                THEN (SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id)
+                ELSE json_array((SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id))
+            END
+        )
+    )
 )
-
-SELECT
-    c.id,
-    c.timepoint,
-    c.graph_type,
-    c.category,
-    c.size,
-    c.density,
-    cd.dmr_ids,
-    cd.dmr_count,
-    cb.biclique_count,
-    cb.biclique_categories
-FROM components c
-LEFT JOIN component_dmrs cd ON c.id = cd.component_id
-LEFT JOIN component_bicliques cb ON c.id = cb.component_id
-ORDER BY c.id;
+SELECT 
+    ci.*,
+    CASE 
+        WHEN bi.biclique_id IS NULL THEN '[]'
+        ELSE json_group_array(
+            json_object(
+                'biclique_id', bi.biclique_id,
+                'category', bi.category,
+                'dmr_ids', bi.dmr_ids,
+                'gene_ids', bi.gene_ids
+            )
+        ) 
+    END as bicliques,
+    CASE 
+        WHEN di.dmr_id IS NULL THEN '[]'
+        ELSE json_group_array(
+            json_object(
+                'dmr_id', di.dmr_id,
+                'dominated_gene_count', di.dominated_gene_count,
+                'utility_score', di.utility_score
+            )
+        )
+    END as dominating_sets
+FROM component_info ci
+LEFT JOIN biclique_info bi ON bi.component_id = ci.component_id
+LEFT JOIN dominating_info di ON 1=1
+GROUP BY ci.component_id;
