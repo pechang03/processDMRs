@@ -158,7 +158,7 @@ WITH component_genes AS (
         g.id as gene_id,
         COUNT(DISTINCT cb.biclique_id) as biclique_count
     FROM genes g
-    JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
+    JOIN bicliques b ON instr(',' || b.gene_ids || ',', ',' || g.id || ',') > 0
     JOIN component_bicliques cb ON b.id = cb.biclique_id
     GROUP BY g.id
 )
@@ -213,10 +213,10 @@ SELECT
     COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) AS hub_dmrs,
     COUNT(DISTINCT b.id) AS biclique_count,
     COUNT(DISTINCT c.id) AS component_count,
-    AVG(COALESCE(CAST(c.density AS FLOAT), 0)) AS avg_component_density,
-    AVG(COALESCE(CAST(c.size AS FLOAT), 0)) AS avg_component_size,
-    AVG(COALESCE(CAST(c.dmr_count AS FLOAT), 0)) AS avg_dmr_count,
-    AVG(COALESCE(CAST(c.gene_count AS FLOAT), 0)) AS avg_gene_count
+    AVG(COALESCE(CAST(c.density AS FLOAT), 0.0)) AS avg_component_density,
+    AVG(COALESCE(CAST(c.size AS FLOAT), 0.0)) AS avg_component_size,
+    AVG(COALESCE(CAST(c.dmr_count AS FLOAT), 0.0)) AS avg_dmr_count,
+    AVG(COALESCE(CAST(c.gene_count AS FLOAT), 0.0)) AS avg_gene_count
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
