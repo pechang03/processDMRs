@@ -65,7 +65,7 @@ FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON EXISTS (
     SELECT 1 
-    FROM json_each(b.gene_ids) 
+    FROM json_each((SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id)) 
     WHERE value = g.id
 )
 GROUP BY g.id, g.symbol, gta.node_type, gta.gene_type, gta.degree, gta.is_isolate, gta.biclique_ids;
@@ -84,7 +84,7 @@ FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN component_bicliques cb ON EXISTS (
     SELECT 1 
-    FROM json_each(b.dmr_ids) 
+    FROM json_each((SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id)) 
     WHERE value = d.id
 )
 GROUP BY d.id, dta.timepoint_id, dta.node_type, dta.degree, dta.is_isolate, dta.biclique_ids;
