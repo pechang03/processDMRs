@@ -267,15 +267,21 @@ def create_split_gene_trace(
     )
 
 
+"""
+Node trace creation functionality.
+Node shapes are centrally defined in NODE_SHAPES dictionary.
+All node shape assignments should reference this dictionary.
+"""
+
 # Centralized node shape configuration
 NODE_SHAPES = {
     "dmr": {
-        "regular": "octagon",  # Changed from "circle" to "octagon"
-        "hub": "star"
+        "regular": "octagon",  # Primary shape for DMR nodes
+        "hub": "star"          # Shape for hub DMR nodes
     },
     "gene": {
-        "regular": "circle",
-        "split": "diamond"
+        "regular": "circle",   # Shape for regular genes
+        "split": "diamond"     # Shape for split genes
     }
 }
 
@@ -326,7 +332,7 @@ def create_dmr_trace(
         # Use centralized shape configuration
         is_hub = node_id in dominating_set
         sizes.append(15 if is_hub else 10)
-        symbols.append(NODE_SHAPES["dmr"]["hub"] if is_hub else NODE_SHAPES["dmr"]["regular"])
+        symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
 
         # Create label and hover text
         label = node_labels.get(node_id, str(node_id))

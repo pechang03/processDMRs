@@ -97,6 +97,7 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             width: null,
             height: 800
           }}
+          // Node shapes are defined in backend visualization.traces.NODE_SHAPES
           config={{
             displayModeBar: true,
             scrollZoom: true,
