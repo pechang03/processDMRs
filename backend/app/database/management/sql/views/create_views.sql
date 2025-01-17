@@ -92,6 +92,101 @@ JOIN components c ON b.component_id = c.id
 WHERE b.category != 'simple'
 GROUP BY t.id, t.name, c.id, c.graph_type;
 
+-- View for component details with bicliques and dominating sets
+CREATE VIEW component_details_extended_view AS
+WITH component_info AS (
+    SELECT 
+        cd.timepoint_id,
+        cd.timepoint,
+        cd.component_id,
+        cd.graph_type,
+        cd.categories,
+        cd.total_dmr_count,
+        cd.total_gene_count,
+        cd.all_dmr_ids,
+        cd.all_gene_ids
+    FROM component_details_view cd
+),
+biclique_info AS (
+    SELECT 
+        b.id as biclique_id,
+        b.dmr_ids,
+        b.gene_ids,
+        b.category
+    FROM bicliques b
+    JOIN component_bicliques cb ON b.id = cb.biclique_id
+),
+dominating_info AS (
+    SELECT 
+        ds.dmr_id,
+        ds.dominated_gene_count,
+        ds.utility_score
+    FROM dominating_sets ds
+)
+SELECT 
+    ci.*,
+    CASE 
+        WHEN bi.biclique_id IS NULL THEN '[]'
+        ELSE json_group_array(
+            json_object(
+                'biclique_id', bi.biclique_id,
+                'category', bi.category,
+                'dmr_ids', bi.dmr_ids,
+                'gene_ids', bi.gene_ids
+            )
+        ) 
+    END as bicliques,
+    CASE 
+        WHEN di.dmr_id IS NULL THEN '[]'
+        ELSE json_group_array(
+            json_object(
+                'dmr_id', di.dmr_id,
+                'dominated_gene_count', di.dominated_gene_count,
+                'utility_score', di.utility_score
+            )
+        )
+    END as dominating_sets
+FROM component_info ci
+LEFT JOIN biclique_info bi ON 1=1
+LEFT JOIN dominating_info di ON 1=1
+GROUP BY ci.component_id;
+
+-- View for component genes with biclique counts
+CREATE VIEW component_genes_view AS
+WITH component_genes AS (
+    SELECT DISTINCT
+        g.id as gene_id,
+        COUNT(DISTINCT cb.biclique_id) as biclique_count
+    FROM genes g
+    JOIN bicliques b ON instr(b.gene_ids, g.id) > 0
+    JOIN component_bicliques cb ON b.id = cb.biclique_id
+    GROUP BY g.id
+)
+SELECT 
+    g.id as gene_id,
+    g.symbol,
+    gta.node_type,
+    gta.gene_type,
+    gta.degree,
+    gta.is_isolate,
+    gta.biclique_ids,
+    cg.biclique_count,
+    CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
+FROM component_genes cg
+JOIN genes g ON g.id = cg.gene_id
+JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id;
+
+-- View for DMR status information
+CREATE VIEW dmr_status_view AS
+SELECT 
+    d.id as dmr_id,
+    dta.node_type,
+    dta.degree,
+    dta.is_isolate,
+    dta.biclique_ids
+FROM dmrs d
+JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id;
+
 -- Biclique details view
 CREATE VIEW biclique_details_view AS
 SELECT
