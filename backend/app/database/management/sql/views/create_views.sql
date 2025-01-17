@@ -160,7 +160,7 @@ WITH component_genes AS (
     GROUP BY g.id
 )
 SELECT 
-    g.id as gene_id,
+    cg.gene_id,
     g.symbol,
     gta.node_type,
     gta.gene_type,
@@ -172,12 +172,11 @@ SELECT
 FROM component_genes cg
 JOIN genes g ON g.id = cg.gene_id
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-WHERE gta.timepoint_id = (
-    SELECT timepoint_id 
-    FROM component_bicliques cb2
-    WHERE cb2.biclique_id = cb.biclique_id
-    LIMIT 1
-);
+JOIN component_bicliques cb ON cb.biclique_id IN (
+    SELECT CAST(value AS INTEGER) 
+    FROM json_each(gta.biclique_ids)
+)
+WHERE gta.timepoint_id = cb.timepoint_id;
 
 -- Base component details view
 CREATE VIEW IF NOT EXISTS component_details_view AS
@@ -252,7 +251,7 @@ SELECT
 FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON g.id IN (
-    SELECT TRY_CAST(value AS INTEGER)
+    SELECT CAST(value AS INTEGER)
     FROM json_each(
     WHERE value IS NOT NULL
         COALESCE(
@@ -277,7 +276,7 @@ SELECT
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN component_bicliques cb ON d.id IN (
-    SELECT TRY_CAST(value AS INTEGER)
+    SELECT CAST(value AS INTEGER)
     FROM json_each(
     WHERE value IS NOT NULL
         COALESCE(
