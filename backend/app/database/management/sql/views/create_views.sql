@@ -82,7 +82,7 @@ FROM triconnected_components tc
 JOIN timepoints t ON tc.timepoint_id = t.id
 JOIN components c ON tc.component_id = c.id;
 
-CREATE VIEW component_details_view AS
+CREATE VIEW IF NOT EXISTS component_details_view AS
 WITH component_info AS (
     SELECT 
         c.id AS component_id,
@@ -109,7 +109,8 @@ biclique_info AS (
         b.id as biclique_id,
         b.dmr_ids,
         b.gene_ids,
-        b.category
+        b.category,
+        cb.component_id
     FROM bicliques b
     JOIN component_bicliques cb ON b.id = cb.biclique_id
 ),
@@ -117,18 +118,9 @@ dominating_info AS (
     SELECT 
         ds.dmr_id,
         ds.dominated_gene_count,
-        ds.utility_score
+        ds.utility_score,
+        ds.timepoint_id
     FROM dominating_sets ds
-    WHERE ds.dmr_id IN (
-        SELECT CAST(trim(value) AS INTEGER)
-        FROM json_each(
-            CASE 
-                WHEN json_valid((SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id))
-                THEN (SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id)
-                ELSE json_array((SELECT all_dmr_ids FROM component_info ci WHERE ci.component_id = c.id))
-            END
-        )
-    )
 )
 SELECT 
     ci.*,
@@ -154,6 +146,16 @@ SELECT
         )
     END as dominating_sets
 FROM component_info ci
-LEFT JOIN biclique_info bi ON bi.component_id = ci.component_id
-LEFT JOIN dominating_info di ON 1=1
+LEFT JOIN biclique_info bi ON ci.component_id = bi.component_id
+LEFT JOIN dominating_info di ON ci.timepoint_id = di.timepoint_id
+    AND di.dmr_id IN (
+        SELECT CAST(trim(value) AS INTEGER)
+        FROM json_each(
+            CASE 
+                WHEN json_valid(ci.all_dmr_ids)
+                THEN ci.all_dmr_ids
+                ELSE json_array(ci.all_dmr_ids)
+            END
+        )
+    )
 GROUP BY ci.component_id;
