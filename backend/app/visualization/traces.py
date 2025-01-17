@@ -270,7 +270,7 @@ def create_split_gene_trace(
 # Centralized node shape configuration
 NODE_SHAPES = {
     "dmr": {
-        "regular": "circle",
+        "regular": "octagon",  # Changed from "circle" to "octagon"
         "hub": "star"
     },
     "gene": {
