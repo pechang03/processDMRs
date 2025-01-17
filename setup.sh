@@ -17,5 +17,5 @@ cd frontend && #npm install @mui/icons-material
 npm install @mui/material version (5.x.x) using --legacy-peer-deps #to resolve the dependency conflict.
 
 npm install --save-dev style-loader css-loader
-npm warn idealTree Removing dependencies.style-loader in favor of devDependencies.style-loader
-npm warn idealTree Removing dependencies.css-loader in favor of devDependencies.css-loader
+#npm warn idealTree Removing dependencies.style-loader in favor of devDependencies.style-loader
+#npm warn idealTree Removing dependencies.css-loader in favor of devDependencies.css-loader

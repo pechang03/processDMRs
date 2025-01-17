@@ -6,7 +6,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.16.12",
-    "@mui/material": "^5.14.20",
+    "@mui/material": "^5.16.14",
     "abs-svg-path": "^0.1.1",
     "accepts": "^1.3.8",
     "acorn": "^8.14.0",

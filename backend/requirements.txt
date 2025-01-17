@@ -12,3 +12,4 @@ sqlalchemy-utils>=0.38.0
 psycopg2-binary>=2.9.0
 alembic>=1.7.0
 python-dotenv>=0.19.0
+pydantic>=2.10.5
