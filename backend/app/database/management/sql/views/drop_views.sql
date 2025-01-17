@@ -6,3 +6,4 @@ DROP VIEW IF EXISTS biclique_details_view;
 DROP VIEW IF EXISTS timepoint_stats_view;
 DROP VIEW IF EXISTS component_nodes_view;
 DROP VIEW IF EXISTS triconnected_component_view;
+DROP VIEW IF EXISTS dmr_status_view;
