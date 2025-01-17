@@ -255,7 +255,7 @@ def create_split_gene_trace(
         marker=dict(
             size=12,  # Slightly larger than regular genes
             color=colors,
-            symbol="diamond",  # Different symbol for split genes
+            symbol=NODE_SHAPES["gene"]["split"],  # Use centralized shape config
             line=dict(color="black", width=2),  # Thicker border
         ),
         text=text,
@@ -266,6 +266,18 @@ def create_split_gene_trace(
         showlegend=True,
     )
 
+
+# Centralized node shape configuration
+NODE_SHAPES = {
+    "dmr": {
+        "regular": "circle",
+        "hub": "star"
+    },
+    "gene": {
+        "regular": "circle",
+        "split": "diamond"
+    }
+}
 
 def create_dmr_trace(
     dmr_nodes: Set[int],
@@ -311,10 +323,10 @@ def create_dmr_trace(
             color = "gray"
         colors.append(color)
 
-        # Adjust size and symbol for hub nodes
+        # Use centralized shape configuration
         is_hub = node_id in dominating_set
         sizes.append(15 if is_hub else 10)
-        symbols.append("star" if is_hub else "octagon")  # Changed from "circle" to "octagon"
+        symbols.append(NODE_SHAPES["dmr"]["hub"] if is_hub else NODE_SHAPES["dmr"]["regular"])
 
         # Create label and hover text
         label = node_labels.get(node_id, str(node_id))

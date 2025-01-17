@@ -49,17 +49,45 @@ def create_component_visualization(
     # Create traces using the unified trace creation functions
     traces = []
     
-    # Add node traces
-    node_traces = create_node_traces(
-        node_info=node_info,
+    # Create traces using the centralized trace creation functions
+    traces = []
+    
+    # Add DMR trace
+    dmr_trace = create_dmr_trace(
+        dmr_nodes=node_info.dmr_nodes,
         node_positions=node_positions,
         node_labels=node_labels,
         node_biclique_map=node_biclique_map,
         biclique_colors=biclique_colors,
-        dmr_metadata=dmr_metadata,
+        dominating_set=dominating_set,
+        dmr_metadata=dmr_metadata
+    )
+    if dmr_trace:
+        traces.append(dmr_trace)
+    
+    # Add gene traces
+    gene_trace = create_gene_trace(
+        gene_nodes=node_info.regular_genes,
+        node_positions=node_positions,
+        node_labels=node_labels,
+        node_biclique_map=node_biclique_map,
+        biclique_colors=biclique_colors,
         gene_metadata=gene_metadata
     )
-    traces.extend(node_traces)
+    if gene_trace:
+        traces.append(gene_trace)
+        
+    # Add split gene trace
+    split_gene_trace = create_split_gene_trace(
+        split_genes=node_info.split_genes,
+        node_positions=node_positions,
+        node_labels=node_labels,
+        node_biclique_map=node_biclique_map,
+        biclique_colors=biclique_colors,
+        gene_metadata=gene_metadata
+    )
+    if split_gene_trace:
+        traces.append(split_gene_trace)
     
     # Add edge traces
     edge_traces = create_edge_traces(
