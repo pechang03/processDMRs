@@ -6,7 +6,9 @@
 
 import os
 from typing import Dict, List, Set, Tuple, Union, Any
-from backend.app.utils.edge_info import EdgeInfo  # Changed from biclique_analysis.edge_info
+from backend.app.utils.edge_info import (
+    EdgeInfo,
+)  # Changed from biclique_analysis.edge_info
 import plotly.graph_objs as go
 import networkx as nx  # Add this line
 from backend.app.utils.node_info import NodeInfo
@@ -26,11 +28,11 @@ def create_node_traces(
     """Create node traces with consistent styling."""
     traces = []
     import math
-    
+
     def get_text_position(x: float, y: float) -> str:
         """
         Determine text position based on node's quadrant position.
-        
+
         Quadrants:
         Q2 | Q1     0° is at 3 o'clock position
         ---|---     Q2 & Q3: text on left (x < 0)
@@ -41,7 +43,7 @@ def create_node_traces(
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
-        if color.startswith('#'):
+        if color.startswith("#"):
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
             b = int(color[5:7], 16)
@@ -58,22 +60,28 @@ def create_node_traces(
             biclique_idx = node_biclique_map.get(node, [0])[0]
             dmr_colors.append(biclique_colors[biclique_idx % len(biclique_colors)])
             dmr_text_positions.append(get_text_position(x, y))
-    
+
     if dmr_x:
-        traces.append(go.Scatter(
-            x=dmr_x,
-            y=dmr_y,
-            mode="markers+text",
-            marker=dict(
-                size=12,
-                color=dmr_colors,
-                symbol="circle",
-                line=dict(color="black", width=1)
-            ),
-            text=[node_labels.get(n) for n in node_info.dmr_nodes if n in node_positions],
-            textposition=dmr_text_positions,  # Use calculated positions
-            name="DMRs"
-        ))
+        traces.append(
+            go.Scatter(
+                x=dmr_x,
+                y=dmr_y,
+                mode="markers+text",
+                marker=dict(
+                    size=12,
+                    color=dmr_colors,
+                    symbol="circle",
+                    line=dict(color="black", width=1),
+                ),
+                text=[
+                    node_labels.get(n)
+                    for n in node_info.dmr_nodes
+                    if n in node_positions
+                ],
+                textposition=dmr_text_positions,  # Use calculated positions
+                name="DMRs",
+            )
+        )
 
     # Create gene trace with transparent colors
     gene_x, gene_y, gene_colors, gene_text_positions = [], [], [], []
@@ -86,22 +94,28 @@ def create_node_traces(
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             gene_colors.append(make_transparent(color))
             gene_text_positions.append(get_text_position(x, y))
-    
+
     if gene_x:
-        traces.append(go.Scatter(
-            x=gene_x,
-            y=gene_y,
-            mode="markers+text",
-            marker=dict(
-                size=10,
-                color=gene_colors,
-                symbol="circle",
-                line=dict(color="black", width=1)
-            ),
-            text=[node_labels.get(n) for n in (node_info.regular_genes | node_info.split_genes) if n in node_positions],
-            textposition=gene_text_positions,  # Use calculated positions
-            name="Genes"
-        ))
+        traces.append(
+            go.Scatter(
+                x=gene_x,
+                y=gene_y,
+                mode="markers+text",
+                marker=dict(
+                    size=10,
+                    color=gene_colors,
+                    symbol="circle",
+                    line=dict(color="black", width=1),
+                ),
+                text=[
+                    node_labels.get(n)
+                    for n in (node_info.regular_genes | node_info.split_genes)
+                    if n in node_positions
+                ],
+                textposition=gene_text_positions,  # Use calculated positions
+                name="Genes",
+            )
+        )
 
     return traces
 
@@ -206,7 +220,7 @@ def create_split_gene_trace(
             biclique_idx = node_biclique_map[node_id][0]
             base_color = biclique_colors[biclique_idx % len(biclique_colors)]
             # Convert to rgba with transparency
-            if base_color.startswith('#'):
+            if base_color.startswith("#"):
                 r = int(base_color[1:3], 16)
                 g = int(base_color[3:5], 16)
                 b = int(base_color[5:7], 16)
@@ -284,9 +298,11 @@ def create_dmr_trace(
         # Set node color based on biclique membership
         if node_id in node_biclique_map and node_biclique_map.get(node_id, []):
             biclique_idx = node_biclique_map[node_id][0]
-            color = (biclique_colors[biclique_idx % len(biclique_colors)]
-                    if biclique_colors and biclique_idx < len(biclique_colors)
-                    else "gray")
+            color = (
+                biclique_colors[biclique_idx % len(biclique_colors)]
+                if biclique_colors and biclique_idx < len(biclique_colors)
+                else "gray"
+            )
         else:
             color = "gray"
         colors.append(color)
@@ -294,7 +310,9 @@ def create_dmr_trace(
         # Adjust size and symbol for hub nodes
         is_hub = node_id in dominating_set
         sizes.append(15 if is_hub else 10)
-        symbols.append("star" if is_hub else "octagon")  # Changed from "circle" to "octagon"
+        symbols.append(
+            "star" if is_hub else "octagon"
+        )  # Changed from "circle" to "octagon"
 
         # Create label and hover text
         label = node_labels.get(node_id, str(node_id))
@@ -343,20 +361,20 @@ def create_edge_traces(
     # Define style mappings
     style_map = {
         "permanent": {
-            "color": "#666666",  # Darker grey but not black
+            "color": "#777777",  # Darker grey but not black
             "dash": "solid",
-            "width": 1.5  # Slightly thicker for emphasis
+            "width": 1.5,  # Slightly thicker for emphasis
         },
         "false_positive": {
             "color": "rgba(255, 0, 0, 0.4)",  # More transparent red
             "dash": "dash",
-            "width": 0.75  # Thinner line
+            "width": 0.75,  # Thinner line
         },
         "false_negative": {
             "color": "rgba(0, 0, 255, 0.4)",  # More transparent blue
             "dash": "dash",
-            "width": 0.75  # Thinner line
-        }
+            "width": 0.75,  # Thinner line
+        },
     }
 
     # Process each edge classification type
@@ -364,18 +382,18 @@ def create_edge_traces(
         x_coords = []
         y_coords = []
         hover_texts = []
-        
+
         # Get style for this edge type
         style = style_map.get(edge_type, {"color": "gray", "dash": "solid"})
 
         for edge_info in edges:
             if not isinstance(edge_info, EdgeInfo):
                 continue
-                
+
             u, v = edge_info.edge
             if u not in node_positions or v not in node_positions:
                 continue
-                
+
             x0, y0 = node_positions[u]
             x1, y1 = node_positions[v]
             x_coords.extend([x0, x1, None])
@@ -389,18 +407,20 @@ def create_edge_traces(
             line_style = dict(
                 color=style["color"],
                 width=edge_style.get("width", 1),
-                dash=style["dash"]
+                dash=style["dash"],
             )
-            
-            traces.append(go.Scatter(
-                x=x_coords,
-                y=y_coords,
-                mode="lines",
-                line=line_style,
-                hoverinfo="text",
-                text=hover_texts,
-                name=f"{edge_type.replace('_', ' ').title()} Edges",
-            ))
+
+            traces.append(
+                go.Scatter(
+                    x=x_coords,
+                    y=y_coords,
+                    mode="lines",
+                    line=line_style,
+                    hoverinfo="text",
+                    text=hover_texts,
+                    name=f"{edge_type.replace('_', ' ').title()} Edges",
+                )
+            )
 
     return traces
 
