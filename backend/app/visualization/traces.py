@@ -29,6 +29,10 @@ def create_node_traces(
     traces = []
     import math
 
+    # Filter out nodes with degree 0 in original graph
+    nodes_to_show = {node for node in node_info.all_nodes 
+                     if node_info.get_node_degree(node) > 0}
+
     def get_text_position(x: float, y: float) -> str:
         """
         Determine text position based on node's quadrant position.
@@ -50,10 +54,10 @@ def create_node_traces(
             return f"rgba({r},{g},{b},{alpha})"
         return color
 
-    # Create DMR trace
+    # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
     for node in node_info.dmr_nodes:
-        if node in node_positions:
+        if node in node_positions and node in nodes_to_show:  # Added check for nodes_to_show
             x, y = node_positions[node]
             dmr_x.append(x)
             dmr_y.append(y)
@@ -83,10 +87,10 @@ def create_node_traces(
             )
         )
 
-    # Create gene trace with transparent colors
+    # Create gene trace - only for nodes with degree > 0
     gene_x, gene_y, gene_colors, gene_text_positions = [], [], [], []
     for node in node_info.regular_genes | node_info.split_genes:
-        if node in node_positions:
+        if node in node_positions and node in nodes_to_show:  # Added check for nodes_to_show
             x, y = node_positions[node]
             gene_x.append(x)
             gene_y.append(y)
