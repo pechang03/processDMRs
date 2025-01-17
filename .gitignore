@@ -3,6 +3,7 @@ __pycache__/
 *.db
 .coverage
 .env
+anthropic_models.sh
 claude_xai_env
 claude_xai_env/
 
