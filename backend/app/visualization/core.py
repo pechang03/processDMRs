@@ -44,6 +44,10 @@ def create_biclique_visualization(
     dmr_metadata: Dict[str, Dict] = None,
     gene_metadata: Dict[str, Dict] = None,
 ) -> str:
+    """Create interactive Plotly visualization with colored bicliques.
+    
+    Node shapes are defined in visualization.traces.NODE_SHAPES.
+    """
     """Create interactive Plotly visualization with colored bicliques."""
     print(f"\nCreating visualization for {len(bicliques)} bicliques")
     
