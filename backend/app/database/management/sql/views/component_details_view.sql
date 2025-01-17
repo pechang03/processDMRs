@@ -63,9 +63,10 @@ SELECT
     COUNT(DISTINCT cb.biclique_id) as biclique_count
 FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
-LEFT JOIN component_bicliques cb ON g.id IN (
-    SELECT value
-    FROM json_each((SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id))
+LEFT JOIN component_bicliques cb ON EXISTS (
+    SELECT 1 
+    FROM json_each(b.gene_ids) 
+    WHERE value = g.id
 )
 GROUP BY g.id, g.symbol, gta.node_type, gta.gene_type, gta.degree, gta.is_isolate, gta.biclique_ids;
 
@@ -81,9 +82,10 @@ SELECT
     COUNT(DISTINCT cb.biclique_id) as biclique_count
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
-LEFT JOIN component_bicliques cb ON d.id IN (
-    SELECT value
-    FROM json_each((SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id))
+LEFT JOIN component_bicliques cb ON EXISTS (
+    SELECT 1 
+    FROM json_each(b.dmr_ids) 
+    WHERE value = d.id
 )
 GROUP BY d.id, dta.timepoint_id, dta.node_type, dta.degree, dta.is_isolate, dta.biclique_ids;
 
