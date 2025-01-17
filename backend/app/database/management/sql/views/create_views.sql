@@ -160,7 +160,7 @@ WITH component_genes AS (
     FROM genes g
     JOIN bicliques b ON EXISTS (
         SELECT 1 FROM json_each(b.gene_ids) 
-        WHERE CAST(value AS INTEGER) = g.id
+        WHERE TRY_CAST(value AS INTEGER) = g.id
     )
     JOIN component_bicliques cb ON b.id = cb.biclique_id
     GROUP BY g.id
@@ -201,6 +201,7 @@ component_genes AS (
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.gene_ids) gene_ids
     JOIN genes g ON TRY_CAST(gene_ids.value AS INTEGER) = g.id
+    WHERE gene_ids.value IS NOT NULL
     GROUP BY cb.component_id, cb.timepoint_id, t.name
 ),
 -- CTE to get all DMRs associated with components
@@ -214,6 +215,7 @@ component_dmrs AS (
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.dmr_ids) dmr_ids
     JOIN dmrs d ON TRY_CAST(dmr_ids.value AS INTEGER) = d.id
+    WHERE dmr_ids.value IS NOT NULL
     GROUP BY cb.component_id, cb.timepoint_id
 ),
 -- CTE to get all categories associated with components
@@ -258,6 +260,7 @@ JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON g.id IN (
     SELECT TRY_CAST(value AS INTEGER)
     FROM json_each(
+    WHERE value IS NOT NULL
         COALESCE(
             (SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id),
             '[]'
@@ -280,8 +283,9 @@ SELECT
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN component_bicliques cb ON d.id IN (
-    SELECT CAST(value AS INTEGER)
+    SELECT TRY_CAST(value AS INTEGER)
     FROM json_each(
+    WHERE value IS NOT NULL
         COALESCE(
             (SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id),
             '[]'
@@ -320,6 +324,10 @@ SELECT
     COALESCE(AVG(TRY_CAST(c.size AS FLOAT)), 0.0) AS avg_component_size,
     COALESCE(AVG(TRY_CAST(c.dmr_count AS FLOAT)), 0.0) AS avg_dmr_count,
     COALESCE(AVG(TRY_CAST(c.gene_count AS FLOAT)), 0.0) AS avg_gene_count
+    WHERE c.density IS NOT NULL
+    AND c.size IS NOT NULL
+    AND c.dmr_count IS NOT NULL
+    AND c.gene_count IS NOT NULL
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
