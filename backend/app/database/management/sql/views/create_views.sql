@@ -125,27 +125,21 @@ dominating_info AS (
 )
 SELECT 
     ci.*,
-    CASE 
-        WHEN bi.biclique_id IS NULL THEN '[]'
-        ELSE json_group_array(
-            json_object(
-                'biclique_id', bi.biclique_id,
-                'category', bi.category,
-                'dmr_ids', bi.dmr_ids,
-                'gene_ids', bi.gene_ids
-            )
-        ) 
-    END as bicliques,
-    CASE 
-        WHEN di.dmr_id IS NULL THEN '[]'
-        ELSE json_group_array(
-            json_object(
-                'dmr_id', di.dmr_id,
-                'dominated_gene_count', di.dominated_gene_count,
-                'utility_score', di.utility_score
-            )
+    json_group_array(
+        json_object(
+            'biclique_id', bi.biclique_id,
+            'category', bi.category,
+            'dmr_ids', bi.dmr_ids,
+            'gene_ids', bi.gene_ids
         )
-    END as dominating_sets
+    ) as bicliques,
+    json_group_array(
+        json_object(
+            'dmr_id', di.dmr_id,
+            'dominated_gene_count', di.dominated_gene_count,
+            'utility_score', di.utility_score
+        )
+    ) as dominating_sets
 FROM component_info ci
 LEFT JOIN biclique_info bi ON 1=1
 LEFT JOIN dominating_info di ON 1=1
@@ -160,7 +154,7 @@ WITH component_genes AS (
     FROM genes g
     JOIN bicliques b ON EXISTS (
         SELECT 1 FROM json_each(b.gene_ids) 
-        WHERE TRY_CAST(value AS INTEGER) = g.id
+        WHERE CAST(value AS INTEGER) = g.id
     )
     JOIN component_bicliques cb ON b.id = cb.biclique_id
     GROUP BY g.id
@@ -200,7 +194,7 @@ component_genes AS (
     JOIN timepoints t ON cb.timepoint_id = t.id
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.gene_ids) gene_ids
-    JOIN genes g ON TRY_CAST(gene_ids.value AS INTEGER) = g.id
+    JOIN genes g ON CAST(gene_ids.value AS INTEGER) = g.id
     WHERE gene_ids.value IS NOT NULL
     GROUP BY cb.component_id, cb.timepoint_id, t.name
 ),
@@ -214,7 +208,7 @@ component_dmrs AS (
     FROM component_bicliques cb
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.dmr_ids) dmr_ids
-    JOIN dmrs d ON TRY_CAST(dmr_ids.value AS INTEGER) = d.id
+    JOIN dmrs d ON CAST(dmr_ids.value AS INTEGER) = d.id
     WHERE dmr_ids.value IS NOT NULL
     GROUP BY cb.component_id, cb.timepoint_id
 ),
@@ -320,20 +314,20 @@ SELECT
     COUNT(DISTINCT CASE WHEN d.is_hub THEN d.id END) AS hub_dmrs,
     COUNT(DISTINCT b.id) AS biclique_count,
     COUNT(DISTINCT c.id) AS component_count,
-    COALESCE(AVG(TRY_CAST(c.density AS FLOAT)), 0.0) AS avg_component_density,
-    COALESCE(AVG(TRY_CAST(c.size AS FLOAT)), 0.0) AS avg_component_size,
-    COALESCE(AVG(TRY_CAST(c.dmr_count AS FLOAT)), 0.0) AS avg_dmr_count,
-    COALESCE(AVG(TRY_CAST(c.gene_count AS FLOAT)), 0.0) AS avg_gene_count
-    WHERE c.density IS NOT NULL
-    AND c.size IS NOT NULL
-    AND c.dmr_count IS NOT NULL
-    AND c.gene_count IS NOT NULL
+    COALESCE(AVG(CAST(c.density AS REAL)), 0.0) AS avg_component_density,
+    COALESCE(AVG(CAST(c.size AS REAL)), 0.0) AS avg_component_size,
+    COALESCE(AVG(CAST(c.dmr_count AS REAL)), 0.0) AS avg_dmr_count,
+    COALESCE(AVG(CAST(c.gene_count AS REAL)), 0.0) AS avg_gene_count
 FROM timepoints t
 LEFT JOIN dmrs d ON t.id = d.timepoint_id
 LEFT JOIN gene_timepoint_annotations gta ON t.id = gta.timepoint_id
 LEFT JOIN genes g ON gta.gene_id = g.id
 LEFT JOIN bicliques b ON t.id = b.timepoint_id
 LEFT JOIN components c ON t.id = c.timepoint_id
+WHERE c.density IS NOT NULL
+AND c.size IS NOT NULL
+AND c.dmr_count IS NOT NULL
+AND c.gene_count IS NOT NULL
 GROUP BY t.name;
 
 -- Component node details view
@@ -342,17 +336,21 @@ SELECT
     c.id AS component_id,
     t.name AS timepoint,
     c.graph_type,
-    GROUP_CONCAT(DISTINCT JSON_OBJECT(
-        'dmr_id', d.id,
-        'dmr_number', d.dmr_number,
-        'area_stat', d.area_stat,
-        'is_hub', d.is_hub
-    )) AS dmrs,
-    GROUP_CONCAT(DISTINCT JSON_OBJECT(
-        'gene_id', g.id,
-        'symbol', g.symbol,
-        'interaction_source', g.interaction_source
-    )) AS genes
+    json_group_array(
+        json_object(
+            'dmr_id', d.id,
+            'dmr_number', d.dmr_number,
+            'area_stat', d.area_stat,
+            'is_hub', d.is_hub
+        )
+    ) AS dmrs,
+    json_group_array(
+        json_object(
+            'gene_id', g.id,
+            'symbol', g.symbol,
+            'interaction_source', g.interaction_source
+        )
+    ) AS genes
 FROM components c
 JOIN timepoints t ON c.timepoint_id = t.id
 LEFT JOIN dmr_timepoint_annotations dta ON c.id = dta.component_id
