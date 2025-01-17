@@ -7,7 +7,10 @@ from plotly.utils import PlotlyJSONEncoder
 from .traces import (
     create_node_traces,
     create_edge_traces,
-    create_biclique_boxes
+    create_biclique_boxes,
+    create_dmr_trace,
+    create_gene_trace,
+    create_split_gene_trace
 )
 from .layout import create_plot_layout
 from .core import generate_biclique_colors
@@ -51,6 +54,14 @@ def create_component_visualization(
     
     # Create traces using the centralized trace creation functions
     traces = []
+    
+    # Get dominating set from component metadata
+    dominating_set = set()
+    if dmr_metadata:
+        dominating_set = {
+            int(dmr_id) for dmr_id, info in dmr_metadata.items() 
+            if info.get('is_hub', False)
+        }
     
     # Add DMR trace
     dmr_trace = create_dmr_trace(
