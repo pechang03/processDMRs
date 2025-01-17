@@ -11,7 +11,7 @@ WITH component_genes AS (
     JOIN timepoints t ON cb.timepoint_id = t.id
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.gene_ids) gene_ids
-    JOIN genes g ON CAST(gene_ids.value AS INTEGER) = g.id
+    JOIN genes g ON gene_ids.value = g.id
     GROUP BY cb.component_id, cb.timepoint_id, t.name
 ),
 component_dmrs AS (
@@ -23,7 +23,7 @@ component_dmrs AS (
     FROM component_bicliques cb
     JOIN bicliques b ON cb.biclique_id = b.id
     JOIN json_each(b.dmr_ids) dmr_ids
-    JOIN dmrs d ON CAST(dmr_ids.value AS INTEGER) = d.id
+    JOIN dmrs d ON dmr_ids.value = d.id
     GROUP BY cb.component_id, cb.timepoint_id
 ),
 component_categories AS (
@@ -64,7 +64,7 @@ SELECT
 FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
 LEFT JOIN component_bicliques cb ON g.id IN (
-    SELECT CAST(value AS INTEGER)
+    SELECT value
     FROM json_each((SELECT gene_ids FROM bicliques WHERE id = cb.biclique_id))
 )
 GROUP BY g.id, g.symbol, gta.node_type, gta.gene_type, gta.degree, gta.is_isolate, gta.biclique_ids;
@@ -82,7 +82,7 @@ SELECT
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
 LEFT JOIN component_bicliques cb ON d.id IN (
-    SELECT CAST(value AS INTEGER)
+    SELECT value
     FROM json_each((SELECT dmr_ids FROM bicliques WHERE id = cb.biclique_id))
 )
 GROUP BY d.id, dta.timepoint_id, dta.node_type, dta.degree, dta.is_isolate, dta.biclique_ids;
