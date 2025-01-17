@@ -174,7 +174,13 @@ SELECT
     CASE WHEN cg.biclique_count > 1 THEN 1 ELSE 0 END as is_split
 FROM component_genes cg
 JOIN genes g ON g.id = cg.gene_id
-JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id;
+JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id
+WHERE gta.timepoint_id = (
+    SELECT timepoint_id 
+    FROM component_bicliques cb2
+    WHERE cb2.biclique_id = cb.biclique_id
+    LIMIT 1
+);
 
 -- View for DMR status information
 CREATE VIEW dmr_status_view AS
@@ -183,7 +189,8 @@ SELECT
     dta.node_type,
     dta.degree,
     dta.is_isolate,
-    dta.biclique_ids
+    dta.biclique_ids,
+    dta.timepoint_id
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id;
 
