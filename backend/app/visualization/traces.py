@@ -294,7 +294,7 @@ def create_dmr_trace(
         # Adjust size and symbol for hub nodes
         is_hub = node_id in dominating_set
         sizes.append(15 if is_hub else 10)
-        symbols.append("star" if is_hub else "circle")
+        symbols.append("star" if is_hub else "octagon")  # Changed from "circle" to "octagon"
 
         # Create label and hover text
         label = node_labels.get(node_id, str(node_id))
@@ -343,16 +343,19 @@ def create_edge_traces(
     # Define style mappings
     style_map = {
         "permanent": {
-            "color": "#D3D3D3",  # Light grey
-            "dash": "solid"
+            "color": "#666666",  # Darker grey but not black
+            "dash": "solid",
+            "width": 1.5  # Slightly thicker for emphasis
         },
         "false_positive": {
-            "color": "red",
-            "dash": "dash"
+            "color": "rgba(255, 0, 0, 0.4)",  # More transparent red
+            "dash": "dash",
+            "width": 0.75  # Thinner line
         },
         "false_negative": {
-            "color": "blue", 
-            "dash": "dash"
+            "color": "rgba(0, 0, 255, 0.4)",  # More transparent blue
+            "dash": "dash",
+            "width": 0.75  # Thinner line
         }
     }
 
