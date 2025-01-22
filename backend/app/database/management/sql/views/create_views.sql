@@ -36,10 +36,14 @@ SELECT
     d.updated_at,
     dta.timepoint_id,
     CASE 
-        WHEN EXISTS (SELECT 1 FROM dominating_sets ds 
-                    WHERE ds.dmr_id = d.id AND ds.timepoint_id = dta.timepoint_id)
-            THEN 'hub' 
-        ELSE dta.node_type 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM dominating_sets ds 
+            WHERE ds.dmr_id = d.id 
+              AND ds.timepoint_id = dta.timepoint_id
+              AND ds.utility_score > 0  -- Ensure it's an active dominating set
+        ) THEN 'hub' 
+        ELSE COALESCE(dta.node_type, 'regular')  -- Default to 'regular' if null
     END AS node_type,
     (SELECT COUNT(*) FROM split_graph_edges sge
      WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
