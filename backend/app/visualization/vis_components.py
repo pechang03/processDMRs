@@ -27,6 +27,18 @@ def create_component_visualization(
     dmr_metadata: Dict = None,
     gene_metadata: Dict = None,
 ) -> Dict:
+    """Create visualization data for a component with centralized shape configuration."""
+    # Centralized node shape configuration
+    NODE_SHAPES = {
+        "dmr": {
+            "regular": "hexagon",  # Changed from octagon to hexagon
+            "hub": "star"
+        },
+        "gene": {
+            "regular": "circle",
+            "split": "diamond"
+        }
+    }
     """Create visualization data for a component."""
     from .traces import create_node_traces, create_edge_traces
     from .layout import create_circular_layout

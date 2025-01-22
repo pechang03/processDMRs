@@ -132,6 +132,7 @@ def create_gene_trace(
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
     textposition: str = "middle right",
+    node_shape: str = "circle"  # Add shape parameter
 ) -> go.Scatter:
     """Create trace for regular gene nodes."""
     # Add at start of function:
@@ -201,6 +202,7 @@ def create_split_gene_trace(
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
     textposition: str = "middle right",
+    node_shape: str = "diamond"  # Add shape parameter
 ) -> go.Scatter:
     """Create trace for split gene nodes."""
     x = []
@@ -276,12 +278,12 @@ All node shape assignments should reference this dictionary.
 # Centralized node shape configuration
 NODE_SHAPES = {
     "dmr": {
-        "regular": "octagon",  # Primary shape for DMR nodes
-        "hub": "star"          # Shape for hub DMR nodes
+        "regular": "hexagon",  # Changed from octagon
+        "hub": "star"
     },
     "gene": {
-        "regular": "circle",   # Shape for regular genes
-        "split": "diamond"     # Shape for split genes
+        "regular": "circle",
+        "split": "diamond"
     }
 }
 
@@ -293,7 +295,13 @@ def create_dmr_trace(
     biclique_colors: List[str],
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
+    node_shapes: Dict[str, str] = None  # Add shape config parameter
 ) -> go.Scatter:
+    # Add default shape configuration
+    node_shapes = node_shapes or {
+        "regular": "hexagon",
+        "hub": "star"
+    }
     """Create trace for DMR nodes."""
     if not dmr_nodes or not node_positions:
         return None

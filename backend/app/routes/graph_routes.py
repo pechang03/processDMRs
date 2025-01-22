@@ -662,26 +662,31 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add timing for performance monitoring
             start_time = time.time()
-            vis_data = create_biclique_visualization(
-                bicliques=bicliques,
-                node_labels=node_labels,
-                node_positions=node_positions,
-                node_biclique_map=node_biclique_map,
-                edge_classifications=edge_classifications["classifications"],  # Pass just the classifications
-                original_graph=original_graph_component,
-                bipartite_graph=split_graph_component,
-                dmr_metadata=dmr_metadata,
-                gene_metadata=gene_metadata,
-                dominating_set=dominating_set,
-            )
-            end_time = time.time()
+            
+            # Create component data structure
+            component_data = {
+                "component": all_component_nodes,
+                "raw_bicliques": bicliques,
+                "dmrs": all_dmr_ids,
+                "genes": all_gene_ids,
+                "total_edges": len(original_graph_component.edges())
+            }
 
+            from ..visualization.vis_components import create_component_visualization
+            vis_dict = create_component_visualization(
+                component=component_data,
+                node_positions=node_positions,
+                node_labels=node_labels,
+                node_biclique_map=node_biclique_map,
+                edge_classifications=edge_classifications["classifications"],
+                dmr_metadata=dmr_metadata,
+                gene_metadata=gene_metadata
+            )
+            
+            end_time = time.time()
             current_app.logger.info(
                 f"Visualization created in {end_time - start_time:.2f} seconds"
             )
-
-            # Parse the JSON string back to a dictionary
-            vis_dict = json.loads(vis_data)
 
             # Add the statistics
             vis_dict["edge_stats"] = edge_classifications["stats"]["component"]
