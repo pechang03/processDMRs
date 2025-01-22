@@ -452,17 +452,26 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
         console.log("Starting data fetch for:", {timepointId, componentId});
 
-        // First fetch component details
-        fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`)
-            .then((response) => {
-                if (!response.ok) throw new Error("Failed to load component details");
-                return response.json();
-            })
-            .then((data) => {
-                if (data.status === "success") {
-                    setComponentDetails(data.data);
-                }
-            })
+        // Fetch component details and DMR details in parallel
+        Promise.all([
+            fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`),
+            fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`)
+        ])
+        .then(([detailsRes, dmrRes]) => {
+            if (!detailsRes.ok) throw new Error("Failed to load component details");
+            if (!dmrRes.ok) throw new Error("Failed to load DMR details");
+            return Promise.all([detailsRes.json(), dmrRes.json()]);
+        })
+        .then(([detailsData, dmrData]) => {
+            if (detailsData.status === "success" && dmrData.status === "success") {
+                setComponentDetails({
+                    ...detailsData.data,
+                    dmr_details: dmrData.data
+                });
+            } else {
+                throw new Error("Failed to load component data");
+            }
+        })
             .catch((error) => {
                 console.error("Error:", error);
                 setError(error.message);
@@ -922,63 +931,62 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 </Paper>
               </Box>
 
-              {/* Add DMR Details Table */}
-              <Box sx={{ mt: 4 }}>
-                <Paper elevation={3} sx={{ p: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    DMR Details
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>DMR ID</TableCell>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Bicliques</TableCell>
+              {/* DMR Details Table */}
+              <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  DMR Details
+                </Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>DMR ID</TableCell>
+                        <TableCell>Chromosome</TableCell>
+                        <TableCell>Start</TableCell>
+                        <TableCell>End</TableCell>
+                        <TableCell>Methylation Δ</TableCell>
+                        <TableCell>P-value</TableCell>
+                        <TableCell>Q-value</TableCell>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Degree</TableCell>
+                        <TableCell>Bicliques</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {componentDetails?.dmr_details?.map((dmr) => (
+                        <TableRow key={dmr.dmr_id}>
+                          <TableCell>DMR_{dmr.dmr_id}</TableCell>
+                          <TableCell>{dmr.chromosome}</TableCell>
+                          <TableCell>{dmr.start?.toLocaleString()}</TableCell>
+                          <TableCell>{dmr.end?.toLocaleString()}</TableCell>
+                          <TableCell>{dmr.methylation_diff?.toFixed(2)}</TableCell>
+                          <TableCell>{dmr.p_value?.toExponential(2)}</TableCell>
+                          <TableCell>{dmr.q_value?.toExponential(2)}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              size="small" 
+                              label={dmr.node_type} 
+                              color={dmr.node_type === 'hub' ? 'primary' : 'default'}
+                            />
+                          </TableCell>
+                          <TableCell>{dmr.degree}</TableCell>
+                          <TableCell>
+                            {dmr.biclique_ids?.split(',')?.map((id, index) => (
+                              <Chip
+                                key={index}
+                                label={id.trim()}
+                                size="small"
+                                variant="outlined"
+                                sx={{ mr: 0.5, mb: 0.5 }}
+                              />
+                            ))}
+                          </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(dmrNames).map(([dmrId, info]) => {
-                          // Parse biclique IDs string and clean it up
-                          const bicliqueIds = info.biclique_ids 
-                            ? Array.isArray(info.biclique_ids)
-                              ? info.biclique_ids
-                              : info.biclique_ids.replace(/[\[\]"\\]/g, '').split(',')
-                            : [];
-                          
-                          return (
-                            <TableRow key={dmrId}>
-                              <TableCell>DMR_{dmrId}</TableCell>
-                              <TableCell>
-                                {info.node_type || 'Regular'}
-                              </TableCell>
-                              <TableCell>
-                                {bicliqueIds.length > 0 ? (
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {bicliqueIds.map((bicliqueId, index) => (
-                                      <Chip
-                                        key={index}
-                                        label={bicliqueId.trim()}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{ fontSize: '0.75rem' }}
-                                      />
-                                    ))}
-                                  </Box>
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    None
-                                  </Typography>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              </Box>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
             </Box>
           </TabPanel>
         </Tabs>

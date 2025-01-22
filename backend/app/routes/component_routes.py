@@ -561,6 +561,61 @@ def get_dmr_status():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@component_bp.route("/<int:timepoint_id>/<int:component_id>/dmr_details", methods=["GET"])
+def get_component_dmr_details(timepoint_id, component_id):
+    """Get detailed DMR information for a specific component."""
+    try:
+        engine = get_db_engine()
+        with Session(engine) as session:
+            query = text("""
+                SELECT 
+                    dav.dmr_id,
+                    dav.chromosome,
+                    dav.start_position,
+                    dav.end_position,
+                    dav.methylation_difference,
+                    dav.p_value,
+                    dav.q_value,
+                    dav.node_type,
+                    dav.degree,
+                    dav.is_isolate,
+                    dav.biclique_ids,
+                    t.name AS timepoint_name
+                FROM dmr_annotations_view dav
+                JOIN timepoints t ON dav.timepoint_id = t.id
+                WHERE dav.timepoint_id = :timepoint_id
+                AND dav.component_id = :component_id
+                ORDER BY dav.chromosome, dav.start_position
+            """)
+
+            results = session.execute(
+                query, 
+                {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).fetchall()
+
+            dmrs = []
+            for row in results:
+                dmrs.append({
+                    "dmr_id": row.dmr_id,
+                    "chromosome": row.chromosome,
+                    "start": row.start_position,
+                    "end": row.end_position,
+                    "methylation_diff": row.methylation_difference,
+                    "p_value": row.p_value,
+                    "q_value": row.q_value,
+                    "node_type": row.node_type,
+                    "degree": row.degree,
+                    "is_isolate": row.is_isolate,
+                    "biclique_count": len(row.biclique_ids.split(",")) if row.biclique_ids else 0,
+                    "timepoint": row.timepoint_name
+                })
+
+            return jsonify({"status": "success", "data": dmrs})
+
+    except Exception as e:
+        current_app.logger.error(f"Error getting DMR details: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @component_bp.route("/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):
     try:

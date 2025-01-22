@@ -62,10 +62,19 @@ def calculate_edge_statistics(
     false_negatives: int
 ) -> Dict[str, float]:
     """Calculate statistical measures for edge classification reliability."""
+    # Add null checks
+    if total_edges is None or permanent_edges is None or false_positives is None or false_negatives is None:
+        return {
+            "accuracy": 0.0,
+            "noise_percentage": 0.0,
+            "false_positive_rate": 0.0,
+            "false_negative_rate": 0.0
+        }
+    
     # Total possible edges in the comparison
     total_compared = total_edges + false_negatives
     
-    # Calculate error rates
+    # Calculate error rates with null checks
     false_positive_rate = false_positives / total_edges if total_edges > 0 else 0
     false_negative_rate = false_negatives / total_compared if total_compared > 0 else 0
     
