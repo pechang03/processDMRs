@@ -223,7 +223,7 @@ class DmrAnnotationViewSchema(BaseModel):
     chromosome: str
     start_position: int
     end_position: int
-    methylation_diff: Optional[float] = Field(alias="methylation_diff")
+    methylation_diff: float = Field(..., alias="methylation_difference")  # Remove Optional
     p_value: Optional[float] = None
     q_value: Optional[float] = None
     node_type: str
@@ -236,3 +236,8 @@ class DmrAnnotationViewSchema(BaseModel):
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
+    op.execute("""
+        UPDATE dmrs 
+        SET mean_methylation = 0.0 
+        WHERE mean_methylation IS NULL
+    """)
