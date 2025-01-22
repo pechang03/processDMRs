@@ -28,7 +28,8 @@ SELECT
     d.chromosome,
     d.start_position,
     d.end_position,
-    d.methylation_difference, -- Now matches physical table
+    -- Handle missing methylation difference from pairwise analysis
+    COALESCE(p.methylation_diff, d.mean_methylation, 0.0) AS methylation_difference,
     d.p_value,
     d.q_value,
     d.created_at,
@@ -45,10 +46,12 @@ SELECT
     dta.is_isolate,
     dta.biclique_ids,
     dta.component_id,
-    t.name AS timepoint_name -- Add timepoint name directly
+    t.name AS timepoint_name
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
-JOIN timepoints t ON dta.timepoint_id = t.id; -- Add explicit join
+JOIN timepoints t ON dta.timepoint_id = t.id
+-- Left join with pairwise table if available
+LEFT JOIN pairwise_analysis p ON d.id = p.dmr_id AND dta.timepoint_id = p.timepoint_id;
 
 DROP VIEW IF EXISTS component_summary_view;
 CREATE VIEW component_summary_view AS

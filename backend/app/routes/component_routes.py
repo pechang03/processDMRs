@@ -573,14 +573,14 @@ def get_component_dmr_details(timepoint_id, component_id):
                     dav.chromosome,
                     dav.start_position,
                     dav.end_position,
-                    dav.methylation_difference,
+                    ROUND(COALESCE(dav.methylation_difference, 0), 4) as methylation_diff,
                     dav.p_value,
                     dav.q_value,
                     dav.node_type,
                     dav.degree,
                     dav.is_isolate,
                     dav.biclique_ids,
-                    t.name AS timepoint_name
+                    t.name AS timepoint
                 FROM dmr_annotations_view dav
                 JOIN timepoints t ON dav.timepoint_id = t.id
                 WHERE dav.timepoint_id = :timepoint_id

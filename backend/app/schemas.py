@@ -223,16 +223,16 @@ class DmrAnnotationViewSchema(BaseModel):
     chromosome: str
     start_position: int
     end_position: int
-    methylation_difference: float
-    p_value: float
-    q_value: float
+    methylation_difference: Optional[float] = None  # Make nullable
+    p_value: Optional[float] = None
+    q_value: Optional[float] = None
     created_at: datetime
     updated_at: datetime
     timepoint_id: int
     node_type: str
     degree: int
     is_isolate: bool
-    biclique_ids: str
+    biclique_ids: Optional[str] = None
     component_id: int
     timepoint_name: str
 
