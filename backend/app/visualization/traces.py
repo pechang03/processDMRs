@@ -422,8 +422,7 @@ def create_edge_traces(
                 continue
 
             u, v = edge_info.edge
-            if (u not in node_positions or v not in node_positions or
-                u not in component_nodes or v not in component_nodes):
+            if not ({u, v} <= component_nodes):
                 continue  # Skip edges not in current component
 
             x0, y0 = node_positions[u]

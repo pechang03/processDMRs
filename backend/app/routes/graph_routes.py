@@ -79,8 +79,8 @@ def get_component_graph(timepoint_id, component_id):
                 return jsonify({"error": "Component not found", "status": 404}), 404
 
             # Get component nodes
-            all_dmr_ids = set(parse_id_string(result.dmr_ids))
-            all_gene_ids = set(parse_id_string(result.gene_ids))
+            all_dmr_ids = {int(x) for x in parse_id_string(result.dmr_ids)}
+            all_gene_ids = {int(x) for x in parse_id_string(result.gene_ids)}
             all_component_nodes = all_dmr_ids | all_gene_ids
 
             # Get component subgraphs directly from graph manager

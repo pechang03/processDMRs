@@ -112,9 +112,22 @@ def classify_edges(
         )
 
     # Initialize classification containers
-    permanent_edges: List[EdgeInfo] = []
-    false_positive_edges: List[EdgeInfo] = []
-    false_negative_edges: List[EdgeInfo] = []
+    classifications = {
+        "permanent": [],
+        "false_positive": [],
+        "false_negative": []
+    }
+
+    # Track simple biclique edges
+    simple_biclique_edges = set()
+    if bicliques:
+        for idx, (dmrs, genes) in enumerate(bicliques):
+            if len(dmrs) == 1:  # Simple biclique
+                dmr = next(iter(dmrs))
+                for gene in genes:
+                    edge = (dmr, gene) if dmr < gene else (gene, dmr)
+                    simple_biclique_edges.add(edge)
+                    edge_sources.setdefault(edge, set()).add(f"simple_biclique_{idx}")
 
     # Get all edges from both graphs
     original_edges = set(original_graph.edges())
@@ -122,16 +135,20 @@ def classify_edges(
 
     # Classify each edge
     for u, v in original_edges:
-        edge = (min(u, v), max(u, v))
-        sources = edge_sources.get(edge, set())
+        edge = (u, v) if u < v else (v, u)
         
-        # Check if it's a simple biclique edge
-        if any(source.startswith("simple_biclique_") for source in sources):
-            permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
-        elif edge in biclique_edges:
-            permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
+        if edge in simple_biclique_edges:
+            classifications["permanent"].append(
+                EdgeInfo(edge=edge, sources=edge_sources[edge])
+            )
+        elif biclique_graph.has_edge(u, v):
+            classifications["permanent"].append(
+                EdgeInfo(edge=edge, sources=edge_sources.get(edge, set()))
+            )
         else:
-            false_positive_edges.append(EdgeInfo(edge, label="false_positive", sources=sources))
+            classifications["false_positive"].append(
+                EdgeInfo(edge=edge, sources=edge_sources.get(edge, set()))
+            )
 
     # 3. Edges only in biclique graph are false negatives
     for u, v in biclique_edges - original_edges:
