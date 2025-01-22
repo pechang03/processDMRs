@@ -28,28 +28,27 @@ SELECT
     d.chromosome,
     d.start_position,
     d.end_position,
-    d.methylation_difference,
+    d.methylation_difference, -- Now matches physical table
     d.p_value,
     d.q_value,
     d.created_at,
     d.updated_at,
     dta.timepoint_id,
     CASE 
-        WHEN EXISTS (
-            SELECT 1 
-            FROM dominating_sets ds 
-            WHERE ds.dmr_id = d.id 
-              AND ds.timepoint_id = dta.timepoint_id
-        ) THEN 'hub' 
+        WHEN EXISTS (SELECT 1 FROM dominating_sets ds 
+                    WHERE ds.dmr_id = d.id AND ds.timepoint_id = dta.timepoint_id)
+            THEN 'hub' 
         ELSE dta.node_type 
     END AS node_type,
     (SELECT COUNT(*) FROM split_graph_edges sge
      WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
     dta.is_isolate,
     dta.biclique_ids,
-    dta.component_id
+    dta.component_id,
+    t.name AS timepoint_name -- Add timepoint name directly
 FROM dmrs d
-JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id;
+JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
+JOIN timepoints t ON dta.timepoint_id = t.id; -- Add explicit join
 
 DROP VIEW IF EXISTS component_summary_view;
 CREATE VIEW component_summary_view AS

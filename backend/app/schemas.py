@@ -219,30 +219,22 @@ class GeneAnnotationViewSchema(BaseModel):
 
 
 class DmrAnnotationViewSchema(BaseModel):
-    """Pydantic model matching dmr_annotations_view"""
-
     dmr_id: int
-    dmr_number: Optional[int]
-    area_stat: Optional[float]
-    description: Optional[str]
-    dmr_name: Optional[str]
-    gene_description: Optional[str]
-    chromosome: Optional[str]
-    start_position: Optional[int]
-    end_position: Optional[int]
-    strand: Optional[str]
-    p_value: Optional[float]
-    q_value: Optional[float]
-    mean_methylation: Optional[float]
-    is_hub: Optional[bool]
-    timepoint: Optional[str]
-    timepoint_id: Optional[int]
-    component_id: Optional[int]
-    triconnected_id: Optional[int]
-    degree: Optional[int]
-    node_type: Optional[str]
-    is_isolate: Optional[bool]
-    biclique_ids: Optional[str]
+    chromosome: str
+    start_position: int
+    end_position: int
+    methylation_difference: float
+    p_value: float
+    q_value: float
+    created_at: datetime
+    updated_at: datetime
+    timepoint_id: int
+    node_type: str
+    degree: int
+    is_isolate: bool
+    biclique_ids: str
+    component_id: int
+    timepoint_name: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
