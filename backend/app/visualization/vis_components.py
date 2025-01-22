@@ -105,7 +105,7 @@ def create_component_visualization(
         edge_classifications,
         node_positions,
         node_labels,
-        component["component"],
+        component["component"],  # Pass current component nodes
         edge_style={"width": 1, "color": "gray"}
     )
     traces.extend(edge_traces)

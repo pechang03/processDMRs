@@ -381,12 +381,13 @@ def create_edge_traces(
     edge_classifications: Dict[str, List[EdgeInfo]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
-    original_graph: nx.Graph,
+    component_nodes: Set[int],  # Add component filter parameter
     edge_style: Dict = None,
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
     traces = []
     edge_style = edge_style or {}
+    component_nodes = component_nodes or set()
 
     # Define style mappings
     style_map = {
@@ -421,8 +422,9 @@ def create_edge_traces(
                 continue
 
             u, v = edge_info.edge
-            if u not in node_positions or v not in node_positions:
-                continue
+            if (u not in node_positions or v not in node_positions or
+                u not in component_nodes or v not in component_nodes):
+                continue  # Skip edges not in current component
 
             x0, y0 = node_positions[u]
             x1, y1 = node_positions[v]

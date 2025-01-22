@@ -95,6 +95,15 @@ def classify_edges(
     # First validate node sets match
     original_nodes = set(original_graph.nodes())
     biclique_nodes = set(biclique_graph.nodes())
+
+    # Explicitly mark edges from single-DMR bicliques
+    if bicliques:
+        for idx, (dmrs, genes) in enumerate(bicliques):
+            if len(dmrs) == 1:  # Simple biclique
+                dmr = next(iter(dmrs))
+                for gene in genes:
+                    edge = (min(dmr, gene), max(dmr, gene))
+                    edge_sources.setdefault(edge, set()).add(f"simple_biclique_{idx}")
     
     if original_nodes != biclique_nodes:
         raise ValueError(
@@ -112,17 +121,17 @@ def classify_edges(
     biclique_edges = set(biclique_graph.edges())
 
     # Classify each edge
-    # 1. Edges in both graphs are permanent
-    for u, v in original_edges & biclique_edges:
+    for u, v in original_edges:
         edge = (min(u, v), max(u, v))
         sources = edge_sources.get(edge, set())
-        permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
-
-    # 2. Edges only in original graph are false positives
-    for u, v in original_edges - biclique_edges:
-        edge = (min(u, v), max(u, v))
-        sources = edge_sources.get(edge, set())
-        false_positive_edges.append(EdgeInfo(edge, label="false_positive", sources=sources))
+        
+        # Check if it's a simple biclique edge
+        if any(source.startswith("simple_biclique_") for source in sources):
+            permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
+        elif edge in biclique_edges:
+            permanent_edges.append(EdgeInfo(edge, label="permanent", sources=sources))
+        else:
+            false_positive_edges.append(EdgeInfo(edge, label="false_positive", sources=sources))
 
     # 3. Edges only in biclique graph are false negatives
     for u, v in biclique_edges - original_edges:
