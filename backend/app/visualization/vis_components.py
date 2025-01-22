@@ -3,6 +3,7 @@
 from typing import Dict, List, Set, Tuple, Union, Any
 import json
 from plotly.utils import PlotlyJSONEncoder
+from flask import current_app
 
 from .traces import (
     create_node_traces,
