@@ -81,7 +81,7 @@ def get_component_graph(timepoint_id, component_id):
             # Get component nodes
             all_dmr_ids = {int(x) for x in parse_id_string(result.dmr_ids)}
             all_gene_ids = {int(x) for x in parse_id_string(result.gene_ids)}
-            all_component_nodes = all_dmr_ids | all_gene_ids
+            all_component_nodes = set(all_dmr_ids).union(set(all_gene_ids))
 
             # Get component subgraphs directly from graph manager
             graph_manager = current_app.graph_manager
