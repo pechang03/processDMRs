@@ -43,7 +43,8 @@ class CircularBicliqueLayout(BaseLogicalLayout):
             **kwargs,
         )
 
-        return positions
+        # Add type conversion for node IDs
+        return {int(node): (float(x), float(y)) for node, (x, y) in positions.items()}
 
     def position_nodes(
         self,

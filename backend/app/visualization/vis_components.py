@@ -71,9 +71,12 @@ def create_component_visualization(
     dominating_set = set()
     if dmr_metadata:
         dominating_set = {
-            int(dmr_id) for dmr_id, info in dmr_metadata.items() 
-            if info.get('is_hub', False)
+            int(dmr_id) for dmr_id, info in dmr_metadata.items()
+            if info.get('node_type', '') == 'hub'  # Changed from 'is_hub' to check node_type
         }
+            
+    # Add debug logging
+    current_app.logger.debug(f"Dominating set DMRs: {dominating_set}")
     
     # Add DMR trace
     dmr_trace = create_dmr_trace(
@@ -126,8 +129,8 @@ def create_component_visualization(
     layout = create_circular_layout(node_info)
     
     return {
-        "data": traces,
-        "layout": layout
+        "data": [trace.to_plotly_json() for trace in traces],  # Convert Scatter to dict
+        "layout": layout.to_plotly_json() if hasattr(layout, 'to_plotly_json') else layout
     }
 
 def create_component_details(

@@ -337,8 +337,12 @@ def create_dmr_trace(
             color = "gray"
         colors.append(color)
 
-        # Use centralized shape configuration
-        is_hub = node_id in dominating_set
+        # Convert node_id to int for comparison
+        is_hub = int(node_id) in dominating_set  # Explicit conversion
+        
+        # Add debug logging
+        print(f"DMR {node_id} is_hub: {is_hub}")
+        
         sizes.append(15 if is_hub else 10)
         symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
 
