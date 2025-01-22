@@ -31,12 +31,10 @@ SELECT
     COALESCE(d.mean_methylation, 0.0) AS methylation_difference,
     d.p_value,
     d.q_value,
-    d.created_at,
-    d.updated_at,
     dta.timepoint_id,
-    CASE 
+    CASE
         WHEN d.is_hub THEN 'hub'
-        ELSE 'regular' 
+        ELSE 'regular'
     END AS node_type,  -- Direct classification
     dta.degree,  -- Get pre-calculated degree from annotations table
     dta.is_isolate,
@@ -75,18 +73,22 @@ SELECT
     c.id AS component_id,
     c.graph_type,
     COALESCE(GROUP_CONCAT(DISTINCT b.category), '') AS categories,
-    COALESCE(SUM(json_array_length(b.dmr_ids)), 0) AS total_dmr_count,
-    COALESCE(SUM(json_array_length(b.gene_ids)), 0) AS total_gene_count,
+    COALESCE(SUM(JSON_ARRAY_LENGTH(b.dmr_ids)), 0) AS total_dmr_count,
+    COALESCE(SUM(JSON_ARRAY_LENGTH(b.gene_ids)), 0) AS total_gene_count,
     COALESCE(
-        (SELECT json_group_array(DISTINCT value)
-         FROM bicliques b2, json_each(b2.dmr_ids)
-         WHERE b2.component_id = c.id AND b2.timepoint_id = t.id),
+        (
+            SELECT JSON_GROUP_ARRAY(DISTINCT value)
+            FROM bicliques b2, JSON_EACH(b2.dmr_ids)
+            WHERE b2.component_id = c.id AND b2.timepoint_id = t.id
+        ),
         '[]'
     ) AS all_dmr_ids,
     COALESCE(
-        (SELECT json_group_array(DISTINCT value)
-         FROM bicliques b3, json_each(b3.gene_ids)
-         WHERE b3.component_id = c.id AND b3.timepoint_id = t.id),
+        (
+            SELECT JSON_GROUP_ARRAY(DISTINCT value)
+            FROM bicliques b3, JSON_EACH(b3.gene_ids)
+            WHERE b3.component_id = c.id AND b3.timepoint_id = t.id
+        ),
         '[]'
     ) AS all_gene_ids
 FROM components c
