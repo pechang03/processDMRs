@@ -223,12 +223,9 @@ class DmrAnnotationViewSchema(BaseModel):
     chromosome: str
     start_position: int
     end_position: int
-    methylation_diff: Optional[float] = Field(alias="methylation_difference")  # Add alias here
+    methylation_diff: Optional[float] = Field(alias="methylation_diff")  # Changed alias
     p_value: Optional[float] = None
     q_value: Optional[float] = None
-    created_at: datetime
-    updated_at: datetime
-    timepoint_id: int
     node_type: str
     degree: int
     is_isolate: bool
@@ -238,4 +235,4 @@ class DmrAnnotationViewSchema(BaseModel):
 
     class Config:
         orm_mode = True
-        allow_population_by_field_name = True  # Add this line
+        allow_population_by_field_name = True
