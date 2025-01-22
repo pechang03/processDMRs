@@ -73,7 +73,7 @@ class GeneTimepointAnnotationSchema(BaseModel):
     component_id: Optional[int] = None
     triconnected_id: Optional[int] = None
     degree: Optional[int] = None
-    node_type: Optional[str] = None
+    node_type: Optional[str] = None  # Now derived from is_hub field
     gene_type: Optional[str] = None
     is_isolate: Optional[bool] = None
     biclique_ids: Optional[str] = None

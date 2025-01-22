@@ -28,7 +28,6 @@ SELECT
     d.chromosome,
     d.start_position,
     d.end_position,
-    -- Remove pairwise analysis dependency
     COALESCE(d.mean_methylation, 0.0) AS methylation_difference,
     d.p_value,
     d.q_value,
@@ -36,16 +35,9 @@ SELECT
     d.updated_at,
     dta.timepoint_id,
     CASE 
-        WHEN EXISTS (
-            SELECT 1 
-            FROM dominating_sets ds 
-            WHERE ds.dmr_id = d.id 
-              AND ds.timepoint_id = dta.timepoint_id
-              AND ds.utility_score > 0
-              AND ds.dominated_gene_count > 0
-        ) THEN 'hub' 
-        ELSE COALESCE(dta.node_type, 'regular')
-    END AS node_type,
+        WHEN d.is_hub THEN 'hub'
+        ELSE 'regular' 
+    END AS node_type,  -- Direct classification
     (SELECT COUNT(*) FROM split_graph_edges sge
      WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
     dta.is_isolate,
