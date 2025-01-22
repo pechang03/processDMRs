@@ -67,7 +67,6 @@ def create_component_visualization(
     
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
-    
     # Add edge traces first
     edge_traces = create_edge_traces(
         edge_classifications,  # Pass full classification results
@@ -129,16 +128,6 @@ def create_component_visualization(
     )
     if split_gene_trace:
         traces.append(split_gene_trace)
-    
-    # Add edge traces
-    edge_traces = create_edge_traces(
-        edge_classifications,
-        node_positions,
-        node_labels,
-        component["component"],  # Pass current component nodes
-        edge_style={"width": 1, "color": "gray"}
-    )
-    traces.extend(edge_traces)
     
     # Create layout using the unified layout function
     layout = create_circular_layout(node_info)
