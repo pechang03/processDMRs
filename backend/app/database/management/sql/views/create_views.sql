@@ -28,8 +28,8 @@ SELECT
     d.chromosome,
     d.start_position,
     d.end_position,
-    -- Handle missing methylation difference from pairwise analysis
-    COALESCE(p.methylation_diff, d.mean_methylation, 0.0) AS methylation_difference,
+    -- Remove pairwise analysis dependency
+    COALESCE(d.mean_methylation, 0.0) AS methylation_difference,
     d.p_value,
     d.q_value,
     d.created_at,
@@ -41,10 +41,10 @@ SELECT
             FROM dominating_sets ds 
             WHERE ds.dmr_id = d.id 
               AND ds.timepoint_id = dta.timepoint_id
-              AND ds.utility_score > 0  -- Ensure it's an active dominating set
-              AND ds.dominated_gene_count > 0  -- Must dominate at least one gene
+              AND ds.utility_score > 0
+              AND ds.dominated_gene_count > 0
         ) THEN 'hub' 
-        ELSE COALESCE(dta.node_type, 'regular')  -- Default to 'regular' if null
+        ELSE COALESCE(dta.node_type, 'regular')
     END AS node_type,
     (SELECT COUNT(*) FROM split_graph_edges sge
      WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
@@ -54,9 +54,7 @@ SELECT
     t.name AS timepoint_name
 FROM dmrs d
 JOIN dmr_timepoint_annotations dta ON d.id = dta.dmr_id
-JOIN timepoints t ON dta.timepoint_id = t.id
--- Left join with pairwise table if available
-LEFT JOIN pairwise_analysis p ON d.id = p.dmr_id AND dta.timepoint_id = p.timepoint_id;
+JOIN timepoints t ON dta.timepoint_id = t.id;
 
 DROP VIEW IF EXISTS component_summary_view;
 CREATE VIEW component_summary_view AS
