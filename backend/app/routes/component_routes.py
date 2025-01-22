@@ -600,14 +600,14 @@ def get_component_dmr_details(timepoint_id, component_id):
                     "chromosome": row.chromosome,
                     "start": row.start_position,
                     "end": row.end_position,
-                    "methylation_diff": row.methylation_difference,
+                    "methylation_diff": row.methylation_diff,  # Changed from methylation_difference
                     "p_value": row.p_value,
                     "q_value": row.q_value,
                     "node_type": row.node_type,
                     "degree": row.degree,
                     "is_isolate": row.is_isolate,
                     "biclique_count": len(row.biclique_ids.split(",")) if row.biclique_ids else 0,
-                    "timepoint": row.timepoint_name
+                    "timepoint": row.timepoint
                 })
 
             return jsonify({"status": "success", "data": dmrs})

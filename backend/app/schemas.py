@@ -223,7 +223,7 @@ class DmrAnnotationViewSchema(BaseModel):
     chromosome: str
     start_position: int
     end_position: int
-    methylation_diff: Optional[float] = Field(alias="methylation_diff")  # Changed alias
+    methylation_diff: Optional[float] = Field(alias="methylation_diff")
     p_value: Optional[float] = None
     q_value: Optional[float] = None
     node_type: str
