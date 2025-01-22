@@ -42,6 +42,7 @@ SELECT
             WHERE ds.dmr_id = d.id 
               AND ds.timepoint_id = dta.timepoint_id
               AND ds.utility_score > 0  -- Ensure it's an active dominating set
+              AND ds.dominated_gene_count > 0  -- Must dominate at least one gene
         ) THEN 'hub' 
         ELSE COALESCE(dta.node_type, 'regular')  -- Default to 'regular' if null
     END AS node_type,
