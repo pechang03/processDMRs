@@ -36,8 +36,11 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
   const parseGenes = (genesStr) => {
     if (!genesStr) return [];
     if (Array.isArray(genesStr)) return genesStr;
-    return genesStr
-      .split(",")
+    
+    // Add bracket cleaning similar to DMR parsing
+    const cleaned = genesStr.replace(/[\[\]]/g, '');
+    return cleaned
+      .split(',')
       .map((id) => parseInt(id.trim()))
       .filter((id) => !isNaN(id));
   };
