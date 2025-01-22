@@ -153,21 +153,21 @@ def classify_edges(
     # 3. Edges only in biclique graph are false negatives
     for u, v in biclique_edges - original_edges:
         edge = (min(u, v), max(u, v))
-        false_negative_edges.append(EdgeInfo(edge, label="false_negative", sources=set()))
+        classifications["false_negative"].append(EdgeInfo(edge, sources=set()))
 
     # Calculate component-wide statistics
     component_stats = calculate_edge_statistics(
         total_edges=len(original_edges),
-        permanent_edges=len(permanent_edges),
-        false_positives=len(false_positive_edges),
-        false_negatives=len(false_negative_edges)
+        permanent_edges=len(classifications["permanent"]),
+        false_positives=len(classifications["false_positive"]),
+        false_negatives=len(classifications["false_negative"])
     )
 
     # Calculate per-biclique statistics if bicliques are provided
     biclique_stats = {
         "edge_counts": {},
         "reliability": {},
-        "total_false_negatives": len(false_negative_edges)
+        "total_false_negatives": len(classifications["false_negative"])
     }
 
     if bicliques:
@@ -180,9 +180,9 @@ def classify_edges(
 
             stats = {
                 "total_edges": len(biclique_edges),
-                "permanent": sum(1 for e in permanent_edges if e.edge in biclique_edges),
-                "false_positives": sum(1 for e in false_positive_edges if e.edge in biclique_edges),
-                "false_negatives": sum(1 for e in false_negative_edges if e.edge in biclique_edges)
+                "permanent": sum(1 for e in classifications["permanent"] if e.edge in biclique_edges),
+                "false_positives": sum(1 for e in classifications["false_positive"] if e.edge in biclique_edges),
+                "false_negatives": sum(1 for e in classifications["false_negative"] if e.edge in biclique_edges)
             }
             
             biclique_stats["edge_counts"][idx] = stats
@@ -194,11 +194,7 @@ def classify_edges(
             )
 
     return {
-        "classifications": {
-            "permanent": permanent_edges,
-            "false_positive": false_positive_edges,
-            "false_negative": false_negative_edges
-        },
+        "classifications": classifications,
         "stats": {
             "component": convert_for_json(component_stats),
             "bicliques": convert_for_json(biclique_stats)
