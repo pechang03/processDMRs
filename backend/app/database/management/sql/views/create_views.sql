@@ -34,7 +34,14 @@ SELECT
     d.created_at,
     d.updated_at,
     dta.timepoint_id,
-    dta.node_type,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM dominating_sets ds 
+            WHERE ds.dmr_id = d.id 
+            AND ds.timepoint_id = dta.timepoint_id
+        ) THEN 'hub' 
+        ELSE dta.node_type 
+    END AS node_type,  -- Prioritize dominating set status
     dta.degree,
     dta.is_isolate,
     dta.biclique_ids,

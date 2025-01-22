@@ -68,16 +68,20 @@ def create_component_visualization(
     # Create traces using the centralized trace creation functions
     traces = []
     
-    # Get dominating set from component metadata
+    # Get dominating set from explicit data or metadata
     dominating_set = set()
-    if dmr_metadata:
-        dominating_set = {
-            int(dmr_id) for dmr_id, info in dmr_metadata.items()
-            if info.get('node_type', '') == 'hub'  # Changed from 'is_hub' to check node_type
-        }
+    if dmr_metadata and 'dominating_sets' in component:
+        # Get from explicit dominating set first
+        dominating_set = {int(dmr_id) for dmr_id in component['dominating_sets']}
+                
+        # Fallback to metadata if empty
+        if not dominating_set:
+            dominating_set = {
+                int(dmr_id) for dmr_id, info in dmr_metadata.items()
+                if info.get('node_type', '').lower() == 'hub'
+            }
             
-    # Add debug logging
-    current_app.logger.debug(f"Dominating set DMRs: {dominating_set}")
+    current_app.logger.debug(f"Final dominating set: {dominating_set}")
     
     # Add DMR trace
     dmr_trace = create_dmr_trace(

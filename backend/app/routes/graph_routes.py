@@ -663,13 +663,14 @@ def get_component_graph(timepoint_id, component_id):
             # Add timing for performance monitoring
             start_time = time.time()
             
-            # Create component data structure
+            # Create component data structure with dominating set
             component_data = {
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
                 "dmrs": all_dmr_ids,
                 "genes": all_gene_ids,
-                "total_edges": len(original_graph_component.edges())
+                "total_edges": len(original_graph_component.edges()),
+                "dominating_sets": list(dominating_set)  # Add explicit dominating set
             }
 
             from ..visualization.vis_components import create_component_visualization
