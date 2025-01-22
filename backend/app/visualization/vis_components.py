@@ -70,7 +70,7 @@ def create_component_visualization(
     
     # Add edge traces first
     edge_traces = create_edge_traces(
-        edge_classifications["classifications"],
+        edge_classifications,  # Pass full classification results
         node_positions,
         node_labels,
         component["component"],  # Pass current component nodes

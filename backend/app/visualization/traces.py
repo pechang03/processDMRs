@@ -390,7 +390,7 @@ def create_dmr_trace(
 
 
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]],
+    edge_classifications: Dict[str, List[EdgeInfo]],  # Now expects direct classifications
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     component_nodes: Set[int],  # Add component filter parameter
@@ -401,7 +401,7 @@ def create_edge_traces(
     edge_style = edge_style or {}
     component_nodes = component_nodes or set()
 
-    # Define style mappings
+    # Use parameter directly instead of nested classifications
     style_map = {
         "permanent": {
             "color": "#777777",  # Darker grey but not black
