@@ -573,7 +573,7 @@ def get_component_dmr_details(timepoint_id, component_id):
                     dav.chromosome,
                     dav.start_position,
                     dav.end_position,
-                    ROUND(COALESCE(dav.methylation_difference, 0), 4) as methylation_diff,
+                    dav.methylation_difference AS methylation_diff,  -- Keep alias for response
                     dav.p_value,
                     dav.q_value,
                     dav.node_type,
