@@ -65,8 +65,18 @@ def create_component_visualization(
     # Create traces using the unified trace creation functions
     traces = []
     
-    # Create traces using the centralized trace creation functions
+    # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
+    
+    # Add edge traces first
+    edge_traces = create_edge_traces(
+        edge_classifications["classifications"],
+        node_positions,
+        node_labels,
+        component["component"],  # Pass current component nodes
+        edge_style={"width": 1, "color": "gray"}
+    )
+    traces.extend(edge_traces)
     
     # Get dominating set from explicit data or metadata
     dominating_set = set()

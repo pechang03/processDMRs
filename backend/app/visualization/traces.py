@@ -462,6 +462,7 @@ def create_edge_traces(
                     hoverinfo="text",
                     text=hover_texts,
                     name=f"{edge_type.replace('_', ' ').title()} Edges",
+                    layer="below"  # Ensure edges stay behind node markers
                 )
             )
 
