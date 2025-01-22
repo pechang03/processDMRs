@@ -1,1 +1,1 @@
-backend/app/database/management/sql/views/create_views.sql
+../management/sql/views/create_views.sql
