@@ -35,9 +35,12 @@ SELECT
     d.updated_at,
     dta.timepoint_id,
     CASE 
-        WHEN EXISTS (SELECT 1 FROM dominating_sets ds 
-                    WHERE ds.dmr_id = d.id AND ds.timepoint_id = dta.timepoint_id)
-            THEN 'hub' 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM dominating_sets ds 
+            WHERE ds.dmr_id = d.id 
+              AND ds.timepoint_id = dta.timepoint_id
+        ) THEN 'hub' 
         ELSE dta.node_type 
     END AS node_type,
     (SELECT COUNT(*) FROM split_graph_edges sge
