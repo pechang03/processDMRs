@@ -38,8 +38,7 @@ SELECT
         WHEN d.is_hub THEN 'hub'
         ELSE 'regular' 
     END AS node_type,  -- Direct classification
-    (SELECT COUNT(*) FROM split_graph_edges sge
-     WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
+    dta.degree,  -- Get pre-calculated degree from annotations table
     dta.is_isolate,
     dta.biclique_ids,
     dta.component_id,

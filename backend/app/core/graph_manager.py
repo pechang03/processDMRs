@@ -333,6 +333,28 @@ class GraphManager:
                         if edge_count % 1000 == 0:
                             logger.info(f"Added {edge_count} edges so far...")
                     
+                    # Calculate and store degrees for DMR nodes
+                    min_gene_id = min(gene_id_mapping.values()) if gene_id_mapping else 0
+                    
+                    for node in split_graph.nodes():
+                        # Only process DMR nodes (assuming DMR IDs < gene IDs)
+                        if node < min_gene_id:
+                            degree = split_graph.degree(node)
+                            session.execute(
+                                text("""
+                                    UPDATE dmr_timepoint_annotations
+                                    SET degree = :degree
+                                    WHERE dmr_id = :dmr_id
+                                    AND timepoint_id = :timepoint_id
+                                """),
+                                {
+                                    "degree": degree,
+                                    "dmr_id": node,
+                                    "timepoint_id": timepoint_id
+                                }
+                            )
+                    session.commit()
+
                     self.split_graphs[timepoint_id] = split_graph
                     logger.info(f"Loaded split graph for timepoint_id={timepoint_id}")
                     logger.info(f"Split graph has {len(split_graph.edges())} edges")
