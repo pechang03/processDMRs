@@ -569,17 +569,20 @@ def get_component_details_by_timepoint(timepoint_id):
         with Session(engine) as session:
             query = text("""
                 SELECT 
-                    timepoint_id,
-                    timepoint,
-                    component_id,
-                    graph_type,
-                    categories,
-                    total_dmr_count,
-                    total_gene_count,
-                    all_dmr_ids,
-                    all_gene_ids
-                FROM component_details_view
-                WHERE timepoint_id = :timepoint_id AND LOWER(graph_type) = 'split'
+                    cd.timepoint_id,
+                    cd.timepoint,
+                    cd.component_id,
+                    cd.graph_type,
+                    cd.categories,
+                    cd.total_dmr_count,
+                    cd.total_gene_count,
+                    (SELECT json_group_array(DISTINCT value) 
+                     FROM json_each(cd.all_dmr_ids)) AS all_dmr_ids,
+                    (SELECT json_group_array(DISTINCT value) 
+                     FROM json_each(cd.all_gene_ids)) AS all_gene_ids
+                FROM component_details_view cd
+                WHERE cd.timepoint_id = :timepoint_id 
+                AND LOWER(cd.graph_type) = 'split'
             """)
 
             app.logger.info("Executing component details query")

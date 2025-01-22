@@ -35,14 +35,13 @@ SELECT
     d.updated_at,
     dta.timepoint_id,
     CASE 
-        WHEN EXISTS (
-            SELECT 1 FROM dominating_sets ds 
-            WHERE ds.dmr_id = d.id 
-            AND ds.timepoint_id = dta.timepoint_id
-        ) THEN 'hub' 
+        WHEN EXISTS (SELECT 1 FROM dominating_sets ds 
+                    WHERE ds.dmr_id = d.id AND ds.timepoint_id = dta.timepoint_id)
+            THEN 'hub' 
         ELSE dta.node_type 
-    END AS node_type,  -- Prioritize dominating set status
-    dta.degree,
+    END AS node_type,
+    (SELECT COUNT(*) FROM split_graph_edges sge
+     WHERE sge.dmr_id = d.id AND sge.timepoint_id = dta.timepoint_id) AS degree,
     dta.is_isolate,
     dta.biclique_ids,
     dta.component_id
@@ -77,17 +76,23 @@ SELECT
     c.id AS component_id,
     c.graph_type,
     COALESCE(GROUP_CONCAT(DISTINCT b.category), '') AS categories,
+    COALESCE(SUM(json_array_length(b.dmr_ids)), 0) AS total_dmr_count,
+    COALESCE(SUM(json_array_length(b.gene_ids)), 0) AS total_gene_count,
     COALESCE(
-        SUM(LENGTH(b.dmr_ids) - LENGTH(REPLACE(b.dmr_ids, ',', '')) + 1), 0
-    ) AS total_dmr_count,
+        (SELECT json_group_array(DISTINCT value)
+         FROM bicliques b2, json_each(b2.dmr_ids)
+         WHERE b2.component_id = c.id AND b2.timepoint_id = t.id),
+        '[]'
+    ) AS all_dmr_ids,
     COALESCE(
-        SUM(LENGTH(b.gene_ids) - LENGTH(REPLACE(b.gene_ids, ',', '')) + 1), 0
-    ) AS total_gene_count,
-    COALESCE(GROUP_CONCAT(DISTINCT b.dmr_ids), '') AS all_dmr_ids,
-    COALESCE(GROUP_CONCAT(DISTINCT b.gene_ids), '') AS all_gene_ids
+        (SELECT json_group_array(DISTINCT value)
+         FROM bicliques b3, json_each(b3.gene_ids)
+         WHERE b3.component_id = c.id AND b3.timepoint_id = t.id),
+        '[]'
+    ) AS all_gene_ids
 FROM components c
 JOIN timepoints t ON c.timepoint_id = t.id
-LEFT JOIN bicliques b ON b.component_id = c.id
+LEFT JOIN bicliques b ON b.component_id = c.id AND b.timepoint_id = t.id
 GROUP BY t.id, t.name, c.id, c.graph_type;
 
 DROP VIEW IF EXISTS biclique_details_view_old;

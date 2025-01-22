@@ -29,10 +29,9 @@ def create_node_traces(
     traces = []
     import math
 
-    # Filter out nodes with degree 0 in original graph
-    nodes_to_show = {node for node in node_info.all_nodes 
-                     if node_info.get_node_degree(node) > 0}
-
+    # Use all component nodes regardless of degree
+    nodes_to_show = component["component"]
+    
     def get_text_position(x: float, y: float) -> str:
         """
         Determine text position based on node's quadrant position.

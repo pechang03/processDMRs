@@ -89,12 +89,21 @@ def classify_edges(
     biclique_graph: nx.Graph,
     edge_sources: Dict[Tuple[int, int], Set[str]],
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
+    component: Dict = None
 ) -> Dict[str, Union[List[EdgeInfo], Dict[str, Any]]]:
     """Classify edges and calculate edge classification statistics."""
     
     # First validate node sets match
     original_nodes = set(original_graph.nodes())
     biclique_nodes = set(biclique_graph.nodes())
+    
+    # Ensure all biclique nodes are included in component
+    if bicliques and component:
+        for dmrs, genes in bicliques:
+            component["component"].update(dmrs)
+            component["component"].update(genes)
+            component["dmrs"].update(dmrs)
+            component["genes"].update(genes)
 
     # Explicitly mark edges from single-DMR bicliques
     if bicliques:
