@@ -131,8 +131,7 @@ def create_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    textposition: str = "middle right",
-    node_shape: str = "circle"  # Add shape parameter
+    node_shape: str = "circle"
 ) -> go.Scatter:
     """Create trace for regular gene nodes."""
     # Add at start of function:
@@ -187,7 +186,7 @@ def create_gene_trace(
         ),
         text=text,
         hovertext=hover_text,
-        textposition=textposition,
+        textposition=[],
         hoverinfo="text",
         name="Regular Genes",
         showlegend=True,
@@ -201,8 +200,7 @@ def create_split_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    textposition: str = "middle right",
-    node_shape: str = "diamond"  # Add shape parameter
+    node_shape: str = "diamond"
 ) -> go.Scatter:
     """Create trace for split gene nodes."""
     x = []
@@ -262,7 +260,7 @@ def create_split_gene_trace(
         ),
         text=text,
         hovertext=hover_text,
-        textposition=textposition,
+        textposition=[],
         hoverinfo="text",
         name="Split Genes",
         showlegend=True,
@@ -390,10 +388,11 @@ def create_dmr_trace(
 
 
 def create_edge_traces(
-    edge_classifications: Dict[str, List[EdgeInfo]],  # Now expects direct classifications
+    edge_classifications: Dict[str, List[EdgeInfo]],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
-    component_nodes: Set[int],  # Add component filter parameter
+    component_nodes: Set[int],
+    split_genes: Set[int],
     edge_style: Dict = None,
 ) -> List[go.Scatter]:
     """Create edge traces with configurable style."""
@@ -404,20 +403,25 @@ def create_edge_traces(
     # Use parameter directly instead of nested classifications
     style_map = {
         "permanent": {
-            "color": "#777777",  # Darker grey but not black
+            "color": "#777777",
             "dash": "solid",
-            "width": 1.5,  # Slightly thicker for emphasis
+            "width": 1.5,
         },
         "false_positive": {
-            "color": "rgba(255, 0, 0, 0.4)",  # More transparent red
-            "dash": "dash",
-            "width": 0.75,  # Thinner line
+            "color": "rgba(255, 0, 0, 0.4)",
+            "dash": "dash", 
+            "width": 0.75,
         },
         "false_negative": {
-            "color": "rgba(0, 0, 255, 0.4)",  # More transparent blue
+            "color": "rgba(0, 0, 255, 0.4)",
             "dash": "dash",
-            "width": 0.75,  # Thinner line
+            "width": 0.75,
         },
+        "split_gene_edge": {
+            "color": "rgba(150, 150, 150, 0.3)",
+            "dash": "dot",
+            "width": 0.5,
+        }
     }
 
     # Process each edge classification type

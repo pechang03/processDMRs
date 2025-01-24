@@ -459,7 +459,13 @@ function BicliqueDetailView({ timepointId, componentId }) {
   }
 
   return (
-    <Box sx={{ width: "100%", mt: 3 }}>
+    <Box sx={{ 
+        width: "100%",
+        mt: 3,
+        maxWidth: "1500px",
+        marginX: "auto",
+        paddingX: 4
+    }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" gutterBottom>

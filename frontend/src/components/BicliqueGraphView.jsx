@@ -65,7 +65,12 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 2, m: 2, width: '100%' }}>
+    <Paper elevation={3} sx={{ 
+        p: 2,
+        m: 2,
+        width: '100%',
+        overflow: 'visible'
+    }}>
       <Typography variant="h6" gutterBottom>
         Component {componentId} Visualization
       </Typography>
@@ -94,8 +99,9 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             },
             plot_bgcolor: 'rgba(0,0,0,0)',
             paper_bgcolor: 'rgba(0,0,0,0)',
-            width: null,
-            height: 800
+            width: 1200,
+            height: 800,
+            margin: { l: 100, r: 100, t: 50, b: 50 }
           }}
           // Node shapes are defined in backend visualization.traces.NODE_SHAPES
           config={{

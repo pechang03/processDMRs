@@ -69,10 +69,11 @@ def create_component_visualization(
     traces = []
     # Add edge traces first
     edge_traces = create_edge_traces(
-        edge_classifications,  # Pass full classification results
+        edge_classifications,
         node_positions,
         node_labels,
-        component["component"],  # Pass current component nodes
+        component["component"],
+        split_genes,
         edge_style={"width": 1, "color": "gray"}
     )
     traces.extend(edge_traces)
