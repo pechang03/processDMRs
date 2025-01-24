@@ -207,7 +207,8 @@ def get_component_details(timepoint_id, component_id):
                         b.id as biclique_id,
                         b.dmr_ids,
                         b.gene_ids,
-                        b.category
+                        b.category,
+                        cb.component_id
                     FROM bicliques b
                     JOIN component_bicliques cb ON b.id = cb.biclique_id
                     WHERE cb.component_id = :component_id
@@ -217,9 +218,11 @@ def get_component_details(timepoint_id, component_id):
                     SELECT 
                         ds.dmr_id,
                         ds.dominated_gene_count,
-                        ds.utility_score
+                        ds.utility_score,
+                        ds.component_id
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
+                    AND ds.component_id = :component_id
                     AND ds.dmr_id IN (
                         SELECT CAST(trim(value) AS INTEGER)
                         FROM json_each(
@@ -255,9 +258,9 @@ def get_component_details(timepoint_id, component_id):
                         )
                     END as dominating_sets
                 FROM component_info ci
-                LEFT JOIN biclique_info bi ON 1=1
-                LEFT JOIN dominating_info di ON 1=1
-                GROUP BY ci.component_id
+                LEFT JOIN biclique_info bi ON ci.component_id = bi.component_id
+                LEFT JOIN dominating_info di ON ci.component_id = di.component_id
+                GROUP BY ci.component_id, bi.biclique_id
             """)
 
             result = session.execute(
