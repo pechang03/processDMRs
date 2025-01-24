@@ -29,17 +29,20 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
     rgba_colors = []
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
-            # Convert hex to rgba
+            # Convert hex to rgba with integer alpha
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
             b = int(color[5:7], 16)
-            rgba_colors.append(f"rgba({r},{g},{b},1.0)")
+            rgba_colors.append(f"rgba({r},{g},{b},1)")  # Changed to integer 1
+        elif color.startswith("rgba"):
+            # Use existing alpha channel
+            rgba_colors.append(color)
         elif color.startswith("rgb"):
-            # Convert rgb() to rgba()
-            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1.0)"))
+            # Convert rgb() to rgba() with integer alpha
+            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1)"))
         else:
             # Default to blue with full opacity
-            rgba_colors.append("rgba(0,0,255,1.0)")
+            rgba_colors.append("rgba(0,0,255,1)")
     
     return rgba_colors
 
