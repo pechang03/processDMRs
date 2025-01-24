@@ -138,7 +138,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations, componentDetails }) =>
   );
 };
 
-const DMRTable = ({ dmrs, dmrNames }) => {
+const DMRTable = ({ dmrs, dmrNames, timepointId }) => {
     console.log('DMRTable props:', { dmrs, dmrNames });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -600,6 +600,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                       <DMRTable 
                         dmrs={biclique.dmr_ids} 
                         dmrNames={dmrNames}
+                        timepointId={timepointId}
                       />
                     </Box>
                   </AccordionDetails>
