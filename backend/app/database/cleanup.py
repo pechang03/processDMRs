@@ -1,7 +1,7 @@
 """Database cleanup operations."""
 
 from sqlalchemy.orm import Session
-from .models import Base
+from .models import Base, EdgeDetails
 from .models import (
     DMR,
     Gene,

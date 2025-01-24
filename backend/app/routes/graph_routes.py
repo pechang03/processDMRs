@@ -1,6 +1,7 @@
 import json
 import time
 from flask import jsonify, current_app, Blueprint
+from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
 
 from pydantic import ValidationError

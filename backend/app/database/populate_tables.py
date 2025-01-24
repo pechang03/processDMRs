@@ -6,6 +6,7 @@ from typing import Dict, List, Set, Tuple
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
+from .models import EdgeDetails
 
 from collections import defaultdict
 from .operations import (
