@@ -3,18 +3,6 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
 
-class DominatingSetSchema(BaseModel):
-    """Schema for dominating set data"""
-    timepoint_id: int
-    dmr_id: int
-    area_stat: Optional[float] = None
-    utility_score: Optional[float] = None
-    dominated_gene_count: Optional[int] = None
-    calculation_timestamp: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
 
 class ComponentSummarySchema(BaseModel):
     """Pydantic model matching component_summary_view"""
@@ -34,22 +22,6 @@ class ComponentSummarySchema(BaseModel):
     class Config:
         from_attributes = True
 
-
-class ComponentDetailsSchema(BaseModel):
-    """Pydantic model matching component_details_view"""
-
-    timepoint_id: int
-    timepoint: str
-    component_id: int
-    graph_type: str
-    categories: str
-    total_dmr_count: int
-    total_gene_count: int
-    all_dmr_ids: List[str]
-    all_gene_ids: List[str]
-
-    class Config:
-        from_attributes = True
 
 
 class TimePointSchema(BaseModel):
@@ -122,6 +94,65 @@ class DominatingSetSchema(BaseModel):
     class Config:
         from_attributes = True
 
+
+class TriconnectedComponentViewSchema(BaseModel):
+    """Pydantic model matching triconnected_component_view"""
+    component_id: int
+    timepoint_id: int 
+    triconnected_id: int
+    size: int
+    edge_count: int
+    density: float
+    component_position: str
+    
+    class Config:
+        from_attributes = True
+        
+
+class TimepointStatsViewSchema(BaseModel):
+    """Pydantic model matching timepoint_stats_view"""
+    timepoint_id: int
+    timepoint_name: str
+    component_count: int
+    total_nodes: int
+    total_edges: int
+    total_bicliques: int
+    avg_density: float
+    isolated_nodes: int
+    
+    class Config:
+        from_attributes = True
+        
+        
+class ComponentNodesViewSchema(BaseModel):
+    """Pydantic model matching component_nodes_view"""
+    component_id: int
+    timepoint_id: int
+    dmr_ids: List[int]
+    gene_ids: List[int]
+    dmr_count: int
+    gene_count: int
+    edge_count: int
+    
+    class Config:
+        from_attributes = True
+        
+        
+class BicliqueDetailsViewSchema(BaseModel):
+    """Pydantic model matching biclique_details_view""" 
+    biclique_id: int
+    component_id: int
+    timepoint_id: int
+    dmr_count: int
+    gene_count: int
+    total_edges: int
+    categories: str
+    dmr_ids: List[int]
+    gene_ids: List[int]
+    
+    class Config:
+        from_attributes = True
+        
 
 class ComponentDetailsSchema(BaseModel):
     """Schema for component details including dominating sets"""
@@ -234,10 +265,5 @@ class DmrAnnotationViewSchema(BaseModel):
     timepoint_name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         allow_population_by_field_name = True
-    op.execute("""
-        UPDATE dmrs 
-        SET mean_methylation = 0.0 
-        WHERE mean_methylation IS NULL
-    """)

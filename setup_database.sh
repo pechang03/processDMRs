@@ -31,14 +31,14 @@ if not database_exists(engine.url):
 
 # Initialize database schema
 echo "Initializing database schema..."
-#python -m backend.app.database.management.initialize_database
+python -m backend.app.database.management.initialize_database
 
 # Handle SQL views symbolic link
 echo "Setting up SQL views symbolic link..."
 VIEWS_FILE="backend/app/database/views.sql"
 if [ -e "$VIEWS_FILE" ]; then
-    echo "Removing existing views.sql file..."
-    rm "$VIEWS_FILE"
+  echo "Removing existing views.sql file..."
+  rm "$VIEWS_FILE"
 fi
 echo "Creating symbolic link for views.sql..."
 ln -s ../management/sql/views/create_views.sql "$VIEWS_FILE"
