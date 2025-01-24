@@ -25,6 +25,7 @@ DROP VIEW IF EXISTS dmr_annotations_view;
 CREATE VIEW dmr_annotations_view AS
 SELECT
     d.id AS dmr_id,
+    d.area_stat,
     d.chromosome,
     d.start_position,
     d.end_position,
