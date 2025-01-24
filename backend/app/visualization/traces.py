@@ -136,170 +136,65 @@ def create_node_traces(
     return traces
 
 
-def create_gene_trace(
+def create_unified_gene_trace(
     gene_nodes: Set[int],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    node_shape: str = "circle"
+    is_split: bool = False
 ) -> go.Scatter:
-    """Create trace for regular gene nodes."""
-    # Add at start of function:
-    if not gene_nodes or not node_positions:
-        return None
-
-    x = []
-    y = []
-    text = []
-    hover_text = []
-    colors = []
-
-    # Process regular genes
+    """Unified gene trace creation with split/regular handling"""
+    x, y, colors, texts, hovers, x_offsets, y_offsets = [], [], [], [], [], [], []
+    
     for node_id in sorted(gene_nodes):
-        position = node_positions.get(node_id)
-        if not position or not isinstance(position, tuple) or len(position) != 2:
+        pos = node_positions.get(node_id)
+        if not pos:
             continue
-
-        x_pos, y_pos = position
+            
+        x_pos, y_pos = pos
         x.append(x_pos)
         y.append(y_pos)
-
-        # Set node color based on biclique membership
-        if node_id in node_biclique_map and node_biclique_map[node_id]:
-            biclique_idx = node_biclique_map[node_id][0]  # Use first biclique for color
-            color = biclique_colors[biclique_idx % len(biclique_colors)]
-        else:
-            color = "gray"
-        colors.append(color)
-
-        # Create label and hover text
+        
+        # Calculate offsets
+        x_offset = 0.12 * (-1 if x_pos > 0 else 1) if is_split else 0.08 * (1 if x_pos > 0 else -1)
+        y_offset = 0.08 * (1 if y_pos > 0 else -1) if is_split else 0.05 * (1 if y_pos > 0 else -1)
+        
+        x_offsets.append(x_offset)
+        y_offsets.append(y_offset)
+        
+        # Color logic
+        biclique_idx = node_biclique_map.get(node_id, [0])[0]
+        color = biclique_colors[biclique_idx % len(biclique_colors)]
+        colors.append(f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.6)" 
+                     if is_split else color)
+        
+        # Text and hover
         label = node_labels.get(node_id, str(node_id))
-        text.append(label)
-
-        # Add metadata to hover text
-        meta = gene_metadata.get(label, {}) if gene_metadata else {}
-        hover = f"{label}<br>Description: {meta.get('description', 'N/A')}"
-        hover_text.append(hover)
-
-    if not x:  # Return None if no nodes to show
-        return None
-
-    # Add position offset calculations
-    # Reverse offsets for regular genes to position labels better
-    x_offset = 0.08 * (1 if x_pos > 0 else -1)  # Move text away from node
-    y_offset = 0.05 * (-1 if y_pos > 0 else 1)  # Vertical offset based on position
+        texts.append(label)
+        meta = gene_metadata.get(str(node_id), {})
+        hovers.append(f"{label}<br>Description: {meta.get('description','N/A')}")
 
     return go.Scatter(
         x=x,
         y=y,
         mode="markers+text",
         marker=dict(
-            size=10,
+            size=12 if is_split else 10,
             color=colors,
-            symbol="circle",
-            line=dict(color="black", width=1),
+            symbol="diamond" if is_split else "circle",
+            line=dict(width=2 if is_split else 1)
         ),
-        text=text,
-        hovertext=hover_text,
-        textposition=[
-            get_text_position(x_pos + x_offset, y_pos + y_offset) 
-            for x_pos, y_pos in zip(x, y)
-        ],
+        text=texts,
+        hovertext=hovers,
+        textposition=[get_text_position(x[i]+x_offsets[i], y[i]+y_offsets[i]) 
+                     for i in range(len(x))],
         textfont=dict(
-            size=12,
-            color='rgba(0, 0, 0, 0.8)'
+            size=14 if is_split else 12,
+            family="Arial Black" if is_split else None
         ),
-        hoverinfo="text",
-        name="Regular Genes",
-        showlegend=True,
-    )
-
-
-def create_split_gene_trace(
-    split_genes: Set[int],
-    node_positions: Dict[int, Tuple[float, float]],
-    node_labels: Dict[int, str],
-    node_biclique_map: Dict[int, List[int]],
-    biclique_colors: List[str],
-    gene_metadata: Dict[str, Dict] = None,
-    node_shape: str = "diamond"
-) -> go.Scatter:
-    """Create trace for split gene nodes."""
-    x = []
-    y = []
-    text = []
-    hover_text = []
-    colors = []
-
-    # Process split genes
-    for node_id in sorted(split_genes):
-        position = node_positions.get(node_id)
-        if not position or not isinstance(position, tuple) or len(position) != 2:
-            continue
-
-        x_pos, y_pos = position
-        x.append(x_pos)
-        y.append(y_pos)
-
-        # Set node color based on first biclique membership
-        if node_id in node_biclique_map and node_biclique_map[node_id]:
-            biclique_idx = node_biclique_map[node_id][0]
-            base_color = biclique_colors[biclique_idx % len(biclique_colors)]
-            # Convert to rgba with transparency
-            if base_color.startswith("#"):
-                r = int(base_color[1:3], 16)
-                g = int(base_color[3:5], 16)
-                b = int(base_color[5:7], 16)
-                color = f"rgba({r},{g},{b},0.6)"
-            else:
-                color = base_color
-        else:
-            color = "rgba(128,128,128,0.6)"  # transparent gray
-        colors.append(color)
-
-        # Create label and hover text
-        label = node_labels.get(node_id, str(node_id))
-        text.append(label)
-
-        # Add metadata to hover text
-        meta = gene_metadata.get(label, {}) if gene_metadata else {}
-        bicliques_str = ", ".join(map(str, node_biclique_map.get(node_id, [])))
-        hover = f"{label}<br>Description: {meta.get('description', 'N/A')}<br>Bicliques: {bicliques_str}"
-        hover_text.append(hover)
-
-    if not x:  # Return None if no nodes to show
-        return None
-
-    # Add stronger offsets for split genes
-    x_offset = 0.12 * (-1 if x_pos > 0 else 1)
-    y_offset = 0.08 * (1 if y_pos > 0 else -1)
-
-    return go.Scatter(
-        x=x,
-        y=y,
-        mode="markers+text",
-        marker=dict(
-            size=12,  # Slightly larger than regular genes
-            color=colors,
-            symbol=NODE_SHAPES["gene"]["split"],  # Use centralized shape config
-            line=dict(color="black", width=2),  # Thicker border
-        ),
-        text=text,
-        hovertext=hover_text,
-        textposition=[
-            get_text_position(x_pos + x_offset, y_pos + y_offset)
-            for x_pos, y_pos in zip(x, y)
-        ],
-        textfont=dict(
-            size=14,
-            color='rgba(0, 0, 0, 0.9)',
-            family='Arial Black'
-        ),
-        hoverinfo="text",
-        name="Split Genes",
-        showlegend=True,
+        name="Split Genes" if is_split else "Regular Genes"
     )
 
 

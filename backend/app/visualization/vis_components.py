@@ -106,26 +106,28 @@ def create_component_visualization(
     if dmr_trace:
         traces.append(dmr_trace)
     
-    # Add gene traces
-    gene_trace = create_gene_trace(
-        gene_nodes=node_info.regular_genes,
-        node_positions=node_positions,
-        node_labels=node_labels,
-        node_biclique_map=node_biclique_map,
-        biclique_colors=biclique_colors,
-        gene_metadata=gene_metadata
+    # Add gene traces using unified function
+    gene_trace = create_unified_gene_trace(
+        node_info.regular_genes,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors,
+        gene_metadata,
+        is_split=False
     )
     if gene_trace:
         traces.append(gene_trace)
         
-    # Add split gene trace
-    split_gene_trace = create_split_gene_trace(
-        split_genes=node_info.split_genes,
-        node_positions=node_positions,
-        node_labels=node_labels,
-        node_biclique_map=node_biclique_map,
-        biclique_colors=biclique_colors,
-        gene_metadata=gene_metadata
+    # Add split gene trace using unified function
+    split_gene_trace = create_unified_gene_trace(
+        node_info.split_genes,
+        node_positions,
+        node_labels,
+        node_biclique_map,
+        biclique_colors,
+        gene_metadata,
+        is_split=True
     )
     if split_gene_trace:
         traces.append(split_gene_trace)
