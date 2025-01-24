@@ -15,6 +15,7 @@ from sqlalchemy import (
     Boolean,
     UniqueConstraint,
     Index,
+    DateTime,
 )
 from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.ext.declarative import declarative_base
@@ -248,6 +249,23 @@ class Relationship(Base):
 
 
 from sqlalchemy import DateTime
+
+
+class EdgeDetails(Base):
+    __tablename__ = "edge_details"
+    
+    dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
+    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
+    edge_type = Column(String(50))  # e.g., 'nearby', 'enhancer', 'promoter'
+    edit_type = Column(String(50))  # For tracking modifications
+    distance_from_tss = Column(Integer)
+    description = Column(Text)
+
+    # Relationships
+    dmr = relationship("DMR", backref="edge_details")
+    gene = relationship("Gene", backref="edge_details")
+    timepoint = relationship("Timepoint", backref="edge_details")
 
 
 class DominatingSet(Base):

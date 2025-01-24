@@ -99,6 +99,24 @@ CREATE TABLE relationships (
     relationship_type VARCHAR(50)
 );
 
+-- Create Edge Details Table
+CREATE TABLE edge_details (
+    dmr_id INTEGER,
+    gene_id INTEGER,
+    timepoint_id INTEGER,
+    edge_type VARCHAR(50),
+    edit_type VARCHAR(50),
+    distance_from_tss INTEGER,
+    description TEXT,
+    PRIMARY KEY (dmr_id, gene_id, timepoint_id),
+    FOREIGN KEY (dmr_id) REFERENCES dmrs(id),
+    FOREIGN KEY (gene_id) REFERENCES genes(id),
+    FOREIGN KEY (timepoint_id) REFERENCES timepoints(id)
+);
+
+-- Create index for efficient lookups
+CREATE INDEX idx_edge_details_lookup ON edge_details(dmr_id, gene_id, timepoint_id);
+
 -- Indexing for Performance
 CREATE INDEX idx_timepoints_name ON timepoints(name);
 CREATE INDEX idx_genes_symbol ON genes(symbol);

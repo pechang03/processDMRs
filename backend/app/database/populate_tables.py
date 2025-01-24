@@ -563,6 +563,58 @@ def populate_metadata(session: Session, metadata: dict):
                 insert_metadata(session, entity_type, entity_id, key, str(value))
 
 
+def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int, gene_id_mapping: Dict[str, int]):
+    """Populate edge details table from dataframe."""
+    print("\nPopulating edge details...")
+    
+    # Process nearby genes
+    if "Gene_Symbol_Nearby" in df.columns:
+        for _, row in df.iterrows():
+            dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+            gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
+            
+            if gene_symbol and gene_symbol != "." and gene_symbol in gene_id_mapping:
+                gene_id = gene_id_mapping[gene_symbol]
+                
+                edge = EdgeDetails(
+                    dmr_id=dmr_id,
+                    gene_id=gene_id,
+                    timepoint_id=timepoint_id,
+                    edge_type="nearby",
+                    distance_from_tss=row.get("Distance_from_TSS"),
+                    description=row.get("Gene_Description")
+                )
+                session.add(edge)
+
+    # Process enhancer interactions
+    if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
+        for _, row in df.iterrows():
+            dmr_id = row["DMR_No."] - 1
+            enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
+            
+            if isinstance(enhancer_info, str) and enhancer_info.strip() and enhancer_info != ".":
+                genes = process_enhancer_info(enhancer_info)
+                
+                for gene_symbol in genes:
+                    if gene_symbol in gene_id_mapping:
+                        edge = EdgeDetails(
+                            dmr_id=dmr_id,
+                            gene_id=gene_id_mapping[gene_symbol],
+                            timepoint_id=timepoint_id,
+                            edge_type="enhancer",
+                            description=f"Enhancer interaction: {enhancer_info}"
+                        )
+                        session.add(edge)
+
+    try:
+        session.commit()
+        print("Edge details populated successfully")
+    except Exception as e:
+        session.rollback()
+        print(f"Error populating edge details: {str(e)}")
+        raise
+
+
 def populate_relationships(session: Session, relationships: list):
     """Populate relationships table."""
     for rel in relationships:
