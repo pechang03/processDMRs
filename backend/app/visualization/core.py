@@ -22,11 +22,26 @@ from backend.app.core.data_loader import preprocess_graph_for_visualization
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
-    """Generate distinct colors for bicliques"""
-    colors = plotly.colors.qualitative.Set3 * (
-        num_bicliques // len(plotly.colors.qualitative.Set3) + 1
-    )
-    return colors[:num_bicliques]
+    """Generate distinct colors for bicliques in proper RGBA format."""
+    import plotly.colors
+    base_colors = plotly.colors.qualitative.Set3 * (num_bicliques // 12 + 1)
+    
+    rgba_colors = []
+    for color in base_colors[:num_bicliques]:
+        if color.startswith("#"):
+            # Convert hex to rgba
+            r = int(color[1:3], 16)
+            g = int(color[3:5], 16)
+            b = int(color[5:7], 16)
+            rgba_colors.append(f"rgba({r},{g},{b},1.0)")
+        elif color.startswith("rgb"):
+            # Convert rgb() to rgba()
+            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1.0)"))
+        else:
+            # Default to blue with full opacity
+            rgba_colors.append("rgba(0,0,255,1.0)")
+    
+    return rgba_colors
 
 
 def create_biclique_visualization(
