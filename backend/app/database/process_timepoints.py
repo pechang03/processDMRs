@@ -34,6 +34,7 @@ from backend.app.database.operations import (
 from backend.app.database.populate_tables import (
     populate_timepoint_genes,
     populate_dmrs,
+    populate_edge_details,
 )
 
 
@@ -142,6 +143,7 @@ def process_timepoint_table_data(
     populate_dmrs(
         session, df, timepoint_id=timepoint_id, gene_id_mapping=gene_id_mapping
     )
+    populate_edge_details(session, df, timepoint_id, gene_id_mapping)
 
 
 def process_bicliques_for_timepoint(
