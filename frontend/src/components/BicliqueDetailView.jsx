@@ -104,7 +104,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
             {geneArray
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((gene) => (
-                <TableRow key={gene.id}>
+                <TableRow key={`${componentDetails.component_id}_${gene.id}`}>
                   <TableCell>{gene.id}</TableCell>
                   <TableCell>{gene.symbol}</TableCell>
                   <TableCell>{gene.type}</TableCell>
@@ -170,7 +170,7 @@ const DMRTable = ({ dmrs, dmrNames }) => {
                             .map((dmrId) => {
                                 const info = dmrNames[dmrId] || {};
                                 return (
-                                    <TableRow key={dmrId}>
+                                    <TableRow key={`${timepointId}_${dmrId}`}>
                                         <TableCell>DMR_{dmrId}</TableCell>
                                         <TableCell align="right">{info.degree || 0}</TableCell>
                                         <TableCell align="right">{info.biclique_count || 0}</TableCell>
@@ -807,6 +807,9 @@ function BicliqueDetailView({ timepointId, componentId }) {
                       </TableHead>
                       <TableBody>
                         {Object.entries(geneSymbols).map(([geneId, info]) => {
+                          // Add unique key construction with component ID
+                          const uniqueKey = `${componentDetails.component_id}_${geneId}`;
+                          
                           // Parse biclique IDs string and clean it up
                           const bicliqueIds = info.biclique_ids 
                             ? Array.isArray(info.biclique_ids)
@@ -815,7 +818,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                             : [];
                           
                           return (
-                            <TableRow key={geneId}>
+                            <TableRow key={uniqueKey}>
                               <TableCell>{info.symbol || `Gene_${geneId}`}</TableCell>
                               <TableCell>
                                 {info.is_split ? 'Split' : info.is_hub ? 'Hub' : 'Regular'}
@@ -826,7 +829,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {bicliqueIds.map((bicliqueId, index) => (
                                       <Chip
-                                        key={index}
+                                        key={`${bicliqueId}_${index}`}
                                         label={bicliqueId.trim()}
                                         size="small"
                                         variant="outlined"
@@ -891,7 +894,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                           <TableCell>
                             {dmr.biclique_ids?.split(',')?.map((id, index) => (
                               <Chip
-                                key={index}
+                                key={`${id}_${index}`}
                                 label={id.trim()}
                                 size="small"
                                 variant="outlined"
