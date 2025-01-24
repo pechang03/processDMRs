@@ -16,6 +16,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Index,
     DateTime,
+    JSON,
 )
 from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.ext.declarative import declarative_base
