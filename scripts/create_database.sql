@@ -117,6 +117,17 @@ CREATE TABLE edge_details (
 -- Create index for efficient lookups
 CREATE INDEX idx_edge_details_lookup ON edge_details(dmr_id, gene_id, timepoint_id);
 
+-- Create Gene Details Table
+CREATE TABLE gene_details (
+    gene_id INTEGER PRIMARY KEY,
+    NCBI_id VARCHAR(50),
+    annotations JSON,
+    FOREIGN KEY (gene_id) REFERENCES genes(id)
+);
+
+-- Create index for NCBI_id lookups
+CREATE INDEX idx_gene_details_ncbi ON gene_details(NCBI_id);
+
 -- Indexing for Performance
 CREATE INDEX idx_timepoints_name ON timepoints(name);
 CREATE INDEX idx_genes_symbol ON genes(symbol);

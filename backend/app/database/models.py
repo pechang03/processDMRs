@@ -268,6 +268,21 @@ class EdgeDetails(Base):
     timepoint = relationship("Timepoint", backref="edge_details")
 
 
+class GeneDetails(Base):
+    __tablename__ = "gene_details"
+    
+    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
+    NCBI_id = Column(String(50))
+    annotations = Column(JSON)  # SQLite will store this as TEXT
+    
+    # Relationship
+    gene = relationship("Gene", backref="details")
+    
+    __table_args__ = (
+        Index('idx_gene_details_ncbi', 'NCBI_id'),  # Index for NCBI_id lookups
+    )
+
+
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)

@@ -36,10 +36,10 @@ def clean_database(session: Session):
         clean_edge_details(session)
         # Drop all tables
         Base.metadata.drop_all(session.bind)
-        # Recreate all tables
+        # Recreate all tables including the new gene_details table
         Base.metadata.create_all(session.bind)
         session.commit()
-        print("Database cleaned and recreated successfully")
+        print("Database cleaned and recreated successfully with gene_details table")
     except Exception as e:
         session.rollback()
         print(f"Warning: Error cleaning database: {str(e)}")
