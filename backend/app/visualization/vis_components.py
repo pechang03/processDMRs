@@ -11,7 +11,8 @@ from .traces import (
     create_biclique_boxes,
     create_dmr_trace,
     create_gene_trace,
-    create_split_gene_trace
+    create_split_gene_trace,
+    create_unified_gene_trace
 )
 from .layout import create_plot_layout
 from .core import generate_biclique_colors
