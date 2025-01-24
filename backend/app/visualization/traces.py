@@ -15,6 +15,30 @@ from backend.app.utils.node_info import NodeInfo
 # from utils import get_node_position  # Add this import
 
 
+def get_text_position(x: float, y: float) -> str:
+    """Determine text position based on node's quadrant with vertical offset."""
+    # Calculate buffer zone (10% of plot area)
+    x_buffer = 0.1
+    y_buffer = 0.1
+    
+    # Horizontal positioning
+    if x < -x_buffer:  # Left side
+        horizontal = "right"
+    elif x > x_buffer:  # Right side
+        horizontal = "left"
+    else:  # Center zone
+        horizontal = "center"
+
+    # Vertical positioning with offset
+    if y < -y_buffer:  # Bottom third
+        vertical = "top"
+    elif y > y_buffer:  # Top third
+        vertical = "bottom"
+    else:  # Middle third
+        vertical = "middle"
+
+    return f"{vertical} {horizontal}"
+
 def create_node_traces(
     node_info: NodeInfo,
     node_positions: Dict[int, Tuple[float, float]],
@@ -32,30 +56,6 @@ def create_node_traces(
 
     # Use all component nodes regardless of degree
     nodes_to_show = component["component"]
-    
-    def get_text_position(x: float, y: float) -> str:
-        """Determine text position based on node's quadrant with vertical offset."""
-        # Calculate buffer zone (10% of plot area)
-        x_buffer = 0.1
-        y_buffer = 0.1
-        
-        # Horizontal positioning
-        if x < -x_buffer:  # Left side
-            horizontal = "right"
-        elif x > x_buffer:  # Right side
-            horizontal = "left"
-        else:  # Center zone
-            horizontal = "center"
-
-        # Vertical positioning with offset
-        if y < -y_buffer:  # Bottom third
-            vertical = "top"
-        elif y > y_buffer:  # Top third
-            vertical = "bottom"
-        else:  # Middle third
-            vertical = "middle"
-
-        return f"{vertical} {horizontal}"
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
