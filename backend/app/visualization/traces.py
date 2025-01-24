@@ -4,15 +4,13 @@
 
 """Node trace creation functionality"""
 
-import os
-from typing import Dict, List, Set, Tuple, Union, Any
-from backend.app.utils.edge_info import (
-    EdgeInfo,
-)  # Changed from biclique_analysis.edge_info
+import logging
+from typing import Dict, List, Set, Tuple, Any
+from backend.app.utils.edge_info import EdgeInfo
 import plotly.graph_objs as go
-import networkx as nx  # Add this line
 from backend.app.utils.node_info import NodeInfo
-# from utils import get_node_position  # Add this import
+
+logger = logging.getLogger(__name__)
 
 
 def get_text_position(x: float, y: float) -> str:

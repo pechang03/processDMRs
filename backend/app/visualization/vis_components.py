@@ -1,23 +1,16 @@
 """Component visualization functionality"""
 
-from typing import Dict, List, Set, Tuple, Union, Any
-import json
-from plotly.utils import PlotlyJSONEncoder
+from typing import Dict, List, Set, Tuple, Any
 from flask import current_app
 
 from .traces import (
-    create_node_traces,
     create_edge_traces,
-    create_biclique_boxes,
     create_dmr_trace,
-    create_gene_trace,
-    create_split_gene_trace,
     create_unified_gene_trace
 )
-from .layout import create_plot_layout
+from .graph_layout_logical import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
-from backend.app.biclique_analysis.classifier import classify_biclique
 from backend.app.biclique_analysis.classifier import classify_biclique
 
 def create_component_visualization(
@@ -30,17 +23,6 @@ def create_component_visualization(
     gene_metadata: Dict = None,
 ) -> Dict:
     """Create visualization data for a component with centralized shape configuration."""
-    # Centralized node shape configuration
-    NODE_SHAPES = {
-        "dmr": {
-            "regular": "hexagon",  # Changed from octagon to hexagon
-            "hub": "star"
-        },
-        "gene": {
-            "regular": "circle",
-            "split": "diamond"
-        }
-    }
     """Create visualization data for a component."""
     from .traces import create_node_traces, create_edge_traces
     from .layout import create_circular_layout
