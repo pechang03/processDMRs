@@ -34,16 +34,28 @@ def create_node_traces(
     nodes_to_show = component["component"]
     
     def get_text_position(x: float, y: float) -> str:
-        """
-        Determine text position based on node's quadrant position.
+        """Determine text position based on node's quadrant with vertical offset."""
+        # Calculate buffer zone (10% of plot area)
+        x_buffer = 0.1
+        y_buffer = 0.1
+        
+        # Horizontal positioning
+        if x < -x_buffer:  # Left side
+            horizontal = "right"
+        elif x > x_buffer:  # Right side
+            horizontal = "left"
+        else:  # Center zone
+            horizontal = "center"
 
-        Quadrants:
-        Q2 | Q1     0° is at 3 o'clock position
-        ---|---     Q2 & Q3: text on left (x < 0)
-        Q3 | Q4     Q1 & Q4: text on right (x > 0)
-        """
-        # Simply check if x is positive (right half) or negative (left half)
-        return "middle right" if x > 0 else "middle left"
+        # Vertical positioning with offset
+        if y < -y_buffer:  # Bottom third
+            vertical = "top"
+        elif y > y_buffer:  # Top third
+            vertical = "bottom"
+        else:  # Middle third
+            vertical = "middle"
+
+        return f"{vertical} {horizontal}"
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
@@ -174,6 +186,10 @@ def create_gene_trace(
     if not x:  # Return None if no nodes to show
         return None
 
+    # Add position offset calculations
+    x_offset = 0.08 * (-1 if x_pos > 0 else 1)  # Move text away from node
+    y_offset = 0.05 * (1 if y_pos > 0 else -1)  # Vertical offset based on position
+
     return go.Scatter(
         x=x,
         y=y,
@@ -186,7 +202,14 @@ def create_gene_trace(
         ),
         text=text,
         hovertext=hover_text,
-        textposition=[],
+        textposition=[
+            get_text_position(x_pos + x_offset, y_pos + y_offset) 
+            for x_pos, y_pos in zip(x, y)
+        ],
+        textfont=dict(
+            size=12,
+            color='rgba(0, 0, 0, 0.8)'
+        ),
         hoverinfo="text",
         name="Regular Genes",
         showlegend=True,
@@ -248,6 +271,10 @@ def create_split_gene_trace(
     if not x:  # Return None if no nodes to show
         return None
 
+    # Add stronger offsets for split genes
+    x_offset = 0.12 * (-1 if x_pos > 0 else 1)
+    y_offset = 0.08 * (1 if y_pos > 0 else -1)
+
     return go.Scatter(
         x=x,
         y=y,
@@ -260,7 +287,15 @@ def create_split_gene_trace(
         ),
         text=text,
         hovertext=hover_text,
-        textposition=[],
+        textposition=[
+            get_text_position(x_pos + x_offset, y_pos + y_offset)
+            for x_pos, y_pos in zip(x, y)
+        ],
+        textfont=dict(
+            size=14,
+            color='rgba(0, 0, 0, 0.9)',
+            family='Arial Black'
+        ),
         hoverinfo="text",
         name="Split Genes",
         showlegend=True,
