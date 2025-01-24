@@ -75,18 +75,21 @@ SELECT
     (
         SELECT COUNT(DISTINCT value)
         FROM bicliques b2, JSON_EACH(b2.dmr_ids)
-        WHERE b2.component_id = c.id AND b2.timepoint_id = t.id
+        WHERE b2.component_id = c.id 
+        AND b2.timepoint_id = t.id
     ) AS total_dmr_count,
     (
         SELECT COUNT(DISTINCT value)
         FROM bicliques b3, JSON_EACH(b3.gene_ids)
-        WHERE b3.component_id = c.id AND b3.timepoint_id = t.id
+        WHERE b3.component_id = c.id 
+        AND b3.timepoint_id = t.id
     ) AS total_gene_count,
     COALESCE(
         (
             SELECT JSON_GROUP_ARRAY(DISTINCT value)
             FROM bicliques b2, JSON_EACH(b2.dmr_ids)
-            WHERE b2.component_id = c.id AND b2.timepoint_id = t.id
+            WHERE b2.component_id = c.id 
+            AND b2.timepoint_id = t.id
         ),
         '[]'
     ) AS all_dmr_ids,
@@ -94,7 +97,8 @@ SELECT
         (
             SELECT JSON_GROUP_ARRAY(DISTINCT value)
             FROM bicliques b3, JSON_EACH(b3.gene_ids)
-            WHERE b3.component_id = c.id AND b3.timepoint_id = t.id
+            WHERE b3.component_id = c.id 
+        AND b3.timepoint_id = t.id
         ),
         '[]'
     ) AS all_gene_ids
