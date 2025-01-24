@@ -213,85 +213,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
 
   const [geneAnnotations, setGeneAnnotations] = useState({});
 
-  // For basic symbol lookup
-  const fetchGeneSymbols = async () => {
-    try {
-        console.log(`Fetching gene symbols for timepoint=${timepointId}, component=${componentId}`);
-        const response = await fetch(`${API_BASE_URL}/component/genes/symbols`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                timepoint_id: timepointId,
-                component_id: componentId,
-            }),
-        });
-        if (!response.ok) throw new Error("Failed to fetch gene symbols");
-        const data = await response.json();
-        if (data.status === "success" && data.data) {
-            console.log("Received gene symbols data:", data.data);
-            // Log split genes for debugging
-            const splitGenes = Object.entries(data.data)
-                .filter(([_, info]) => info.is_split)
-                .map(([id, info]) => ({id, symbol: info.symbol}));
-            console.log("Split genes found:", splitGenes);
-            setGeneSymbols(data.data);
-        } else {
-            throw new Error("Invalid gene data received");
-        }
-    } catch (error) {
-        console.error("Error fetching gene symbols:", error);
-    }
-  };
-
-  // For detailed gene information
-  const fetchGeneAnnotations = async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/component/genes/annotations`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            timepoint_id: timepointId,
-            component_id: componentId,
-          }),
-        },
-      );
-      if (!response.ok) throw new Error("Failed to fetch gene annotations");
-      const data = await response.json();
-      if (data.status === "success" && data.gene_info) {
-        setGeneAnnotations(data.gene_info);
-      }
-    } catch (error) {
-      console.error("Error fetching gene annotations:", error);
-    }
-  };
-
-  const fetchDmrNames = async (dmrIds) => {
-    try {
-      console.log("Fetching DMR status for:", dmrIds);
-      const response = await fetch(`${API_BASE_URL}/component/dmrs/status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          dmr_ids: dmrIds,
-          timepoint_id: timepointId,
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to fetch DMR status");
-      const data = await response.json();
-      console.log("Received DMR data:", data);
-      setDmrNames(data.dmr_status);
-    } catch (error) {
-      console.error("Error fetching DMR names:", error);
-    }
-  };
 
   const formatGeneSymbols = (geneIds) => {
     // Ensure geneIds is an array
@@ -446,62 +367,59 @@ function BicliqueDetailView({ timepointId, componentId }) {
   }, [componentDetails, dmrNames]);
 
   React.useEffect(() => {
-    if (timepointId && componentId) {
+    if (!timepointId || !componentId) return;
+
+    const fetchAllData = async () => {
         setLoading(true);
         setError(null);
+        
+        try {
+            // Fetch all data in parallel
+            const [detailsRes, dmrRes, genesRes, dmrStatusRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`),
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`),
+                // Gene symbols
+                fetch(`${API_BASE_URL}/component/genes/symbols`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ timepoint_id: timepointId, component_id: componentId }),
+                }),
+                // DMR status
+                fetch(`${API_BASE_URL}/component/dmrs/status`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        dmr_ids: [], // Will be updated after details load
+                        timepoint_id: timepointId 
+                    }),
+                }),
+            ]);
 
-        console.log("Starting data fetch for:", {timepointId, componentId});
+            // Handle responses
+            const [detailsData, dmrData, genesData, dmrStatusData] = await Promise.all([
+                detailsRes.json(),
+                dmrRes.json(),
+                genesRes.json(),
+                dmrStatusRes.json(),
+            ]);
 
-        // Fetch component details and DMR details in parallel
-        Promise.all([
-            fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`),
-            fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`)
-        ])
-        .then(([detailsRes, dmrRes]) => {
-            if (!detailsRes.ok) throw new Error("Failed to load component details");
-            if (!dmrRes.ok) throw new Error("Failed to load DMR details");
-            return Promise.all([detailsRes.json(), dmrRes.json()]);
-        })
-        .then(([detailsData, dmrData]) => {
-            if (detailsData.status === "success" && dmrData.status === "success") {
-                setComponentDetails({
-                    ...detailsData.data,
-                    dmr_details: dmrData.data
-                });
-            } else {
-                throw new Error("Failed to load component data");
-            }
-        })
-            .catch((error) => {
-                console.error("Error:", error);
-                setError(error.message);
-            })
-            .finally(() => {
-                setLoading(false);
+            // Update state once with all data
+            setComponentDetails({
+                ...detailsData.data,
+                dmr_details: dmrData.data
             });
+            setGeneSymbols(genesData.data);
+            setDmrNames(dmrStatusData.dmr_status);
 
-        // Fetch gene symbols separately
-        fetch(`${API_BASE_URL}/component/genes/symbols`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                timepoint_id: timepointId,
-                component_id: componentId,
-            }),
-        })
-            .then((response) => {
-                if (!response.ok) throw new Error("Failed to fetch gene symbols");
-                return response.json();
-            })
-            .then((data) => {
-                if (data.status === "success") {
-                    setGeneSymbols(data.data);
-                }
-            })
-            .catch((error) => {
-                console.error("Error fetching gene symbols:", error);
-            });
-    }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchAllData();
   }, [timepointId, componentId]);
 
   if (loading) {
