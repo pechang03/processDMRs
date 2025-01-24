@@ -2,22 +2,18 @@ DROP VIEW IF EXISTS gene_annotations_view;
 CREATE VIEW gene_annotations_view AS
 SELECT
     g.id AS gene_id,
-    g.master_gene_id,
     g.symbol,
     g.description,
-    g.chromosome,
-    g.start_position,
-    g.end_position,
-    g.strand,
-    g.gene_type,
-    g.created_at,
-    g.updated_at,
+    g.master_gene_id,
+    g.interaction_source,
+    g.promoter_info,
     gta.timepoint_id,
     gta.node_type,
     gta.degree,
     gta.is_isolate,
     gta.biclique_ids,
-    gta.component_id
+    gta.component_id,
+    gta.gene_type
 FROM genes g
 JOIN gene_timepoint_annotations gta ON g.id = gta.gene_id;
 
