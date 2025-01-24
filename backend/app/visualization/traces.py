@@ -268,7 +268,7 @@ def create_dmr_trace(
         is_hub = int(node_id) in dominating_set  # Explicit conversion
         
         # Add debug logging
-        print(f"DMR {node_id} is_hub: {is_hub}")
+        logger.debug(f"DMR {node_id} is_hub: {is_hub}")
         
         sizes.append(15 if is_hub else 10)
         symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
@@ -288,7 +288,15 @@ def create_dmr_trace(
         return None
 
     # Add debug logging
-    print("DMR trace marker configuration:")
+    logger.debug("DMR trace marker configuration: %s", {
+        "symbols": symbols,
+        "marker_config": {
+            "size": sizes,
+            "color": colors,
+            "symbol": symbols,
+            "line": dict(color="black", width=1),
+        }
+    })
     print("Symbols:", symbols)
     print("Marker configuration:", {
         "size": sizes,
