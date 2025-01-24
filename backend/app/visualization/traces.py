@@ -187,8 +187,9 @@ def create_gene_trace(
         return None
 
     # Add position offset calculations
-    x_offset = 0.08 * (-1 if x_pos > 0 else 1)  # Move text away from node
-    y_offset = 0.05 * (1 if y_pos > 0 else -1)  # Vertical offset based on position
+    # Reverse offsets for regular genes to position labels better
+    x_offset = 0.08 * (1 if x_pos > 0 else -1)  # Move text away from node
+    y_offset = 0.05 * (-1 if y_pos > 0 else 1)  # Vertical offset based on position
 
     return go.Scatter(
         x=x,
