@@ -219,10 +219,9 @@ def get_component_details(timepoint_id, component_id):
                         ds.dmr_id,
                         ds.dominated_gene_count,
                         ds.utility_score,
-                        ds.component_id
+                        :component_id as component_id
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
-                    AND ds.component_id = :component_id
                     AND ds.dmr_id IN (
                         SELECT CAST(trim(value) AS INTEGER)
                         FROM json_each(
