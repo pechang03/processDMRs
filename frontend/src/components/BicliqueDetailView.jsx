@@ -367,31 +367,37 @@ function BicliqueDetailView({ timepointId, componentId }) {
   }, [componentDetails, dmrNames]);
 
   React.useEffect(() => {
-    if (!timepointId || !componentId) return;
-
+    const abortController = new AbortController();
+    
     const fetchAllData = async () => {
+        if (!timepointId || !componentId) return;
+
         setLoading(true);
         setError(null);
         
         try {
-            // Fetch all data in parallel
+            // Fetch all data in parallel with abort signals
             const [detailsRes, dmrRes, genesRes, dmrStatusRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`),
-                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`),
-                // Gene symbols
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`, { 
+                    signal: abortController.signal 
+                }),
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`, {
+                    signal: abortController.signal 
+                }),
                 fetch(`${API_BASE_URL}/component/genes/symbols`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ timepoint_id: timepointId, component_id: componentId }),
+                    signal: abortController.signal
                 }),
-                // DMR status
                 fetch(`${API_BASE_URL}/component/dmrs/status`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        dmr_ids: [], // Will be updated after details load
+                        dmr_ids: [],
                         timepoint_id: timepointId 
                     }),
+                    signal: abortController.signal
                 }),
             ]);
 
