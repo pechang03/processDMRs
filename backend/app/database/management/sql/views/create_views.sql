@@ -196,3 +196,35 @@ SELECT
     tc.parent_id
 FROM triconnected_components tc
 JOIN timepoints t ON tc.timepoint_id = t.id;
+
+-- Create view for GO enrichment details with top processes for DMRs
+DROP VIEW IF EXISTS view_go_enrichment_top_processes_dmr;
+CREATE VIEW view_go_enrichment_top_processes_dmr AS
+SELECT
+    d.dmr_id,
+    d.go_terms,
+    d.p_value AS dmr_p_value,
+    d.enrichment_score AS dmr_enrichment_score,
+    t.termId,
+    t.pValue AS top_process_p_value,
+    t.enrichmentScore AS top_process_enrichment_score
+FROM 
+    go_enrichment_dmr d
+JOIN 
+    top_go_processes_dmr t ON d.dmr_id = t.dmr_id;
+
+-- Create view for GO enrichment details with top processes for bicliques
+DROP VIEW IF EXISTS view_go_enrichment_top_processes_biclique;
+CREATE VIEW view_go_enrichment_top_processes_biclique AS
+SELECT
+    b.biclique_id,
+    b.go_terms,
+    b.p_value AS biclique_p_value,
+    b.enrichment_score AS biclique_enrichment_score,
+    t.termId,
+    t.pValue AS top_process_p_value,
+    t.enrichmentScore AS top_process_enrichment_score
+FROM 
+    go_enrichment_biclique b
+JOIN 
+    top_go_processes_biclique t ON b.biclique_id = t.biclique_id;

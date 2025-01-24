@@ -284,6 +284,56 @@ class GeneDetails(Base):
     )
 
 
+class GOEnrichmentDMR(Base):
+    __tablename__ = "go_enrichment_dmr"
+    
+    dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
+    go_terms = Column(JSON)
+    p_value = Column(Float)
+    enrichment_score = Column(Float)
+    source = Column(Text)
+    biologicalProcessCount = Column(Integer)
+    significantBiologicalProcesses = Column(JSON)
+    topBiologicalProcess = Column(Text)
+    biologicalProcessAnnotationDetails = Column(JSON)
+    
+    # Relationship
+    dmr = relationship("DMR", backref="go_enrichment")
+    top_processes = relationship("TopGOProcessesDMR", backref="enrichment")
+
+class GOEnrichmentBiclique(Base):
+    __tablename__ = "go_enrichment_biclique"
+    
+    biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
+    go_terms = Column(JSON)
+    p_value = Column(Float)
+    enrichment_score = Column(Float)
+    source = Column(Text)
+    biologicalProcessCount = Column(Integer)
+    significantBiologicalProcesses = Column(JSON)
+    topBiologicalProcess = Column(Text)
+    biologicalProcessAnnotationDetails = Column(JSON)
+    
+    # Relationship
+    biclique = relationship("Biclique", backref="go_enrichment")
+    top_processes = relationship("TopGOProcessesBiclique", backref="enrichment")
+
+class TopGOProcessesDMR(Base):
+    __tablename__ = "top_go_processes_dmr"
+    
+    dmr_id = Column(Integer, ForeignKey("go_enrichment_dmr.dmr_id"), primary_key=True)
+    termId = Column(String(50), primary_key=True)
+    pValue = Column(Float)
+    enrichmentScore = Column(Float)
+
+class TopGOProcessesBiclique(Base):
+    __tablename__ = "top_go_processes_biclique"
+    
+    biclique_id = Column(Integer, ForeignKey("go_enrichment_biclique.biclique_id"), primary_key=True)
+    termId = Column(String(50), primary_key=True)
+    pValue = Column(Float)
+    enrichmentScore = Column(Float)
+
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)

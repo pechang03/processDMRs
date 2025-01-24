@@ -128,6 +128,54 @@ CREATE TABLE gene_details (
 -- Create index for NCBI_id lookups
 CREATE INDEX idx_gene_details_ncbi ON gene_details(NCBI_id);
 
+-- Create GO Enrichment DMR Table
+CREATE TABLE go_enrichment_dmr (
+    dmr_id INTEGER PRIMARY KEY,
+    go_terms JSON,
+    p_value FLOAT,
+    enrichment_score FLOAT,
+    source TEXT,
+    biologicalProcessCount INTEGER,
+    significantBiologicalProcesses JSON,
+    topBiologicalProcess TEXT,
+    biologicalProcessAnnotationDetails JSON,
+    FOREIGN KEY (dmr_id) REFERENCES dmrs(id)
+);
+
+-- Create GO Enrichment Biclique Table
+CREATE TABLE go_enrichment_biclique (
+    biclique_id INTEGER PRIMARY KEY,
+    go_terms JSON,
+    p_value FLOAT,
+    enrichment_score FLOAT,
+    source TEXT,
+    biologicalProcessCount INTEGER,
+    significantBiologicalProcesses JSON,
+    topBiologicalProcess TEXT,
+    biologicalProcessAnnotationDetails JSON,
+    FOREIGN KEY (biclique_id) REFERENCES bicliques(id)
+);
+
+-- Create Top GO Processes DMR Table
+CREATE TABLE top_go_processes_dmr (
+    dmr_id INTEGER,
+    termId TEXT,
+    pValue FLOAT,
+    enrichmentScore FLOAT,
+    PRIMARY KEY (dmr_id, termId),
+    FOREIGN KEY (dmr_id) REFERENCES go_enrichment_dmr(dmr_id)
+);
+
+-- Create Top GO Processes Biclique Table
+CREATE TABLE top_go_processes_biclique (
+    biclique_id INTEGER,
+    termId TEXT,
+    pValue FLOAT,
+    enrichmentScore FLOAT,
+    PRIMARY KEY (biclique_id, termId),
+    FOREIGN KEY (biclique_id) REFERENCES go_enrichment_biclique(biclique_id)
+);
+
 -- Indexing for Performance
 CREATE INDEX idx_timepoints_name ON timepoints(name);
 CREATE INDEX idx_genes_symbol ON genes(symbol);
