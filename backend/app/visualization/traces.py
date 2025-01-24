@@ -5,6 +5,7 @@
 """Node trace creation functionality"""
 
 import logging
+import matplotlib.colors
 from typing import Dict, List, Set, Tuple, Any
 from backend.app.utils.edge_info import EdgeInfo
 import plotly.graph_objs as go
@@ -57,12 +58,28 @@ def create_node_traces(
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
-        if color.startswith("#"):
+        """Safely convert color to transparent version with validation."""
+        try:
+            # Handle named colors and short hex codes
+            if not color.startswith("#"):
+                color = matplotlib.colors.to_hex(color).lower()
+                
+            # Validate hex format
+            if len(color) not in [4, 7] or not all(c in "0123456789abcdef" for c in color[1:]):
+                raise ValueError(f"Invalid hex color: {color}")
+                
+            # Expand shorthand hex
+            if len(color) == 4:
+                color = f"#{color[1]}{color[1]}{color[2]}{color[2]}{color[3]}{color[3]}"
+
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
             b = int(color[5:7], 16)
             return f"rgba({r},{g},{b},{alpha})"
-        return color
+            
+        except (ValueError, AttributeError) as e:
+            logger.warning(f"Invalid color format: {color}, using fallback. Error: {str(e)}")
+            return "rgba(128,128,128,0.5)"  # Fallback to gray
 
     # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
@@ -164,9 +181,14 @@ def create_unified_gene_trace(
         
         # Color logic
         biclique_idx = node_biclique_map.get(node_id, [0])[0]
-        color = biclique_colors[biclique_idx % len(biclique_colors)]
-        colors.append(f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.6)" 
-                     if is_split else color)
+        try:
+            color = biclique_colors[biclique_idx % len(biclique_colors)]
+            if not color.startswith("#"):
+                color = matplotlib.colors.to_hex(color).lower()
+            colors.append(f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.6)" 
+                         if is_split else color)
+        except IndexError:
+            colors.append("#808080")  # Fallback to gray
         
         # Text and hover
         label = node_labels.get(node_id, str(node_id))
