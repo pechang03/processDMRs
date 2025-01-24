@@ -203,7 +203,7 @@ def get_component_details(timepoint_id, component_id):
                     AND LOWER(cd.graph_type) = 'split'
                 ),
                 biclique_info AS (
-                    SELECT 
+                    SELECT DISTINCT
                         b.id as biclique_id,
                         b.dmr_ids,
                         b.gene_ids,
@@ -218,8 +218,7 @@ def get_component_details(timepoint_id, component_id):
                     SELECT 
                         ds.dmr_id,
                         ds.dominated_gene_count,
-                        ds.utility_score,
-                        :component_id as component_id
+                        ds.utility_score
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
                     AND ds.dmr_id IN (
@@ -246,20 +245,19 @@ def get_component_details(timepoint_id, component_id):
                             )
                         ) 
                     END as bicliques,
-                    CASE 
-                        WHEN di.dmr_id IS NULL THEN '[]'
-                        ELSE json_group_array(
+                    (
+                        SELECT json_group_array(
                             json_object(
-                                'dmr_id', di.dmr_id,
-                                'dominated_gene_count', di.dominated_gene_count,
-                                'utility_score', di.utility_score
+                                'dmr_id', dmr_id,
+                                'dominated_gene_count', dominated_gene_count,
+                                'utility_score', utility_score
                             )
                         )
-                    END as dominating_sets
+                        FROM dominating_info
+                    ) as dominating_sets
                 FROM component_info ci
                 LEFT JOIN biclique_info bi ON ci.component_id = bi.component_id
-                LEFT JOIN dominating_info di ON ci.component_id = di.component_id
-                GROUP BY ci.component_id, bi.biclique_id
+                GROUP BY ci.component_id
             """)
 
             result = session.execute(
