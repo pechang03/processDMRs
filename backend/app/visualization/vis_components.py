@@ -8,7 +8,7 @@ from .traces import (
     create_dmr_trace,
     create_unified_gene_trace
 )
-from .graph_layout_logical import create_circular_layout
+from .layout import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
 from backend.app.biclique_analysis.classifier import classify_biclique
