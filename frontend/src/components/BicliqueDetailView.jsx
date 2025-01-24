@@ -27,7 +27,7 @@ import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "../styles/BicliqueDetailView.css";
 import { API_BASE_URL } from "../config.js";
 
-const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
+const GeneTable = ({ genes, geneSymbols, geneAnnotations, componentDetails }) => {
   console.log('GeneTable props:', { genes, geneSymbols, geneAnnotations });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -104,7 +104,7 @@ const GeneTable = ({ genes, geneSymbols, geneAnnotations }) => {
             {geneArray
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((gene) => (
-                <TableRow key={`${componentDetails.component_id}_${gene.id}`}>
+                <TableRow key={`${componentDetails?.component_id}_${gene.id}`}>
                   <TableCell>{gene.id}</TableCell>
                   <TableCell>{gene.symbol}</TableCell>
                   <TableCell>{gene.type}</TableCell>
@@ -412,14 +412,19 @@ function BicliqueDetailView({ timepointId, componentId }) {
             setDmrNames(dmrStatusData.dmr_status);
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             console.error("Error fetching data:", error);
             setError(error.message);
         } finally {
-            setLoading(false);
+            if (!abortController.signal.aborted) {
+                setLoading(false);
+            }
         }
     };
 
     fetchAllData();
+    
+    return () => abortController.abort();
   }, [timepointId, componentId]);
 
   if (loading) {
@@ -575,6 +580,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                         genes={biclique.gene_ids}
                         geneSymbols={geneSymbols}
                         geneAnnotations={geneAnnotations}
+                        componentDetails={componentDetails}
                       />
                     </Box>
                     <Box>
