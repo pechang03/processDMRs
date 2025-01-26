@@ -2,8 +2,12 @@
 
 import json
 from typing import Dict, List, Set, Tuple
-from plotly.utils import PlotlyJSONEncoder
 import plotly
+from plotly.utils import PlotlyJSONEncoder
+import plotly.graph_objects as go
+
+# Generate example data
+import numpy as np
 import networkx as nx
 
 from sqlalchemy.orm import Session
@@ -24,31 +28,42 @@ from backend.app.database.models import (
     GeneTimepointAnnotation,
 )
 from backend.app.core.data_loader import preprocess_graph_for_visualization
+import numpy as np
+import re
+
+
+from .color_utils import get_rgb_arr, get_rgb_str
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
-    """Generate distinct colors for bicliques as CSS rgba strings"""
+    """Generate distinct colors for bicliques as CSS rgb strings"""
+    """ see also https://plotly.com/python/marker-style/"""
     import plotly.colors
 
     base_colors = plotly.colors.qualitative.Set3 * (num_bicliques // 12 + 1)
 
-    rgba_colors = []
+    rgb_colors = []
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
-            r = int(color[1:3], 16)
-            g = int(color[3:5], 16)
-            b = int(color[5:7], 16)
-            rgba_colors.append(f"rgba({r},{g},{b},1)")  # Changed 1.0 to 1
+            # Convert hex to RGB string
+            rgb_arr = np.array(
+                [int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)]
+            )
+            rgb_colors.append(get_rgb_str(rgb_arr))
         elif color.startswith("rgba"):
-            # Fix existing rgba colors
-            parts = color[5:-1].split(",")
-            rgba_colors.append(f"rgba({','.join(parts[:3])},1)")  # Force alpha to 1
+            # Use existing RGBA color converted to RGB
+            rgb_arr = get_rgb_arr(color)
+            rgb_colors.append(get_rgb_str(rgb_arr))
         elif color.startswith("rgb"):
-            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1)"))
+            # Use existing RGB color directly
+            rgb_arr = get_rgb_arr(color)
+            rgb_colors.append(get_rgb_str(rgb_arr))
         else:
-            rgba_colors.append("rgba(0,0,255,1)")  # Default as CSS string
+            # Default color as RGB
+            rgb_arr = np.array([0, 0, 255])  # Blue
+            rgb_colors.append(get_rgb_str(rgb_arr))
 
-    return rgba_colors
+    return rgb_colors
 
 
 def create_biclique_visualization(
@@ -121,6 +136,9 @@ def create_biclique_visualization(
 
     # Determine which node positions to use
     positions = original_node_positions if original_node_positions else node_positions
+    split_genes = {
+        node for node in gene_nodes if len(node_biclique_map.get(node, [])) > 1
+    }
 
     # Create edge traces with EdgeInfo using the appropriate positions
     edge_traces = create_edge_traces(
@@ -128,6 +146,7 @@ def create_biclique_visualization(
         positions,
         node_labels,
         original_graph,
+        split_genes,
         edge_style={"width": 1},
     )
     traces.extend(edge_traces)
@@ -138,9 +157,6 @@ def create_biclique_visualization(
     )
     dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
     gene_nodes = all_nodes - dmr_nodes
-    split_genes = {
-        node for node in gene_nodes if len(node_biclique_map.get(node, [])) > 1
-    }
     regular_genes = gene_nodes - split_genes
 
     node_info = NodeInfo(
@@ -199,12 +215,6 @@ def create_component_visualization(
     Returns:
         JSON string containing Plotly visualization data
     """
-    from database.models import (
-        Component,
-        Biclique,
-        DMRTimepointAnnotation,
-        GeneTimepointAnnotation,
-    )
 
     # Get component data from database
     component = session.query(Component).get(component_id)
