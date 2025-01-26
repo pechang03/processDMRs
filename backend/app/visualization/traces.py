@@ -57,22 +57,22 @@ def create_node_traces(
     nodes_to_show = component["component"]
 
     # Helper function to create transparent version of color
-    def make_transparent(color: str, alpha: float = 0.6) -> list:
-        """Convert color to transparent RGBA list"""
+    def make_transparent(color: str, alpha: float = 0.6) -> str:
+        """Convert color to transparent rgba string"""
         try:
             if color.startswith("#"):
                 r = int(color[1:3], 16)
                 g = int(color[3:5], 16)
                 b = int(color[5:7], 16)
-                return [r, g, b, alpha]
+                return f"rgba({r},{g},{b},{alpha})"
             elif color.startswith("rgba"):
                 parts = [float(x) for x in color[5:-1].split(',')]
-                parts[3] = alpha  # Override alpha
-                return parts
-            return [128, 128, 128, alpha]  # Fallback to gray
+                parts[3] = alpha
+                return f"rgba({','.join(map(str, parts))})"
+            return f"rgba(128,128,128,{alpha})"  # Fallback to gray
         except Exception as e:
             logger.warning(f"Color conversion error: {str(e)}")
-            return [128, 128, 128, alpha]
+            return f"rgba(128,128,128,{alpha})"
 
     # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
@@ -355,22 +355,22 @@ def create_edge_traces(
     # Use parameter directly instead of nested classifications
     style_map = {
         "permanent": {
-            "color": [119, 119, 119, 1.0],  # #777777 converted to RGBA
+            "color": "rgba(119, 119, 119, 1.0)",  # Convert list to rgba string
             "dash": "solid",
             "width": 1.5,
         },
         "false_positive": {
-            "color": [255, 0, 0, 0.4],  # rgba(255, 0, 0, 0.4)
+            "color": "rgba(255, 0, 0, 0.4)",
             "dash": "dash",
             "width": 0.75,
         },
         "false_negative": {
-            "color": [0, 0, 255, 0.4],  # rgba(0, 0, 255, 0.4)
+            "color": "rgba(0, 0, 255, 0.4)",
             "dash": "dash",
             "width": 0.75,
         },
         "split_gene_edge": {
-            "color": [150, 150, 150, 0.3],  # rgba(150, 150, 150, 0.3)
+            "color": "rgba(150, 150, 150, 0.3)",
             "dash": "dot",
             "width": 0.5,
         }
@@ -457,9 +457,13 @@ def create_biclique_boxes(
                 x=[x_min, x_max, x_max, x_min, x_min],
                 y=[y_min, y_min, y_max, y_max, y_min],
                 mode="lines",
-                line=dict(color=biclique_colors[biclique_idx], width=2, dash="dot"),
+                line=dict(
+                    color=biclique_colors[biclique_idx],  # Now using CSS string
+                    width=2, 
+                    dash="dot"
+                ),
                 fill="toself",
-                fillcolor=biclique_colors[biclique_idx],
+                fillcolor=biclique_colors[biclique_idx],  # Now using CSS string
                 opacity=0.1,
                 name=f"Biclique {biclique_idx + 1}",
                 showlegend=True,
