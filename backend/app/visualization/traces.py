@@ -115,7 +115,12 @@ def create_node_traces(
             biclique_idx = node_biclique_map.get(node, [0])[0]
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             arr = get_rgb_arr(color)
-            gene_colors.append((int(arr[0]), int(arr[1]), int(arr[2]), 0.6))  # 0.6 alpha for transparency
+            gene_colors.append((
+                int(arr[0]) / 255,
+                int(arr[1]) / 255,
+                int(arr[2]) / 255,
+                0.6  # 0.6 alpha for transparency
+            ))
             gene_text_positions.append(get_text_position(x, y))
 
     if gene_x:
@@ -278,7 +283,12 @@ def create_dmr_trace(
         else:
             color = "gray"
         arr = get_rgb_arr(color)
-        colors.append((int(arr[0]), int(arr[1]), int(arr[2]), 1))
+        colors.append((
+            int(arr[0]) / 255,
+            int(arr[1]) / 255, 
+            int(arr[2]) / 255,
+            1
+        ))
 
         # Convert node_id to int for comparison
         is_hub = int(node_id) in dominating_set  # Explicit conversion
