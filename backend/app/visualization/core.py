@@ -22,30 +22,29 @@ from backend.app.core.data_loader import preprocess_graph_for_visualization
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
-    """Generate distinct colors for bicliques in proper RGBA format."""
+    """Generate distinct colors for bicliques in proper numerical format."""
     import plotly.colors
     base_colors = plotly.colors.qualitative.Set3 * (num_bicliques // 12 + 1)
     
     rgba_colors = []
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
-            # Convert hex to rgba with float alpha
+            # Convert hex to RGBA list
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
             b = int(color[5:7], 16)
-            rgba_colors.append(f"rgba({r},{g},{b},1.0)")  # Changed to 1.0
+            rgba_colors.append([r, g, b, 1.0])  # Now a list of numbers
         elif color.startswith("rgba"):
-            # Ensure existing alphas are floats
-            parts = color[5:-1].split(',')
-            if len(parts) == 4 and '.' not in parts[3]:
-                parts[3] += '.0'
-            rgba_colors.append(f"rgba({','.join(parts)})")
+            # Extract numerical values from rgba string
+            parts = [float(x.strip()) for x in color[5:-1].split(',')]
+            rgba_colors.append(parts)
         elif color.startswith("rgb"):
-            # Convert rgb() to rgba() with float alpha
-            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1.0)"))
+            # Convert rgb() to rgba() with full opacity
+            parts = [int(x.strip()) for x in color[4:-1].split(',')]
+            rgba_colors.append(parts + [1.0])
         else:
             # Default to blue with full opacity
-            rgba_colors.append("rgba(0,0,255,1.0)")
+            rgba_colors.append([0, 0, 255, 1.0])
     
     return rgba_colors
 

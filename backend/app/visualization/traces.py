@@ -57,29 +57,22 @@ def create_node_traces(
     nodes_to_show = component["component"]
 
     # Helper function to create transparent version of color
-    def make_transparent(color: str, alpha: float = 0.6) -> str:
-        """Safely convert color to transparent version with validation."""
+    def make_transparent(color: str, alpha: float = 0.6) -> list:
+        """Convert color to transparent RGBA list"""
         try:
-            # Handle named colors and short hex codes
-            if not color.startswith("#"):
-                color = matplotlib.colors.to_hex(color).lower()
-                
-            # Validate hex format
-            if len(color) not in [4, 7] or not all(c in "0123456789abcdef" for c in color[1:]):
-                raise ValueError(f"Invalid hex color: {color}")
-                
-            # Expand shorthand hex
-            if len(color) == 4:
-                color = f"#{color[1]}{color[1]}{color[2]}{color[2]}{color[3]}{color[3]}"
-
-            r = int(color[1:3], 16)
-            g = int(color[3:5], 16)
-            b = int(color[5:7], 16)
-            return f"rgba({r},{g},{b},{alpha})"
-            
-        except (ValueError, AttributeError) as e:
-            logger.warning(f"Invalid color format: {color}, using fallback. Error: {str(e)}")
-            return "rgba(128,128,128,0.5)"  # Fallback to gray
+            if color.startswith("#"):
+                r = int(color[1:3], 16)
+                g = int(color[3:5], 16)
+                b = int(color[5:7], 16)
+                return [r, g, b, alpha]
+            elif color.startswith("rgba"):
+                parts = [float(x) for x in color[5:-1].split(',')]
+                parts[3] = alpha  # Override alpha
+                return parts
+            return [128, 128, 128, alpha]  # Fallback to gray
+        except Exception as e:
+            logger.warning(f"Color conversion error: {str(e)}")
+            return [128, 128, 128, alpha]
 
     # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
@@ -362,22 +355,22 @@ def create_edge_traces(
     # Use parameter directly instead of nested classifications
     style_map = {
         "permanent": {
-            "color": "#777777",
+            "color": [119, 119, 119, 1.0],  # #777777 converted to RGBA
             "dash": "solid",
             "width": 1.5,
         },
         "false_positive": {
-            "color": "rgba(255, 0, 0, 0.4)",
-            "dash": "dash", 
+            "color": [255, 0, 0, 0.4],  # rgba(255, 0, 0, 0.4)
+            "dash": "dash",
             "width": 0.75,
         },
         "false_negative": {
-            "color": "rgba(0, 0, 255, 0.4)",
+            "color": [0, 0, 255, 0.4],  # rgba(0, 0, 255, 0.4)
             "dash": "dash",
             "width": 0.75,
         },
         "split_gene_edge": {
-            "color": "rgba(150, 150, 150, 0.3)",
+            "color": [150, 150, 150, 0.3],  # rgba(150, 150, 150, 0.3)
             "dash": "dot",
             "width": 0.5,
         }
