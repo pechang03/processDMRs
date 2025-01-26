@@ -45,23 +45,43 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
     rgb_colors = []
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
-            # Convert hex to RGB string
+            # Convert hex to RGB tuple
             rgb_arr = np.array(
                 [int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)]
             )
-            rgb_colors.append(get_rgb_str(rgb_arr))
+            rgb_colors.append((
+                int(rgb_arr[0]) / 255,
+                int(rgb_arr[1]) / 255,
+                int(rgb_arr[2]) / 255,
+                1
+            ))
         elif color.startswith("rgba"):
-            # Use existing RGBA color converted to RGB
+            # Use existing RGBA color converted to RGB tuple
             rgb_arr = get_rgb_arr(color)
-            rgb_colors.append(get_rgb_str(rgb_arr))
+            rgb_colors.append((
+                int(rgb_arr[0]) / 255,
+                int(rgb_arr[1]) / 255,
+                int(rgb_arr[2]) / 255,
+                1
+            ))
         elif color.startswith("rgb"):
-            # Use existing RGB color directly
+            # Use existing RGB color as tuple
             rgb_arr = get_rgb_arr(color)
-            rgb_colors.append(get_rgb_str(rgb_arr))
+            rgb_colors.append((
+                int(rgb_arr[0]) / 255,
+                int(rgb_arr[1]) / 255,
+                int(rgb_arr[2]) / 255,
+                1
+            ))
         else:
-            # Default color as RGB
+            # Default color as RGB tuple
             rgb_arr = np.array([0, 0, 255])  # Blue
-            rgb_colors.append(get_rgb_str(rgb_arr))
+            rgb_colors.append((
+                int(rgb_arr[0]) / 255,
+                int(rgb_arr[1]) / 255,
+                int(rgb_arr[2]) / 255,
+                1
+            ))
 
     return rgb_colors
 
