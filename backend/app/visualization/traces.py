@@ -114,7 +114,8 @@ def create_node_traces(
             gene_y.append(y)
             biclique_idx = node_biclique_map.get(node, [0])[0]
             color = biclique_colors[biclique_idx % len(biclique_colors)]
-            gene_colors.append(make_transparent(color))
+            arr = get_rgb_arr(color)
+            gene_colors.append((int(arr[0]), int(arr[1]), int(arr[2]), 0.6))  # 0.6 alpha for transparency
             gene_text_positions.append(get_text_position(x, y))
 
     if gene_x:
@@ -177,7 +178,7 @@ def create_unified_gene_trace(
             if not color.startswith("#"):
                 color = matplotlib.colors.to_hex(color).lower()
             rgb = get_rgb_arr(color)
-            colors.append(get_rgb_str(rgb))
+            colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2]), 1))
             
         except IndexError:
             colors.append("#808080")  # Fallback to gray
@@ -276,7 +277,8 @@ def create_dmr_trace(
             )
         else:
             color = "gray"
-        colors.append(color)
+        arr = get_rgb_arr(color)
+        colors.append((int(arr[0]), int(arr[1]), int(arr[2]), 1))
 
         # Convert node_id to int for comparison
         is_hub = int(node_id) in dominating_set  # Explicit conversion
