@@ -154,6 +154,11 @@ def create_biclique_visualization(
     )
     traces.extend(biclique_box_traces)
 
+    # Create node sets from bicliques
+    all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
+    dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
+    gene_nodes = all_nodes - dmr_nodes
+    
     # Determine which node positions to use
     positions = original_node_positions if original_node_positions else node_positions
     split_genes = {
