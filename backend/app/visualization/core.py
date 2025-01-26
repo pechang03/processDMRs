@@ -38,13 +38,15 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
             b = int(color[5:7], 16)
-            rgba_colors.append(f"rgba({r},{g},{b},1.0)")  # Convert to CSS string
+            rgba_colors.append(f"rgba({r},{g},{b},1)")  # Changed 1.0 to 1
         elif color.startswith("rgba"):
-            rgba_colors.append(color)  # Keep as-is
+            # Fix existing rgba colors
+            parts = color[5:-1].split(",")
+            rgba_colors.append(f"rgba({','.join(parts[:3])},1)")  # Force alpha to 1
         elif color.startswith("rgb"):
-            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1.0)"))
+            rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1)"))
         else:
-            rgba_colors.append("rgba(0,0,255,1.0)")  # Default as CSS string
+            rgba_colors.append("rgba(0,0,255,1)")  # Default as CSS string
 
     return rgba_colors
 
