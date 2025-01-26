@@ -17,15 +17,21 @@ from .traces import (
     create_biclique_boxes,
 )
 from .layout import create_visual_layout
-from backend.app.database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
+from backend.app.database.models import (
+    Component,
+    Biclique,
+    DMRTimepointAnnotation,
+    GeneTimepointAnnotation,
+)
 from backend.app.core.data_loader import preprocess_graph_for_visualization
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
     """Generate distinct colors for bicliques as CSS rgba strings"""
     import plotly.colors
+
     base_colors = plotly.colors.qualitative.Set3 * (num_bicliques // 12 + 1)
-    
+
     rgba_colors = []
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
@@ -39,7 +45,7 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
             rgba_colors.append(color.replace("rgb", "rgba").replace(")", ",1.0)"))
         else:
             rgba_colors.append("rgba(0,0,255,1.0)")  # Default as CSS string
-    
+
     return rgba_colors
 
 
@@ -59,27 +65,35 @@ def create_biclique_visualization(
     gene_metadata: Dict[str, Dict] = None,
 ) -> str:
     """Create interactive Plotly visualization with colored bicliques.
-    
+
     Node shapes are defined in visualization.traces.NODE_SHAPES.
     """
     """Create interactive Plotly visualization with colored bicliques."""
     print(f"\nCreating visualization for {len(bicliques)} bicliques")
-    
+
     # Validate and format bicliques
     formatted_bicliques = []
     for biclique in bicliques:
         if isinstance(biclique, (list, tuple)) and len(biclique) == 2:
             # Convert to sets if needed
-            dmr_set = set(biclique[0]) if isinstance(biclique[0], (list, set)) else {biclique[0]}
-            gene_set = set(biclique[1]) if isinstance(biclique[1], (list, set)) else {biclique[1]}
+            dmr_set = (
+                set(biclique[0])
+                if isinstance(biclique[0], (list, set))
+                else {biclique[0]}
+            )
+            gene_set = (
+                set(biclique[1])
+                if isinstance(biclique[1], (list, set))
+                else {biclique[1]}
+            )
             formatted_bicliques.append((dmr_set, gene_set))
         else:
             print(f"Warning: Skipping invalid biclique format: {biclique}")
             continue
-            
+
     if not formatted_bicliques:
         raise ValueError("No valid bicliques found for visualization")
-        
+
     bicliques = formatted_bicliques
 
     # Preprocess graphs for visualization
@@ -112,7 +126,7 @@ def create_biclique_visualization(
         positions,
         node_labels,
         original_graph,
-        edge_style={"width": 1}
+        edge_style={"width": 1},
     )
     traces.extend(edge_traces)
 
@@ -159,9 +173,9 @@ def create_biclique_visualization(
     print("Final visualization configuration:")
     print("Trace count:", len(traces))
     for i, trace in enumerate(traces):
-        if 'marker' in trace:
-            print(f"Trace {i} marker config:", trace['marker'])
-    
+        if "marker" in trace:
+            print(f"Trace {i} marker config:", trace["marker"])
+
     print(f"Created visualization with {len(traces)} traces")  # Debug logging
     return json.dumps(fig, cls=PlotlyJSONEncoder)
 
@@ -170,50 +184,63 @@ def create_component_visualization(
     component_id: int,
     session: Session,
     node_positions: Dict[int, Tuple[float, float]] = None,
-    layout_type: str = "circular"
+    layout_type: str = "circular",
 ) -> str:
     """Create visualization for a specific component.
-    
+
     Args:
         component_id: Database ID of the component
         session: Database session
         node_positions: Optional pre-calculated node positions
         layout_type: Type of layout to use ('circular' or 'spring')
-        
+
     Returns:
         JSON string containing Plotly visualization data
     """
-    from database.models import Component, Biclique, DMRTimepointAnnotation, GeneTimepointAnnotation
-    
+    from database.models import (
+        Component,
+        Biclique,
+        DMRTimepointAnnotation,
+        GeneTimepointAnnotation,
+    )
+
     # Get component data from database
     component = session.query(Component).get(component_id)
     if not component:
         raise ValueError(f"Component {component_id} not found")
-        
+
     # Get bicliques for this component
     bicliques = session.query(Biclique).filter_by(component_id=component_id).all()
-    
+
     # Create node sets
     dmr_nodes = set()
     gene_nodes = set()
     for biclique in bicliques:
         dmr_nodes.update(biclique.dmr_ids)
         gene_nodes.update(biclique.gene_ids)
-        
+
     # Get node metadata
     dmr_metadata = {}
     gene_metadata = {}
-    
-    dmr_annotations = session.query(DMRTimepointAnnotation).filter(
-        DMRTimepointAnnotation.dmr_id.in_(dmr_nodes),
-        DMRTimepointAnnotation.timepoint_id == component.timepoint_id
-    ).all()
-    
-    gene_annotations = session.query(GeneTimepointAnnotation).filter(
-        GeneTimepointAnnotation.gene_id.in_(gene_nodes),
-        GeneTimepointAnnotation.timepoint_id == component.timepoint_id
-    ).all()
-    
+
+    dmr_annotations = (
+        session.query(DMRTimepointAnnotation)
+        .filter(
+            DMRTimepointAnnotation.dmr_id.in_(dmr_nodes),
+            DMRTimepointAnnotation.timepoint_id == component.timepoint_id,
+        )
+        .all()
+    )
+
+    gene_annotations = (
+        session.query(GeneTimepointAnnotation)
+        .filter(
+            GeneTimepointAnnotation.gene_id.in_(gene_nodes),
+            GeneTimepointAnnotation.timepoint_id == component.timepoint_id,
+        )
+        .all()
+    )
+
     # Create node labels
     node_labels = {}
     for dmr in dmr_annotations:
@@ -221,18 +248,18 @@ def create_component_visualization(
         dmr_metadata[dmr.dmr_id] = {
             "degree": dmr.degree,
             "type": dmr.node_type,
-            "bicliques": dmr.biclique_ids
+            "bicliques": dmr.biclique_ids,
         }
-        
+
     for gene in gene_annotations:
         node_labels[gene.gene_id] = f"Gene_{gene.gene_id}"
         gene_metadata[gene.gene_id] = {
             "degree": gene.degree,
             "type": gene.node_type,
             "gene_type": gene.gene_type,
-            "bicliques": gene.biclique_ids
+            "bicliques": gene.biclique_ids,
         }
-    
+
     # Create node biclique map
     node_biclique_map = {}
     for idx, biclique in enumerate(bicliques):
@@ -240,36 +267,42 @@ def create_component_visualization(
             if dmr_id not in node_biclique_map:
                 node_biclique_map[dmr_id] = []
             node_biclique_map[dmr_id].append(idx)
-            
+
         for gene_id in biclique.gene_ids:
             if gene_id not in node_biclique_map:
                 node_biclique_map[gene_id] = []
             node_biclique_map[gene_id].append(idx)
-    
+
     # Calculate positions if not provided
     if not node_positions:
         if layout_type == "circular":
             layout = CircularBicliqueLayout()
         else:
             layout = SpringLogicalLayout()
-            
+
         node_info = NodeInfo(
             all_nodes=dmr_nodes | gene_nodes,
             dmr_nodes=dmr_nodes,
-            regular_genes={g for g in gene_nodes if len(node_biclique_map.get(g, [])) <= 1},
-            split_genes={g for g in gene_nodes if len(node_biclique_map.get(g, [])) > 1},
-            node_degrees={n: len(node_biclique_map.get(n, [])) for n in (dmr_nodes | gene_nodes)},
-            min_gene_id=min(gene_nodes) if gene_nodes else 0
+            regular_genes={
+                g for g in gene_nodes if len(node_biclique_map.get(g, [])) <= 1
+            },
+            split_genes={
+                g for g in gene_nodes if len(node_biclique_map.get(g, [])) > 1
+            },
+            node_degrees={
+                n: len(node_biclique_map.get(n, [])) for n in (dmr_nodes | gene_nodes)
+            },
+            min_gene_id=min(gene_nodes) if gene_nodes else 0,
         )
-        
+
         node_positions = layout.calculate_positions(
             graph=nx.Graph(),  # Empty graph since we have node sets
-            node_info=node_info
+            node_info=node_info,
         )
-    
+
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(bicliques))
-    
+
     # Create visualization
     return create_biclique_visualization(
         bicliques=[(set(b.dmr_ids), set(b.gene_ids)) for b in bicliques],
@@ -280,5 +313,5 @@ def create_component_visualization(
         original_graph=nx.Graph(),  # Add actual graph if needed
         bipartite_graph=nx.Graph(),  # Add actual graph if needed
         dmr_metadata=dmr_metadata,
-        gene_metadata=gene_metadata
+        gene_metadata=gene_metadata,
     )
