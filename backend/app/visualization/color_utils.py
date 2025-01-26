@@ -28,4 +28,4 @@ def get_rgba_str(rgb_arr: np.ndarray, alpha: float = 1.0) -> str:
 
 def get_rgb_str(rgb_arr: np.ndarray) -> str:
     """Convert RGB array to RGB string in Plotly's format (no spaces)."""
-    return f"rgb({int(rgb_arr[0])},{int(rgb_arr[1])},{int(rgb_arr[2])})"
+    return f"rgba({int(rgb_arr[0])},{int(rgb_arr[1])},{int(rgb_arr[2])},1.0)"
