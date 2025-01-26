@@ -114,7 +114,19 @@ def create_node_traces(
             gene_y.append(y)
             biclique_idx = node_biclique_map.get(node, [0])[0]
             color = biclique_colors[biclique_idx % len(biclique_colors)]
-            arr = get_rgb_arr(color)
+            if isinstance(color, tuple):
+                # color is already (r,g,b,a) in [0..1], convert to [0..255]
+                arr = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+            else:
+                if isinstance(color, tuple):
+                    # color is already (r,g,b,a) in [0..1], convert to [0..255]
+                    arr = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+                else:
+                    if isinstance(color, tuple):
+                        # color is already (r,g,b,a) in [0..1], convert to [0..255]
+                        arr = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+                    else:
+                        arr = get_rgb_arr(color)
             gene_colors.append((
                 int(arr[0]) / 255,
                 int(arr[1]) / 255,
