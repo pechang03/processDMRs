@@ -7,6 +7,7 @@
 import logging
 import matplotlib.colors
 from typing import Dict, List, Set, Tuple, Any
+from .color_utils import get_rgb_arr, get_rgb_str
 from backend.app.utils.edge_info import EdgeInfo
 import plotly.graph_objs as go
 from backend.app.utils.node_info import NodeInfo
@@ -58,21 +59,18 @@ def create_node_traces(
 
     # Helper function to create transparent version of color
     def make_transparent(color: str, alpha: float = 0.6) -> str:
-        """Convert color to transparent rgba string"""
+        """Convert color to RGB string and handle opacity separately in marker config"""
         try:
             if color.startswith("#"):
-                r = int(color[1:3], 16)
-                g = int(color[3:5], 16)
-                b = int(color[5:7], 16)
-                return f"rgba({r},{g},{b},{alpha})"
-            elif color.startswith("rgba"):
-                parts = [float(x) for x in color[5:-1].split(',')]
-                parts[3] = alpha
-                return f"rgba({','.join(map(str, parts))})"
-            return f"rgba(128,128,128,{alpha})"  # Fallback to gray
+                rgb = get_rgb_arr(color)
+                return get_rgb_str(rgb)
+            elif color.startswith("rgb"):
+                rgb = get_rgb_arr(color)
+                return get_rgb_str(rgb)
+            return get_rgb_str([128, 128, 128])  # Fallback to gray
         except Exception as e:
             logger.warning(f"Color conversion error: {str(e)}")
-            return f"rgba(128,128,128,{alpha})"
+            return "rgb(128, 128, 128)"
 
     # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
@@ -178,8 +176,9 @@ def create_unified_gene_trace(
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             if not color.startswith("#"):
                 color = matplotlib.colors.to_hex(color).lower()
-            colors.append(f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.6)" 
-                         if is_split else color)
+            rgb = get_rgb_arr(color)
+            colors.append(get_rgb_str(rgb))
+            
         except IndexError:
             colors.append("#808080")  # Fallback to gray
         
@@ -355,24 +354,28 @@ def create_edge_traces(
     # Use parameter directly instead of nested classifications
     style_map = {
         "permanent": {
-            "color": "rgba(119, 119, 119, 1.0)",  # Convert list to rgba string
+            "color": get_rgb_str([119, 119, 119]),
             "dash": "solid",
             "width": 1.5,
+            "opacity": 1.0,
         },
         "false_positive": {
-            "color": "rgba(255, 0, 0, 0.4)",
+            "color": get_rgb_str([255, 0, 0]),
             "dash": "dash",
             "width": 0.75,
+            "opacity": 0.4,
         },
         "false_negative": {
-            "color": "rgba(0, 0, 255, 0.4)",
+            "color": get_rgb_str([0, 0, 255]),
             "dash": "dash",
             "width": 0.75,
+            "opacity": 0.4,
         },
         "split_gene_edge": {
-            "color": "rgba(150, 150, 150, 0.3)",
-            "dash": "dot",
+            "color": get_rgb_str([150, 150, 150]),
+            "dash": "dot", 
             "width": 0.5,
+            "opacity": 0.3,
         }
     }
 
