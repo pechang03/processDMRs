@@ -44,7 +44,7 @@ def create_component_visualization(
 
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(component.get("raw_bicliques", [])))
-    current_app.logger.debug("Point 3")
+    # current_app.logger.debug("Point 3")
 
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
@@ -88,7 +88,7 @@ def create_component_visualization(
     if dmr_trace:
         traces.append(dmr_trace)
 
-    current_app.logger.debug("Point 3b")
+    # current_app.logger.debug("Point 3b")
     # Add gene traces using unified function
     gene_trace = create_unified_gene_trace(
         gene_nodes,  # All genes now
@@ -96,12 +96,12 @@ def create_component_visualization(
         node_labels,
         node_biclique_map,
         biclique_colors,
-        gene_metadata
+        gene_metadata,
     )
     if gene_trace:
         traces.append(gene_trace)
 
-    current_app.logger.debug("Point 4")
+    # current_app.logger.debug("Point 4")
     # Unified gene trace now handles both regular and split genes
     # split_gene_trace = create_unified_gene_trace(
     #     node_info.split_genes,
@@ -115,7 +115,7 @@ def create_component_visualization(
     # if split_gene_trace:
     #     traces.append(split_gene_trace)
 
-    current_app.logger.debug("Point 5")
+    # current_app.logger.debug("Point 5")
     # Create layout using the unified layout function
     layout = create_circular_layout(node_info)
 

@@ -186,17 +186,17 @@ def get_component_details(timepoint_id, component_id):
         with Session(engine) as session:
             # Get the component details including bicliques
             query = text("""
-                WITH component_info AS (
-                    SELECT 
-                        cd.timepoint_id,
-                        cd.timepoint,
-                        cd.component_id,
-                        cd.graph_type,
-                        cd.categories,
-                        cd.total_dmr_count,
-                        cd.total_gene_count,
-                        cd.all_dmr_ids,
-                        cd.all_gene_ids
+            WITH component_info AS (
+                SELECT 
+                    cd.timepoint_id,
+                    cd.timepoint,
+                    cd.component_id,
+                    cd.graph_type,
+                    cd.categories,
+                    cd.total_dmr_count,
+                    cd.total_gene_count,
+                    cd.all_dmr_ids,
+                    cd.all_gene_ids
                     FROM component_details_view cd
                     WHERE cd.timepoint_id = :timepoint_id 
                     AND cd.component_id = :component_id
