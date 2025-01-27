@@ -23,7 +23,7 @@ def convert_for_json(data: Any) -> Any:
         return sorted(list(data))
     elif isinstance(data, (np.integer, np.int_)):
         return int(data)
-    elif isinstance(data, (np.floating, np.float_)):
+    elif isinstance(data, (np.floating, np.float64)):
         return float(data)
     elif isinstance(data, np.ndarray):
         return data.tolist()
