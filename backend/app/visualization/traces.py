@@ -11,8 +11,9 @@ from .color_utils import get_rgb_arr, get_rgb_str
 from backend.app.utils.edge_info import EdgeInfo
 import plotly.graph_objs as go
 from backend.app.utils.node_info import NodeInfo
+from flask import current_app
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 def get_text_position(x: float, y: float) -> str:
@@ -20,7 +21,7 @@ def get_text_position(x: float, y: float) -> str:
     # Calculate buffer zone (10% of plot area)
     x_buffer = 0.1
     y_buffer = 0.1
-    
+
     # Horizontal positioning
     if x < -x_buffer:  # Left side
         horizontal = "right"
@@ -38,6 +39,25 @@ def get_text_position(x: float, y: float) -> str:
         vertical = "middle"
 
     return f"{vertical} {horizontal}"
+    # Helper function to create transparent version of color
+    #
+
+
+def make_transparent(color: str, alpha: float = 0.6) -> str:
+    """Convert color to RGB string and handle opacity separately in marker config"""
+    current_app.logger.debug("make_transparent")
+    try:
+        if color.startswith("#"):
+            rgb = get_rgb_arr(color)
+            return get_rgb_str(rgb)
+        elif color.startswith("rgb"):
+            rgb = get_rgb_arr(color)
+            return get_rgb_str(rgb)
+        return get_rgb_str(list(get_rgb_arr([128, 128, 128])))  # Fallback to gray
+    except Exception as e:
+        current_app.logger.warning(f"Color conversion error: {str(e)}")
+        return "rgb(128, 128, 128)"
+
 
 def create_node_traces(
     node_info: NodeInfo,
@@ -52,30 +72,16 @@ def create_node_traces(
 ) -> List[go.Scatter]:
     """Create node traces with consistent styling."""
     traces = []
-    import math
 
     # Use all component nodes regardless of degree
     nodes_to_show = component["component"]
 
-    # Helper function to create transparent version of color
-    def make_transparent(color: str, alpha: float = 0.6) -> str:
-        """Convert color to RGB string and handle opacity separately in marker config"""
-        try:
-            if color.startswith("#"):
-                rgb = get_rgb_arr(color)
-                return get_rgb_str(rgb)
-            elif color.startswith("rgb"):
-                rgb = get_rgb_arr(color)
-                return get_rgb_str(rgb)
-            return get_rgb_str([128, 128, 128])  # Fallback to gray
-        except Exception as e:
-            logger.warning(f"Color conversion error: {str(e)}")
-            return "rgb(128, 128, 128)"
-
     # Create DMR trace - only for nodes with degree > 0
     dmr_x, dmr_y, dmr_colors, dmr_text_positions = [], [], [], []
     for node in node_info.dmr_nodes:
-        if node in node_positions and node in nodes_to_show:  # Added check for nodes_to_show
+        if (
+            node in node_positions and node in nodes_to_show
+        ):  # Added check for nodes_to_show
             x, y = node_positions[node]
             dmr_x.append(x)
             dmr_y.append(y)
@@ -108,7 +114,9 @@ def create_node_traces(
     # Create gene trace - only for nodes with degree > 0
     gene_x, gene_y, gene_colors, gene_text_positions = [], [], [], []
     for node in node_info.regular_genes | node_info.split_genes:
-        if node in node_positions and node in nodes_to_show:  # Added check for nodes_to_show
+        if (
+            node in node_positions and node in nodes_to_show
+        ):  # Added check for nodes_to_show
             x, y = node_positions[node]
             gene_x.append(x)
             gene_y.append(y)
@@ -120,19 +128,29 @@ def create_node_traces(
             else:
                 if isinstance(color, tuple):
                     # color is already (r,g,b,a) in [0..1], convert to [0..255]
-                    arr = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+                    arr = [
+                        int(color[0] * 255),
+                        int(color[1] * 255),
+                        int(color[2] * 255),
+                    ]
                 else:
                     if isinstance(color, tuple):
                         # color is already (r,g,b,a) in [0..1], convert to [0..255]
-                        arr = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+                        arr = [
+                            int(color[0] * 255),
+                            int(color[1] * 255),
+                            int(color[2] * 255),
+                        ]
                     else:
                         arr = get_rgb_arr(color)
-            gene_colors.append((
-                int(arr[0]) / 255,
-                int(arr[1]) / 255,
-                int(arr[2]) / 255,
-                0.6  # 0.6 alpha for transparency
-            ))
+            gene_colors.append(
+                (
+                    int(arr[0]) / 255,
+                    int(arr[1]) / 255,
+                    int(arr[2]) / 255,
+                    0.6,  # 0.6 alpha for transparency
+                )
+            )
             gene_text_positions.append(get_text_position(x, y))
 
     if gene_x:
@@ -167,39 +185,57 @@ def create_unified_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    is_split: bool = False
+    is_split: bool = False,
 ) -> go.Scatter:
     """Unified gene trace creation with split/regular handling"""
     x, y, colors, texts, hovers, x_offsets, y_offsets = [], [], [], [], [], [], []
-    
+    current_app.logger.debug("Point 7")
     for node_id in sorted(gene_nodes):
         pos = node_positions.get(node_id)
         if not pos:
             continue
-            
+
         x_pos, y_pos = pos
         x.append(x_pos)
         y.append(y_pos)
-        
+
         # Calculate offsets
-        x_offset = 0.12 * (-1 if x_pos > 0 else 1) if is_split else 0.08 * (1 if x_pos > 0 else -1)
-        y_offset = 0.08 * (1 if y_pos > 0 else -1) if is_split else 0.05 * (1 if y_pos > 0 else -1)
-        
+        x_offset = (
+            0.12 * (-1 if x_pos > 0 else 1)
+            if is_split
+            else 0.08 * (1 if x_pos > 0 else -1)
+        )
+        y_offset = (
+            0.08 * (1 if y_pos > 0 else -1)
+            if is_split
+            else 0.05 * (1 if y_pos > 0 else -1)
+        )
         x_offsets.append(x_offset)
         y_offsets.append(y_offset)
-        
+
+        biclique_idx = node_biclique_map.get(node_id, [0])[
+            0
+        ]  # Get biclique index for current node
+
         # Color logic
-        biclique_idx = node_biclique_map.get(node_id, [0])[0]
+        # Color logic
         try:
             color = biclique_colors[biclique_idx % len(biclique_colors)]
-            if not color.startswith("#"):
-                color = matplotlib.colors.to_hex(color).lower()
-            rgb = get_rgb_arr(color)
-            colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2]), 1))
-            
-        except IndexError:
-            colors.append("#808080")  # Fallback to gray
-        
+            if isinstance(color, tuple):
+                # Handle tuple input (r,g,b) in [0..1] range
+                r, g, b = color[:3]  # Take first 3 values
+                colors.append((int(r * 255), int(g * 255), int(b * 255), 1))
+            else:
+                # Handle string input
+                color_str = str(color)
+                if not color_str.startswith("#"):
+                    color_str = matplotlib.colors.to_hex(color_str).lower()
+                rgb = get_rgb_arr(color_str)
+                colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2]), 1))
+
+        except (IndexError, ValueError):
+            colors.append((128, 128, 128, 1))  # Fallback to gray
+
         # Text and hover
         label = node_labels.get(node_id, str(node_id))
         texts.append(label)
@@ -214,17 +250,18 @@ def create_unified_gene_trace(
             size=12 if is_split else 10,
             color=colors,
             symbol="diamond" if is_split else "circle",
-            line=dict(width=2 if is_split else 1)
+            line=dict(width=2 if is_split else 1),
         ),
         text=texts,
         hovertext=hovers,
-        textposition=[get_text_position(x[i]+x_offsets[i], y[i]+y_offsets[i]) 
-                     for i in range(len(x))],
+        textposition=[
+            get_text_position(x[i] + x_offsets[i], y[i] + y_offsets[i])
+            for i in range(len(x))
+        ],
         textfont=dict(
-            size=14 if is_split else 12,
-            family="Arial Black" if is_split else None
+            size=14 if is_split else 12, family="Arial Black" if is_split else None
         ),
-        name="Split Genes" if is_split else "Regular Genes"
+        name="Split Genes" if is_split else "Regular Genes",
     )
 
 
@@ -238,13 +275,11 @@ All node shape assignments should reference this dictionary.
 NODE_SHAPES = {
     "dmr": {
         "regular": "hexagon",  # Changed from octagon
-        "hub": "star"
+        "hub": "star",
     },
-    "gene": {
-        "regular": "circle",
-        "split": "diamond"
-    }
+    "gene": {"regular": "circle", "split": "diamond"},
 }
+
 
 def create_dmr_trace(
     dmr_nodes: Set[int],
@@ -254,13 +289,10 @@ def create_dmr_trace(
     biclique_colors: List[str],
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
-    node_shapes: Dict[str, str] = None  # Add shape config parameter
+    node_shapes: Dict[str, str] = None,  # Add shape config parameter
 ) -> go.Scatter:
     # Add default shape configuration
-    node_shapes = node_shapes or {
-        "regular": "hexagon",
-        "hub": "star"
-    }
+    node_shapes = node_shapes or {"regular": "hexagon", "hub": "star"}
     """Create trace for DMR nodes."""
     if not dmr_nodes or not node_positions:
         return None
@@ -275,6 +307,7 @@ def create_dmr_trace(
 
     # Convert dominating_set to empty set if None
     dominating_set = dominating_set or set()
+    current_app.logger.debug("Point 5a")
 
     for node_id in sorted(dmr_nodes):
         if node_id not in node_positions:
@@ -294,20 +327,25 @@ def create_dmr_trace(
             )
         else:
             color = "gray"
-        arr = get_rgb_arr(color)
-        colors.append((
-            int(arr[0]) / 255,
-            int(arr[1]) / 255, 
-            int(arr[2]) / 255,
-            1
-        ))
+        current_app.logger.debug("Point 5bb")
+        if isinstance(color, tuple):
+            # Color is already (r,g,b) in [0..1] range
+            colors.append((color[0], color[1], color[2], 1))
+        else:
+            # Convert string color to rgb values
+            color_str = str(color)
+            if not color_str.startswith("#"):
+                color_str = matplotlib.colors.to_hex(color_str).lower()
+            arr = get_rgb_arr(color_str)
+            colors.append((int(arr[0]) / 255, int(arr[1]) / 255, int(arr[2]) / 255, 1))
+        current_app.logger.debug("Point 5bc")
 
         # Convert node_id to int for comparison
         is_hub = int(node_id) in dominating_set  # Explicit conversion
-        
+
         # Add debug logging
-        logger.debug(f"DMR {node_id} is_hub: {is_hub}")
-        
+        current_app.logger.debug(f"DMR {node_id} is_hub: {is_hub}")
+
         sizes.append(15 if is_hub else 10)
         symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
 
@@ -326,23 +364,29 @@ def create_dmr_trace(
         return None
 
     # Add debug logging
-    logger.debug("DMR trace marker configuration: %s", {
-        "symbols": symbols,
-        "marker_config": {
+    current_app.logger.debug(
+        "DMR trace marker configuration: %s",
+        {
+            "symbols": symbols,
+            "marker_config": {
+                "size": sizes,
+                "color": colors,
+                "symbol": symbols,
+                "line": dict(color="black", width=1),
+            },
+        },
+    )
+    print("Symbols:", symbols)
+    print(
+        "Marker configuration:",
+        {
             "size": sizes,
             "color": colors,
             "symbol": symbols,
             "line": dict(color="black", width=1),
-        }
-    })
-    print("Symbols:", symbols)
-    print("Marker configuration:", {
-        "size": sizes,
-        "color": colors,
-        "symbol": symbols,
-        "line": dict(color="black", width=1),
-    })
-    
+        },
+    )
+
     return go.Scatter(
         x=x,
         y=y,
@@ -397,10 +441,10 @@ def create_edge_traces(
         },
         "split_gene_edge": {
             "color": get_rgb_str([150, 150, 150]),
-            "dash": "dot", 
+            "dash": "dot",
             "width": 0.5,
             "opacity": 0.3,
-        }
+        },
     }
 
     # Process each edge classification type
@@ -486,8 +530,8 @@ def create_biclique_boxes(
                 mode="lines",
                 line=dict(
                     color=biclique_colors[biclique_idx],  # Now using CSS string
-                    width=2, 
-                    dash="dot"
+                    width=2,
+                    dash="dot",
                 ),
                 fill="toself",
                 fillcolor=biclique_colors[biclique_idx],  # Now using CSS string

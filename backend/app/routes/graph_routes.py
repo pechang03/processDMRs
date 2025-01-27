@@ -4,6 +4,10 @@ from flask import jsonify, current_app, Blueprint
 from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
 
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+import networkx as nx
+
 from pydantic import ValidationError
 from ..schemas import (
     GraphComponentSchema,
@@ -13,13 +17,13 @@ from ..schemas import (
     DmrAnnotationViewSchema,
 )
 from ..database.connection import get_db_engine
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from ..visualization.core import create_biclique_visualization
-from ..visualization.graph_layout_biclique import CircularBicliqueLayout
+
+# from ..visualization.core import create_biclique_visualization
+# from ..visualization.graph_layout_biclique import CircularBicliqueLayout
+from ..visualization.vis_components import create_component_visualization
 from ..biclique_analysis.edge_classification import classify_edges
+from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
-import networkx as nx
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
@@ -53,29 +57,35 @@ def get_edge_details(timepoint_id: int, dmr_id: int):
     try:
         engine = get_db_engine()
         with Session(engine) as session:
-            edges = session.query(EdgeDetails).filter(
-                EdgeDetails.timepoint_id == timepoint_id,
-                EdgeDetails.dmr_id == dmr_id
-            ).all()
-            
+            edges = (
+                session.query(EdgeDetails)
+                .filter(
+                    EdgeDetails.timepoint_id == timepoint_id,
+                    EdgeDetails.dmr_id == dmr_id,
+                )
+                .all()
+            )
+
             if not edges:
                 return jsonify({"error": "No edge details found", "status": 404}), 404
-            
+
             result = []
             for edge in edges:
                 gene = session.query(Gene).get(edge.gene_id)
-                result.append({
-                    "dmr_id": edge.dmr_id,
-                    "gene_id": edge.gene_id,
-                    "gene_symbol": gene.symbol if gene else None,
-                    "edge_type": edge.edge_type,
-                    "edit_type": edge.edit_type,
-                    "distance_from_tss": edge.distance_from_tss,
-                    "description": edge.description
-                })
-            
+                result.append(
+                    {
+                        "dmr_id": edge.dmr_id,
+                        "gene_id": edge.gene_id,
+                        "gene_symbol": gene.symbol if gene else None,
+                        "edge_type": edge.edge_type,
+                        "edit_type": edge.edit_type,
+                        "distance_from_tss": edge.distance_from_tss,
+                        "description": edge.description,
+                    }
+                )
+
             return jsonify({"edges": result})
-            
+
     except Exception as e:
         current_app.logger.error(f"Error retrieving edge details: {str(e)}")
         return jsonify({"error": "Internal server error", "status": 500}), 500
@@ -512,8 +522,6 @@ def get_component_graph(timepoint_id, component_id):
                 min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
             )
 
-            from ..visualization.graph_layout_biclique import CircularBicliqueLayout
-
             # Initialize the circular layout
             layout = CircularBicliqueLayout()
 
@@ -697,7 +705,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add timing for performance monitoring
             start_time = time.time()
-            
+
             # Create component data structure with dominating set
             component_data = {
                 "component": all_component_nodes,
@@ -705,10 +713,10 @@ def get_component_graph(timepoint_id, component_id):
                 "dmrs": all_dmr_ids,
                 "genes": all_gene_ids,
                 "total_edges": len(original_graph_component.edges()),
-                "dominating_sets": list(dominating_set)  # Add explicit dominating set
+                "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
 
-            from ..visualization.vis_components import create_component_visualization
+            current_app.logger.debug("Point 1")
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
@@ -716,9 +724,10 @@ def get_component_graph(timepoint_id, component_id):
                 node_biclique_map=node_biclique_map,
                 edge_classifications=edge_classifications["classifications"],
                 dmr_metadata=dmr_metadata,
-                gene_metadata=gene_metadata
+                gene_metadata=gene_metadata,
             )
-            
+            current_app.logger.debug("Point 2")
+
             end_time = time.time()
             current_app.logger.info(
                 f"Visualization created in {end_time - start_time:.2f} seconds"

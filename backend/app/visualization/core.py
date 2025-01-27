@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 # Generate example data
 import numpy as np
 import networkx as nx
+import logging
 
 from sqlalchemy.orm import Session
 from .graph_layout_biclique import CircularBicliqueLayout
@@ -28,11 +29,11 @@ from backend.app.database.models import (
     GeneTimepointAnnotation,
 )
 from backend.app.core.data_loader import preprocess_graph_for_visualization
-import numpy as np
-import re
-
+# import re
 
 from .color_utils import get_rgb_arr, get_rgb_str
+
+logger = logging.getLogger(__name__)
 
 
 def generate_biclique_colors(num_bicliques: int) -> List[str]:
@@ -43,45 +44,35 @@ def generate_biclique_colors(num_bicliques: int) -> List[str]:
     base_colors = plotly.colors.qualitative.Set3 * (num_bicliques // 12 + 1)
 
     rgb_colors = []
+
+    logger.debug("core_enumerate_biclique_colors")
     for color in base_colors[:num_bicliques]:
         if color.startswith("#"):
             # Convert hex to RGB tuple
             rgb_arr = np.array(
                 [int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)]
             )
-            rgb_colors.append((
-                int(rgb_arr[0]) / 255,
-                int(rgb_arr[1]) / 255,
-                int(rgb_arr[2]) / 255,
-                1
-            ))
+            rgb_colors.append(
+                (int(rgb_arr[0]) / 255, int(rgb_arr[1]) / 255, int(rgb_arr[2]) / 255, 1)
+            )
         elif color.startswith("rgba"):
             # Use existing RGBA color converted to RGB tuple
             rgb_arr = get_rgb_arr(color)
-            rgb_colors.append((
-                int(rgb_arr[0]) / 255,
-                int(rgb_arr[1]) / 255,
-                int(rgb_arr[2]) / 255,
-                1
-            ))
+            rgb_colors.append(
+                (int(rgb_arr[0]) / 255, int(rgb_arr[1]) / 255, int(rgb_arr[2]) / 255, 1)
+            )
         elif color.startswith("rgb"):
             # Use existing RGB color as tuple
             rgb_arr = get_rgb_arr(color)
-            rgb_colors.append((
-                int(rgb_arr[0]) / 255,
-                int(rgb_arr[1]) / 255,
-                int(rgb_arr[2]) / 255,
-                1
-            ))
+            rgb_colors.append(
+                (int(rgb_arr[0]) / 255, int(rgb_arr[1]) / 255, int(rgb_arr[2]) / 255, 1)
+            )
         else:
             # Default color as RGB tuple
             rgb_arr = np.array([0, 0, 255])  # Blue
-            rgb_colors.append((
-                int(rgb_arr[0]) / 255,
-                int(rgb_arr[1]) / 255,
-                int(rgb_arr[2]) / 255,
-                1
-            ))
+            rgb_colors.append(
+                (int(rgb_arr[0]) / 255, int(rgb_arr[1]) / 255, int(rgb_arr[2]) / 255, 1)
+            )
 
     return rgb_colors
 
@@ -155,10 +146,12 @@ def create_biclique_visualization(
     traces.extend(biclique_box_traces)
 
     # Create node sets from bicliques
-    all_nodes = set().union(*[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques])
+    all_nodes = set().union(
+        *[dmr_nodes | gene_nodes for dmr_nodes, gene_nodes in bicliques]
+    )
     dmr_nodes = set().union(*[dmr_nodes for dmr_nodes, _ in bicliques])
     gene_nodes = all_nodes - dmr_nodes
-    
+
     # Determine which node positions to use
     positions = original_node_positions if original_node_positions else node_positions
     split_genes = {

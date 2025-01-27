@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request, current_app
 from ..utils.extensions import app
-from ..llm.prompts import PromptManager
+from ..prompts.prompt_manager import PromptManager
+from ..database.management.db_utils import DatabaseUtils
+from xml.etree.ElementTree import ParseError as XMLParseError
+from ..config import AppConfig
 from ..llm.config import LLMConfig
 from ..llm.mcp import MCPClient
 import os
@@ -9,16 +12,22 @@ import xml.etree.ElementTree as ET
 llm_bp = Blueprint('llm', __name__)
 
 # Initialize services
+app_config = AppConfig()
 llm_config = LLMConfig()
-prompt_manager = PromptManager()
+prompt_manager = PromptManager(
+    prompts_dir=app_config.get('PROMPTS_DIR', './prompts'),
+    schema_dir=app_config.get('SCHEMA_DIR', './prompts/schemas')
+)
 mcp_client = MCPClient(llm_config)
+db_utils = DatabaseUtils()
 
-def create_error_response(message, status_code=500, details=None):
+def create_error_response(message, status_code=500, details=None, error_type=None):
     response = {
         "error": message,
-        "status": status_code
+        "status": status_code,
+        "error_type": error_type or "UnknownError"
     }
-    if details and current_app.debug:
+    if details and app_config.get('DEBUG', False):
         response["details"] = str(details)
     return jsonify(response), status_code
 
@@ -61,8 +70,8 @@ def chat():
         }), 400
     
     try:
-        provider = data.get('provider', 'openai')
-        model = data.get('model', 'gpt-3.5-turbo')
+        provider = data.get('provider', llm_config.get('DEFAULT_PROVIDER', 'openai'))
+        model = data.get('model', llm_config.get('DEFAULT_MODEL', 'gpt-3.5-turbo'))
         context = data.get('context', [])
         
         response = mcp_client.chat(
@@ -85,14 +94,17 @@ def analyze_data():
     data = request.get_json()
     
     if not data or 'prompt_id' not in data:
-        return jsonify({
-            'status': 'error',
-            'message': 'No prompt ID provided'
-        }), 400
+        return create_error_response('No prompt ID provided', 400, error_type='ValidationError')
     
     try:
+        # Load and validate prompt XML
         prompt = prompt_manager.get_prompt(data['prompt_id'])
         parameters = data.get('parameters', {})
+        
+        # Add schema information if needed
+        if data.get('include_schema', False):
+            schema_info = db_utils.get_schema_info()
+            parameters['schema'] = schema_info
         
         # Process the prompt with provided parameters
         processed_prompt = prompt_manager.process_prompt(prompt, parameters)
@@ -100,19 +112,21 @@ def analyze_data():
         # Get response from LLM
         response = mcp_client.analyze(
             prompt=processed_prompt,
-            provider=data.get('provider', 'openai'),
-            model=data.get('model', 'gpt-3.5-turbo')
+            provider=data.get('provider', llm_config.get('DEFAULT_PROVIDER', 'openai')),
+            model=data.get('model', llm_config.get('DEFAULT_MODEL', 'gpt-3.5-turbo')),
+            max_tokens=llm_config.get('MAX_TOKENS', 2000)
         )
         
         return jsonify({
             'status': 'success',
             'analysis': response
         })
+    except XMLParseError as e:
+        return create_error_response('Invalid prompt XML format', 400, e, 'XMLError')
+    except ValueError as e:
+        return create_error_response(str(e), 400, e, 'ValidationError')
     except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+        return create_error_response('Analysis failed', 500, e, 'ProcessingError')
 
 @llm_bp.route('/config', methods=['GET'])
 def get_config():
