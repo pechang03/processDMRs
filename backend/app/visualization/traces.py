@@ -222,19 +222,19 @@ def create_unified_gene_trace(
         try:
             color = biclique_colors[biclique_idx % len(biclique_colors)]
             if isinstance(color, tuple):
-                # Handle tuple input (r,g,b) in [0..1] range
-                r, g, b = color[:3]  # Take first 3 values
-                colors.append((int(r * 255), int(g * 255), int(b * 255), 1))
+                # Color is already in 0-1 range
+                r, g, b = color[:3] 
+                colors.append(f'rgba({int(r*255)},{int(g*255)},{int(b*255)},0.6)')
             else:
-                # Handle string input
+                # Convert string color to rgb values
                 color_str = str(color)
                 if not color_str.startswith("#"):
                     color_str = matplotlib.colors.to_hex(color_str).lower()
                 rgb = get_rgb_arr(color_str)
-                colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2]), 1))
+                colors.append(f'rgba({rgb[0]},{rgb[1]},{rgb[2]},0.6)')
 
         except (IndexError, ValueError):
-            colors.append((128, 128, 128, 1))  # Fallback to gray
+            colors.append('rgba(128,128,128,0.6)')  # Fallback to gray
 
         # Text and hover
         label = node_labels.get(node_id, str(node_id))
