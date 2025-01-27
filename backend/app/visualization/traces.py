@@ -4,7 +4,7 @@
 
 """Node trace creation functionality"""
 
-import logging
+# import logging
 import matplotlib.colors
 from typing import Dict, List, Set, Tuple, Any
 from .color_utils import get_rgb_arr, get_rgb_str
@@ -149,7 +149,7 @@ def create_node_traces(
                     int(arr[0]) / 255,
                     int(arr[1]) / 255,
                     int(arr[2]) / 255,
-                    0.6,  # 0.6 alpha for transparency
+                    0.9,  # Increased opacity
                 )
             )
             gene_text_positions.append(get_text_position(x, y))
@@ -197,23 +197,23 @@ def create_unified_gene_trace(
         pos = node_positions.get(node_id)
         if not pos:
             continue
-            
+
         processed_nodes.append(node_id)  # Track which nodes we actually process
-            
+
         x_pos, y_pos = pos
         x.append(x_pos)
         y.append(y_pos)
-        
+
         biclique_indices = node_biclique_map.get(node_id, [0])
         is_split = len(biclique_indices) > 1
-        
+
         # Calculate text position based on node type and position
         if is_split:
             # Split nodes: text opposite to x position
-            textpositions.append('middle right' if x_pos < 0 else 'middle left')
+            textpositions.append("middle right" if x_pos < 0 else "middle left")
         else:
             # Regular nodes: text same side as x position
-            textpositions.append('middle left' if x_pos < 0 else 'middle right')
+            textpositions.append("middle left" if x_pos < 0 else "middle right")
 
         # Process colors - ensure full opacity
         color = biclique_colors[biclique_indices[0] % len(biclique_colors)]
@@ -238,17 +238,34 @@ def create_unified_gene_trace(
         y=y,
         mode="markers+text",
         marker=dict(
-            size=[12 if len(node_biclique_map.get(n, [])) > 1 else 10 for n in processed_nodes],
+            size=[
+                12 if len(node_biclique_map.get(n, [])) > 1 else 10
+                for n in processed_nodes
+            ],
             color=colors,
-            symbol=['diamond' if len(node_biclique_map.get(n, [])) > 1 else 'circle' for n in processed_nodes],
-            line=dict(width=[2 if len(node_biclique_map.get(n, [])) > 1 else 1 for n in processed_nodes]),
+            symbol=[
+                "diamond" if len(node_biclique_map.get(n, [])) > 1 else "circle"
+                for n in processed_nodes
+            ],
+            line=dict(
+                width=[
+                    2 if len(node_biclique_map.get(n, [])) > 1 else 1
+                    for n in processed_nodes
+                ]
+            ),
         ),
         text=texts,
         textposition=textpositions,
         hovertext=hovers,
         textfont=dict(
-            size=[14 if len(node_biclique_map.get(n, [])) > 1 else 12 for n in processed_nodes],
-            family=["Arial Black" if len(node_biclique_map.get(n, [])) > 1 else "Arial" for n in processed_nodes],
+            size=[
+                14 if len(node_biclique_map.get(n, [])) > 1 else 12
+                for n in processed_nodes
+            ],
+            family=[
+                "Arial Black" if len(node_biclique_map.get(n, [])) > 1 else "Arial"
+                for n in processed_nodes
+            ],
         ),
         name="Gene Nodes",
     )
@@ -296,7 +313,7 @@ def create_dmr_trace(
 
     # Convert dominating_set to empty set if None
     dominating_set = dominating_set or set()
-    current_app.logger.debug("Point 5a")
+    # current_app.logger.debug("Point 5a")
 
     for node_id in sorted(dmr_nodes):
         if node_id not in node_positions:
@@ -316,24 +333,26 @@ def create_dmr_trace(
             )
         else:
             color = "gray"
-        current_app.logger.debug("Point 5bb")
+        # current_app.logger.debug("Point 5bb")
         if isinstance(color, tuple):
-            # Color is already (r,g,b) in [0..1] range
-            colors.append((color[0], color[1], color[2], 1))
+            # Color is already (r,g,b) in [0..1] range, set high opacity
+            colors.append(
+                f"rgba({int(color[0]*255)},{int(color[1]*255)},{int(color[2]*255)},0.9)"
+            )
         else:
             # Convert string color to rgb values
             color_str = str(color)
             if not color_str.startswith("#"):
                 color_str = matplotlib.colors.to_hex(color_str).lower()
             arr = get_rgb_arr(color_str)
-            colors.append((int(arr[0]) / 255, int(arr[1]) / 255, int(arr[2]) / 255, 1))
-        current_app.logger.debug("Point 5bc")
+            colors.append(f"rgba({arr[0]},{arr[1]},{arr[2]},0.9)")
+        # current_app.logger.debug("Point 5bc")
 
         # Convert node_id to int for comparison
         is_hub = int(node_id) in dominating_set  # Explicit conversion
 
         # Add debug logging
-        current_app.logger.debug(f"DMR {node_id} is_hub: {is_hub}")
+        # current_app.logger.debug(f"DMR {node_id} is_hub: {is_hub}")
 
         sizes.append(15 if is_hub else 10)
         symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
