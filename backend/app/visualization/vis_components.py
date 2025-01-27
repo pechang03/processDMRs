@@ -91,30 +91,29 @@ def create_component_visualization(
     current_app.logger.debug("Point 3b")
     # Add gene traces using unified function
     gene_trace = create_unified_gene_trace(
-        node_info.regular_genes,
+        gene_nodes,  # All genes now
         node_positions,
         node_labels,
         node_biclique_map,
         biclique_colors,
-        gene_metadata,
-        is_split=False,
+        gene_metadata
     )
     if gene_trace:
         traces.append(gene_trace)
 
     current_app.logger.debug("Point 4")
-    # Add split gene trace using unified function
-    split_gene_trace = create_unified_gene_trace(
-        node_info.split_genes,
-        node_positions,
-        node_labels,
-        node_biclique_map,
-        biclique_colors,
-        gene_metadata,
-        is_split=True,
-    )
-    if split_gene_trace:
-        traces.append(split_gene_trace)
+    # Unified gene trace now handles both regular and split genes
+    # split_gene_trace = create_unified_gene_trace(
+    #     node_info.split_genes,
+    #     node_positions,
+    #     node_labels,
+    #     node_biclique_map,
+    #     biclique_colors,
+    #     gene_metadata,
+    #     is_split=True,
+    # )
+    # if split_gene_trace:
+    #     traces.append(split_gene_trace)
 
     current_app.logger.debug("Point 5")
     # Create layout using the unified layout function

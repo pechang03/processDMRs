@@ -95,6 +95,7 @@ def create_node_traces(
                 x=dmr_x,
                 y=dmr_y,
                 mode="markers+text",
+                hoveron="fills+points",
                 marker=dict(
                     size=12,
                     color=dmr_colors,
@@ -159,6 +160,7 @@ def create_node_traces(
                 x=gene_x,
                 y=gene_y,
                 mode="markers+text",
+                hoveron="fills+points",
                 marker=dict(
                     size=10,
                     color=gene_colors,
@@ -185,56 +187,45 @@ def create_unified_gene_trace(
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
     gene_metadata: Dict[str, Dict] = None,
-    is_split: bool = False,
 ) -> go.Scatter:
-    """Unified gene trace creation with split/regular handling"""
-    x, y, colors, texts, hovers, x_offsets, y_offsets = [], [], [], [], [], [], []
-    current_app.logger.debug("Point 7")
+    """Unified gene trace creation with split/regular handling based on biclique indices"""
+    current_app.logger.debug(f"Creating unified gene trace for {len(gene_nodes)} nodes")
+    x, y, colors, texts, textpositions, hovers = [], [], [], [], [], []
+    processed_nodes = []  # Keep track of nodes we actually process
+
     for node_id in sorted(gene_nodes):
         pos = node_positions.get(node_id)
         if not pos:
             continue
-
+            
+        processed_nodes.append(node_id)  # Track which nodes we actually process
+            
         x_pos, y_pos = pos
         x.append(x_pos)
         y.append(y_pos)
+        
+        biclique_indices = node_biclique_map.get(node_id, [0])
+        is_split = len(biclique_indices) > 1
+        
+        # Calculate text position based on node type and position
+        if is_split:
+            # Split nodes: text opposite to x position
+            textpositions.append('middle right' if x_pos < 0 else 'middle left')
+        else:
+            # Regular nodes: text same side as x position
+            textpositions.append('middle left' if x_pos < 0 else 'middle right')
 
-        # Calculate offsets
-        x_offset = (
-            0.12 * (-1 if x_pos > 0 else 1)
-            if is_split
-            else 0.08 * (1 if x_pos > 0 else -1)
-        )
-        y_offset = (
-            0.08 * (1 if y_pos > 0 else -1)
-            if is_split
-            else 0.05 * (1 if y_pos > 0 else -1)
-        )
-        x_offsets.append(x_offset)
-        y_offsets.append(y_offset)
-
-        biclique_idx = node_biclique_map.get(node_id, [0])[
-            0
-        ]  # Get biclique index for current node
-
-        # Color logic
-        # Color logic
-        try:
-            color = biclique_colors[biclique_idx % len(biclique_colors)]
-            if isinstance(color, tuple):
-                # Color is already in 0-1 range
-                r, g, b = color[:3] 
-                colors.append(f'rgba({int(r*255)},{int(g*255)},{int(b*255)},0.6)')
-            else:
-                # Convert string color to rgb values
-                color_str = str(color)
-                if not color_str.startswith("#"):
-                    color_str = matplotlib.colors.to_hex(color_str).lower()
-                rgb = get_rgb_arr(color_str)
-                colors.append(f'rgba({rgb[0]},{rgb[1]},{rgb[2]},0.6)')
-
-        except (IndexError, ValueError):
-            colors.append('rgba(128,128,128,0.6)')  # Fallback to gray
+        # Process colors - ensure full opacity
+        color = biclique_colors[biclique_indices[0] % len(biclique_colors)]
+        if isinstance(color, tuple):
+            r, g, b = color[:3]
+            colors.append(f"rgba({int(r*255)},{int(g*255)},{int(b*255)},1)")
+        else:
+            color_str = str(color)
+            if not color_str.startswith("#"):
+                color_str = matplotlib.colors.to_hex(color_str).lower()
+            rgb = get_rgb_arr(color_str)
+            colors.append(f"rgba({rgb[0]},{rgb[1]},{rgb[2]},1)")
 
         # Text and hover
         label = node_labels.get(node_id, str(node_id))
@@ -247,21 +238,19 @@ def create_unified_gene_trace(
         y=y,
         mode="markers+text",
         marker=dict(
-            size=12 if is_split else 10,
+            size=[12 if len(node_biclique_map.get(n, [])) > 1 else 10 for n in processed_nodes],
             color=colors,
-            symbol="diamond" if is_split else "circle",
-            line=dict(width=2 if is_split else 1),
+            symbol=['diamond' if len(node_biclique_map.get(n, [])) > 1 else 'circle' for n in processed_nodes],
+            line=dict(width=[2 if len(node_biclique_map.get(n, [])) > 1 else 1 for n in processed_nodes]),
         ),
         text=texts,
+        textposition=textpositions,
         hovertext=hovers,
-        textposition=[
-            get_text_position(x[i] + x_offsets[i], y[i] + y_offsets[i])
-            for i in range(len(x))
-        ],
         textfont=dict(
-            size=14 if is_split else 12, family="Arial Black" if is_split else None
+            size=[14 if len(node_biclique_map.get(n, [])) > 1 else 12 for n in processed_nodes],
+            family=["Arial Black" if len(node_biclique_map.get(n, [])) > 1 else "Arial" for n in processed_nodes],
         ),
-        name="Split Genes" if is_split else "Regular Genes",
+        name="Gene Nodes",
     )
 
 
@@ -391,6 +380,7 @@ def create_dmr_trace(
         x=x,
         y=y,
         mode="markers+text",
+        hoveron="fills+points",
         marker=dict(
             size=sizes,
             color=colors,
@@ -485,6 +475,7 @@ def create_edge_traces(
                     x=x_coords,
                     y=y_coords,
                     mode="lines",
+                    opacity=0.7,
                     line=line_style,
                     hoverinfo="text",
                     text=hover_texts,
@@ -535,7 +526,7 @@ def create_biclique_boxes(
                 ),
                 fill="toself",
                 fillcolor=biclique_colors[biclique_idx],  # Now using CSS string
-                opacity=0.1,
+                opacity=0.1,  # Keep only this opacity
                 name=f"Biclique {biclique_idx + 1}",
                 showlegend=True,
             )
