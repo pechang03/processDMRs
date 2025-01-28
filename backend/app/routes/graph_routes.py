@@ -51,44 +51,6 @@ def parse_id_string(id_str):
 graph_bp = Blueprint("graph_routes", __name__, url_prefix="/api/graph")
 
 
-@graph_bp.route("/edge-details/<int:timepoint_id>/<int:dmr_id>", methods=["GET"])
-def get_edge_details(timepoint_id: int, dmr_id: int):
-    """Get edge details for a specific DMR in a timepoint."""
-    try:
-        engine = get_db_engine()
-        with Session(engine) as session:
-            edges = (
-                session.query(EdgeDetails)
-                .filter(
-                    EdgeDetails.timepoint_id == timepoint_id,
-                    EdgeDetails.dmr_id == dmr_id,
-                )
-                .all()
-            )
-
-            if not edges:
-                return jsonify({"error": "No edge details found", "status": 404}), 404
-
-            result = []
-            for edge in edges:
-                gene = session.query(Gene).get(edge.gene_id)
-                result.append(
-                    {
-                        "dmr_id": edge.dmr_id,
-                        "gene_id": edge.gene_id,
-                        "gene_symbol": gene.symbol if gene else None,
-                        "edge_type": edge.edge_type,
-                        "edit_type": edge.edit_type,
-                        "distance_from_tss": edge.distance_from_tss,
-                        "description": edge.description,
-                    }
-                )
-
-            return jsonify({"edges": result})
-
-    except Exception as e:
-        current_app.logger.error(f"Error retrieving edge details: {str(e)}")
-        return jsonify({"error": "Internal server error", "status": 500}), 500
 
 
 @graph_bp.route("/<int:timepoint_id>/<int:component_id>", methods=["GET"])
