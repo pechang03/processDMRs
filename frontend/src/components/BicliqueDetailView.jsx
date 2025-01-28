@@ -224,8 +224,8 @@ const fetchEnrichmentData = async (bicliqueId) => {
     
     try {
         const [dmrEnrichmentRes, bicliqueEnrichmentRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/graph/go-enrichment-dmr/${timepointId}/${bicliqueId}`),
-            fetch(`${API_BASE_URL}/graph/go-enrichment-biclique/${timepointId}/${bicliqueId}`)
+            fetch(`${API_BASE_URL}/api/enrichment/go-enrichment-dmr/${timepointId}/${bicliqueId}`),
+            fetch(`${API_BASE_URL}/api/enrichment/go-enrichment-biclique/${timepointId}/${bicliqueId}`)
         ]);
 
         if (!dmrEnrichmentRes.ok || !bicliqueEnrichmentRes.ok) {
