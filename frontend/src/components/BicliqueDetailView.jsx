@@ -204,14 +204,58 @@ const DMRTable = ({ dmrs, dmrNames, timepointId }) => {
 };
 
 function BicliqueDetailView({ timepointId, componentId }) {
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [componentDetails, setComponentDetails] = useState(null);
-  const [geneSymbols, setGeneSymbols] = useState({});
-  const [dmrNames, setDmrNames] = useState({});
-  const [activeTab, setActiveTab] = useState(0);
+const [loading, setLoading] = React.useState(true);
+const [error, setError] = React.useState(null);
+const [componentDetails, setComponentDetails] = useState(null);
+const [geneSymbols, setGeneSymbols] = useState({});
+const [dmrNames, setDmrNames] = useState({});
+const [activeTab, setActiveTab] = useState(0);
+const [selectedBicliqueForEnrichment, setSelectedBicliqueForEnrichment] = useState(null);
+const [enrichmentLoading, setEnrichmentLoading] = useState(false);
+const [enrichmentError, setEnrichmentError] = useState(null);
+const [enrichmentData, setEnrichmentData] = useState(null);
+const [geneAnnotations, setGeneAnnotations] = useState({});
 
-  const [geneAnnotations, setGeneAnnotations] = useState({});
+const fetchEnrichmentData = async (bicliqueId) => {
+    if (!bicliqueId || !timepointId) return;
+    
+    setEnrichmentLoading(true);
+    setEnrichmentError(null);
+    
+    try {
+        const [dmrEnrichmentRes, bicliqueEnrichmentRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/graph/go-enrichment-dmr/${timepointId}/${bicliqueId}`),
+            fetch(`${API_BASE_URL}/graph/go-enrichment-biclique/${timepointId}/${bicliqueId}`)
+        ]);
+
+        if (!dmrEnrichmentRes.ok || !bicliqueEnrichmentRes.ok) {
+            throw new Error('Failed to fetch enrichment data');
+        }
+
+        const [dmrData, bicliqueData] = await Promise.all([
+            dmrEnrichmentRes.json(),
+            bicliqueEnrichmentRes.json()
+        ]);
+
+        setEnrichmentData({
+            dmr_enrichment: dmrData.data,
+            biclique_enrichment: bicliqueData.data
+        });
+    } catch (error) {
+        setEnrichmentError(error.message);
+        console.error('Error fetching enrichment data:', error);
+    } finally {
+        setEnrichmentLoading(false);
+    }
+};
+
+// Add useEffect to fetch enrichment data when a biclique is selected
+React.useEffect(() => {
+    if (selectedBicliqueForEnrichment) {
+        fetchEnrichmentData(selectedBicliqueForEnrichment);
+    }
+}, [selectedBicliqueForEnrichment, timepointId]);
+
 
 
   const formatGeneSymbols = (geneIds) => {
@@ -479,11 +523,8 @@ function BicliqueDetailView({ timepointId, componentId }) {
     );
   }
 
-  if (!componentDetails) {
-    return <Alert severity="info">No component details available</Alert>;
-  }
 
-  return (
+return (
     <Box sx={{ 
         width: "100%",
         mt: 3,
@@ -574,10 +615,11 @@ function BicliqueDetailView({ timepointId, componentId }) {
           selectedIndex={activeTab}
           className="bicliqueDetailTabs"
         >
-          <TabList className="bicliqueDetailTabs__tabList">
+        <TabList className="bicliqueDetailTabs__tabList">
             <Tab className="bicliqueDetailTabs__tab">Overview</Tab>
             <Tab className="bicliqueDetailTabs__tab">Details</Tab>
-          </TabList>
+            <Tab className="bicliqueDetailTabs__tab">Enrichment</Tab>
+        </TabList>
 
           <TabPanel className="bicliqueDetailTabs__tabPanel" style={{ display: 'block' }}>
             <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
@@ -803,9 +845,10 @@ function BicliqueDetailView({ timepointId, componentId }) {
                           <TableCell>Biclique ID</TableCell>
                           <TableCell align="right">DMRs</TableCell>
                           <TableCell align="right">Genes</TableCell>
-                          <TableCell>Category</TableCell>
+                        <TableCell>Category</TableCell>
+                        <TableCell>Enrichment</TableCell>
                         </TableRow>
-                      </TableHead>
+                    </TableHead>
                       <TableBody>
                         {componentDetails?.bicliques?.map((biclique, index) => (
                           <TableRow key={biclique.biclique_id}>
@@ -817,9 +860,21 @@ function BicliqueDetailView({ timepointId, componentId }) {
                               {biclique.gene_ids?.split(',').length || 0}
                             </TableCell>
                             <TableCell>{biclique.category}</TableCell>
-                          </TableRow>
+                            <TableCell>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={() => {
+                                setSelectedBicliqueForEnrichment(biclique.biclique_id);
+                                setActiveTab(2); // Switch to Enrichment tab
+                                }}
+                            >
+                                View Enrichment
+                            </Button>
+                            </TableCell>
+                        </TableRow>
                         ))}
-                      </TableBody>
+                    </TableBody>
                     </Table>
                   </Paper>
                 </Grid>
@@ -945,7 +1000,87 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 </TableContainer>
               </Paper>
             </Box>
-          </TabPanel>
+        </TabPanel>
+        <TabPanel className="bicliqueDetailTabs__tabPanel" style={{ display: 'block' }}>
+            <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
+            {enrichmentLoading ? (
+                <Box display="flex" justifyContent="center" p={3}>
+                <CircularProgress />
+                </Box>
+            ) : enrichmentError ? (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                {enrichmentError}
+                </Alert>
+            ) : selectedBicliqueForEnrichment ? (
+                <>
+                <Typography variant="h6" gutterBottom>
+                    Gene Enrichment Analysis
+                </Typography>
+                <Box sx={{ mb: 3 }}>
+                    <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>DMR GO Enrichment</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                            <TableCell>Process Name</TableCell>
+                            <TableCell>P-value</TableCell>
+                            <TableCell>Enrichment Score</TableCell>
+                            <TableCell>Source</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {enrichmentData?.dmr_enrichment?.map((item, index) => (
+                            <TableRow key={index}>
+                                <TableCell>{item.process}</TableCell>
+                                <TableCell>{item.p_value.toExponential(2)}</TableCell>
+                                <TableCell>{item.enrichment_score.toFixed(2)}</TableCell>
+                                <TableCell>{item.source}</TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                        </Table>
+                    </AccordionDetails>
+                    </Accordion>
+                    
+                    <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>Biclique GO Enrichment</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                            <TableCell>Process Name</TableCell>
+                            <TableCell>P-value</TableCell>
+                            <TableCell>Enrichment Score</TableCell>
+                            <TableCell>Source</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {enrichmentData?.biclique_enrichment?.map((item, index) => (
+                            <TableRow key={index}>
+                                <TableCell>{item.process}</TableCell>
+                                <TableCell>{item.p_value.toExponential(2)}</TableCell>
+                                <TableCell>{item.enrichment_score.toFixed(2)}</TableCell>
+                                <TableCell>{item.source}</TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                        </Table>
+                    </AccordionDetails>
+                    </Accordion>
+                </Box>
+                </>
+            ) : (
+                <Typography>
+                Select a biclique from the summary table to view enrichment data
+                </Typography>
+            )}
+            </Box>
+        </TabPanel>
         </Tabs>
       </Paper>
 
