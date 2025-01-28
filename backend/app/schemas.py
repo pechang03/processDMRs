@@ -2,8 +2,20 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
+class EdgeStatsSchema(BaseModel):
+    """Schema for edge classification statistics"""
+    permanent_edges: int = 0
+    false_positives: int = 0
+    false_negatives: int = 0
+    reliability: dict = Field(default_factory=lambda: {
+        "accuracy": 0.0,
+        "noise_percentage": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+    })
 
-
+    class Config:
+        from_attributes = True
 class ComponentSummarySchema(BaseModel):
     """Pydantic model matching component_summary_view"""
     component_id: Optional[int] = None
@@ -168,6 +180,7 @@ class ComponentDetailsSchema(BaseModel):
     all_gene_ids: List[int]
     bicliques: List[BicliqueMemberSchema]
     dominating_sets: Dict[str, DominatingSetSchema]
+    edge_stats: Optional[EdgeStatsSchema] = None
 
     class Config:
         from_attributes = True

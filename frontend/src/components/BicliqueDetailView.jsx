@@ -498,16 +498,6 @@ function BicliqueDetailView({ timepointId, componentId }) {
             )}
           </Paper>
           {/* Add debug section */}
-          <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5' }}>
-            <Typography variant="h6">Debug Information</Typography>
-            <pre>
-              Loading: {loading.toString()}{'\n'}
-              Error: {error || 'none'}{'\n'}
-              Component Details: {componentDetails ? 'yes' : 'no'}{'\n'}
-              Gene Symbols Count: {geneSymbols ? Object.keys(geneSymbols).length : 0}{'\n'}
-              Raw Gene Symbols: {JSON.stringify(geneSymbols, null, 2)}
-            </pre>
-          </Box>
           <Typography variant="h5" gutterBottom>
             Component Analysis for Timepoint {componentDetails.timepoint}
           </Typography>
@@ -699,40 +689,40 @@ function BicliqueDetailView({ timepointId, componentId }) {
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell>Accuracy</TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.edge_stats?.accuracy * 100).toFixed(1)}%
-                          </TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.biclique_stats?.average_accuracy * 100).toFixed(1)}%
-                          </TableCell>
+                            <TableCell>Accuracy</TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.edge_stats?.accuracy ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.biclique_stats?.average_accuracy ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell>Noise Percentage</TableCell>
-                          <TableCell align="right">
-                            {componentDetails?.edge_stats?.noise_percentage.toFixed(1)}%
-                          </TableCell>
-                          <TableCell align="right">
-                            {componentDetails?.biclique_stats?.average_noise.toFixed(1)}%
-                          </TableCell>
+                            <TableCell>Noise Percentage</TableCell>
+                            <TableCell align="right">
+                                {(componentDetails?.edge_stats?.noise_percentage ?? 0).toFixed(1)}%
+                            </TableCell>
+                            <TableCell align="right">
+                                {(componentDetails?.biclique_stats?.average_noise ?? 0).toFixed(1)}%
+                            </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell>False Positive Rate</TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.edge_stats?.false_positive_rate * 100).toFixed(1)}%
-                          </TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.biclique_stats?.average_fp_rate * 100).toFixed(1)}%
-                          </TableCell>
+                            <TableCell>False Positive Rate</TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.edge_stats?.false_positive_rate ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.biclique_stats?.average_fp_rate ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell>False Negative Rate</TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.edge_stats?.false_negative_rate * 100).toFixed(1)}%
-                          </TableCell>
-                          <TableCell align="right">
-                            {(componentDetails?.biclique_stats?.average_fn_rate * 100).toFixed(1)}%
-                          </TableCell>
+                            <TableCell>False Negative Rate</TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.edge_stats?.false_negative_rate ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
+                            <TableCell align="right">
+                                {((componentDetails?.biclique_stats?.average_fn_rate ?? 0) * 100).toFixed(1)}%
+                            </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -766,7 +756,7 @@ function BicliqueDetailView({ timepointId, componentId }) {
                                 <TableCell align="right">{counts.false_positives}</TableCell>
                                 <TableCell align="right">{counts.false_negatives}</TableCell>
                                 <TableCell align="right">
-                                  {stats.noise_percentage?.toFixed(1)}%
+                                    {(stats?.noise_percentage ?? 0).toFixed(1)}%
                                 </TableCell>
                               </TableRow>
                             );

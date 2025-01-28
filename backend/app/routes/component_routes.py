@@ -1,5 +1,6 @@
 import json
 from flask import Blueprint, jsonify, request, current_app
+from ..biclique_analysis.edge_classification import classify_edges
 from pydantic import ValidationError
 from ..schemas import (
     ComponentSummarySchema,
@@ -10,6 +11,7 @@ from ..schemas import (
     NodeStatusRequest,
     BicliqueMemberSchema,
     DominatingSetSchema,
+    EdgeStatsSchema,
 )
 from flask_cors import CORS
 from ..utils.extensions import app
@@ -182,6 +184,9 @@ def get_component_details(timepoint_id, component_id):
         f"Getting details for timepoint {timepoint_id}, component {component_id}"
     )
     try:
+        # Get graph manager for later use
+        graph_manager = current_app.graph_manager
+
         engine = get_db_engine()
         with Session(engine) as session:
             # Get the component details including bicliques
@@ -272,15 +277,68 @@ def get_component_details(timepoint_id, component_id):
                         "message": "Failed to retrieve component details",
                     }
                 ), 500
+            # Parse arrays and JSON first
+            def parse_array_string(arr_str):
+                if not arr_str:
+                    return []
+                cleaned = arr_str.replace("[", "").replace("]", "").strip()
+                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
+            
+            component_nodes = parse_array_string(result.all_dmr_ids) + parse_array_string(result.all_gene_ids)
+            
+            # Now get the component subgraphs using the actual node IDs
+            original_component = graph_manager.get_original_graph_component(timepoint_id, component_nodes)
+            split_component = graph_manager.get_split_graph_component(timepoint_id, component_nodes)
 
+            if not original_component or not split_component:
+                app.logger.error(f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}")
+                return jsonify({
+                    "status": "error",
+                    "message": "Failed to load required component graphs" 
+                }), 500
+
+            # Calculate edge statistics for this specific component
+            edge_sources = {}  # Initialize empty edge sources dictionary
+
+            # Parse bicliques JSON string first
+            bicliques_data = json.loads(result.bicliques) if result.bicliques else []
+            # Convert to the format needed for classify_edges
+            bicliques = [(set(parse_array_string(b['dmr_ids'])), set(parse_array_string(b['gene_ids']))) 
+                    for b in bicliques_data]
+
+            # Create component data
+            component_data = {
+                "component": set(component_nodes),
+                "dmrs": set(parse_array_string(result.all_dmr_ids)),
+                "genes": set(parse_array_string(result.all_gene_ids))
+            }
+
+            # Call classify_edges with all required parameters
+            classification_result = classify_edges(
+                original_component,
+                split_component,
+                edge_sources,
+                bicliques=bicliques,
+                component=component_data
+            )
+
+            # Create edge stats using the Pydantic model
+            # Extract reliability metrics from the stats
+            reliability_stats = classification_result["stats"]["component"]
+            # Create edge stats matching frontend expectations
+            edge_stats = {
+                "permanent_edges": len(classification_result["classifications"]["permanent"]),
+                "false_positives": len(classification_result["classifications"]["false_positive"]),
+                "false_negatives": len(classification_result["classifications"]["false_negative"]),
+                # Include reliability metrics at top level
+                "accuracy": reliability_stats.get("accuracy", 0.0),
+                "noise_percentage": reliability_stats.get("noise_percentage", 0.0),
+                "false_positive_rate": reliability_stats.get("false_positive_rate", 0.0),
+                "false_negative_rate": reliability_stats.get("false_negative_rate", 0.0)
+            }
+
+            app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
             try:
-                # Parse arrays and JSON
-                def parse_array_string(arr_str):
-                    if not arr_str:
-                        return []
-                    cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                    return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
-
                 # Parse bicliques
                 bicliques_data = (
                     json.loads(result.bicliques) if result.bicliques else []
@@ -311,6 +369,7 @@ def get_component_details(timepoint_id, component_id):
                     all_gene_ids=parse_array_string(result.all_gene_ids),
                     bicliques=bicliques,
                     dominating_sets=dominating_sets,
+                    edge_stats=edge_stats,
                 )
 
                 app.logger.info(
