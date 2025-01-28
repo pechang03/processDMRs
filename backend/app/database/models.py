@@ -271,8 +271,9 @@ class EdgeDetails(Base):
 
 class GeneDetails(Base):
     __tablename__ = "gene_details"
-    
-    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
+
+    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True) 
+    genome = Column(String(50), nullable=False, default='mouse')  # Either 'mouse' or 'human'
     NCBI_id = Column(String(50))
     annotations = Column(JSON)  # SQLite will store this as TEXT
     
