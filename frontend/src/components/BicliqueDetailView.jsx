@@ -377,12 +377,19 @@ function BicliqueDetailView({ timepointId, componentId }) {
         
         try {
             // Fetch all data in parallel with abort signals
-            const [detailsRes, dmrRes, genesRes, dmrStatusRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`, { 
-                    signal: abortController.signal 
+            // Fetch all data in parallel with abort signals
+            const [
+                detailsRes,
+                dmrDetailsRes,
+                genesSymbolsRes,
+                dmrStatusRes,
+                edgeStatsRes
+            ] = await Promise.all([
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/details`, {
+                    signal: abortController.signal
                 }),
                 fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/dmr_details`, {
-                    signal: abortController.signal 
+                    signal: abortController.signal
                 }),
                 fetch(`${API_BASE_URL}/component/genes/symbols`, {
                     method: "POST",
@@ -393,30 +400,48 @@ function BicliqueDetailView({ timepointId, componentId }) {
                 fetch(`${API_BASE_URL}/component/dmrs/status`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         dmr_ids: [],
-                        timepoint_id: timepointId 
+                        timepoint_id: timepointId
                     }),
+                    signal: abortController.signal
+                }),
+                fetch(`${API_BASE_URL}/component/${timepointId}/${componentId}/edge_stats`, {
                     signal: abortController.signal
                 }),
             ]);
 
+            // Check for any failed responses
+            if (!detailsRes.ok) throw new Error(`Details request failed: ${detailsRes.status}`);
+            if (!dmrDetailsRes.ok) throw new Error(`DMR details request failed: ${dmrDetailsRes.status}`);
+            if (!genesSymbolsRes.ok) throw new Error(`Genes symbols request failed: ${genesSymbolsRes.status}`);
+            if (!dmrStatusRes.ok) throw new Error(`DMR status request failed: ${dmrStatusRes.status}`);
+            if (!edgeStatsRes.ok) throw new Error(`Edge stats request failed: ${edgeStatsRes.status}`);
+
             // Handle responses
-            const [detailsData, dmrData, genesData, dmrStatusData] = await Promise.all([
+            // Parse responses in the exact same order as the fetch calls
+            const [
+                detailsData,
+                dmrDetailsData,
+                genesSymbolsData,
+                dmrStatusData,
+                edgeStatsData
+            ] = await Promise.all([
                 detailsRes.json(),
-                dmrRes.json(),
-                genesRes.json(),
+                dmrDetailsRes.json(),
+                genesSymbolsRes.json(),
                 dmrStatusRes.json(),
+                edgeStatsRes.json()
             ]);
 
             // Update state once with all data
             setComponentDetails({
                 ...detailsData.data,
-                dmr_details: dmrData.data
+                dmr_details: dmrDetailsData.data,
+                edge_stats: edgeStatsData.data
             });
-            setGeneSymbols(genesData.data);
+            setGeneSymbols(genesSymbolsData.data);
             setDmrNames(dmrStatusData.dmr_status);
-
         } catch (error) {
             if (error.name === 'AbortError') return;
             console.error("Error fetching data:", error);

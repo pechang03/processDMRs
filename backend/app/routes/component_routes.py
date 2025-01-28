@@ -394,6 +394,119 @@ def get_component_details(timepoint_id, component_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@component_bp.route("/<int:timepoint_id>/<int:component_id>/edge_stats", methods=["GET"])
+def get_component_edge_stats(timepoint_id, component_id):
+    app.logger.info(
+        f"Getting edge statistics for timepoint {timepoint_id}, component {component_id}"
+    )
+    try:
+        # Get graph manager for later use
+        graph_manager = current_app.graph_manager
+
+        # Get the component nodes
+        engine = get_db_engine()
+        with Session(engine) as session:
+            query = text("""
+                SELECT 
+                    cd.all_dmr_ids,
+                    cd.all_gene_ids
+                FROM component_details_view cd
+                WHERE cd.timepoint_id = :timepoint_id 
+                AND cd.component_id = :component_id
+                AND LOWER(cd.graph_type) = 'split'
+            """)
+            
+            result = session.execute(
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).first()
+            
+            if not result:
+                app.logger.error("Query returned no results")
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": "Failed to retrieve component details",
+                    }
+                ), 500
+
+            # Parse arrays first
+            def parse_array_string(arr_str):
+                if not arr_str:
+                    return []
+                cleaned = arr_str.replace("[", "").replace("]", "").strip()
+                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
+            
+            component_nodes = parse_array_string(result.all_dmr_ids) + parse_array_string(result.all_gene_ids)
+            
+            # Get the component subgraphs using the actual node IDs
+            original_component = graph_manager.get_original_graph_component(timepoint_id, component_nodes)
+            split_component = graph_manager.get_split_graph_component(timepoint_id, component_nodes)
+
+            if not original_component or not split_component:
+                app.logger.error(f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}")
+                return jsonify({
+                    "status": "error",
+                    "message": "Failed to load required component graphs" 
+                }), 500
+
+            # Query bicliques for this component
+            query = text("""
+                SELECT DISTINCT
+                    b.id as biclique_id,
+                    b.dmr_ids,
+                    b.gene_ids
+                FROM bicliques b
+                JOIN component_bicliques cb ON b.id = cb.biclique_id
+                WHERE cb.component_id = :component_id
+                AND cb.timepoint_id = :timepoint_id
+            """)
+            
+            bicliques_results = session.execute(query, {
+                "timepoint_id": timepoint_id, 
+                "component_id": component_id
+            }).fetchall()
+
+            # Convert bicliques to the format needed for classify_edges
+            bicliques = [(set(parse_array_string(b.dmr_ids)), set(parse_array_string(b.gene_ids))) 
+                    for b in bicliques_results]
+
+            # Create component data
+            component_data = {
+                "component": set(component_nodes),
+                "dmrs": set(parse_array_string(result.all_dmr_ids)),
+                "genes": set(parse_array_string(result.all_gene_ids))
+            }
+
+            edge_sources = {}  # Initialize empty edge sources dictionary
+            # Call classify_edges with all required parameters
+            classification_result = classify_edges(
+                original_component,
+                split_component,
+                edge_sources,
+                bicliques=bicliques,
+                component=component_data
+            )
+
+            # Create edge stats using the Pydantic model
+            reliability_stats = classification_result["stats"]["component"]
+            edge_stats = {
+                "permanent_edges": len(classification_result["classifications"]["permanent"]),
+                "false_positives": len(classification_result["classifications"]["false_positive"]),
+                "false_negatives": len(classification_result["classifications"]["false_negative"]),
+                "accuracy": reliability_stats.get("accuracy", 0.0),
+                "noise_percentage": reliability_stats.get("noise_percentage", 0.0),
+                "false_positive_rate": reliability_stats.get("false_positive_rate", 0.0),
+                "false_negative_rate": reliability_stats.get("false_negative_rate", 0.0)
+            }
+
+            app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
+            return jsonify({"status": "success", "data": edge_stats})
+
+    except Exception as e:
+        app.logger.error(f"Error getting edge statistics: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @component_bp.route("/genes/symbols", methods=["POST"])
 def get_gene_symbols():
     if request.method == "OPTIONS":
