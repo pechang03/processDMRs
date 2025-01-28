@@ -11,6 +11,7 @@ from flask_cors import CORS
 
 from .routes.graph_routes import graph_bp
 from .routes.component_routes import component_bp
+from .routes.llm_routes import llm_bp
 
 
 def configure_app(app):
@@ -124,6 +125,7 @@ def register_routes(app):
     # Register all blueprints
     app.register_blueprint(graph_bp)
     app.register_blueprint(component_bp)
+    app.register_blueprint(llm_bp)
 
     @app.route("/api/health")
     def health_check():

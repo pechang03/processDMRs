@@ -1,25 +1,20 @@
 from flask import Blueprint, jsonify, request, current_app
-from ..utils.extensions import app
-from ..prompts.prompt_manager import PromptManager
-from ..database.management.db_utils import DatabaseUtils
-from xml.etree.ElementTree import ParseError as XMLParseError
-from ..config import AppConfig
-from ..llm.config import LLMConfig
-from ..llm.mcp import MCPClient
 import os
-import xml.etree.ElementTree as ET
+import json
+from pathlib import Path
 
-llm_bp = Blueprint('llm', __name__)
+llm_bp = Blueprint('llm', __name__, url_prefix='/api/llm')
 
-# Initialize services
-app_config = AppConfig()
-llm_config = LLMConfig()
-prompt_manager = PromptManager(
-    prompts_dir=app_config.get('PROMPTS_DIR', './prompts'),
-    schema_dir=app_config.get('SCHEMA_DIR', './prompts/schemas')
-)
-mcp_client = MCPClient(llm_config)
-db_utils = DatabaseUtils()
+# Sample data for development
+SAMPLE_PROMPTS = {
+    "general": {"id": "general", "name": "General Query", "description": "General purpose query template"},
+    "analysis": {"id": "analysis", "name": "Data Analysis", "description": "Template for data analysis tasks"}
+}
+
+SAMPLE_MODELS = {
+    "gpt-3.5-turbo": {"name": "GPT-3.5 Turbo", "provider": "openai", "capabilities": ["chat", "completion"]},
+    "gpt-4": {"name": "GPT-4", "provider": "openai", "capabilities": ["chat", "completion", "analysis"]}
+}
 
 def create_error_response(message, status_code=500, details=None, error_type=None):
     response = {
@@ -35,13 +30,15 @@ def create_error_response(message, status_code=500, details=None, error_type=Non
 def list_prompts():
     """List all available prompts"""
     try:
-        prompts = prompt_manager.get_all_prompts()
         return jsonify({
             'status': 'success',
-            'prompts': prompts
+            'prompts': SAMPLE_PROMPTS
         })
     except Exception as e:
-        return create_error_response("Failed to list prompts", 500, e)
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 @llm_bp.route('/prompts/<prompt_id>', methods=['GET'])
 def get_prompt(prompt_id):
@@ -60,7 +57,7 @@ def get_prompt(prompt_id):
 
 @llm_bp.route('/chat', methods=['POST'])
 def chat():
-    """Handle chat interactions with the LLM"""
+    """Handle chat interactions"""
     data = request.get_json()
     
     if not data or 'message' not in data:
@@ -70,21 +67,19 @@ def chat():
         }), 400
     
     try:
-        provider = data.get('provider', llm_config.get('DEFAULT_PROVIDER', 'openai'))
-        model = data.get('model', llm_config.get('DEFAULT_MODEL', 'gpt-3.5-turbo'))
-        context = data.get('context', [])
-        
-        response = mcp_client.chat(
-            message=data['message'],
-            provider=provider,
-            model=model,
-            context=context
-        )
-        
+        # Mock response for development
         return jsonify({
             'status': 'success',
-            'response': response
+            'response': {
+                'message': f"Echo: {data['message']}",
+                'model': data.get('model', 'gpt-3.5-turbo')
+            }
         })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
     except Exception as e:
         return create_error_response(str(e), 500, e)
 
@@ -158,6 +153,18 @@ def get_providers():
             'message': str(e)
         }), 500
 
-# Register the blueprint with the app
-app.register_blueprint(llm_bp, url_prefix='/api/llm')
+@llm_bp.route('/models', methods=['GET'])
+def get_models():
+    """Get available models with their capabilities"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'models': SAMPLE_MODELS,
+            'default_model': 'gpt-3.5-turbo'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
