@@ -133,10 +133,58 @@ def register_routes(app):
     @app.route("/api/timepoints")
     def get_timepoints():
         """Get all timepoint names from the database."""
+        print("\n>>> Accessing /api/timepoints endpoint")
+        engine = get_db_engine()
+        db_path = app.config["DATABASE_URL"].replace("sqlite:///", "")
+        print(f">>> Successfully connected to database at: {db_path}")
+        
+        with Session(engine) as session:
+            # Log the query being executed
+            query = session.query(Timepoint.id, Timepoint.name)
+            print(f">>> Executing query: {str(query)}")
+            
+            # Get all timepoints
+            timepoints = query.all()
+            print(f">>> Found {len(timepoints)} timepoints in database")
+            
+            # Log details of first timepoint if available
+            if timepoints:
+                first = timepoints[0]
+                print(f">>> First timepoint: id={first.id}, name='{first.name}'")
+            else:
+                print(">>> No timepoints found in database")
+            
+            # Create result list
+            result = [{"id": t.id, "name": t.name} for t in timepoints]
+            print(f">>> Returning: {result}")
+            return jsonify(result)
+
+    @app.route("/api/timepoints/<int:timepoint_id>")
+    def get_timepoint(timepoint_id):
+        """Get a specific timepoint by ID including its associated graph data."""
         engine = get_db_engine()
         with Session(engine) as session:
-            timepoints = session.query(Timepoint.id, Timepoint.name).all()
-            return jsonify([{"id": t.id, "name": t.name} for t in timepoints])
+            timepoint = session.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
+            if timepoint is None:
+                return jsonify({"error": "Timepoint not found"}), 404
+            
+            # Get graph data from GraphManager
+            response_data = {
+                "id": timepoint.id,
+                "name": timepoint.name,
+                "graph_data": None
+            }
+            
+            try:
+                graph_manager = current_app.graph_manager
+                if graph_manager and timepoint.name in graph_manager.split_graphs:
+                    response_data["graph_data"] = graph_manager.split_graphs[timepoint.name]
+            except Exception as e:
+                print(f"Error retrieving graph data: {str(e)}")
+                # Don't fail the whole request if graph data is unavailable
+                response_data["graph_error"] = str(e)
+            
+            return jsonify(response_data)
 
 
 # Remove the direct configure_app(app) call from here
