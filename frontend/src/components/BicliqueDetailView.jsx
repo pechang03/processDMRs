@@ -770,22 +770,24 @@ function BicliqueDetailView({ timepointId, componentId }) {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {componentDetails?.bicliques?.map((biclique) => {
-                            const stats = componentDetails?.biclique_stats?.reliability[biclique.biclique_id] || {};
-                            const counts = componentDetails?.biclique_stats?.edge_counts[biclique.biclique_id] || {};
-                            return (
-                              <TableRow key={biclique.biclique_id}>
-                                <TableCell>{biclique.biclique_id}</TableCell>
-                                <TableCell align="right">{counts.total_edges}</TableCell>
-                                <TableCell align="right">{counts.permanent}</TableCell>
-                                <TableCell align="right">{counts.false_positives}</TableCell>
-                                <TableCell align="right">{counts.false_negatives}</TableCell>
-                                <TableCell align="right">
-                                    {(stats?.noise_percentage ?? 0).toFixed(1)}%
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
+                        {componentDetails?.bicliques?.map((biclique) => {
+                        const edge_stats = componentDetails?.edge_stats || {};
+                        const permanent = edge_stats.permanent_edges || 0;
+                        const falsePos = edge_stats.false_positives || 0;
+                        const falseNeg = edge_stats.false_negatives || 0;
+                        const total = permanent + falsePos + falseNeg;
+                        const noise = total > 0 ? ((falsePos + falseNeg) / total * 100).toFixed(1) : "0.0";
+                        return (
+                            <TableRow key={biclique.biclique_id}>
+                            <TableCell>{biclique.biclique_id}</TableCell>
+                            <TableCell align="right">{total}</TableCell>
+                            <TableCell align="right">{permanent}</TableCell>
+                            <TableCell align="right">{falsePos}</TableCell>
+                            <TableCell align="right">{falseNeg}</TableCell>
+                            <TableCell align="right">{noise}%</TableCell>
+                            </TableRow>
+                        );
+                        })}\n
                         </TableBody>
                       </Table>
                     </TableContainer>
