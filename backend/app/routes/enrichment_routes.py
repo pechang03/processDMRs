@@ -160,16 +160,22 @@ def get_biclique_dmrs(db: Session, timepoint_id: int, biclique_id: int) -> List[
         raise ValueError(f"Timepoint {timepoint_id} not found")
     
     try:
-        # Query to get DMRs associated with the biclique through the biclique_dmr_association table
+        # Get DMRs through the ComponentBiclique association
         stmt = text("""
-            SELECT DISTINCT dmr_id 
-            FROM biclique_dmr_association 
-            WHERE biclique_id = :biclique_id 
-            AND timepoint_id = :timepoint_id
+            SELECT DISTINCT b.dmr_ids
+            FROM bicliques b
+            JOIN component_bicliques cb ON b.id = cb.biclique_id
+            WHERE cb.component_id = (
+                SELECT component_id 
+                FROM component_bicliques 
+                WHERE biclique_id = :biclique_id 
+                LIMIT 1
+            )
+            AND cb.timepoint_id = :timepoint_id
         """)
         
         result = db.execute(stmt, {"biclique_id": biclique_id, "timepoint_id": timepoint_id})
-        dmr_ids = [row[0] for row in result]
+        dmr_ids = parse_id_string(result.scalar() or "")
         
         app.logger.debug(f"Found {len(dmr_ids)} DMRs for biclique {biclique_id}")
         return dmr_ids
