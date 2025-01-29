@@ -16,9 +16,11 @@ from ..database import get_db_engine, get_db_session
 from ..database.models import (
     Timepoint,
     Biclique,
+    DMR,
     TopGOProcessesBiclique,
     TopGOProcessesDMR,
 )
+from ..enrichment.go_enrichment import calculate_dmr_enrichment
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from typing import Dict, Any, List
@@ -51,56 +53,55 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
     """
     Get GO enrichment analysis results for a specific DMR
     """
-    app.logger.info(
-        f"Processing dmr enrichment timepoint_id={timepoint_id} dmr_id={dmr_id}"
-    )
+    app.logger.info(f"Processing DMR enrichment timepoint_id={timepoint_id} dmr_id={dmr_id}")
 
     engine = get_db_engine()
     db = get_db_session(engine)
     try:
-        # Validate timepoint and dmr existence
-        app.logger.debug(f"Validating timepoint_id={timepoint_id} and dmr_id={dmr_id}")
+        # Validate timepoint and DMR existence
         timepoint = db.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
         if not timepoint:
             app.logger.warning(f"Timepoint {timepoint_id} not found")
             return jsonify({"error": f"Timepoint {timepoint_id} not found"}), 404
 
-        # Check if DMR exists in TopGOProcessesDMR
-        dmr_exists = (
-            db.query(TopGOProcessesDMR)
-            .filter(
-                TopGOProcessesDMR.dmr_id == dmr_id,
-                TopGOProcessesDMR.timepoint_id == timepoint_id,
-            )
-            .first()
-        )
-        if not dmr_exists:
-            app.logger.warning(f"DMR {dmr_id} not found for timepoint {timepoint_id}")
-            return (
-                jsonify(
-                    {"error": f"DMR {dmr_id} not found for timepoint {timepoint_id}"}
-                ),
-                404,
-            )
+        dmr = db.query(DMR).filter(DMR.id == dmr_id).first()
+        if not dmr:
+            app.logger.warning(f"DMR {dmr_id} not found")
+            return jsonify({"error": f"DMR {dmr_id} not found"}), 404
 
-        app.logger.debug("Processing DMR enrichment")
+        # Check if enrichment data exists
+        enrichment_exists = db.query(TopGOProcessesDMR).filter(
+            TopGOProcessesDMR.dmr_id == dmr_id,
+            TopGOProcessesDMR.timepoint_id == timepoint_id
+        ).first()
+
+        if not enrichment_exists:
+            app.logger.info(f"Initiating enrichment calculation for DMR {dmr_id}")
+            try:
+                calculate_dmr_enrichment(dmr_id, timepoint_id)
+                return jsonify({
+                    "status": "processing",
+                    "message": "Enrichment calculation initiated. Please try again in a few moments.",
+                    "timepoint_id": timepoint_id,
+                    "dmr_id": dmr_id
+                }), 202
+            except Exception as e:
+                app.logger.error(f"Failed to initiate DMR enrichment calculation: {str(e)}")
+                return jsonify({
+                    "error": "Failed to initiate enrichment calculation",
+                    "details": str(e)
+                }), 500
+
         # Fetch DMR enrichment data
-        query = text(
-            """
+        query = text("""
             SELECT go_id, description, category, p_value, genes
             FROM top_go_processes_dmr
             WHERE dmr_id = :dmr_id AND timepoint_id = :timepoint_id
-        """
-        )
-        results = db.execute(
-            query, {"dmr_id": dmr_id, "timepoint_id": timepoint_id}
-        ).fetchall()
+        """)
+        results = db.execute(query, {"dmr_id": dmr_id, "timepoint_id": timepoint_id}).fetchall()
 
         enrichment_data = {
-            "timepoint": {
-                "id": timepoint.id,
-                "name": timepoint.name
-            },
+            "timepoint": {"id": timepoint.id, "name": timepoint.name},
             "go_terms": [
                 {
                     "go_id": row.go_id,
