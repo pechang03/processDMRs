@@ -71,7 +71,25 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
             return jsonify({"error": f"DMR {dmr_id} not found for timepoint {timepoint_id}"}), 404
 
         app.logger.debug("Processing DMR enrichment")
-        enrichment_data = process_dmr_enrichment(db, dmr_id, timepoint_id)
+        # Fetch DMR enrichment data
+        query = text("""
+            SELECT go_id, description, category, p_value, genes
+            FROM top_go_processes_dmr
+            WHERE dmr_id = :dmr_id AND timepoint_id = :timepoint_id
+        """)
+        results = db.execute(query, {"dmr_id": dmr_id, "timepoint_id": timepoint_id}).fetchall()
+        
+        enrichment_data = {
+            "go_terms": [
+                {
+                    "go_id": row.go_id,
+                    "description": row.description,
+                    "category": row.category,
+                    "p_value": float(row.p_value),
+                    "genes": row.genes.split(",") if row.genes else []
+                } for row in results
+            ]
+        }
         if "error" in enrichment_data:
             app.logger.warning(f"Error in enrichment data: {enrichment_data['error']}")
             return jsonify({"error": enrichment_data["error"]}), 404
@@ -118,7 +136,25 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
             return jsonify({"error": f"No enrichment data found for biclique {biclique_id}"}), 404
 
         app.logger.debug("Processing biclique enrichment")
-        enrichment_data = process_biclique_enrichment(db, biclique_id, timepoint_id)
+        # Fetch biclique enrichment data
+        query = text("""
+            SELECT go_id, description, category, p_value, genes
+            FROM top_go_processes_biclique
+            WHERE biclique_id = :biclique_id AND timepoint_id = :timepoint_id
+        """)
+        results = db.execute(query, {"biclique_id": biclique_id, "timepoint_id": timepoint_id}).fetchall()
+        
+        enrichment_data = {
+            "go_terms": [
+                {
+                    "go_id": row.go_id,
+                    "description": row.description,
+                    "category": row.category,
+                    "p_value": float(row.p_value),
+                    "genes": row.genes.split(",") if row.genes else []
+                } for row in results
+            ]
+        }
         if "error" in enrichment_data:
             app.logger.warning(f"Error in enrichment data: {enrichment_data['error']}")
             return jsonify({"error": enrichment_data["error"]}), 404
