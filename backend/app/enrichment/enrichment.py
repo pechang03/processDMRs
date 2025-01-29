@@ -1,5 +1,39 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import select, Table, MetaData
+import logging
+from enum import Enum
+from datetime import datetime
+from sqlalchemy.orm import Session 
+from sqlalchemy import select, Table, MetaData, Column, Integer, String, DateTime, Enum as SQLEnum, insert
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+class EnrichmentStatus(str, Enum):
+    INITIATED = "INITIATED"
+    FETCHING_GENES = "FETCHING_GENES"
+    FETCHING_NCBI_IDS = "FETCHING_NCBI_IDS"
+    CALCULATING_ENRICHMENT = "CALCULATING_ENRICHMENT"
+    SAVING_RESULTS = "SAVING_RESULTS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+class ProcessStatus(Base):
+    __tablename__ = "process_status"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    process_type = Column(String)  # "biclique" or "dmr"
+    entity_id = Column(Integer)
+    timepoint_id = Column(Integer)
+    status = Column(SQLEnum(EnrichmentStatus))
+    error_message = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 from typing import List, Dict, Any
 import requests
 import json
@@ -11,17 +45,74 @@ from ..schemas import (
 from ..database.models import Biclique
 
 def get_biclique_genes(db: Session, biclique_id: int, timepoint_id: int) -> List[int]:
-    """Get all gene IDs in a biclique"""
-    query = select(Biclique).where(
-        Biclique.id == biclique_id,
-        Biclique.timepoint_id == timepoint_id
-    )
-    result = db.execute(query).first()
-    
-    if result and result.gene_ids:
-        # gene_ids is stored as a JSON array
-        return json.loads(result.gene_ids) if isinstance(result.gene_ids, str) else result.gene_ids
-    return []
+    """
+    Get all gene IDs in a biclique.
+    Expects gene_ids to be either:
+    - A string containing a JSON array of integers
+    - A Python list of integers
+    - A comma-separated string of integers
+    """
+    try:
+        logger.info(f"Querying biclique {biclique_id} at timepoint {timepoint_id}")
+        query = select(Biclique.id, Biclique.gene_ids, Biclique.timepoint_id).where(
+            Biclique.id == biclique_id,
+            Biclique.timepoint_id == timepoint_id
+        )
+        result = db.execute(query).first()
+        
+        if not result:
+            logger.error(f"No biclique found with id {biclique_id} at timepoint {timepoint_id}")
+            return []
+        
+        # Access columns by name from the result row
+        gene_ids_raw = result[1]  # Access gene_ids column by index
+        
+        if not gene_ids_raw:
+            logger.warning(f"Biclique {biclique_id} exists but has no gene_ids")
+            return []
+        
+        # Log raw value and type for debugging
+        logger.info(f"Raw gene_ids value for biclique {biclique_id}: {gene_ids_raw!r}")
+        logger.info(f"Type of gene_ids: {type(gene_ids_raw)}")
+        
+        try:
+            # Handle different formats
+            if isinstance(gene_ids_raw, str):
+                # Clean the string of any brackets, quotes, and spaces
+                cleaned = gene_ids_raw.strip('[](){} \n\t')
+                
+                # Try JSON first
+                try:
+                    gene_ids = json.loads(f"[{cleaned}]")
+                except json.JSONDecodeError:
+                    # Fall back to splitting by comma
+                    gene_ids = [x.strip() for x in cleaned.split(',') if x.strip()]
+            else:
+                gene_ids = gene_ids_raw
+            
+            # Ensure all IDs are integers
+            gene_ids = [int(x) for x in gene_ids]
+            logger.info(f"Successfully parsed {len(gene_ids)} gene IDs from biclique {biclique_id}: {gene_ids}")
+            return gene_ids
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Failed to parse gene_ids for biclique {biclique_id}")
+            logger.error(f"Parse error details: {str(e)}")
+            logger.error(f"Raw value that failed parsing: {gene_ids_raw!r}")
+            return []
+        
+    except Exception as e:
+        logger.error(f"Error retrieving genes for biclique {biclique_id}")
+        logger.error(f"Full error details: {str(e)}")
+        logger.exception("Stack trace:")
+        return []
+        
+    except Exception as e:
+        logger.error(f"Error retrieving genes for biclique {biclique_id}: {str(e)}")
+        return []
+    except Exception as e:
+        logger.error(f"Error retrieving genes for biclique {biclique_id}: {str(e)}")
+        return []
 
 def get_gene_ncbi_ids(db: Session, gene_ids: List[int]) -> Dict[int, str]:
     """
@@ -138,7 +229,7 @@ def save_biclique_enrichment_data(db: Session, biclique_id: int, timepoint_id: i
     """Save biclique GO enrichment data to database"""
     # Insert main enrichment data
     db.execute(
-        insert(GoEnrichmentBiclique).values(
+        insert(GOEnrichmentBiclique).values(
             biclique_id=biclique_id,
             timepoint_id=timepoint_id,
             go_terms=enrichment_data.get("go_terms", {}),
@@ -166,6 +257,33 @@ def save_biclique_enrichment_data(db: Session, biclique_id: int, timepoint_id: i
     
     db.commit()
 
+def update_process_status(db: Session, process_type: str, entity_id: int, timepoint_id: int, 
+                        status: EnrichmentStatus, error_message: str = None):
+    """Update the process status in the database"""
+    try:
+        status_record = db.query(ProcessStatus).filter(
+            ProcessStatus.process_type == process_type,
+            ProcessStatus.entity_id == entity_id,
+            ProcessStatus.timepoint_id == timepoint_id
+        ).first()
+        
+        if not status_record:
+            status_record = ProcessStatus(
+                process_type=process_type,
+                entity_id=entity_id,
+                timepoint_id=timepoint_id
+            )
+            db.add(status_record)
+        
+        status_record.status = status
+        status_record.error_message = error_message
+        status_record.updated_at = datetime.utcnow()
+        db.commit()
+        
+    except Exception as e:
+        logger.error(f"Failed to update process status: {str(e)}")
+        db.rollback()
+
 def process_biclique_enrichment(db: Session, biclique_id: int, timepoint_id: int) -> Dict[str, Any]:
     """
     Process GO enrichment for a biclique using DAVID API:
@@ -182,35 +300,87 @@ def process_biclique_enrichment(db: Session, biclique_id: int, timepoint_id: int
     Returns:
         Dictionary containing enrichment results
     """
-    # Check for existing enrichment data
-    stored_data = get_stored_biclique_enrichment(db, biclique_id, timepoint_id)
-    if stored_data:
-        return stored_data
+    logger.info(f"Starting enrichment process for biclique {biclique_id} at timepoint {timepoint_id}")
+    update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.INITIATED)
     
+    # Check for existing enrichment data
+    try:
+        stored_data = get_stored_biclique_enrichment(db, biclique_id, timepoint_id)
+        if stored_data:
+            logger.info(f"Found existing enrichment data for biclique {biclique_id}")
+            return stored_data
+    except Exception as e:
+        error_msg = f"Error fetching stored enrichment data: {str(e)}"
+        logger.error(error_msg)
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+        return {"error": error_msg}
+    
+    update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FETCHING_GENES)
     # Get genes in biclique
     gene_ids = get_biclique_genes(db, biclique_id, timepoint_id)
     if not gene_ids:
-        return {"error": "No genes found in biclique"}
+        error_msg = f"No genes found in biclique {biclique_id}"
+        logger.error(error_msg)
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+        return {"error": error_msg}
+
+    logger.info(f"Found {len(gene_ids)} genes in biclique {biclique_id}")
     
+    update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FETCHING_NCBI_IDS)
     # Get NCBI IDs
-    ncbi_id_mapping = get_ncbi_ids_for_genes(db, gene_ids)
+    ncbi_id_mapping = get_gene_ncbi_ids(db, gene_ids)
     if not ncbi_id_mapping:
-        return {"error": "No NCBI IDs found for genes"}
+        info_msg = f"No NCBI IDs found in database for genes in biclique {biclique_id}. Attempting to fetch from NCBI..."
+        logger.info(info_msg)
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FETCHING_NCBI_IDS, info_msg)
+        try:
+            # Add imports from ncbi_utils if needed
+            ncbi_id_mapping = fetch_ncbi_gene_ids(db, gene_ids)
+            if not ncbi_id_mapping:
+                error_msg = f"Failed to fetch NCBI IDs for genes in biclique {biclique_id}"
+                logger.error(error_msg)
+                update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+                return {"error": error_msg}
+        except Exception as e:
+            error_msg = f"Error fetching NCBI IDs for biclique {biclique_id}: {str(e)}"
+            logger.error(error_msg)
+            update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+            return {"error": error_msg}
+
+    logger.info(f"Found {len(ncbi_id_mapping)} NCBI IDs for genes in biclique {biclique_id}")
     
     # Get unique NCBI IDs
     ncbi_ids = list(set(ncbi_id_mapping.values()))
     
+    update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.CALCULATING_ENRICHMENT)
     # Fetch enrichment from DAVID
-    enrichment_data = fetch_david_enrichment(ncbi_ids)
-    if not enrichment_data:
-        return {"error": "Failed to fetch enrichment data from DAVID"}
+    try:
+        enrichment_data = fetch_david_enrichment(ncbi_ids)
+        if not enrichment_data:
+            error_msg = f"Failed to fetch enrichment data from DAVID for biclique {biclique_id}"
+            logger.error(error_msg)
+            update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+            return {"error": error_msg}
+    except Exception as e:
+        error_msg = f"DAVID API error for biclique {biclique_id}: {str(e)}"
+        logger.error(error_msg)
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+        return {"error": error_msg}
+
+    logger.info(f"Successfully fetched enrichment data from DAVID for biclique {biclique_id}")
     
+    update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.SAVING_RESULTS)
     # Save enrichment data
     try:
         save_biclique_enrichment_data(db, biclique_id, timepoint_id, enrichment_data)
+        logger.info(f"Successfully saved enrichment data for biclique {biclique_id}")
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.COMPLETED)
     except Exception as e:
-        return {"error": f"Failed to save enrichment data: {str(e)}"}
-    
+        error_msg = f"Failed to save enrichment data for biclique {biclique_id}: {str(e)}"
+        logger.error(error_msg)
+        update_process_status(db, "biclique", biclique_id, timepoint_id, EnrichmentStatus.FAILED, error_msg)
+        return {"error": error_msg}
+
     return enrichment_data
 
 from sqlalchemy.orm import Session 

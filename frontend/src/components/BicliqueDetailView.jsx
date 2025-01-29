@@ -896,11 +896,32 @@ return (
                             <Button
                                 variant="contained"
                                 size="small"
-                                onClick={() => {
-                                setSelectedBicliqueForEnrichment(biclique.biclique_id);
-                                setActiveTab(2); // Switch to Enrichment tab
+                                disabled={enrichmentLoading}
+                                onClick={async () => {
+                                    try {
+                                        setEnrichmentLoading(true);
+                                        setEnrichmentError(null);
+                                        const response = await fetch(
+                                            `${API_BASE_URL}/enrichment/go-enrichment-biclique/${timepointId}/${biclique.biclique_id}`
+                                        );
+                                        if (!response.ok) {
+                                            throw new Error('Failed to fetch enrichment data');
+                                        }
+                                        const data = await response.json();
+                                        setEnrichmentData(data);
+                                        setSelectedBicliqueForEnrichment(biclique.biclique_id);
+                                        setActiveTab(2); // Switch to Enrichment tab
+                                    } catch (error) {
+                                        console.error('Error fetching enrichment:', error);
+                                        setEnrichmentError(error.message);
+                                    } finally {
+                                        setEnrichmentLoading(false);
+                                    }
                                 }}
                             >
+                                {enrichmentLoading ? (
+                                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                                ) : null}
                                 View Enrichment
                             </Button>
                             </TableCell>

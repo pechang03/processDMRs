@@ -183,6 +183,54 @@ CREATE TABLE top_go_processes_biclique (
     FOREIGN KEY (biclique_id) REFERENCES go_enrichment_biclique(biclique_id)
 );
 
+-- Create Process Status Table for tracking enrichment processes
+CREATE TABLE process_status (
+    id SERIAL PRIMARY KEY,
+    process_type TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    timepoint_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    error_message TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (timepoint_id) REFERENCES timepoints(id)
+);
+
+-- Create indices for efficient process status lookups
+CREATE INDEX idx_process_status_lookup ON process_status(process_type, entity_id, timepoint_id);
+CREATE INDEX idx_process_status_type ON process_status(process_type);
+CREATE INDEX idx_process_status_type ON process_status(process_type);
+
+-- Create Prompt Logs Table for tracking AI model interactions
+CREATE TABLE prompt_logs (
+    id SERIAL PRIMARY KEY,
+    prompt TEXT NOT NULL,
+    prompt_template TEXT,
+    model VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    response TEXT,
+    tokens_used INTEGER,
+    prompt_tokens INTEGER,
+    completion_tokens INTEGER,
+    processing_time INTEGER, -- in milliseconds
+    status VARCHAR(50) NOT NULL, -- 'success' or 'error'
+    error_message TEXT,
+    metadata JSONB, -- for additional flexible data storage
+    user_feedback TEXT,
+    cost DECIMAL(10,6), -- estimated cost in currency units
+    
+    -- Add constraints
+    CHECK (status IN ('success', 'error'))
+);
+
+-- Create indices for efficient querying of prompt logs
+CREATE INDEX idx_prompt_logs_created_at ON prompt_logs(created_at);
+CREATE INDEX idx_prompt_logs_model ON prompt_logs(model);
+CREATE INDEX idx_prompt_logs_status ON prompt_logs(status);
+CREATE INDEX idx_prompt_logs_tokens ON prompt_logs(tokens_used);
+
+-- Indexing for Performance
+
 -- Indexing for Performance
 CREATE INDEX idx_timepoints_name ON timepoints(name);
 CREATE INDEX idx_genes_symbol ON genes(symbol);

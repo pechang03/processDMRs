@@ -1,3 +1,4 @@
+from enum import Enum
 from .database.models import (
     Base,
     Timepoint,
@@ -22,6 +23,7 @@ from .database.models import (
     GeneDetails,
 )
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
@@ -50,6 +52,8 @@ __all__ = [
     # Add Pydantic schemas as well
     "TopGOProcessBase",
     "DmrAnnotationViewSchema",
+    "ProcessStatus",
+    "ProcessStatusEnum",
 ]
 
 
@@ -365,3 +369,28 @@ class DmrAnnotationViewSchema(BaseModel):
     class Config:
         from_attributes = True
         allow_population_by_field_name = True
+
+class ProcessStatusEnum(str, Enum):
+    """Enum for process status values"""
+    INITIATED = "INITIATED"
+    FETCHING_GENES = "FETCHING_GENES"
+    FETCHING_NCBI_IDS = "FETCHING_NCBI_IDS"
+    CALCULATING_ENRICHMENT = "CALCULATING_ENRICHMENT"
+    SAVING_RESULTS = "SAVING_RESULTS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class ProcessStatus(BaseModel):
+    """Schema for tracking enrichment process status"""
+    id: int
+    process_type: str
+    entity_id: int
+    timepoint_id: int
+    status: ProcessStatusEnum
+    error_message: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
