@@ -9,6 +9,7 @@
 from flask import Blueprint, jsonify, current_app
 from flask_cors import CORS
 from ..utils.extensions import app
+from ..enrichment.go_enrichment import calculate_biclique_enrichment
 
 # from ..database.models import TopGOProcessesDMR
 from ..database import get_db_engine, get_db_session
@@ -30,7 +31,7 @@ from ..schemas import (
 )
 
 
-enrichment_bp = Blueprint("enrichment_routes", __name__, url_prefix="/app/enrichment")
+enrichment_bp = Blueprint("enrichment_routes", __name__, url_prefix="/api/enrichment")
 
 
 def parse_id_string(id_string: str) -> List[int]:
@@ -54,7 +55,8 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
         f"Processing dmr enrichment timepoint_id={timepoint_id} dmr_id={dmr_id}"
     )
 
-    db = get_db_session()
+    engine = get_db_engine()
+    db = get_db_session(engine)
     try:
         # Validate timepoint and dmr existence
         app.logger.debug(f"Validating timepoint_id={timepoint_id} and dmr_id={dmr_id}")
@@ -95,6 +97,10 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
         ).fetchall()
 
         enrichment_data = {
+            "timepoint": {
+                "id": timepoint.id,
+                "name": timepoint.name
+            },
             "go_terms": [
                 {
                     "go_id": row.go_id,
@@ -127,7 +133,8 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
     app.logger.info(
         f"Processing biclique enrichment timepoint_id={timepoint_id} biclique_id={biclique_id}"
     )
-    db = get_db_session()
+    engine = get_db_engine()
+    db = get_db_session(engine)
     try:
         # Validate timepoint and biclique existence
         app.logger.debug(
@@ -149,33 +156,80 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
             db.query(TopGOProcessesBiclique)
             .filter(
                 TopGOProcessesBiclique.biclique_id == biclique_id,
-                TopGOProcessesBiclique.timepoint_id == timepoint_id,
+                TopGOProcessesBiclique.timepoint_id == timepoint_id
             )
             .first()
         )
         if not enrichment_exists:
-            app.logger.warning(f"No enrichment data found for biclique {biclique_id}")
-            return (
-                jsonify(
-                    {"error": f"No enrichment data found for biclique {biclique_id}"}
-                ),
-                404,
-            )
+            app.logger.info(f"Initiating enrichment calculation for biclique {biclique_id}")
+            try:
+                # Start async enrichment calculation
+                calculate_biclique_enrichment(biclique_id, timepoint_id)
+                return jsonify({
+                    "status": "processing",
+                    "message": "Enrichment calculation has been initiated. Please try again in a few moments.",
+                    "timepoint_id": timepoint_id,
+                    "biclique_id": biclique_id
+                }), 202
+            except Exception as e:
+                app.logger.error(f"Failed to initiate enrichment calculation: {str(e)}")
+                return jsonify({
+                    "error": "Failed to initiate enrichment calculation",
+                    "details": str(e)
+                }), 500
 
         app.logger.debug("Processing biclique enrichment")
-        # Fetch biclique enrichment data
+        
+        # Add debug logging for database queries
+        debug_query = text("""
+            SELECT EXISTS (
+                SELECT 1 FROM timepoints WHERE id = :timepoint_id
+            ) as timepoint_exists,
+            EXISTS (
+                SELECT 1 FROM bicliques WHERE id = :biclique_id
+            ) as biclique_exists,
+            EXISTS (
+                SELECT 1 FROM top_go_processes_biclique 
+                WHERE biclique_id = :biclique_id
+            ) as enrichment_exists;
+        """)
+
+        debug_result = db.execute(
+            debug_query,
+            {
+                "timepoint_id": timepoint_id,
+                "biclique_id": biclique_id
+            }
+        ).first()
+
+        app.logger.info(
+            f"Debug check results: timepoint_exists={debug_result.timepoint_exists}, "
+            f"biclique_exists={debug_result.biclique_exists}, "
+            f"enrichment_exists={debug_result.enrichment_exists}"
+        )
+
+        # Fetch biclique enrichment data  
         query = text(
             """
             SELECT go_id, description, category, p_value, genes
             FROM top_go_processes_biclique
-            WHERE biclique_id = :biclique_id AND timepoint_id = :timepoint_id
-        """
+            WHERE biclique_id = :biclique_id 
+            AND timepoint_id = :timepoint_id
+            """
         )
         results = db.execute(
-            query, {"biclique_id": biclique_id, "timepoint_id": timepoint_id}
+            query,
+            {
+                "biclique_id": biclique_id,
+                "timepoint_id": timepoint_id
+            }
         ).fetchall()
 
         enrichment_data = {
+            "timepoint": {
+                "id": timepoint.id,
+                "name": timepoint.name
+            },
             "go_terms": [
                 {
                     "go_id": row.go_id,
