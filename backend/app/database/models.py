@@ -15,7 +15,6 @@ from sqlalchemy import (
     Boolean,
     UniqueConstraint,
     Index,
-    DateTime,
     JSON,
 )
 from sqlalchemy.types import TypeDecorator, TEXT
@@ -24,6 +23,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
+
 
 
 class ArrayType(TypeDecorator):
@@ -292,6 +292,7 @@ class GOEnrichmentDMR(Base):
     __tablename__ = "go_enrichment_dmr"
 
     dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     go_terms = Column(JSON)
     p_value = Column(Float)
     enrichment_score = Column(Float)
@@ -310,6 +311,7 @@ class GOEnrichmentBiclique(Base):
     __tablename__ = "go_enrichment_biclique"
 
     biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     go_terms = Column(JSON)
     p_value = Column(Float)
     enrichment_score = Column(Float)
@@ -328,6 +330,7 @@ class TopGOProcessesDMR(Base):
     __tablename__ = "top_go_processes_dmr"
 
     dmr_id = Column(Integer, ForeignKey("go_enrichment_dmr.dmr_id"), primary_key=True)
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     termId = Column(String(50), primary_key=True)
     pValue = Column(Float)
     enrichmentScore = Column(Float)
@@ -339,6 +342,7 @@ class TopGOProcessesBiclique(Base):
     biclique_id = Column(
         Integer, ForeignKey("go_enrichment_biclique.biclique_id"), primary_key=True
     )
+    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
     termId = Column(String(50), primary_key=True)
     pValue = Column(Float)
     enrichmentScore = Column(Float)

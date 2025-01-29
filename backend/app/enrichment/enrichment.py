@@ -5,8 +5,8 @@ import requests
 import json
 from ..schemas import (
     GeneDetails, 
-    GoEnrichmentBiclique,
-    TopGoProcessesBiclique
+    GOEnrichmentBiclique,
+    TopGOProcessesBiclique
 )
 from ..database.models import Biclique
 
@@ -36,18 +36,18 @@ def get_gene_ncbi_ids(db: Session, gene_ids: List[int]) -> Dict[int, str]:
 
 def get_stored_biclique_enrichment(db: Session, biclique_id: int, timepoint_id: int) -> Dict[str, Any]:
     """Get stored GO enrichment data for a biclique if it exists"""
-    query = select(GoEnrichmentBiclique).where(
-        GoEnrichmentBiclique.biclique_id == biclique_id,
-        GoEnrichmentBiclique.timepoint_id == timepoint_id
+    query = select(GOEnrichmentBiclique).where(
+        GOEnrichmentBiclique.biclique_id == biclique_id,
+        GOEnrichmentBiclique.timepoint_id == timepoint_id
     )
     result = db.execute(query).first()
     
     if result:
         # Get top processes
         top_processes = db.execute(
-            select(TopGoProcessesBiclique).where(
-                TopGoProcessesBiclique.biclique_id == biclique_id,
-                TopGoProcessesBiclique.timepoint_id == timepoint_id
+            select(TopGOProcessesBiclique).where(
+                TopGOProcessesBiclique.biclique_id == biclique_id,
+                TopGOProcessesBiclique.timepoint_id == timepoint_id
             )
         ).fetchall()
         
@@ -222,10 +222,10 @@ from datetime import datetime
 from ..schemas import (
     EdgeDetails, 
     GeneDetails, 
-    GoEnrichmentDmr, 
-    TopGoProcessesDmr,
-    GoEnrichmentBiclique,
-    TopGoProcessesBiclique,
+    GOEnrichmentDMR, 
+    TopGOProcessesDMR,
+    GOEnrichmentBiclique,
+    TopGOProcessesBiclique,
     BicliqueMemberSchema
 )
 
@@ -248,17 +248,17 @@ def get_ncbi_ids_for_genes(db: Session, gene_ids: List[int]) -> Dict[int, str]:
 
 def get_stored_enrichment(db: Session, dmr_id: int, timepoint_id: int) -> Dict[str, Any]:
     """Get stored GO enrichment data if it exists"""
-    query = select(GoEnrichmentDmr).where(
-        GoEnrichmentDmr.dmr_id == dmr_id,
-        GoEnrichmentDmr.timepoint_id == timepoint_id
+    query = select(GOEnrichmentDMR).where(
+        GOEnrichmentDMR.dmr_id == dmr_id,
+        GOEnrichmentDMR.timepoint_id == timepoint_id
     )
     result = db.execute(query).first()
     if result:
         # Get top processes
         top_processes = db.execute(
-            select(TopGoProcessesDmr).where(
-                TopGoProcessesDmr.dmr_id == dmr_id,
-                TopGoProcessesDmr.timepoint_id == timepoint_id
+            select(TopGOProcessesDMR).where(
+                TopGOProcessesDMR.dmr_id == dmr_id,
+                TopGOProcessesDMR.timepoint_id == timepoint_id
             )
         ).fetchall()
         

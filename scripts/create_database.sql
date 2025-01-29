@@ -133,6 +133,7 @@ CREATE INDEX idx_gene_details_ncbi ON gene_details(NCBI_id);
 -- Create GO Enrichment DMR Table
 CREATE TABLE go_enrichment_dmr (
     dmr_id INTEGER PRIMARY KEY,
+    timepoint_id INTEGER,
     go_terms JSON,
     p_value FLOAT,
     enrichment_score FLOAT,
@@ -146,7 +147,8 @@ CREATE TABLE go_enrichment_dmr (
 
 -- Create GO Enrichment Biclique Table
 CREATE TABLE go_enrichment_biclique (
-    biclique_id INTEGER PRIMARY KEY,
+    biclique_id INTEGER,
+    timepoint_id INTEGER,
     go_terms JSON,
     p_value FLOAT,
     enrichment_score FLOAT,
@@ -155,12 +157,14 @@ CREATE TABLE go_enrichment_biclique (
     significantBiologicalProcesses JSON,
     topBiologicalProcess TEXT,
     biologicalProcessAnnotationDetails JSON,
+    PRIMARY KEY (biclique_id, timepoint_id),
     FOREIGN KEY (biclique_id) REFERENCES bicliques(id)
 );
 
 -- Create Top GO Processes DMR Table
 CREATE TABLE top_go_processes_dmr (
     dmr_id INTEGER,
+    timepoint_id INTEGER,
     termId TEXT,
     pValue FLOAT,
     enrichmentScore FLOAT,
@@ -171,6 +175,7 @@ CREATE TABLE top_go_processes_dmr (
 -- Create Top GO Processes Biclique Table
 CREATE TABLE top_go_processes_biclique (
     biclique_id INTEGER,
+    timepoint_id INTEGER,
     termId TEXT,
     pValue FLOAT,
     enrichmentScore FLOAT,

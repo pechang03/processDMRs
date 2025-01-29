@@ -1,34 +1,74 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float, JSON, Index
-from sqlalchemy.orm import relationship, declarative_base
-
+from .database.models import (
+    Base,
+    Timepoint,
+    Gene,
+    DMR,
+    Biclique,
+    Component,
+    ComponentBiclique,
+    Statistic,
+    Metadata,
+    Relationship,
+    MasterGeneID,
+    GeneTimepointAnnotation,
+    DMRTimepointAnnotation,
+    TriconnectedComponent,
+    DominatingSet,
+    GOEnrichmentDMR,
+    GOEnrichmentBiclique,
+    TopGOProcessesDMR,
+    TopGOProcessesBiclique,
+    EdgeDetails,
+    GeneDetails,
+)
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
-Base = declarative_base()
+__all__ = [
+    "Base",
+    "Timepoint",
+    "Gene",
+    "DMR",
+    "Biclique",
+    "Component",
+    "ComponentBiclique",
+    "Statistic",
+    "Metadata",
+    "Relationship",
+    "MasterGeneID",
+    "GeneTimepointAnnotation",
+    "DMRTimepointAnnotation",
+    "TriconnectedComponent",
+    "DominatingSet",
+    "GOEnrichmentDMR",
+    "GOEnrichmentBiclique",
+    "TopGOProcessesDMR",
+    "TopGOProcessesBiclique",
+    "EdgeDetails",
+    "GeneDetails",
+    # Add Pydantic schemas as well
+    "TopGOProcessBase",
+    "DmrAnnotationViewSchema",
+]
 
 
-class EdgeDetails(Base):
-    __tablename__ = "edge_details"
+# Start with Pydantic schemas for data validation and transfer
+class TopGOProcessBase(BaseModel):
+    go_id: str
+    timepoint_id: int
+    description: str | None = None
+    category: str | None = None
+    p_value: float
+    genes: str | None = None
 
-    # Composite primary key columns
-    dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
-    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
-    timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
 
-    # Additional columns
-    edge_type = Column(String(50))
-    edit_type = Column(String(50))
-    distance_from_tss = Column(Integer)
-    description = Column(Text)
+class TopGOProcessBicliqueCreate(TopGOProcessBase):
+    biclique_id: int
 
-    # Relationships
-    dmr = relationship("Dmr", back_populates="edge_details")
-    gene = relationship("Gene", back_populates="edge_details")
-    timepoint = relationship("Timepoint", back_populates="edge_details")
 
-    def __repr__(self):
-        return f"<EdgeDetails(dmr_id={self.dmr_id}, gene_id={self.gene_id}, timepoint_id={self.timepoint_id})>"
+class TopGOProcessDMRCreate(TopGOProcessBase):
+    dmr_id: int
 
 
 class EdgeStatsSchema(BaseModel):
@@ -303,81 +343,6 @@ class GeneAnnotationViewSchema(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class GeneDetails(Base):
-    __tablename__ = "gene_details"
-
-    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
-    NCBI_id = Column(String(50))
-    annotations = Column(JSON)
-
-    # Relationships
-    gene = relationship("Gene")
-
-    __table_args__ = (
-        Index('idx_gene_details_ncbi_id', 'NCBI_id'),
-    )
-
-
-class TopGoProcessesDmr(Base):
-    __tablename__ = "top_go_processes_dmr"
-
-    dmr_id = Column(Integer, ForeignKey("go_enrichment_dmr.dmr_id"), primary_key=True)
-    termId = Column(String(50), primary_key=True)
-    pValue = Column(Float)
-    enrichmentScore = Column(Float)
-
-    # Relationships
-    go_enrichment = relationship("GoEnrichmentDmr")
-
-
-class TopGoProcessesBiclique(Base):
-    __tablename__ = "top_go_processes_biclique"
-
-    biclique_id = Column(Integer, ForeignKey("go_enrichment_biclique.biclique_id"), primary_key=True)
-    termId = Column(String(50), primary_key=True)
-    pValue = Column(Float)
-    enrichmentScore = Column(Float)
-
-    # Relationships
-    go_enrichment = relationship("GoEnrichmentBiclique")
-
-
-class GoEnrichmentDmr(Base):
-    __tablename__ = "go_enrichment_dmr"
-
-    dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
-    go_terms = Column(JSON)
-    p_value = Column(Float)
-    enrichment_score = Column(Float)
-    source = Column(Text)
-    biologicalProcessCount = Column(Integer)
-    significantBiologicalProcesses = Column(JSON)
-    topBiologicalProcess = Column(Text)
-    biologicalProcessAnnotationDetails = Column(JSON)
-
-    # Relationships
-    dmr = relationship("Dmr")
-    top_go_processes = relationship("TopGoProcessesDmr", back_populates="go_enrichment")
-
-
-class GoEnrichmentBiclique(Base):
-    __tablename__ = "go_enrichment_biclique"
-
-    biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
-    go_terms = Column(JSON)
-    p_value = Column(Float)
-    enrichment_score = Column(Float)
-    source = Column(Text)
-    biologicalProcessCount = Column(Integer)
-    significantBiologicalProcesses = Column(JSON)
-    topBiologicalProcess = Column(Text)
-    biologicalProcessAnnotationDetails = Column(JSON)
-
-    # Relationships
-    biclique = relationship("Biclique")
-    top_go_processes = relationship("TopGoProcessesBiclique", back_populates="go_enrichment")
 
 
 class DmrAnnotationViewSchema(BaseModel):
