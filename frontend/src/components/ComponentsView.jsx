@@ -10,15 +10,67 @@ import {
     TableRow,
     Button,
     Box,
-    CircularProgress
+    CircularProgress,
+    Tabs,
+    Tab,
+    Alert
 } from '@mui/material';
 import { API_BASE_URL } from '../config.js';
+
+// Reusable table component
+function ComponentTable({ components, onSelectComponent, showCategory }) {
+    return (
+        <TableContainer>
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Component ID</TableCell>
+                        <TableCell align="right">Bicliques</TableCell>
+                        <TableCell align="right">Genes</TableCell>
+                        <TableCell align="right">DMRs</TableCell>
+                        {showCategory && <TableCell>Category</TableCell>}
+                        <TableCell>Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {components.map((component) => (
+                        <TableRow key={component.component_id}>
+                            <TableCell>{component.component_id}</TableCell>
+                            <TableCell align="right">{component.biclique_count}</TableCell>
+                            <TableCell align="right">{component.gene_count}</TableCell>
+                            <TableCell align="right">{component.dmr_count}</TableCell>
+                            {showCategory && <TableCell>{component.biclique_categories}</TableCell>}
+                            <TableCell>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => onSelectComponent(component.component_id)}
+                                    disabled={showCategory && component.biclique_categories === 'simple'}
+                                    title={showCategory && component.biclique_categories === 'simple' ? 
+                                        "Detailed analysis is only available for interesting components" : 
+                                        "View component details"
+                                    }
+                                    sx={{
+                                        opacity: (showCategory && component.biclique_categories === 'simple') ? 0.6 : 1
+                                    }}
+                                >
+                                    Details
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+}
 
 function ComponentsView({ selectedTimepoint, onSelectComponent }) {
     const [components, setComponents] = useState([]);
     const [timepointName, setTimepointName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('split');
 
     useEffect(() => {
         if (selectedTimepoint) {
@@ -46,8 +98,10 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                             component_id: component.component_id,
                             biclique_count: component.biclique_count,
                             gene_count: component.gene_count,
-                            dmr_count: component.dmr_count
-                        })));
+                            dmr_count: component.dmr_count,
+                            graph_type: component.graph_type,
+                            biclique_categories: component.biclique_categories
+                        })))
                         setTimepointName(data.timepoint);
                     } else {
                         throw new Error(data.message || 'Failed to fetch components');
@@ -84,6 +138,15 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
         );
     }
 
+
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
+    const filteredComponents = components.filter(component => 
+        component.graph_type === activeTab
+    );
+
     return (
         <Box sx={{ mt: 2 }}>
             <Paper elevation={3} sx={{ p: 3 }}>
@@ -95,54 +158,21 @@ function ComponentsView({ selectedTimepoint, onSelectComponent }) {
                         Found {components.length} components
                     </Typography>
                 )}
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Component ID</TableCell>
-                                <TableCell align="right">Bicliques</TableCell>
-                                <TableCell align="right">Genes</TableCell>
-                                <TableCell align="right">DMRs</TableCell>
-                                <TableCell>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {components.map((component) => (
-                                <TableRow key={component.component_id}>
-                                    <TableCell>{component.component_id}</TableCell>
-                                    <TableCell align="right">
-                                        {component.biclique_count}
-                                        {component.biclique_count <= 1 && (
-                                            <Typography 
-                                                variant="caption" 
-                                                color="text.secondary" 
-                                                display="block"
-                                            >
-                                                (Simple)
-                                            </Typography>
-                                        )}
-                                    </TableCell>
-                                    <TableCell align="right">{component.gene_count}</TableCell>
-                                    <TableCell align="right">{component.dmr_count}</TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={() => onSelectComponent(component.component_id)}
-                                            disabled={component.biclique_count <= 1}
-                                            title={component.biclique_count <= 1 ? 
-                                                "Detailed analysis is only available for complex components" : 
-                                                "View component details"
-                                            }
-                                        >
-                                            Details
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs value={activeTab} onChange={handleTabChange}>
+                        <Tab label="Split Components" value="split" />
+                        <Tab label="Original Components" value="original" />
+                    </Tabs>
+                </Box>
+                
+                <Box sx={{ mt: 2 }}>
+                    <ComponentTable 
+                        components={filteredComponents}
+                        onSelectComponent={onSelectComponent}
+                        showCategory={activeTab === 'split'}
+                    />
+                </Box>
             </Paper>
         </Box>
     );

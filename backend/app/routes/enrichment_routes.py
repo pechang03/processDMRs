@@ -29,6 +29,10 @@ from ..schemas import (
     ComponentDetailsSchema,
 )
 
+
+enrichment_bp = Blueprint("enrichment_routes", __name__, url_prefix="/app/enrichment")
+
+
 def parse_id_string(id_string: str) -> List[int]:
     """Parse a comma-separated string of IDs into a list of integers"""
     if not id_string:
@@ -37,8 +41,6 @@ def parse_id_string(id_string: str) -> List[int]:
         return [int(x.strip()) for x in id_string.split(",") if x.strip()]
     except ValueError:
         raise ValueError("Invalid ID format - must be comma-separated integers")
-
-enrichment_bp = Blueprint("enrichment_routes", __name__, url_prefix="/api/enrichment")
 
 
 @enrichment_bp.route(
@@ -62,23 +64,36 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
             return jsonify({"error": f"Timepoint {timepoint_id} not found"}), 404
 
         # Check if DMR exists in TopGOProcessesDMR
-        dmr_exists = db.query(TopGOProcessesDMR).filter(
-            TopGOProcessesDMR.dmr_id == dmr_id,
-            TopGOProcessesDMR.timepoint_id == timepoint_id
-        ).first()
+        dmr_exists = (
+            db.query(TopGOProcessesDMR)
+            .filter(
+                TopGOProcessesDMR.dmr_id == dmr_id,
+                TopGOProcessesDMR.timepoint_id == timepoint_id,
+            )
+            .first()
+        )
         if not dmr_exists:
             app.logger.warning(f"DMR {dmr_id} not found for timepoint {timepoint_id}")
-            return jsonify({"error": f"DMR {dmr_id} not found for timepoint {timepoint_id}"}), 404
+            return (
+                jsonify(
+                    {"error": f"DMR {dmr_id} not found for timepoint {timepoint_id}"}
+                ),
+                404,
+            )
 
         app.logger.debug("Processing DMR enrichment")
         # Fetch DMR enrichment data
-        query = text("""
+        query = text(
+            """
             SELECT go_id, description, category, p_value, genes
             FROM top_go_processes_dmr
             WHERE dmr_id = :dmr_id AND timepoint_id = :timepoint_id
-        """)
-        results = db.execute(query, {"dmr_id": dmr_id, "timepoint_id": timepoint_id}).fetchall()
-        
+        """
+        )
+        results = db.execute(
+            query, {"dmr_id": dmr_id, "timepoint_id": timepoint_id}
+        ).fetchall()
+
         enrichment_data = {
             "go_terms": [
                 {
@@ -86,8 +101,9 @@ def read_dmr_enrichment(timepoint_id: int, dmr_id: int):
                     "description": row.description,
                     "category": row.category,
                     "p_value": float(row.p_value),
-                    "genes": row.genes.split(",") if row.genes else []
-                } for row in results
+                    "genes": row.genes.split(",") if row.genes else [],
+                }
+                for row in results
             ]
         }
         if "error" in enrichment_data:
@@ -114,7 +130,9 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
     db = get_db_session()
     try:
         # Validate timepoint and biclique existence
-        app.logger.debug(f"Validating timepoint_id={timepoint_id} and biclique_id={biclique_id}")
+        app.logger.debug(
+            f"Validating timepoint_id={timepoint_id} and biclique_id={biclique_id}"
+        )
         timepoint = db.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
         if not timepoint:
             app.logger.warning(f"Timepoint {timepoint_id} not found")
@@ -127,23 +145,36 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
             return jsonify({"error": f"Biclique {biclique_id} not found"}), 404
 
         # Check if biclique has enrichment data
-        enrichment_exists = db.query(TopGOProcessesBiclique).filter(
-            TopGOProcessesBiclique.biclique_id == biclique_id,
-            TopGOProcessesBiclique.timepoint_id == timepoint_id
-        ).first()
+        enrichment_exists = (
+            db.query(TopGOProcessesBiclique)
+            .filter(
+                TopGOProcessesBiclique.biclique_id == biclique_id,
+                TopGOProcessesBiclique.timepoint_id == timepoint_id,
+            )
+            .first()
+        )
         if not enrichment_exists:
             app.logger.warning(f"No enrichment data found for biclique {biclique_id}")
-            return jsonify({"error": f"No enrichment data found for biclique {biclique_id}"}), 404
+            return (
+                jsonify(
+                    {"error": f"No enrichment data found for biclique {biclique_id}"}
+                ),
+                404,
+            )
 
         app.logger.debug("Processing biclique enrichment")
         # Fetch biclique enrichment data
-        query = text("""
+        query = text(
+            """
             SELECT go_id, description, category, p_value, genes
             FROM top_go_processes_biclique
             WHERE biclique_id = :biclique_id AND timepoint_id = :timepoint_id
-        """)
-        results = db.execute(query, {"biclique_id": biclique_id, "timepoint_id": timepoint_id}).fetchall()
-        
+        """
+        )
+        results = db.execute(
+            query, {"biclique_id": biclique_id, "timepoint_id": timepoint_id}
+        ).fetchall()
+
         enrichment_data = {
             "go_terms": [
                 {
@@ -151,8 +182,9 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
                     "description": row.description,
                     "category": row.category,
                     "p_value": float(row.p_value),
-                    "genes": row.genes.split(",") if row.genes else []
-                } for row in results
+                    "genes": row.genes.split(",") if row.genes else [],
+                }
+                for row in results
             ]
         }
         if "error" in enrichment_data:
@@ -160,7 +192,9 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
             return jsonify({"error": enrichment_data["error"]}), 404
         return jsonify({"data": enrichment_data})
     except Exception as e:
-        app.logger.error(f"Error retrieving biclique enrichment: {str(e)}", exc_info=True)
+        app.logger.error(
+            f"Error retrieving biclique enrichment: {str(e)}", exc_info=True
+        )
         return jsonify({"error": "Internal server error"}), 500
     finally:
         db.close()
@@ -169,35 +203,38 @@ def read_biclique_enrichment(timepoint_id: int, biclique_id: int):
 def get_biclique_dmrs(db: Session, timepoint_id: int, biclique_id: int) -> List[int]:
     """
     Get all DMR IDs that are part of a biclique
-    
+
     Args:
         db: Database session
         timepoint_id: ID of the timepoint
         biclique_id: ID of the biclique
-    
+
     Returns:
         List of DMR IDs associated with the biclique
-        
+
     Raises:
         ValueError: If biclique or timepoint doesn't exist
     """
-    app.logger.debug(f"Fetching DMRs for biclique_id={biclique_id} timepoint_id={timepoint_id}")
-    
+    app.logger.debug(
+        f"Fetching DMRs for biclique_id={biclique_id} timepoint_id={timepoint_id}"
+    )
+
     # Validate biclique exists
     biclique = db.query(Biclique).filter(Biclique.id == biclique_id).first()
     if not biclique:
         app.logger.warning(f"Biclique {biclique_id} not found")
         raise ValueError(f"Biclique {biclique_id} not found")
-        
+
     # Validate timepoint exists
     timepoint = db.query(Timepoint).filter(Timepoint.id == timepoint_id).first()
     if not timepoint:
         app.logger.warning(f"Timepoint {timepoint_id} not found")
         raise ValueError(f"Timepoint {timepoint_id} not found")
-    
+
     try:
         # Get DMRs through the ComponentBiclique association
-        stmt = text("""
+        stmt = text(
+            """
             SELECT DISTINCT b.dmr_ids
             FROM bicliques b
             JOIN component_bicliques cb ON b.id = cb.biclique_id
@@ -208,52 +245,57 @@ def get_biclique_dmrs(db: Session, timepoint_id: int, biclique_id: int) -> List[
                 LIMIT 1
             )
             AND cb.timepoint_id = :timepoint_id
-        """)
-        
-        result = db.execute(stmt, {"biclique_id": biclique_id, "timepoint_id": timepoint_id})
+        """
+        )
+
+        result = db.execute(
+            stmt, {"biclique_id": biclique_id, "timepoint_id": timepoint_id}
+        )
         dmr_ids = parse_id_string(result.scalar() or "")
-        
+
         app.logger.debug(f"Found {len(dmr_ids)} DMRs for biclique {biclique_id}")
         return dmr_ids
-        
+
     except Exception as e:
-        app.logger.error(f"Error fetching DMRs for biclique {biclique_id}: {str(e)}", exc_info=True)
+        app.logger.error(
+            f"Error fetching DMRs for biclique {biclique_id}: {str(e)}", exc_info=True
+        )
         raise
 
 
 def combine_enrichment_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Combine and summarize GO enrichment results from multiple DMRs
-    
+
     Args:
         results: List of enrichment results from multiple DMRs, each containing go_terms
-        
+
     Returns:
         Dict containing combined and summarized enrichment results with:
         - Combined p-values using Fisher's method
         - Occurrence statistics
         - Overall enrichment scores
-        
+
     Raises:
         ValueError: If results format is invalid
     """
     app.logger.debug(f"Combining enrichment results from {len(results)} sources")
-    
+
     if not results:
         app.logger.warning("No enrichment results provided to combine")
         return {"error": "No enrichment results to combine"}
-        
+
     try:
         combined = {}
         total_samples = len(results)
         valid_results = 0
-        
+
         # Iterate through all results to combine GO terms
         for idx, result in enumerate(results):
             if not isinstance(result, dict) or "go_terms" not in result:
                 app.logger.warning(f"Invalid result format at index {idx}")
                 continue
-                
+
             valid_results += 1
             for term in result["go_terms"]:
                 try:
@@ -265,26 +307,26 @@ def combine_enrichment_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
                             "category": term["category"],
                             "p_values": [],
                             "occurrence": 0,
-                            "genes": set()  # Track unique genes
+                            "genes": set(),  # Track unique genes
                         }
-                    
+
                     # Add p-value and update occurrence
                     p_value = float(term["p_value"])
                     combined[go_id]["p_values"].append(p_value)
                     combined[go_id]["occurrence"] += 1
-                    
+
                     # Add associated genes if present
                     if "genes" in term:
                         combined[go_id]["genes"].update(term["genes"])
-                        
+
                 except (KeyError, ValueError) as e:
                     app.logger.warning(f"Error processing term: {str(e)}")
                     continue
-                    
+
         if valid_results == 0:
             app.logger.warning("No valid results found to combine")
             return {"error": "No valid results to combine"}
-            
+
         # Calculate summary statistics
         summary = []
         for go_id, data in combined.items():
@@ -292,7 +334,7 @@ def combine_enrichment_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
             min_p_value = min(data["p_values"])
             mean_p_value = sum(data["p_values"]) / len(data["p_values"])
             occurrence_ratio = data["occurrence"] / total_samples
-            
+
             summary_entry = {
                 "go_id": data["go_id"],
                 "description": data["description"],
@@ -303,16 +345,18 @@ def combine_enrichment_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "occurrence": data["occurrence"],
                 "total_samples": total_samples,
                 "gene_count": len(data["genes"]),
-                "genes": list(data["genes"]) if data["genes"] else []
+                "genes": list(data["genes"]) if data["genes"] else [],
             }
             summary.append(summary_entry)
-        
+
         # Sort by occurrence ratio and then by minimum p-value
         summary.sort(key=lambda x: (-x["occurrence_ratio"], x["min_p_value"]))
-        
-        app.logger.info(f"Successfully combined {len(summary)} GO terms from {valid_results} results")
+
+        app.logger.info(
+            f"Successfully combined {len(summary)} GO terms from {valid_results} results"
+        )
         return {"go_terms": summary}
-        
+
     except Exception as e:
         app.logger.error(f"Error combining enrichment results: {str(e)}", exc_info=True)
         raise ValueError(f"Error combining enrichment results: {str(e)}")
