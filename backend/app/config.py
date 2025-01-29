@@ -123,6 +123,18 @@ class LLMConfig(AppConfig):
         }
     }
 
+# NCBI Configuration
+class NCBIConfig(AppConfig):
+    """NCBI-specific configuration settings."""
+    NCBI_EMAIL = os.getenv("NCBI_EMAIL", "")
+    NCBI_API_KEY = os.getenv("NCBI_API_KEY", "")
+    DEFAULT_ORGANISM = os.getenv("DEFAULT_ORGANISM", "homo sapiens")
+    
+    # Proxy Settings
+    HTTP_PROXY = os.getenv("HTTP_PROXY", "")
+    HTTPS_PROXY = os.getenv("HTTPS_PROXY", "")
+    NO_PROXY = os.getenv("NO_PROXY", "")
+
 # API Configuration
 class APIConfig(AppConfig):
     # Environment
@@ -141,6 +153,11 @@ class APIConfig(AppConfig):
     # Server Settings
     HOST = os.getenv("HOST", "0.0.0.0")
     PORT = int(os.getenv("PORT", "5000"))
+    
+    # Proxy Settings
+    HTTP_PROXY = os.getenv("HTTP_PROXY", "")
+    HTTPS_PROXY = os.getenv("HTTPS_PROXY", "")
+    NO_PROXY = os.getenv("NO_PROXY", "")
 
 # Database Configuration
 class DatabaseConfig(AppConfig):
@@ -153,6 +170,7 @@ prompt_config = PromptConfig()
 llm_config = LLMConfig()
 api_config = APIConfig()
 db_config = DatabaseConfig()
+ncbi_config = NCBIConfig()
 
 def load_config(app):
     """Load all configuration into Flask app.config.
@@ -164,7 +182,7 @@ def load_config(app):
         app: Flask application instance
     """
     # Load configurations from each config class
-    for config_class in [PromptConfig, LLMConfig, APIConfig, DatabaseConfig]:
+    for config_class in [PromptConfig, LLMConfig, APIConfig, DatabaseConfig, NCBIConfig]:
         config_dict = {k: v for k, v in config_class.__dict__.items() 
                     if not k.startswith('_')}
         app.config.update(config_dict)
