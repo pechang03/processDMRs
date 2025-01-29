@@ -254,7 +254,7 @@ from sqlalchemy import DateTime
 
 class EdgeDetails(Base):
     __tablename__ = "edge_details"
-    
+
     dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
     gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
@@ -272,22 +272,25 @@ class EdgeDetails(Base):
 class GeneDetails(Base):
     __tablename__ = "gene_details"
 
-    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True) 
-    genome = Column(String(50), nullable=False, default='mouse')  # Either 'mouse' or 'human'
+    gene_id = Column(Integer, ForeignKey("genes.id"), primary_key=True)
+    gene_name_long = Column(String(50))  # Either 'mouse' or 'human'
+    genome = Column(
+        String(50), nullable=False, default="mouse"
+    )  # Either 'mouse' or 'human'
     NCBI_id = Column(String(50))
     annotations = Column(JSON)  # SQLite will store this as TEXT
-    
+
     # Relationship
     gene = relationship("Gene", backref="details")
-    
+
     __table_args__ = (
-        Index('idx_gene_details_ncbi', 'NCBI_id'),  # Index for NCBI_id lookups
+        Index("idx_gene_details_ncbi", "NCBI_id"),  # Index for NCBI_id lookups
     )
 
 
 class GOEnrichmentDMR(Base):
     __tablename__ = "go_enrichment_dmr"
-    
+
     dmr_id = Column(Integer, ForeignKey("dmrs.id"), primary_key=True)
     go_terms = Column(JSON)
     p_value = Column(Float)
@@ -297,14 +300,15 @@ class GOEnrichmentDMR(Base):
     significantBiologicalProcesses = Column(JSON)
     topBiologicalProcess = Column(Text)
     biologicalProcessAnnotationDetails = Column(JSON)
-    
+
     # Relationship
     dmr = relationship("DMR", backref="go_enrichment")
     top_processes = relationship("TopGOProcessesDMR", backref="enrichment")
 
+
 class GOEnrichmentBiclique(Base):
     __tablename__ = "go_enrichment_biclique"
-    
+
     biclique_id = Column(Integer, ForeignKey("bicliques.id"), primary_key=True)
     go_terms = Column(JSON)
     p_value = Column(Float)
@@ -314,26 +318,31 @@ class GOEnrichmentBiclique(Base):
     significantBiologicalProcesses = Column(JSON)
     topBiologicalProcess = Column(Text)
     biologicalProcessAnnotationDetails = Column(JSON)
-    
+
     # Relationship
     biclique = relationship("Biclique", backref="go_enrichment")
     top_processes = relationship("TopGOProcessesBiclique", backref="enrichment")
 
+
 class TopGOProcessesDMR(Base):
     __tablename__ = "top_go_processes_dmr"
-    
+
     dmr_id = Column(Integer, ForeignKey("go_enrichment_dmr.dmr_id"), primary_key=True)
     termId = Column(String(50), primary_key=True)
     pValue = Column(Float)
     enrichmentScore = Column(Float)
 
+
 class TopGOProcessesBiclique(Base):
     __tablename__ = "top_go_processes_biclique"
-    
-    biclique_id = Column(Integer, ForeignKey("go_enrichment_biclique.biclique_id"), primary_key=True)
+
+    biclique_id = Column(
+        Integer, ForeignKey("go_enrichment_biclique.biclique_id"), primary_key=True
+    )
     termId = Column(String(50), primary_key=True)
     pValue = Column(Float)
     enrichmentScore = Column(Float)
+
 
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"

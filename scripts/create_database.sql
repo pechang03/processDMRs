@@ -120,6 +120,8 @@ CREATE INDEX idx_edge_details_lookup ON edge_details(dmr_id, gene_id, timepoint_
 -- Create Gene Details Table
 CREATE TABLE gene_details (
     gene_id INTEGER PRIMARY KEY,
+    gene_name_long VARCHAR(50),
+    genome VARCHAR(50),
     NCBI_id VARCHAR(50),
     annotations JSON,
     FOREIGN KEY (gene_id) REFERENCES genes(id)
