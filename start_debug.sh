@@ -26,9 +26,9 @@ export FLASK_DEBUG=1
 export FLASK_PORT=5555
 export DATABASE_URL=sqlite:///$PWD/dmr_analysis.db
 
-# Add API base URL for frontend
-export REACT_APP_API_URL=http://localhost:5555/api
-log "Setting REACT_APP_API_URL to: $REACT_APP_API_URL"
+# Configure API URL for network access (using IP instead of localhost)
+export REACT_APP_API_URL=http://192.168.10.104:5555/api
+log "Setting REACT_APP_API_URL to: $REACT_APP_API_URL (accessible over local network)"
 
 # Start backend with increased logging
 log "Starting Flask backend..."
@@ -36,13 +36,18 @@ export FLASK_LOG_LEVEL=DEBUG
 python -m flask run --host=0.0.0.0 --port=5555 &
 
 # Wait for backend to start
-log "Backend will be available at: http://localhost:5555"
+log "Backend will be available at:"
+log "  - Local: http://localhost:5555"
+log "  - Network: http://192.168.10.104:5555"
 sleep 2
 
-# Start frontend with environment variable
-log "Starting React frontend with REACT_APP_API_URL=$REACT_APP_API_URL"
+# Start frontend with network access enabled
+log "Starting React frontend (enabling network access)..."
+log "Frontend will be available at:"
+log "  - Local: http://localhost:3000"
+log "  - Network: http://192.168.10.104:3000"
 cd frontend
-REACT_APP_API_URL=$REACT_APP_API_URL npm start &
+HOST=0.0.0.0 REACT_APP_API_URL=$REACT_APP_API_URL npm start &
 
 # Wait for both processes
 wait
