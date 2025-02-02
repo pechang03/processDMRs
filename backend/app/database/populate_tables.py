@@ -603,10 +603,30 @@ def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int,
                             gene_id=gene_id_mapping[gene_symbol],
                             timepoint_id=timepoint_id,
                             edge_type="enhancer",
+                            distance_from_tss=row.get("Distance_from_TSS"),
                             description=f"Enhancer interaction: {enhancer_info}"
                         )
                         session.add(edge)
-
+    
+    if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
+        for _, row in df.iterrows():
+            dmr_id = row["DMR_No."] - 1
+            promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
+            if isinstance(promoter_info, str) and promoter_info.strip() and promoter_info != ".":
+                # Use the same processing function to extract gene symbols
+                genes = process_enhancer_info(promoter_info)
+                for gene_symbol in genes:
+                    if gene_symbol in gene_id_mapping:
+                        edge = EdgeDetails(
+                            dmr_id=dmr_id,
+                            gene_id=gene_id_mapping[gene_symbol],
+                            timepoint_id=timepoint_id,
+                            edge_type="promoter",
+                            distance_from_tss=row.get("Distance_from_TSS"),
+                            description=f"Promoter interaction: {promoter_info}"
+                        )
+                        session.add(edge)
+    
     try:
         session.commit()
         print("Edge details populated successfully")
