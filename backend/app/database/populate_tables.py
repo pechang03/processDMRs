@@ -573,16 +573,22 @@ def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int,
         for _, row in df.iterrows():
             dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
-            
             if gene_symbol and gene_symbol != "." and gene_symbol in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_symbol]
-                
+                distance_from_tss = row.get("Distance_from_TSS")
+                try:
+                    distance_val = float(distance_from_tss) if distance_from_tss is not None else None
+                except (ValueError, TypeError):
+                    distance_val = None
+                edge_type = "nearby"
+                if distance_val is not None and distance_val <= 0:
+                    edge_type = "direct"
                 edge = EdgeDetails(
                     dmr_id=dmr_id,
                     gene_id=gene_id,
                     timepoint_id=timepoint_id,
-                    edge_type="nearby",
-                    distance_from_tss=row.get("Distance_from_TSS"),
+                    edge_type=edge_type,
+                    distance_from_tss=distance_from_tss,
                     description=row.get("Gene_Description")
                 )
                 session.add(edge)
