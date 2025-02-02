@@ -572,6 +572,8 @@ def populate_edge_details(
 ):
     """Populate edge details table from dataframe."""
     print("\nPopulating edge details...")
+    aggregated_edges = {}
+    priority_map = {"direct": 3, "nearby": 2, "enhancer": 1, "promoter": 1}
 
     # Process nearby genes
     if "Gene_Symbol_Nearby" in df.columns:
@@ -600,7 +602,9 @@ def populate_edge_details(
                     distance_from_tss=distance_from_tss,
                     description=row.get("Gene_Description"),
                 )
-                session.add(edge)
+                key = (dmr_id, gene_id)
+                if key not in aggregated_edges or priority_map[edge_type] > priority_map[aggregated_edges[key].edge_type]:
+                    aggregated_edges[key] = edge
 
     # Process enhancer interactions
     if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
@@ -637,7 +641,9 @@ def populate_edge_details(
                                 distance_from_tss=distance_val,
                                 description=f"Enhancer interaction: {interaction}"
                             )
-                            session.add(edge)
+                            key = (dmr_id, gene_id_mapping[gene_symbol])
+                            if key not in aggregated_edges or priority_map["enhancer"] > priority_map[aggregated_edges[key].edge_type]:
+                                aggregated_edges[key] = edge
     else:
         print("ERROR : Can't found ENCODER column")
 
@@ -675,9 +681,13 @@ def populate_edge_details(
                                 distance_from_tss=distance_val,
                                 description=f"Promoter interaction: {interaction}"
                             )
-                            session.add(edge)
+                            key = (dmr_id, gene_id_mapping[gene_symbol])
+                            if key not in aggregated_edges or priority_map["promoter"] > priority_map[aggregated_edges[key].edge_type]:
+                                aggregated_edges[key] = edge
     else:
         print("ERROR : Can't found ENCODE_Promoter_Interaction column")
+    for edge in aggregated_edges.values():
+        session.add(edge)
 
     try:
         session.commit()
