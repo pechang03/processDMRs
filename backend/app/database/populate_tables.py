@@ -7,6 +7,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from .models import EdgeDetails
+from backend.app.database.cleanup import clean_edge_details
 
 from collections import defaultdict
 from .operations import (
@@ -572,6 +573,8 @@ def populate_edge_details(
 ):
     """Populate edge details table from dataframe."""
     print("\nPopulating edge details...")
+    # Clean up any existing edge details for this timepoint
+    clean_edge_details(session, timepoint_id)
     aggregated_edges = {}
     priority_map = {"direct": 3, "nearby": 2, "enhancer": 1, "promoter": 1}
 
