@@ -599,11 +599,15 @@ def populate_edge_details(
                     gene_id=gene_id,
                     timepoint_id=timepoint_id,
                     edge_type=edge_type,
-                    distance_from_tss=distance_from_tss,
+                    distance_from_tss=distance_val,
                     description=row.get("Gene_Description"),
                 )
                 key = (dmr_id, gene_id)
-                if key not in aggregated_edges or priority_map[edge_type] > priority_map[aggregated_edges[key].edge_type]:
+                if (
+                    key not in aggregated_edges
+                    or priority_map[edge_type]
+                    > priority_map[aggregated_edges[key].edge_type]
+                ):
                     aggregated_edges[key] = edge
 
     # Process enhancer interactions
@@ -611,27 +615,32 @@ def populate_edge_details(
         for _, row in df.iterrows():
             dmr_id = row["DMR_No."]  # Do not adjust index
             enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            if isinstance(enhancer_info, str) and enhancer_info.strip() and enhancer_info != ".":
+            if (
+                isinstance(enhancer_info, str)
+                and enhancer_info.strip()
+                and enhancer_info != "."
+            ):
                 interactions = enhancer_info.split(";")
                 for interaction in interactions:
                     interaction = interaction.strip()
                     if interaction and interaction != ".":
                         parts = interaction.split("/")
                         gene_symbol = parts[0].strip().lower()
-                        if len(parts) > 1:
-                            distance_str = parts[1].strip()
-                            if distance_str.startswith("e"):
-                                try:
-                                    distance_val = int(distance_str[1:])
-                                except ValueError:
-                                    distance_val = None
-                            else:
-                                try:
-                                    distance_val = int(distance_str)
-                                except ValueError:
-                                    distance_val = None
-                        else:
-                            distance_val = None
+                        distance_val = None
+                        # if len(parts) > 1: # this is not the way to compute this distance
+                        # distance_str = parts[1].strip()
+                        # if distance_str.startswith("e"):
+                        #    try:
+                        #        distance_val = int(distance_str[1:])
+                        #    except ValueError:
+                        #        distance_val = None
+                        # else:
+                        #    try:
+                        #        distance_val = int(distance_str)
+                        #    except ValueError:
+                        #        distance_val = None
+                        # else:
+                        # distance_val = None
                         if gene_symbol in gene_id_mapping:
                             edge = EdgeDetails(
                                 dmr_id=dmr_id,
@@ -639,10 +648,14 @@ def populate_edge_details(
                                 timepoint_id=timepoint_id,
                                 edge_type="enhancer",
                                 distance_from_tss=distance_val,
-                                description=f"Enhancer interaction: {interaction}"
+                                description=f"Enhancer interaction: {interaction}",
                             )
                             key = (dmr_id, gene_id_mapping[gene_symbol])
-                            if key not in aggregated_edges or priority_map["enhancer"] > priority_map[aggregated_edges[key].edge_type]:
+                            if (
+                                key not in aggregated_edges
+                                or priority_map["enhancer"]
+                                > priority_map[aggregated_edges[key].edge_type]
+                            ):
                                 aggregated_edges[key] = edge
     else:
         print("ERROR : Can't found ENCODER column")
@@ -651,27 +664,32 @@ def populate_edge_details(
         for _, row in df.iterrows():
             dmr_id = row["DMR_No."]
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if isinstance(promoter_info, str) and promoter_info.strip() and promoter_info != ".":
+            if (
+                isinstance(promoter_info, str)
+                and promoter_info.strip()
+                and promoter_info != "."
+            ):
                 interactions = promoter_info.split(";")
                 for interaction in interactions:
                     interaction = interaction.strip()
                     if interaction and interaction != ".":
                         parts = interaction.split("/")
                         gene_symbol = parts[0].strip().lower()
-                        if len(parts) > 1:
-                            distance_str = parts[1].strip()
-                            if distance_str.startswith("e"):
-                                try:
-                                    distance_val = int(distance_str[1:])
-                                except ValueError:
-                                    distance_val = None
-                            else:
-                                try:
-                                    distance_val = int(distance_str)
-                                except ValueError:
-                                    distance_val = None
-                        else:
-                            distance_val = None
+                        distance_val = None
+                        # if len(parts) > 1: # this is not the way to compute this distance
+                        #    distance_str = parts[1].strip()
+                        #    if distance_str.startswith("e"):
+                        #        try:
+                        #            distance_val = int(distance_str[1:])
+                        #        except ValueError:
+                        #            distance_val = None
+                        #    else:
+                        #        try:
+                        #            distance_val = int(distance_str)
+                        #        except ValueError:
+                        #            distance_val = None
+                        # else:
+                        #    distance_val = None
                         if gene_symbol in gene_id_mapping:
                             edge = EdgeDetails(
                                 dmr_id=dmr_id,
@@ -679,10 +697,14 @@ def populate_edge_details(
                                 timepoint_id=timepoint_id,
                                 edge_type="promoter",
                                 distance_from_tss=distance_val,
-                                description=f"Promoter interaction: {interaction}"
+                                description=f"Promoter interaction: {interaction}",
                             )
                             key = (dmr_id, gene_id_mapping[gene_symbol])
-                            if key not in aggregated_edges or priority_map["promoter"] > priority_map[aggregated_edges[key].edge_type]:
+                            if (
+                                key not in aggregated_edges
+                                or priority_map["promoter"]
+                                > priority_map[aggregated_edges[key].edge_type]
+                            ):
                                 aggregated_edges[key] = edge
     else:
         print("ERROR : Can't found ENCODE_Promoter_Interaction column")
