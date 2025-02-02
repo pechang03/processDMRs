@@ -564,20 +564,29 @@ def populate_metadata(session: Session, metadata: dict):
                 insert_metadata(session, entity_type, entity_id, key, str(value))
 
 
-def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int, gene_id_mapping: Dict[str, int]):
+def populate_edge_details(
+    session: Session,
+    df: pd.DataFrame,
+    timepoint_id: int,
+    gene_id_mapping: Dict[str, int],
+):
     """Populate edge details table from dataframe."""
     print("\nPopulating edge details...")
-    
+
     # Process nearby genes
     if "Gene_Symbol_Nearby" in df.columns:
         for _, row in df.iterrows():
-            dmr_id = row["DMR_No."] - 1  # Convert to 0-based index
+            dmr_id = row["DMR_No."]  # - 1  dont Convert to 0-based index
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
             if gene_symbol and gene_symbol != "." and gene_symbol in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_symbol]
                 distance_from_tss = row.get("Distance_from_TSS")
                 try:
-                    distance_val = float(distance_from_tss) if distance_from_tss is not None else None
+                    distance_val = (
+                        float(distance_from_tss)
+                        if distance_from_tss is not None
+                        else None
+                    )
                 except (ValueError, TypeError):
                     distance_val = None
                 edge_type = "nearby"
@@ -589,19 +598,23 @@ def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int,
                     timepoint_id=timepoint_id,
                     edge_type=edge_type,
                     distance_from_tss=distance_from_tss,
-                    description=row.get("Gene_Description")
+                    description=row.get("Gene_Description"),
                 )
                 session.add(edge)
 
     # Process enhancer interactions
     if "ENCODE_Enhancer_Interaction(BingRen_Lab)" in df.columns:
         for _, row in df.iterrows():
-            dmr_id = row["DMR_No."] - 1
+            dmr_id = row["DMR_No."]  # don't convert to 0-based index - 1
             enhancer_info = row["ENCODE_Enhancer_Interaction(BingRen_Lab)"]
-            
-            if isinstance(enhancer_info, str) and enhancer_info.strip() and enhancer_info != ".":
+
+            if (
+                isinstance(enhancer_info, str)
+                and enhancer_info.strip()
+                and enhancer_info != "."
+            ):
                 genes = process_enhancer_info(enhancer_info)
-                
+
                 for gene_symbol in genes:
                     if gene_symbol in gene_id_mapping:
                         edge = EdgeDetails(
@@ -610,15 +623,21 @@ def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int,
                             timepoint_id=timepoint_id,
                             edge_type="enhancer",
                             distance_from_tss=row.get("Distance_from_TSS"),
-                            description=f"Enhancer interaction: {enhancer_info}"
+                            description=f"Enhancer interaction: {enhancer_info}",
                         )
                         session.add(edge)
-    
+    else:
+        print("ERROR : Can't found ENCODER column")
+
     if "ENCODE_Promoter_Interaction(BingRen_Lab)" in df.columns:
         for _, row in df.iterrows():
-            dmr_id = row["DMR_No."] - 1
+            dmr_id = row["DMR_No."]  # don't convert to 0 based indexing - 1
             promoter_info = row["ENCODE_Promoter_Interaction(BingRen_Lab)"]
-            if isinstance(promoter_info, str) and promoter_info.strip() and promoter_info != ".":
+            if (
+                isinstance(promoter_info, str)
+                and promoter_info.strip()
+                and promoter_info != "."
+            ):
                 # Use the same processing function to extract gene symbols
                 genes = process_enhancer_info(promoter_info)
                 for gene_symbol in genes:
@@ -629,10 +648,12 @@ def populate_edge_details(session: Session, df: pd.DataFrame, timepoint_id: int,
                             timepoint_id=timepoint_id,
                             edge_type="promoter",
                             distance_from_tss=row.get("Distance_from_TSS"),
-                            description=f"Promoter interaction: {promoter_info}"
+                            description=f"Promoter interaction: {promoter_info}",
                         )
                         session.add(edge)
-    
+    else:
+        print("ERROR : Can't found ENCODE_Promoter_Interaction column")
+
     try:
         session.commit()
         print("Edge details populated successfully")
