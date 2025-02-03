@@ -14,10 +14,10 @@ export PYTHONPATH="$SCRIPT_DIR/:$PYTHONPATH"
 echo "Setting up DMR Analysis Database..."
 
 # Check if PostgreSQL is running
-if ! pg_isready; then
-  echo "Error: PostgreSQL is not running"
-  exit 1
-fi
+#if ! pg_isready; then
+#  echo "Error: PostgreSQL is not running"
+#  exit 1
+#fi
 
 # Create database if it doesn't exist
 echo "Creating database..."

@@ -1,6 +1,7 @@
 """Core database operations for DMR analysis system."""
 
 from collections import defaultdict
+from types import NoneType
 import networkx as nx
 from typing import Dict, List, Set, Tuple
 import pandas as pd
@@ -585,17 +586,14 @@ def populate_edge_details(
             gene_symbol = str(row["Gene_Symbol_Nearby"]).strip().lower()
             if gene_symbol and gene_symbol != "." and gene_symbol in gene_id_mapping:
                 gene_id = gene_id_mapping[gene_symbol]
-                distance_from_tss = row.get("Distance_from_TSS")
-                try:
-                    distance_val = (
-                        float(distance_from_tss)
-                        if distance_from_tss is not None
-                        else None
-                    )
-                except (ValueError, TypeError):
-                    distance_val = None
+                distance_from_tss = row.get("Distance_From_TSS")
+                distance_val = (
+                    pd.to_numeric(distance_from_tss, errors="coerce")
+                    if distance_from_tss is not None
+                    else None
+                )
                 edge_type = "nearby"
-                if distance_val is not None and distance_val <= 0:
+                if distance_val is not None and distance_val < 0:
                     edge_type = "direct"
                 edge = EdgeDetails(
                     dmr_id=dmr_id,
@@ -623,12 +621,16 @@ def populate_edge_details(
                 and enhancer_info.strip()
                 and enhancer_info != "."
             ):
+                processed_enhancer_genes = set()
                 interactions = enhancer_info.split(";")
                 for interaction in interactions:
                     interaction = interaction.strip()
                     if interaction and interaction != ".":
                         parts = interaction.split("/")
                         gene_symbol = parts[0].strip().lower()
+                        if gene_symbol in processed_enhancer_genes:
+                            continue
+                        processed_enhancer_genes.add(gene_symbol)
                         distance_val = None
                         # if len(parts) > 1: # this is not the way to compute this distance
                         # distance_str = parts[1].strip()
@@ -672,12 +674,16 @@ def populate_edge_details(
                 and promoter_info.strip()
                 and promoter_info != "."
             ):
+                processed_promoter_genes = set()
                 interactions = promoter_info.split(";")
                 for interaction in interactions:
                     interaction = interaction.strip()
                     if interaction and interaction != ".":
                         parts = interaction.split("/")
                         gene_symbol = parts[0].strip().lower()
+                        if gene_symbol in processed_promoter_genes:
+                            continue
+                        processed_promoter_genes.add(gene_symbol)
                         distance_val = None
                         # if len(parts) > 1: # this is not the way to compute this distance
                         #    distance_str = parts[1].strip()

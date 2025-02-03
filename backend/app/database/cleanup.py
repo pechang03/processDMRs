@@ -1,7 +1,7 @@
 """Database cleanup operations."""
 
 from sqlalchemy.orm import Session
-from .models import Base, EdgeDetails
+from .models import Base
 from .models import (
     DMR,
     Gene,
@@ -16,24 +16,26 @@ from .models import (
     TriconnectedComponent,
     DMRTimepointAnnotation,
     GeneTimepointAnnotation,
+    EdgeDetails,
 )
 
 
-def clean_edge_details(session: Session):
+def clean_edge_details(session: Session, timepoint_id):
     """Clean edge details table."""
     try:
-        session.query(EdgeDetails).delete()
+        session.query(EdgeDetails).filter_by(timepoint_id=timepoint_id).delete()
         session.commit()
     except Exception as e:
         session.rollback()
         print(f"Error cleaning edge details: {str(e)}")
         raise
 
+
 def clean_database(session: Session):
     """Clean out existing data from all tables."""
     print("Cleaning existing data from database...")
     try:
-        clean_edge_details(session)
+        # clean_edge_details(session)
         # Drop all tables
         Base.metadata.drop_all(session.bind)
         # Recreate all tables including the new gene_details table
