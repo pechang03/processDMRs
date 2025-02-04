@@ -828,6 +828,55 @@ def store_dominating_set(
     session.commit()
 
 
+def update_component_edge_classification(self, timepoint_id: int, original_graph_component: nx.Graph, split_graph_component: nx.Graph, bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Tuple[int, int, str]]:
+    """
+    Compute edge classifications from the provided graphs and bicliques,
+    build a list of updates as tuples (dmr_id, gene_id, edge_type),
+    and call the update_edge_details() database function.
+    Returns the list of update tuples.
+    """
+    from backend.app.biclique_analysis.edge_classification import classify_edges
+    from backend.app.database.operations import update_edge_details
+        
+    # Build component data from bicliques: union of all nodes, and separate sets for DMRs and genes.
+    component_nodes = set()
+    dmrs = set()
+    genes = set()
+    for dmrs_set, genes_set in bicliques:
+        component_nodes.update(dmrs_set)
+        component_nodes.update(genes_set)
+        dmrs.update(dmrs_set)
+        genes.update(genes_set)
+    component_data = {"component": component_nodes, "dmrs": dmrs, "genes": genes}
+        
+    # Classify edges using the provided graphs and bicliques.
+    classification_result = classify_edges(
+        original_graph_component,
+        split_graph_component,
+        edge_sources={}, 
+        bicliques=bicliques,
+        component=component_data
+    )
+        
+    updates = []
+    for cls_type in ["permanent", "false_positive", "false_negative"]:
+        for edge_info in classification_result["classifications"].get(cls_type, []):
+            dmr_id, gene_id = edge_info.edge
+            updates.append((dmr_id, gene_id, cls_type))
+        
+    if updates:
+        current_app.logger.info("Updating edge_details with: " + str(updates))
+        try:
+            update_edge_details(timepoint_id, updates)
+            current_app.logger.info("Edge_details update succeeded.")
+        except Exception as e:
+            current_app.logger.error("Edge_details update failed: " + str(e))
+            raise
+    else:
+        current_app.logger.info("No edge_updates to perform.")
+        
+    return updates
+
 def get_dominating_set(
     session: Session, timepoint_id: int
 ) -> Tuple[Set[int], Dict[str, Dict]]:
