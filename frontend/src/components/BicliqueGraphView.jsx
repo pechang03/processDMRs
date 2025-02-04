@@ -101,7 +101,24 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
             paper_bgcolor: 'rgba(0,0,0,0)',
             width: 1200,
             height: 800,
-            margin: { l: 100, r: 100, t: 50, b: 50 }
+            margin: { l: 100, r: 100, t: 50, b: 50 },
+            annotations: [
+              {
+                x: 0.02,
+                y: 0.98,
+                xref: "paper",
+                yref: "paper",
+                text: plotData?.dmr_details_summary || "No DMR details available",
+                align: "left",
+                showarrow: false,
+                font: { size: 12, color: "black" },
+                bgcolor: "rgba(255,255,255,0.8)",
+                bordercolor: "black",
+                borderwidth: 1,
+                borderpad: 4,
+                width: 300
+              }
+            ]
           }}
           // Node shapes are defined in backend visualization.traces.NODE_SHAPES
           config={{

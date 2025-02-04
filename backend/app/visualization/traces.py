@@ -357,16 +357,18 @@ def create_dmr_trace(
         sizes.append(15 if is_hub else 10)
         symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
 
-        # Create label and hover text
-        label = node_labels.get(node_id, str(node_id))
+        # Create concise label for node display
+        label = f"DMR_{node_id}"
         text.append(label)
 
-        # Add metadata and edge details to hover text
+        # Create detailed hover text
         meta = dmr_metadata.get(str(node_id), {}) if dmr_metadata else {}
-        hover = [f"{label}<br>Area: {meta.get('area', 'N/A')}"]
+        hover = [f"DMR {node_id}"]
         
         if is_hub:
             hover.append("(Hub Node)")
+            
+        hover.append(f"Area: {meta.get('area', 'N/A')}")
             
         # Add edge details if available
         if meta.get("edge_details"):
