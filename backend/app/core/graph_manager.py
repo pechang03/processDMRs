@@ -6,20 +6,17 @@
 import os
 import networkx as nx
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Set
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from flask import current_app
 from dataclasses import dataclass
-from typing import Dict, Set, Tuple
-import networkx as nx
 
 from backend.app.utils.graph_io import read_bipartite_graph
-from backend.app.core.data_loader import create_bipartite_graph
+from backend.app.core.data_loader import create_bipartite_graph, read_gene_mapping
 from backend.app.database.connection import get_db_engine
 from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
-from backend.app.core.data_loader import read_gene_mapping
 
 
 import logging
