@@ -1,6 +1,8 @@
 """Core database operations for DMR analysis system."""
 
+import networkx as nx
 from typing import Set, Dict, List, Tuple, Any
+from flask import current_app
 from os import environ
 from sqlalchemy import and_, func
 from backend.app.biclique_analysis.classifier import classify_biclique

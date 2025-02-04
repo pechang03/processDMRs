@@ -641,6 +641,15 @@ def get_component_graph(timepoint_id, component_id):
                     bicliques
                 )
                 current_app.logger.info("Edge classification updates: " + str(updates))
+                
+                # Get edge classifications from the component data
+                edge_classifications = classify_edges(
+                    original_graph_component,
+                    split_graph_component,
+                    edge_sources={},
+                    bicliques=bicliques,
+                    component=component_data
+                )
             except Exception as e:
                 current_app.logger.error("Error during edge classification update: " + str(e))
                 return jsonify({"error": "Edge classification update failed", "status": 500}), 500
