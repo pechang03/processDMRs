@@ -1,0 +1,79 @@
+<bug_report>
+    <title>Error in Graph Visualization: Missing Column 'area_stat' in 'dmr_annotations_view'</title>
+    
+    <date>2025-01-24</date>
+    <time>15:53:49,890</time>
+    
+    <severity>Critical</severity>
+
+    <description>
+        An error occurred while generating graph visualizations due to the absence of the column 'area_stat' in the view 'dmr_annotations_view'. This resulted in a 
+failure when attempting to execute a query expecting this column.
+    </description>
+
+    <error_log>
+        <![CDATA[
+            [2025-01-24 15:53:49,890] ERROR in graph_routes:
+            Error generating graph visualization: 
+            (sqlite3.OperationalError) no such column: area_stat
+            [SQL: 
+                SELECT 
+                    dmr_id as id,
+                    area_stat as area,
+                    description,
+                    node_type,
+                    degree,
+                    is_isolate,
+                    biclique_ids
+                FROM dmr_annotations_view
+                WHERE timepoint_id = ?
+                AND component_id = ?
+            ]
+        ]]>
+    </error_log>
+
+    <affected_files>
+        <file_path>backend/app/schemas.py</file_path>
+        <file_path>backend/app/database/management/sql/views/create_views.sql</file_path>
+    </affected_files>
+
+    <root_cause_analysis>
+        The 'area_stat' column is present in the 'dmr' table but not included in the 'dmr_annotations_view'. This oversight causes an operational error when 
+executing queries that reference this missing column.
+    </root_cause_analysis>
+
+    <solution_proposal>
+        <step>
+            <description>Modify the SQL view definition to include the 'area_stat' column.</description>
+            <action>
+                Edit the file `backend/app/database/management/sql/views/create_views.sql` to update the creation script for `dmr_annotations_view`, ensuring that it 
+selects the 'area_stat' from the appropriate base table.
+            </action>
+        </step>
+
+        <step>
+            <description>Update the corresponding schema definition in Python.</description>
+            <action>
+                Adjust the field definitions within `backend/app/schemas.py` to reflect the inclusion of 'area_stat' as part of the expected fields for visualization 
+purposes.
+            </action>
+        </step>
+
+        <step>
+            <description>Test and validate changes.</description>
+            <action>
+                Execute comprehensive tests on graph generation routes to confirm that the error is resolved and no new issues are introduced. Ensure all queries 
+involving 'dmr_annotations_view' work as expected with the updated schema.
+            </action>
+        </step>
+
+    </solution_proposal>
+
+    <status>Open</status>
+    <assigned_to/>
+    <created_by/>
+    
+    <comments_section>
+        <!-- Placeholder for comments or additional notes from development team members -->
+    </comments_section>
+</bug_report>
