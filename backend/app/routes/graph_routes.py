@@ -650,6 +650,11 @@ def get_component_graph(timepoint_id, component_id):
                     bicliques=bicliques,
                     component=component_data
                 )
+                
+                # Convert to dict if it's a Pydantic model
+                if hasattr(edge_classifications, 'model_dump'):
+                    edge_classifications = edge_classifications.model_dump()
+
             except Exception as e:
                 current_app.logger.error("Error during edge classification update: " + str(e))
                 return jsonify({"error": "Edge classification update failed", "status": 500}), 500
