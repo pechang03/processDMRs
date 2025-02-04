@@ -648,7 +648,7 @@ def get_component_graph(timepoint_id, component_id):
                     split_graph_component,
                     edge_sources={},
                     bicliques=bicliques,
-                    component=component_info
+                    component=component_data
                 )
                 
                 # Convert to dict if it's a Pydantic model
