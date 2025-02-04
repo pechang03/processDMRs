@@ -1,10 +1,10 @@
 """Core database operations for DMR analysis system."""
 
-from typing import Set, Dict, List, Tuple
+from typing import Set, Dict, List, Tuple, Any
 from os import environ
 from sqlalchemy import and_, func
 from backend.app.biclique_analysis.classifier import classify_biclique
-from .models import GeneTimepointAnnotation, DMRTimepointAnnotation
+from .models import GeneTimepointAnnotation, DMRTimepointAnnotation, EdgeDetails
 from .models import TriconnectedComponent
 from .models import (
     Component,
@@ -730,6 +730,21 @@ def get_component_data(session: Session, component_id: int) -> Dict:
         "gene_nodes": gene_nodes,
     }
 
+
+def update_edge_details(timepoint_id: int, updates: List[Tuple[int, int, str]]) -> None:
+    """
+    Update the edge_details table: for each tuple (dmr_id, gene_id, edge_type),
+    set the edge_type field accordingly.
+    """
+    engine = get_db_engine()
+    with Session(engine) as session:
+        for dmr_id, gene_id, new_edge_type in updates:
+            session.query(EdgeDetails).filter(
+                EdgeDetails.timepoint_id == timepoint_id,
+                EdgeDetails.dmr_id == dmr_id,
+                EdgeDetails.gene_id == gene_id
+            ).update({"edge_type": new_edge_type})
+        session.commit()
 
 def update_gene_source_metadata(
     session: Session,

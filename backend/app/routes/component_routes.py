@@ -343,14 +343,20 @@ def get_component_details(timepoint_id, component_id):
             dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
 
             # Update dmr_metadata edge_type based on classifications
+            updates = []
             for cls_type in ["permanent", "false_positive", "false_negative"]:
                 for edge_info in classification_result["classifications"].get(cls_type, []):
-                    # Assume edge_info.edge is a tuple: (dmr_id, gene_id)
+                    # edge_info.edge is the tuple (dmr_id, gene_id)
                     dmr_id, gene_id = edge_info.edge
+                    updates.append((dmr_id, gene_id, cls_type))
                     if dmr_id in dmr_metadata:
                         for rec in dmr_metadata[dmr_id]["edge_details"]:
                             if rec.get("gene_id") == gene_id:
                                 rec["edge_type"] = cls_type
+
+            # Update edge details in database
+            from backend.app.database.operations import update_edge_details
+            update_edge_details(timepoint_id, updates)
 
             try:
                 # Parse bicliques
