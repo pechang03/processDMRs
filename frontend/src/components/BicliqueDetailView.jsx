@@ -1196,8 +1196,18 @@ return (
               .then(data => {
                 if (data.edges) {
                   console.log('Fetched DMR edge details:', data.edges);
-                  setDmrEdgeDetails(data.edges);
-                  setActiveTab(1); // Switch to Details tab
+                  // Update the componentDetails state by adding edge_details to the matching DMR row
+                  setComponentDetails(prev => {
+                    if (!prev || !prev.dmr_details) return prev;
+                    const updatedDmrDetails = prev.dmr_details.map(dmr => {
+                      if (dmr.dmr_id === dmrId) {
+                        return { ...dmr, edge_details: data.edges };
+                      }
+                      return dmr;
+                    });
+                    return { ...prev, dmr_details: updatedDmrDetails };
+                  });
+                  setActiveTab(1); // Switch to Details tab to visually update the table
                 }
               })
               .catch(error => {
