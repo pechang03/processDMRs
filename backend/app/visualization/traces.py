@@ -362,7 +362,7 @@ def create_dmr_trace(
         text.append(label)
 
         # Create detailed hover text
-        meta = dmr_metadata.get(str(node_id), {}) if dmr_metadata else {}
+        meta = dmr_metadata.get(node_id, {}) if dmr_metadata else {}
         hover = [f"DMR {node_id}"]
         
         if is_hub:
