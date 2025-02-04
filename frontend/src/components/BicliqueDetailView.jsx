@@ -223,7 +223,6 @@ const [selectedDmrForEnrichment, setSelectedDmrForEnrichment] = useState(null);
 const [dmrEnrichmentLoading, setDmrEnrichmentLoading] = useState(false);
 const [dmrEnrichmentError, setDmrEnrichmentError] = useState(null); 
 const [dmrEnrichmentData, setDmrEnrichmentData] = useState(null);
-const [dmrEdgeDetails, setDmrEdgeDetails] = useState(null);
 const [expandedRows, setExpandedRows] = useState({});
 
 const toggleRow = (dmrId) => {
@@ -1026,9 +1025,7 @@ return (
                     </TableRow>
                     </TableHead>
                     <TableBody>
-                      {/* Add debug logging for DMR edge details */}
-                      {console.log("Current DMR edge details state:", dmrEdgeDetails)}
-                      {(dmrEdgeDetails || componentDetails?.dmr_details)?.map((dmr) => (
+                      {componentDetails?.dmr_details?.map((dmr) => (
                         <React.Fragment key={`dmr_${dmr.dmr_id}`}>
                           <TableRow hover onClick={() => toggleRow(dmr.dmr_id)}>
                             <TableCell>DMR_{dmr.dmr_id}</TableCell>
