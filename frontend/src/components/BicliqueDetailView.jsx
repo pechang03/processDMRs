@@ -1089,7 +1089,7 @@ return (
                                   {dmr.edge_details && dmr.edge_details.length > 0 ? (
                                     dmr.edge_details.map((edge, idx) => (
                                       <Typography key={idx} variant="body2" sx={{ mb: 1 }}>
-                                        {`→ ${edge.gene_name} | Type: ${edge.edge_type} | TSS: ${edge.distance_from_tss} | Edit: ${edge.edit_type}`}
+                                        {`→ ${edge.gene_symbol} | Type: ${edge.edge_type} | TSS: ${edge.distance_from_tss} | Edit: ${edge.edit_type}`}
                                       </Typography>
                                     ))
                                   ) : (
