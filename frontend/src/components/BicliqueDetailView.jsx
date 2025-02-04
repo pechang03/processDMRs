@@ -1020,7 +1020,7 @@ return (
                     </TableRow>
                     </TableHead>
                     <TableBody>
-                      {componentDetails?.dmr_details?.map((dmr) => (
+                      {(dmrDetails || componentDetails?.dmr_details)?.map((dmr) => (
                         <TableRow key={dmr.dmr_id}>
                           <TableCell>DMR_{dmr.dmr_id}</TableCell>
                           <TableCell>{dmr.chromosome}</TableCell>
@@ -1046,7 +1046,8 @@ return (
                                 variant="outlined"
                                 sx={{ mr: 0.5, mb: 0.5 }}
                               />
-                            ))}\n                          </TableCell>
+                            ))}
+                          </TableCell>
                         <TableCell padding="none" align="center">
                         <IconButton
                             size="small"
