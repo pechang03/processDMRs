@@ -1152,7 +1152,7 @@ return (
             console.log('DMR selected:', dmrId);
             setSelectedDmrForEnrichment(dmrId);
             // Fetch edge details
-            fetch(`${API_BASE_URL}/graph/edge-details/timepoint/${timepointId}/dmr/${dmrId}`)
+            fetch(`${API_BASE_URL}/edge-details/timepoint/${timepointId}/dmr/${dmrId}`)
               .then(res => res.json())
               .then(data => {
                 if (data.edges) {
