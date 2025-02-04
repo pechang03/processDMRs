@@ -120,12 +120,13 @@ const BicliqueGraphView = ({ componentId, timepointId, onDMRSelected }) => {
             margin: { l: 100, r: 100, t: 50, b: 50 },
             annotations: [
               {
-                x: 0.02,
+                x: 0.98,
                 y: 0.98,
                 xref: "paper",
                 yref: "paper",
                 text: plotData?.dmr_details_summary || "No DMR details available",
-                align: "left",
+                align: "right",
+                xanchor: "right", 
                 showarrow: false,
                 font: { size: 12, color: "black" },
                 bgcolor: "rgba(255,255,255,0.8)",
