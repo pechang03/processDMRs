@@ -1020,6 +1020,8 @@ return (
                     </TableRow>
                     </TableHead>
                     <TableBody>
+                      {/* Add debug logging for DMR details */}
+                      {console.log("Current DMR details state:", dmrDetails)}
                       {(dmrDetails || componentDetails?.dmr_details)?.map((dmr) => (
                         <TableRow key={dmr.dmr_id}>
                           <TableCell>DMR_{dmr.dmr_id}</TableCell>
@@ -1157,10 +1159,9 @@ return (
               .then(res => res.json())
               .then(data => {
                 if (data.edges) {
-                  // Update DMR details in state
+                  console.log('Fetched DMR details:', data.edges);
                   setDmrDetails(data.edges);
-                  // Switch to Details tab to show the updated information
-                  setActiveTab(1);
+                  setActiveTab(1); // Switch to Details tab
                 }
               })
               .catch(error => {
