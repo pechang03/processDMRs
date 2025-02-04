@@ -222,7 +222,7 @@ const [selectedDmrForEnrichment, setSelectedDmrForEnrichment] = useState(null);
 const [dmrEnrichmentLoading, setDmrEnrichmentLoading] = useState(false);
 const [dmrEnrichmentError, setDmrEnrichmentError] = useState(null); 
 const [dmrEnrichmentData, setDmrEnrichmentData] = useState(null);
-const [dmrDetails, setDmrDetails] = useState(null);
+const [dmrEdgeDetails, setDmrEdgeDetails] = useState(null);
 
 const fetchEnrichmentData = async (bicliqueId) => {
     if (!bicliqueId || !timepointId) return;
@@ -1000,7 +1000,7 @@ return (
               {/* DMR Details Table */}
               <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
                 <Typography variant="subtitle1" gutterBottom>
-                  DMR Details
+                  DMR Edge Details
                 </Typography>
                 <TableContainer>
                   <Table size="small">
@@ -1020,9 +1020,9 @@ return (
                     </TableRow>
                     </TableHead>
                     <TableBody>
-                      {/* Add debug logging for DMR details */}
-                      {console.log("Current DMR details state:", dmrDetails)}
-                      {(dmrDetails || componentDetails?.dmr_details)?.map((dmr) => (
+                      {/* Add debug logging for DMR edge details */}
+                      {console.log("Current DMR edge details state:", dmrEdgeDetails)}
+                      {(dmrEdgeDetails || componentDetails?.dmr_details)?.map((dmr) => (
                         <TableRow key={dmr.dmr_id}>
                           <TableCell>DMR_{dmr.dmr_id}</TableCell>
                           <TableCell>{dmr.chromosome}</TableCell>
@@ -1159,8 +1159,8 @@ return (
               .then(res => res.json())
               .then(data => {
                 if (data.edges) {
-                  console.log('Fetched DMR details:', data.edges);
-                  setDmrDetails(data.edges);
+                  console.log('Fetched DMR edge details:', data.edges);
+                  setDmrEdgeDetails(data.edges);
                   setActiveTab(1); // Switch to Details tab
                 }
               })
