@@ -24,6 +24,7 @@ IconButton,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import BiotechIcon from "@mui/icons-material/Biotech";
+import Collapse from '@mui/material/Collapse';
 import BicliqueGraphView from "./BicliqueGraphView.jsx";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "../styles/BicliqueDetailView.css";
@@ -223,6 +224,11 @@ const [dmrEnrichmentLoading, setDmrEnrichmentLoading] = useState(false);
 const [dmrEnrichmentError, setDmrEnrichmentError] = useState(null); 
 const [dmrEnrichmentData, setDmrEnrichmentData] = useState(null);
 const [dmrEdgeDetails, setDmrEdgeDetails] = useState(null);
+const [expandedRows, setExpandedRows] = useState({});
+
+const toggleRow = (dmrId) => {
+  setExpandedRows((prev) => ({ ...prev, [dmrId]: !prev[dmrId] }));
+};
 
 const fetchEnrichmentData = async (bicliqueId) => {
     if (!bicliqueId || !timepointId) return;
@@ -1000,7 +1006,7 @@ return (
               {/* DMR Details Table */}
               <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
                 <Typography variant="subtitle1" gutterBottom>
-                  DMR Edge Details
+                  DMR Details
                 </Typography>
                 <TableContainer>
                   <Table size="small">
@@ -1023,47 +1029,80 @@ return (
                       {/* Add debug logging for DMR edge details */}
                       {console.log("Current DMR edge details state:", dmrEdgeDetails)}
                       {(dmrEdgeDetails || componentDetails?.dmr_details)?.map((dmr) => (
-                        <TableRow key={dmr.dmr_id}>
-                          <TableCell>DMR_{dmr.dmr_id}</TableCell>
-                          <TableCell>{dmr.chromosome}</TableCell>
-                          <TableCell>{dmr.start?.toLocaleString()}</TableCell>
-                          <TableCell>{dmr.end?.toLocaleString()}</TableCell>
-                          <TableCell>{dmr.methylation_diff?.toFixed(2)}</TableCell>
-                          <TableCell>{dmr.p_value?.toExponential(2)}</TableCell>
-                          <TableCell>{dmr.q_value?.toExponential(2)}</TableCell>
-                          <TableCell>
-                            <Chip 
-                              size="small" 
-                              label={dmr.node_type} 
-                              color={dmr.node_type === 'hub' ? 'primary' : 'default'}
-                            />
-                          </TableCell>
-                          <TableCell>{dmr.degree}</TableCell>
-                          <TableCell>
-                            {dmr.biclique_ids?.split(',')?.map((id, index) => (
-                              <Chip
-                                key={`${id}_${index}`}
-                                label={id.trim()}
-                                size="small"
-                                variant="outlined"
-                                sx={{ mr: 0.5, mb: 0.5 }}
+                        <React.Fragment key={`dmr_${dmr.dmr_id}`}>
+                          <TableRow hover onClick={() => toggleRow(dmr.dmr_id)}>
+                            <TableCell>DMR_{dmr.dmr_id}</TableCell>
+                            <TableCell>{dmr.chromosome}</TableCell>
+                            <TableCell>{dmr.start?.toLocaleString()}</TableCell>
+                            <TableCell>{dmr.end?.toLocaleString()}</TableCell>
+                            <TableCell>{dmr.methylation_diff?.toFixed(2)}</TableCell>
+                            <TableCell>{dmr.p_value?.toExponential(2)}</TableCell>
+                            <TableCell>{dmr.q_value?.toExponential(2)}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                size="small" 
+                                label={dmr.node_type} 
+                                color={dmr.node_type === 'hub' ? 'primary' : 'default'}
                               />
-                            ))}
-                          </TableCell>
-                        <TableCell padding="none" align="center">
-                        <IconButton
-                            size="small"
-                            onClick={() => {
-                                console.log('Clicked DMR enrichment for:', dmr.dmr_id);
-                                setSelectedDmrForEnrichment(dmr.dmr_id);
-                                setActiveTab(2); // Switch to Enrichment tab when clicking the button
-                            }}
-                            title="View Enrichment"
-                        >
-                            <BiotechIcon fontSize="small" />
-                        </IconButton>
-                        </TableCell>
-                    </TableRow>
+                            </TableCell>
+                            <TableCell>{dmr.degree}</TableCell>
+                            <TableCell>
+                              {dmr.biclique_ids?.split(',')?.map((id, index) => (
+                                <Chip
+                                  key={`${id.trim()}_${index}`}
+                                  label={id.trim()}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ mr: 0.5, mb: 0.5 }}
+                                />
+                              ))}
+                            </TableCell>
+                            <TableCell padding="none" align="center">
+                              <IconButton 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRow(dmr.dmr_id);
+                                }}
+                              >
+                                <ExpandMoreIcon 
+                                  style={{ 
+                                    transform: expandedRows[dmr.dmr_id] ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.3s'
+                                  }} 
+                                />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log('Clicked DMR enrichment for:', dmr.dmr_id);
+                                  setSelectedDmrForEnrichment(dmr.dmr_id);
+                                  setActiveTab(2);
+                                }}
+                                title="View Enrichment"
+                              >
+                                <BiotechIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={11}>
+                              <Collapse in={expandedRows[dmr.dmr_id]} timeout="auto" unmountOnExit>
+                                <Box margin={1}>
+                                  {dmr.edge_details && dmr.edge_details.length > 0 ? (
+                                    dmr.edge_details.map((edge, idx) => (
+                                      <Typography key={idx} variant="body2" sx={{ mb: 1 }}>
+                                        {`→ ${edge.gene_name} | Type: ${edge.edge_type} | TSS: ${edge.distance_from_tss} | Edit: ${edge.edit_type}`}
+                                      </Typography>
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2">No edge details available</Typography>
+                                  )}
+                                </Box>
+                              </Collapse>
+                            </TableCell>
+                          </TableRow>
+                        </React.Fragment>
                       ))}
                     </TableBody>
                   </Table>
