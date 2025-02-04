@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from backend.app.utils.graph_io import read_bipartite_graph
 from backend.app.core.data_loader import create_bipartite_graph, read_gene_mapping
 from backend.app.database.connection import get_db_engine
+from backend.app.database.operations import update_component_edge_classification
 from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
 
@@ -30,9 +31,9 @@ class ComponentMapping:
     def __init__(self, original_graph: nx.Graph, split_graph: nx.Graph):
         self.original_components: Dict[int, Set[int]] = {}  # component_id -> node_ids
         self.split_components: Dict[int, Set[int]] = {}  # component_id -> node_ids
-        self.split_to_original: Dict[int, int] = (
-            {}
-        )  # split_component_id -> original_component_id
+        self.split_to_original: Dict[
+            int, int
+        ] = {}  # split_component_id -> original_component_id
 
         # Remove isolated nodes from both graphs
         self.original_graph = original_graph.subgraph(
@@ -306,7 +307,7 @@ class GraphManager:
                         JOIN genes g ON ed.gene_id = g.id
                         WHERE ed.timepoint_id = :timepoint_id
                     """),
-                    {"timepoint_id": timepoint_id}
+                    {"timepoint_id": timepoint_id},
                 ).fetchall()
 
                 # Group edge details by DMR
@@ -315,14 +316,16 @@ class GraphManager:
                     dmr_id = detail.dmr_id
                     if dmr_id not in self.dmr_edge_details:
                         self.dmr_edge_details[dmr_id] = {"edge_details": []}
-                    
-                    self.dmr_edge_details[dmr_id]["edge_details"].append({
-                        "gene_id": detail.gene_id,
-                        "gene_name": detail.gene_name,
-                        "edge_type": detail.edge_type,
-                        "distance_from_tss": detail.distance_from_tss,
-                        "edit_type": detail.edit_type
-                    })
+
+                    self.dmr_edge_details[dmr_id]["edge_details"].append(
+                        {
+                            "gene_id": detail.gene_id,
+                            "gene_name": detail.gene_name,
+                            "edge_type": detail.edge_type,
+                            "distance_from_tss": detail.distance_from_tss,
+                            "edit_type": detail.edit_type,
+                        }
+                    )
 
             original_graph_file, split_graph_file = self.get_graph_paths(timepoint_info)
 
@@ -516,7 +519,7 @@ class GraphManager:
 
     def get_dmr_metadata(self, timepoint_id: int) -> Dict:
         """Get DMR metadata including edge details."""
-        if not hasattr(self, 'dmr_edge_details'):
+        if not hasattr(self, "dmr_edge_details"):
             return {}
         return self.dmr_edge_details
 
