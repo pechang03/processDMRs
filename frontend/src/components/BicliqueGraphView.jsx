@@ -3,7 +3,7 @@ import Plot from "react-plotly.js";
 import { Box, Paper, CircularProgress, Alert, Typography } from "@mui/material";
 import { API_BASE_URL } from "../config.js";
 
-const BicliqueGraphView = ({ componentId, timepointId }) => {
+const BicliqueGraphView = ({ componentId, timepointId, onDMRSelected }) => {
   const [plotData, setPlotData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
