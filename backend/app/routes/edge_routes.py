@@ -1,113 +1,76 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List
-from pydantic import BaseModel
+from flask import Blueprint, jsonify, current_app
+from typing import List, Dict, Any
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from ..database.models import EdgeDetails, Gene
-from ..database.connection import get_async_session
+from ..database.connection import get_db_engine
 
-router = APIRouter(prefix="/api/graph/edge-details", tags=["edges"])
+edge_bp = Blueprint('edge_routes', __name__)
 
-class EdgeDetailBase(BaseModel):
-    dmr_id: int
-    gene_id: int
-    gene_symbol: str | None
-    edge_type: str
-    edit_type: str
-    distance_from_tss: int
-    description: str | None
-
-    class Config:
-        orm_mode = True
-
-class EdgeDetailsResponse(BaseModel):
-    edges: List[EdgeDetailBase]
-
-@router.get("/timepoint/{timepoint_id}/dmr/{dmr_id}", 
-        response_model=EdgeDetailsResponse)
-async def get_dmr_edge_details(
-    timepoint_id: int,
-    dmr_id: int,
-    db: AsyncSession = Depends(get_async_session)
-) -> EdgeDetailsResponse:
+@edge_bp.route("/timepoint/<int:timepoint_id>/dmr/<int:dmr_id>")
+def get_dmr_edge_details(timepoint_id: int, dmr_id: int):
     """Get edge details for a specific DMR in a timepoint."""
     try:
-        edges = (
-            await db.scalars(
-                select(EdgeDetails)
-                .filter(
-                    EdgeDetails.timepoint_id == timepoint_id,
-                    EdgeDetails.dmr_id == dmr_id
-                )
-            )
-        ).all()
+        engine = get_db_engine()
+        with Session(engine) as db:
+            edges = db.query(EdgeDetails).filter(
+                EdgeDetails.timepoint_id == timepoint_id,
+                EdgeDetails.dmr_id == dmr_id
+            ).all()
 
-        if not edges:
-            raise HTTPException(status_code=404, detail="No edge details found")
+            if not edges:
+                return jsonify({"status": "error", "message": "No edge details found"}), 404
 
-        result = []
-        for edge in edges:
-            gene = await db.get(Gene, edge.gene_id)
-            result.append(
-                EdgeDetailBase(
-                    dmr_id=edge.dmr_id,
-                    gene_id=edge.gene_id,
-                    gene_symbol=gene.symbol if gene else None,
-                    edge_type=edge.edge_type,
-                    edit_type=edge.edit_type,
-                    distance_from_tss=edge.distance_from_tss,
-                    description=edge.description
-                )
-            )
+            result = []
+            for edge in edges:
+                gene = db.get(Gene, edge.gene_id)
+                result.append({
+                    "dmr_id": edge.dmr_id,
+                    "gene_id": edge.gene_id,
+                    "gene_symbol": gene.symbol if gene else None,
+                    "edge_type": edge.edge_type,
+                    "edit_type": edge.edit_type,
+                    "distance_from_tss": edge.distance_from_tss,
+                    "description": edge.description
+                })
 
-        return EdgeDetailsResponse(edges=result)
+            return jsonify({"status": "success", "edges": result})
 
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        current_app.logger.error(f"Error getting DMR edge details: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
-@router.get("/timepoint/{timepoint_id}/gene/{gene_id}",
-        response_model=EdgeDetailsResponse)
-async def get_gene_edge_details(
-    timepoint_id: int,
-    gene_id: int,
-    db: AsyncSession = Depends(get_async_session)
-) -> EdgeDetailsResponse:
+@edge_bp.route("/timepoint/<int:timepoint_id>/gene/<int:gene_id>")
+def get_gene_edge_details(timepoint_id: int, gene_id: int):
     """Get edge details for a specific gene in a timepoint."""
     try:
-        edges = (
-            await db.scalars(
-                select(EdgeDetails)
-                .filter(
-                    EdgeDetails.timepoint_id == timepoint_id,
-                    EdgeDetails.gene_id == gene_id
-                )
-            )
-        ).all()
+        engine = get_db_engine()
+        with Session(engine) as db:
+            edges = db.query(EdgeDetails).filter(
+                EdgeDetails.timepoint_id == timepoint_id,
+                EdgeDetails.gene_id == gene_id
+            ).all()
 
-        if not edges:
-            raise HTTPException(status_code=404, detail="No edge details found")
+            if not edges:
+                return jsonify({"status": "error", "message": "No edge details found"}), 404
 
-        result = []
-        for edge in edges:
-            result.append(
-                EdgeDetailBase(
-                    dmr_id=edge.dmr_id,
-                    gene_id=edge.gene_id,
-                    gene_symbol=(await db.get(Gene, edge.gene_id)).symbol,
-                    edge_type=edge.edge_type,
-                    edit_type=edge.edit_type,
-                    distance_from_tss=edge.distance_from_tss,
-                    description=edge.description
-                )
-            )
+            result = []
+            for edge in edges:
+                gene = db.get(Gene, edge.gene_id)
+                result.append({
+                    "dmr_id": edge.dmr_id,
+                    "gene_id": edge.gene_id,
+                    "gene_symbol": gene.symbol if gene else None,
+                    "edge_type": edge.edge_type,
+                    "edit_type": edge.edit_type,
+                    "distance_from_tss": edge.distance_from_tss,
+                    "description": edge.description
+                })
 
-        return EdgeDetailsResponse(edges=result)
+            return jsonify({"status": "success", "edges": result})
 
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        current_app.logger.error(f"Error getting gene edge details: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
