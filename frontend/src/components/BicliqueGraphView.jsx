@@ -7,6 +7,22 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
   const [plotData, setPlotData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedDMR, setSelectedDMR] = useState(null);
+
+  const handlePlotClick = (event) => {
+    if (event?.points && event.points.length > 0) {
+      const clickedText = event.points[0].text || "";
+      const match = clickedText.match(/DMR_(\d+)/);
+      if (match) {
+        const dmrId = parseInt(match[1], 10);
+        setSelectedDMR(dmrId);
+        // Trigger API call through parent component
+        if (onDMRSelected) {
+          onDMRSelected(dmrId);
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchGraphData = async () => {
@@ -138,6 +154,7 @@ const BicliqueGraphView = ({ componentId, timepointId }) => {
           }}
           style={{ width: "100%", height: "100%" }}
           useResizeHandler={true}
+          onClick={(event) => handlePlotClick(event)}
         />
       </Box>
     </Paper>

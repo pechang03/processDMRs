@@ -222,6 +222,7 @@ const [selectedDmrForEnrichment, setSelectedDmrForEnrichment] = useState(null);
 const [dmrEnrichmentLoading, setDmrEnrichmentLoading] = useState(false);
 const [dmrEnrichmentError, setDmrEnrichmentError] = useState(null); 
 const [dmrEnrichmentData, setDmrEnrichmentData] = useState(null);
+const [dmrDetails, setDmrDetails] = useState(null);
 
 const fetchEnrichmentData = async (bicliqueId) => {
     if (!bicliqueId || !timepointId) return;
@@ -1147,6 +1148,24 @@ return (
           timepointId={timepointId}
           geneSymbols={geneSymbols}
           dmrNames={dmrNames}
+          onDMRSelected={(dmrId) => {
+            console.log('DMR selected:', dmrId);
+            setSelectedDmrForEnrichment(dmrId);
+            // Fetch edge details
+            fetch(`${API_BASE_URL}/graph/edge-details/timepoint/${timepointId}/dmr/${dmrId}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.edges) {
+                  // Update DMR details in state
+                  setDmrDetails(data.edges);
+                  // Switch to Details tab to show the updated information
+                  setActiveTab(1);
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching DMR edge details:', error);
+              });
+          }}
         />
       </Paper>
     </Box>
