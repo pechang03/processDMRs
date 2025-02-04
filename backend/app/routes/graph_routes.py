@@ -648,7 +648,7 @@ def get_component_graph(timepoint_id, component_id):
                     split_graph_component,
                     edge_sources={},
                     bicliques=bicliques,
-                    component=component_data
+                    component=component_info
                 )
                 
                 # Convert to dict if it's a Pydantic model
@@ -689,7 +689,14 @@ def get_component_graph(timepoint_id, component_id):
             # Add timing for performance monitoring
             start_time = time.time()
 
-            # Create component data structure with dominating set
+            # Create component info dictionary specifically for classify_edges
+            component_info = {
+                "component": set(all_component_nodes),
+                "dmrs": set(all_dmr_ids),
+                "genes": set(all_gene_ids)
+            }
+
+            # Create full component data structure with additional info
             component_data = {
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
