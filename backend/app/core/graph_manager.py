@@ -320,6 +320,7 @@ class GraphManager:
                         self.dmr_edge_details[dmr_id] = {"edge_details": []}
                     
                     self.dmr_edge_details[dmr_id]["edge_details"].append({
+                        "gene_id": detail.gene_id,
                         "gene_name": detail.gene_name,
                         "edge_type": detail.edge_type,
                         "distance_from_tss": detail.distance_from_tss,

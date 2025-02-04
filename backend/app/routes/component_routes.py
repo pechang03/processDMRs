@@ -338,6 +338,17 @@ def get_component_details(timepoint_id, component_id):
             }
 
             app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
+
+            # Update dmr_metadata edge_type based on classifications
+            for cls_type in ["permanent", "false_positive", "false_negative"]:
+                for edge_info in classification_result["classifications"].get(cls_type, []):
+                    # Assume edge_info.edge is a tuple: (dmr_id, gene_id)
+                    dmr_id, gene_id = edge_info.edge
+                    if dmr_id in dmr_metadata:
+                        for rec in dmr_metadata[dmr_id]["edge_details"]:
+                            if rec.get("gene_id") == gene_id:
+                                rec["edge_type"] = cls_type
+
             try:
                 # Parse bicliques
                 bicliques_data = (
