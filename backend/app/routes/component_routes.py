@@ -339,6 +339,9 @@ def get_component_details(timepoint_id, component_id):
 
             app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
 
+            # Get DMR metadata from graph manager
+            dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
+
             # Update dmr_metadata edge_type based on classifications
             for cls_type in ["permanent", "false_positive", "false_negative"]:
                 for edge_info in classification_result["classifications"].get(cls_type, []):
