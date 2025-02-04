@@ -18,6 +18,8 @@ from backend.app.database.connection import get_db_engine
 from backend.app.database.operations import update_component_edge_classification
 from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
+from backend.app.biclique_analysis.edge_classification import classify_edges
+from backend.app.database.operations import update_edge_details
 
 
 import logging
@@ -523,16 +525,20 @@ class GraphManager:
             return {}
         return self.dmr_edge_details
 
-    def update_component_edge_classification(self, timepoint_id: int, original_graph_component: nx.Graph, split_graph_component: nx.Graph, bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Tuple[int, int, str]]:
+    def update_component_edge_classification(
+        self,
+        timepoint_id: int,
+        original_graph_component: nx.Graph,
+        split_graph_component: nx.Graph,
+        bicliques: List[Tuple[Set[int], Set[int]]],
+    ) -> List[Tuple[int, int, str]]:
         """
         Compute edge classifications from the provided subgraphs and bicliques,
         build a list of update tuples (dmr_id, gene_id, edge_type),
         and call update_edge_details to update the database.
         Returns the list of update tuples.
         """
-        from backend.app.biclique_analysis.edge_classification import classify_edges
-        from backend.app.database.operations import update_edge_details
-        
+
         # Build component data (union of nodes; separate DMRs and genes)
         component_nodes = set()
         dmrs = set()
@@ -543,23 +549,23 @@ class GraphManager:
             dmrs.update(dmrs_set)
             genes.update(genes_set)
         component_data = {"component": component_nodes, "dmrs": dmrs, "genes": genes}
-        
+
         # Call classify_edges with the subgraphs and component data
         classification_result = classify_edges(
             original_graph_component,
             split_graph_component,
             edge_sources={},
             bicliques=bicliques,
-            component=component_data
+            component=component_data,
         )
-        
+
         # Build the list of update tuples
         updates = []
         for cls_type in ["permanent", "false_positive", "false_negative"]:
             for edge_info in classification_result["classifications"].get(cls_type, []):
                 dmr_id, gene_id = edge_info.edge
                 updates.append((dmr_id, gene_id, cls_type))
-        
+
         if updates:
             current_app.logger.info("Updating edge_details with: " + str(updates))
             try:
@@ -570,7 +576,7 @@ class GraphManager:
                 raise
         else:
             current_app.logger.info("No edge updates to perform.")
-        
+
         return updates
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
