@@ -375,9 +375,20 @@ def get_component_details(timepoint_id, component_id):
                 app.logger.info(
                     f"Successfully processed component {component_id} details"
                 )
-                return jsonify(
-                    {"status": "success", "data": component_details.model_dump()}
-                )
+                
+                # Add DMR details summary
+                graph_manager = current_app.graph_manager
+                dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
+                summary_lines = []
+                for dmr_id, meta in dmr_metadata.items():
+                    count = len(meta.get("edge_details", []))
+                    summary_lines.append(f"DMR_{dmr_id}: {count} edge{'s' if count != 1 else ''}")
+                summary_string = "; ".join(summary_lines)
+                
+                # Convert the Pydantic model to a dict and add the summary field
+                component_dict = component_details.model_dump()
+                component_dict["dmr_details_summary"] = summary_string
+                return jsonify({"status": "success", "data": component_dict})
 
             except ValidationError as e:
                 app.logger.error(f"Validation error: {str(e)}")
