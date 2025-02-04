@@ -361,12 +361,26 @@ def create_dmr_trace(
         label = node_labels.get(node_id, str(node_id))
         text.append(label)
 
-        # Add metadata to hover text
+        # Add metadata and edge details to hover text
         meta = dmr_metadata.get(str(node_id), {}) if dmr_metadata else {}
-        hover = f"{label}<br>Area: {meta.get('area', 'N/A')}"
+        hover = [f"{label}<br>Area: {meta.get('area', 'N/A')}"]
+        
         if is_hub:
-            hover += "<br>(Hub Node)"
-        hover_text.append(hover)
+            hover.append("(Hub Node)")
+            
+        # Add edge details if available
+        if meta.get("edge_details"):
+            hover.append("<br>Edge Details:")
+            for edge in meta["edge_details"]:
+                edge_text = (
+                    f"→ {edge.get('gene_name', 'N/A')} | "
+                    f"Type: {edge.get('edge_type', '-')} | "
+                    f"TSS: {edge.get('distance_from_tss', '-')} | "
+                    f"Edit: {edge.get('edit_type', '-')}"
+                )
+                hover.append(edge_text)
+                
+        hover_text.append("<br>".join(hover))
 
     if not x:
         return None

@@ -297,6 +297,35 @@ class GraphManager:
             if not timepoint_info:
                 raise ValueError(f"Timepoint {timepoint_id} not found")
 
+            # Load edge details for DMRs
+            engine = get_db_engine()
+            with Session(engine) as session:
+                # Query edge details for all DMRs in this timepoint
+                edge_details = session.execute(
+                    text("""
+                        SELECT ed.dmr_id, ed.gene_id, g.symbol as gene_name,
+                               ed.edge_type, ed.edit_type, ed.distance_from_tss
+                        FROM edge_details ed
+                        JOIN genes g ON ed.gene_id = g.id
+                        WHERE ed.timepoint_id = :timepoint_id
+                    """),
+                    {"timepoint_id": timepoint_id}
+                ).fetchall()
+
+                # Group edge details by DMR
+                self.dmr_edge_details = {}
+                for detail in edge_details:
+                    dmr_id = detail.dmr_id
+                    if dmr_id not in self.dmr_edge_details:
+                        self.dmr_edge_details[dmr_id] = {"edge_details": []}
+                    
+                    self.dmr_edge_details[dmr_id]["edge_details"].append({
+                        "gene_name": detail.gene_name,
+                        "edge_type": detail.edge_type,
+                        "distance_from_tss": detail.distance_from_tss,
+                        "edit_type": detail.edit_type
+                    })
+
             original_graph_file, split_graph_file = self.get_graph_paths(timepoint_info)
 
             logger.info(f"Loading graphs for timepoint {timepoint_id}")
@@ -486,6 +515,12 @@ class GraphManager:
             raise ValueError(f"Graphs not found for timepoint {timepoint_id}")
 
         return ComponentMapping(original_graph, split_graph)
+
+    def get_dmr_metadata(self, timepoint_id: int) -> Dict:
+        """Get DMR metadata including edge details."""
+        if not hasattr(self, 'dmr_edge_details'):
+            return {}
+        return self.dmr_edge_details
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
         """Get timepoint name from cached mapping."""
