@@ -51,8 +51,6 @@ def parse_id_string(id_str):
 graph_bp = Blueprint("graph_routes", __name__, url_prefix="/api/graph")
 
 
-
-
 @graph_bp.route("/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
     """Get graph visualization data for a specific component."""
@@ -631,33 +629,37 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get component mapping and classify edges
             component_mapping = graph_manager.load_timepoint_components(timepoint_id)
-            
+
             try:
                 # Call the new GraphManager method with the component's graphs and bicliques
                 updates = graph_manager.update_component_edge_classification(
-                    timepoint_id, 
-                    original_graph_component, 
-                    split_graph_component, 
-                    bicliques
+                    timepoint_id,
+                    original_graph_component,
+                    split_graph_component,
+                    bicliques,
                 )
                 current_app.logger.info("Edge classification updates: " + str(updates))
-                
+
                 # Get edge classifications from the component data
                 edge_classifications = classify_edges(
                     original_graph_component,
                     split_graph_component,
                     edge_sources={},
                     bicliques=bicliques,
-                    component=component_data.model_dump()
+                    component=component_data.model_dump(),
                 )
-                
+                current_app.logger.info("Edge classifications done ")
                 # Convert to dict if it's a Pydantic model
-                if hasattr(edge_classifications, 'model_dump'):
-                    edge_classifications = edge_classifications.model_dump()
+                # if hasattr(edge_classifications, 'model_dump'):
+                #    edge_classifications = edge_classifications.model_dump()
 
             except Exception as e:
-                current_app.logger.error("Error during edge classification update: " + str(e))
-                return jsonify({"error": "Edge classification update failed", "status": 500}), 500
+                current_app.logger.error(
+                    "Error during edge classification update: " + str(e)
+                )
+                return jsonify(
+                    {"error": "Edge classification update failed", "status": 500}
+                ), 500
 
             # Add detailed logging for edge classification
             total_edges = len(original_graph_component.edges())
@@ -693,7 +695,7 @@ def get_component_graph(timepoint_id, component_id):
             component_info = {
                 "component": set(all_component_nodes),
                 "dmrs": set(all_dmr_ids),
-                "genes": set(all_gene_ids)
+                "genes": set(all_gene_ids),
             }
 
             # Create full component data structure with additional info

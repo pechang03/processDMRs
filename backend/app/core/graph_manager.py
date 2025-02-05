@@ -558,13 +558,15 @@ class GraphManager:
             bicliques=bicliques,
             component=component_data,
         )
+        if not isinstance(classification_result, dict):
+            classification_result = classification_result.model_dump()
 
-        # Build the list of update tuples
         updates = []
         for cls_type in ["permanent", "false_positive", "false_negative"]:
             for edge_info in classification_result["classifications"].get(cls_type, []):
                 dmr_id, gene_id = edge_info.edge
                 updates.append((dmr_id, gene_id, cls_type))
+        # Build the list of update tuples
 
         if updates:
             current_app.logger.info("Updating edge_details with: " + str(updates))
