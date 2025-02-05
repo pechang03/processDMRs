@@ -579,7 +579,7 @@ class GraphManager:
         else:
             current_app.logger.info("No edge updates to perform.")
 
-        return updates
+        return updates, classification_result
 
     def get_timepoint_name(self, timepoint_id: int) -> str:
         """Get timepoint name from cached mapping."""

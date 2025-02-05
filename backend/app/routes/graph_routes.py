@@ -631,27 +631,14 @@ def get_component_graph(timepoint_id, component_id):
             component_mapping = graph_manager.load_timepoint_components(timepoint_id)
 
             try:
-                # Call the new GraphManager method with the component's graphs and bicliques
-                updates = graph_manager.update_component_edge_classification(
+                # Call the GraphManager method to get both updates and classifications
+                updates, edge_classifications = graph_manager.update_component_edge_classification(
                     timepoint_id,
                     original_graph_component,
                     split_graph_component,
                     bicliques,
                 )
                 current_app.logger.info("Edge classification updates: " + str(updates))
-
-                # Get edge classifications from the component data
-                edge_classifications = classify_edges(
-                    original_graph_component,
-                    split_graph_component,
-                    edge_sources={},
-                    bicliques=bicliques,
-                    component=component_data.model_dump(),
-                )
-                current_app.logger.info("Edge classifications done ")
-                # Convert to dict if it's a Pydantic model
-                # if hasattr(edge_classifications, 'model_dump'):
-                #    edge_classifications = edge_classifications.model_dump()
 
             except Exception as e:
                 current_app.logger.error(
