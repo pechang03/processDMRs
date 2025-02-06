@@ -231,7 +231,7 @@ def create_component_visualization(
 
     # Create edge traces
     edge_traces = create_edge_traces(
-        classifications,
+        edge_classifications,
         node_positions,
         node_labels,
         component["component"],
