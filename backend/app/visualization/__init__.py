@@ -13,15 +13,16 @@ from .biconnected_visualization import BiconnectedVisualization
 from .triconnected_visualization import TriconnectedVisualization
 from backend.app.utils.node_info import NodeInfo
 from backend.app.utils.edge_info import EdgeInfo
+from .colors import get_biclique_colors, get_edge_colors
 
 __all__ = [
     "create_biclique_visualization",
-    "create_node_biclique_map",
+    "create_node_biclique_map", 
     "create_visual_layout",
     "create_axis_layout",
     "calculate_plot_height",
     "OriginalGraphLayout",
-    "SpringLogicalLayout",
+    "SpringLogicalLayout", 
     "CircularBicliqueLayout",
     "create_edge_traces",
     "create_node_traces",
@@ -29,6 +30,8 @@ __all__ = [
     "create_dmr_table",
     "create_gene_table",
     "generate_biclique_colors",
+    "get_biclique_colors",
+    "get_edge_colors",
     "calculate_node_positions",
     "BiconnectedVisualization",
     "TriconnectedVisualization",
