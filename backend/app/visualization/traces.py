@@ -580,6 +580,7 @@ def create_edge_traces(
                     text=hover_texts,
                     name=f"{edge_type.replace('_', ' ').title()} Edges",
                     legendgroup="edges",  # Add this line
+                    showlegend=False,  # Hide duplicate legend entries
                 )
             )
 
