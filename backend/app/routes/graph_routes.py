@@ -718,12 +718,8 @@ def get_component_graph(timepoint_id, component_id):
             vis_dict["edge_stats"] = edge_classifications["stats"]["component"]
             vis_dict["biclique_stats"] = edge_classifications["stats"]["bicliques"]
 
-            # Convert Plotly objects to JSON-serializable dictionaries
-            final_fig = {
-                'data': [trace.to_plotly_json() for trace in traces],
-                'layout': layout.to_plotly_json() if hasattr(layout, "to_plotly_json") else layout
-            }
-            return final_fig
+            # Return the visualization dictionary directly
+            return vis_dict
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")
