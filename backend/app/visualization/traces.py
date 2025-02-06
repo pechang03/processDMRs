@@ -179,6 +179,38 @@ def create_node_traces(
 
     return traces
 
+def create_node_trace(x, y, symbol, color, text):
+    """Create a node trace with markers and text labels.
+    
+    Args:
+        x: List of x coordinates
+        y: List of y coordinates 
+        symbol: Marker symbol to use
+        color: Color for the markers
+        text: Text labels for the nodes
+        
+    Returns:
+        go.Scatter trace with markers and text
+    """
+    import plotly.graph_objects as go
+    # Ensure that text is a list if given as a string
+    if isinstance(text, str):
+        text = [text]
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="markers+text",
+        marker={
+            "symbol": symbol,
+            "size": 10,
+            "color": color,
+            "line": {"color": "black", "width": 1}
+        },
+        text=text,
+        textposition="top center",
+        hoverinfo="text"
+    )
+
 
 def create_unified_gene_trace(
     gene_nodes: Set[int],
