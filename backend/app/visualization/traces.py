@@ -99,7 +99,7 @@ def create_node_traces(
                 marker=dict(
                     size=12,
                     color=dmr_colors,
-                    symbol="circle",
+                    symbol=NODE_SHAPES['dmr']['regular'],
                     line=dict(color="black", width=1),
                 ),
                 text=[
@@ -646,17 +646,10 @@ def split_genes(
 def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
     """
     Create legend-only traces for nodes and edge types.
-    Node shapes use NODE_SHAPES so that:
-      - DMR hub nodes are rendered with NODE_SHAPES["dmr"]["hub"],
-      - Regular DMR nodes with NODE_SHAPES["dmr"]["regular"],
-      - Genes: uses NODE_SHAPES["gene"]["regular"],
-      - Split Genes: uses NODE_SHAPES["gene"]["split"] (which is 'diamond').
-    Also creates dummy legend traces for edge types.
-    Returns a tuple: (legend_node_traces, legend_edge_traces)
+    Node shapes for DMRs and genes are taken from NODE_SHAPES.
     """
-    # Create node legend traces (as dicts for Plotly) for DMRs and Genes
     legend_nodes = []
-
+    
     # DMR legend entries:
     legend_nodes.append({
         'x': [None],
@@ -684,14 +677,14 @@ def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
         'showlegend': True,
         'legendgroup': 'dmr'
     })
-
+    
     # Gene legend entries:
     legend_nodes.append({
         'x': [None],
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['gene']['split'],   # Diamond for split genes
+            'symbol': NODE_SHAPES['gene']['split'],
             'size': 10,
             'color': 'red'
         },
@@ -708,21 +701,19 @@ def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
             'size': 10,
             'color': 'red'
         },
-        'name': 'Genes',
+        'name': 'Gene Nodes',
         'showlegend': True,
         'legendgroup': 'gene'
     })
-
-    # Create dummy legend traces for edge types
+    
+    # Legend for edge types
     legend_edges = []
-    # Define the colors for each edge type
     edge_colors = {
         'permanent': 'rgb(119,119,119)',
         'false_positive': 'rgb(255,0,0)', 
         'false_negative': 'rgb(0,0,255)'
     }
-    desired_edge_types = ['permanent', 'false_positive', 'false_negative']
-    for edge_type in desired_edge_types:
+    for edge_type in ['permanent', 'false_positive', 'false_negative']:
         edge_name = edge_type.replace('_', ' ').title() + " Edges"
         legend_edges.append(go.Scatter(
             x=[None],
