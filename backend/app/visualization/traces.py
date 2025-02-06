@@ -536,51 +536,72 @@ def create_edge_traces(
 
     # Process each edge classification type
     for edge_type, edges in edge_classifications.items():
-        x_coords = []
-        y_coords = []
-        hover_texts = []
-
         # Get style for this edge type
-        style = style_map.get(edge_type, {"color": "gray", "dash": "solid"})
-
+        style = style_map.get(edge_type, {"color": "gray", "dash": "solid", "opacity": 1.0, "width": 1.0})
+        # Initialize separate lists for normal and split-incident edges
+        normal_x_coords, normal_y_coords, normal_hover_texts = [], [], []
+        split_x_coords, split_y_coords, split_hover_texts = [], [], []
+        
         for edge_info in edges:
             if not isinstance(edge_info, EdgeInfo):
                 continue
-
             u, v = edge_info.edge
             if u not in component_nodes or v not in component_nodes:
-                continue  # Skip edges not in current component
-
+                continue
             x0, y0 = node_positions[u]
             x1, y1 = node_positions[v]
-            x_coords.extend([x0, x1, None])
-            y_coords.extend([y0, y1, None])
-
             sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
             hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Type: {edge_type}<br>Sources: {sources}"
-            hover_texts.extend([hover_text, hover_text, None])
-
-        if x_coords:
-            line_style = dict(
-                color=style["color"],
-                width=edge_style.get("width", 1),
-                dash=style["dash"],
-            )
-
+            
+            if (u in split_genes) or (v in split_genes):
+                split_x_coords.extend([x0, x1, None])
+                split_y_coords.extend([y0, y1, None])
+                split_hover_texts.extend([hover_text, hover_text, None])
+            else:
+                normal_x_coords.extend([x0, x1, None])
+                normal_y_coords.extend([y0, y1, None])
+                normal_hover_texts.extend([hover_text, hover_text, None])
+        
+        # Create a trace for normal edges (if any)
+        if normal_x_coords:
             traces.append(
                 go.Scatter(
-                    x=x_coords,
-                    y=y_coords,
+                    x=normal_x_coords,
+                    y=normal_y_coords,
                     mode="lines",
-                    opacity=style.get(
-                        "opacity", 1.0
-                    ),  # Use style opacity (e.g., 0.4 for false edges)
-                    line=line_style,
+                    opacity=style.get("opacity", 1.0),  # use base opacity
+                    line=dict(
+                        color=style["color"],
+                        width=edge_style.get("width", style.get("width", 1)),
+                        dash=style["dash"],
+                    ),
                     hoverinfo="text",
-                    text=hover_texts,
+                    text=normal_hover_texts,
                     name=f"{edge_type.replace('_', ' ').title()} Edges",
-                    legendgroup="edges",  # Add this line
-                    showlegend=False,  # Hide duplicate legend entries
+                    legendgroup="edges",
+                    showlegend=False,
+                )
+            )
+        
+        # Create a trace for edges incident to split nodes (if any) with reduced opacity
+        if split_x_coords:
+            reduced_opacity = style.get("opacity", 1.0) * 0.5  # adjust factor as desired
+            traces.append(
+                go.Scatter(
+                    x=split_x_coords,
+                    y=split_y_coords,
+                    mode="lines",
+                    opacity=reduced_opacity,
+                    line=dict(
+                        color=style["color"],
+                        width=edge_style.get("width", style.get("width", 1)),
+                        dash=style["dash"],
+                    ),
+                    hoverinfo="text",
+                    text=split_hover_texts,
+                    name=f"{edge_type.replace('_', ' ').title()} Edges",
+                    legendgroup="edges",
+                    showlegend=False,
                 )
             )
 
