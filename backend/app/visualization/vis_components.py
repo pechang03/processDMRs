@@ -86,6 +86,11 @@ def create_component_visualization(
 
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
+    
+    # Add legend traces
+    legend_nodes, legend_edges = create_legend_traces(biclique_colors)
+    traces.extend(legend_nodes)
+    traces.extend(legend_edges)
 
     # Log edge_classifications structure and content for debugging
     current_app.logger.debug("Edge Classifications Structure: %s", type(edge_classifications))

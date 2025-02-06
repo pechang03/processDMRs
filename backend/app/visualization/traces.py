@@ -640,7 +640,7 @@ def split_genes(
     return {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
 
 
-def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
+def create_legend_traces(biclique_colors: List[str] = None) -> Tuple[List[dict], List[go.Scatter]]:
     """
     Create legend-only traces for nodes and edge types.
     Node shapes for DMRs and genes are taken from NODE_SHAPES.
@@ -702,6 +702,23 @@ def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
         'showlegend': True,
         'legendgroup': 'gene'
     })
+    
+    # Add biclique legend entries if colors provided
+    if biclique_colors:
+        for idx, color in enumerate(biclique_colors):
+            legend_nodes.append({
+                'x': [None],
+                'y': [None],
+                'mode': 'markers',
+                'marker': {
+                    'symbol': 'circle',
+                    'size': 12,
+                    'color': color,
+                },
+                'name': f'Biclique {idx + 1}',
+                'showlegend': True,
+                'legendgroup': 'biclique',
+            })
     
     # Legend for edge types
     legend_edges = []
