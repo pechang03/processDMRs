@@ -57,7 +57,6 @@ def get_component_graph(timepoint_id, component_id):
                     all_gene_ids as gene_ids,
                     graph_type,
                     categories,
-                    dominating_sets,
                     bicliques
                 FROM component_details_view
                 WHERE timepoint_id = :timepoint_id 
@@ -106,7 +105,7 @@ def get_component_graph(timepoint_id, component_id):
                         BicliqueMemberSchema(**b)
                         for b in json.loads(result.bicliques)
                     ],
-                    dominating_sets=result.dominating_sets,
+                    dominating_sets=None,  # No longer available from view
                 )
             except Exception as e:
                 current_app.logger.error(f"Validation error: {e}")
