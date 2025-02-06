@@ -34,5 +34,6 @@ __all__ = [
     "TriconnectedVisualization",
     "NodeInfo",
     "EdgeInfo",
+    "create_edge_trace",
 ]
 """Visualization package"""

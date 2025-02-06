@@ -179,6 +179,26 @@ def create_node_traces(
 
     return traces
 
+def create_edge_trace(x, y, color):
+    """Create an edge trace with lines.
+    
+    Args:
+        x: List of x coordinates
+        y: List of y coordinates
+        color: Color for the line
+        
+    Returns:
+        go.Scatter trace with lines
+    """
+    import plotly.graph_objects as go
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="lines",
+        line=dict(color=color, width=1),
+        hoverinfo="none"
+    )
+
 def create_node_trace(x, y, symbol, color, text):
     """Create a node trace with markers and text labels.
     
