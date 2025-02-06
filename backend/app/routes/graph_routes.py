@@ -723,7 +723,10 @@ def get_component_graph(timepoint_id, component_id):
             # Convert Plotly objects to dicts
             from ..utils.json_utils import convert_plotly_object
 
-            return convert_plotly_object(vis_dict)
+            converted = convert_plotly_object(vis_dict)
+            if converted is None:
+                converted = vis_dict
+            return converted
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")

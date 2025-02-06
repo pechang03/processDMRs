@@ -58,11 +58,18 @@ def convert_plotly_object(obj: Any) -> Any:
     """Recursively convert Plotly objects to JSON-serializable dicts.
     If an object has a to_plotly_json() method, call it."""
     if hasattr(obj, "to_plotly_json"):
-        return obj.to_plotly_json()
+        result = obj.to_plotly_json()
+        # Fallback to original obj if conversion returns None
+        if result is None:
+            return obj
+        return result
     elif isinstance(obj, list):
         return [convert_plotly_object(item) for item in obj]
     elif isinstance(obj, dict):
-        return {key: convert_plotly_object(val) for key, val in obj.items()}
+        new_dict = {}
+        for key, val in obj.items():
+            new_dict[key] = convert_plotly_object(val)
+        return new_dict
     elif isinstance(obj, (np.integer, np.int_)):
         return int(obj)
     elif isinstance(obj, (np.floating, np.float64)):
