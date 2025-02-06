@@ -216,12 +216,14 @@ def create_component_visualization(
             is_hub = info.get('is_hub', False)
             shape = NODE_SHAPES['dmr']['hub'] if is_hub else NODE_SHAPES['dmr']['regular']
             trace = create_node_trace([x_val], [y_val], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
+            trace.showlegend = False
             dmr_traces.append(trace)
         else:
             info = gene_metadata.get(node_id, {})
             is_split = info.get('is_split', False)
             shape = NODE_SHAPES['gene']['split'] if is_split else NODE_SHAPES['gene']['regular']
             trace = create_node_trace([x_val], [y_val], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
+            trace.showlegend = False
             gene_traces.append(trace)
 
     # Process edges - aggregate by type
@@ -249,7 +251,8 @@ def create_component_visualization(
             x_coords.extend([start_x, end_x, None])
             y_coords.extend([start_y, end_y, None])
         if x_coords:
-            trace = create_edge_trace(x_coords, y_coords, color)
+            trace = create_edge_trace(x_coords, y_coords, color, name=f"{edge_type.replace('_', ' ').title()} Edges")
+            trace.showlegend = False
             edge_traces.append(trace)
 
     # Create legend-only traces
@@ -330,8 +333,32 @@ def create_component_visualization(
                 'legendgroup': f'biclique_{idx + 1}'
             })
 
+    # Create dummy legend traces for edge types
+    legend_edge_traces = []
+    desired_edge_types = ['permanent', 'false_positive', 'false_negative']
+    edge_colors = {
+        'permanent': 'rgb(119,119,119)',
+        'false_positive': 'rgb(255,0,0)', 
+        'false_negative': 'rgb(0,0,255)'
+    }
+    
+    for edge_type in desired_edge_types:
+        edge_name = edge_type.replace('_', ' ').title() + " Edges"
+        legend_edge_traces.append(go.Scatter(
+            x=[None],
+            y=[None],
+            mode="lines",
+            line=dict(
+                color=edge_colors.get(edge_type, 'gray'),
+                width=1
+            ),
+            name=edge_name,
+            showlegend=True,
+            legendgroup="edges"
+        ))
+
     # Combine all traces
-    all_traces = edge_traces + dmr_traces + gene_traces + legend_traces
+    all_traces = edge_traces + dmr_traces + gene_traces + legend_traces + legend_edge_traces
 
     return {
         'data': all_traces,
