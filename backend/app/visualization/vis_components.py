@@ -8,6 +8,7 @@ from .traces import (
     create_dmr_trace,
     create_unified_gene_trace,
     split_genes,
+    create_biclique_boxes,
 )
 from .layout import create_circular_layout
 from .core import generate_biclique_colors
