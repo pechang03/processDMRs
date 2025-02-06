@@ -640,7 +640,7 @@ def get_component_graph(timepoint_id, component_id):
                         bicliques,
                     )
                 )
-                current_app.logger.info("Edge classification updates: " + str(updates))
+                # current_app.logger.info("Edge classification updates: " + str(updates))
 
             except Exception as e:
                 current_app.logger.error(
@@ -697,7 +697,8 @@ def get_component_graph(timepoint_id, component_id):
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
 
-            current_app.logger.debug(f"Point 1{component_data}")
+            # current_app.logger.debug(f"Point 1{component_data}")
+            current_app.logger.debug("Point 1")
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
@@ -719,12 +720,15 @@ def get_component_graph(timepoint_id, component_id):
             vis_dict["biclique_stats"] = edge_classifications["stats"]["bicliques"]
 
             # Return the visualization dictionary directly
-            return vis_dict
+            # Convert Plotly objects to dicts
+            from ..utils.json_utils import convert_plotly_object
+
+            return convert_plotly_object(vis_dict)
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")
         return {
-            "error": "Failed to generate graph visualization", 
+            "error": "Failed to generate graph visualization",
             "details": str(e) if current_app.debug else "Internal server error",
-            "status": 500
+            "status": 500,
         }
