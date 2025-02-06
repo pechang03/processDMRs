@@ -35,7 +35,7 @@ def create_component_visualization(
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
 
-    # Extract classifications and stats from edge_classifications
+    # Extract classifications and stats from edge_classifications 
     if "classifications" in edge_classifications:
         classifications = edge_classifications["classifications"]
     else:
@@ -95,11 +95,11 @@ def create_component_visualization(
     
     # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
-        edge_classifications,
+        classifications,    # Use the extracted 'classifications' dict
         node_positions,
         node_labels,
         component["component"],
-        split_genes=split_genes,  # Use explicit keyword argument
+        split_genes=split_genes,
         edge_style={"width": 1, "color": "gray"},
     )
     traces.extend(edge_traces)
