@@ -260,6 +260,9 @@ def create_component_visualization(
                 'legendgroup': f'biclique_{idx + 1}'
             })
 
+    # Get legend traces
+    legend_node_traces, legend_edge_traces = create_legend_traces()
+    
     # Combine all traces
     all_traces = edge_traces + dmr_traces + gene_traces + legend_node_traces + legend_edge_traces + biclique_legend_traces
 
