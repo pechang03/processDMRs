@@ -754,7 +754,7 @@ def get_component_graph(timepoint_id, component_id):
                 "bicliques": {},
             }
             current_app.logger.debug(f"Point 2c")
-            vis_dict["edge_stats"] = stats.get("component", {})
+            # vis_dict["edge_stats"] = stats.get("component", {})
             current_app.logger.debug(f"Point 2d")
             # vis_dict["biclique_stats"] = stats.get("bicliques", {})
 
