@@ -718,6 +718,17 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add the statistics
             # Guard against missing "stats" in edge_classifications
+            # Initialize stats if missing
+            if "stats" not in edge_classifications or edge_classifications["stats"] is None:
+                edge_classifications["stats"] = {
+                    "component": {
+                        "permanent": len(edge_classifications.get("classifications", {}).get("permanent", [])),
+                        "false_positive": len(edge_classifications.get("classifications", {}).get("false_positive", [])),
+                        "false_negative": len(edge_classifications.get("classifications", {}).get("false_negative", []))
+                    },
+                    "bicliques": {}  # Empty biclique stats for now
+                }
+
             current_app.logger.debug(f'Point 2b{edge_classifications["stats"]}')
             stats = edge_classifications.get("stats") or {
                 "component": {},
