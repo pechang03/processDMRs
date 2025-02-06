@@ -694,13 +694,19 @@ def get_component_graph(timepoint_id, component_id):
                 edge_classifications["stats"] = {
                     "component": {
                         "permanent": len(classifications.get("permanent", [])),
-                        "false_positive": len(classifications.get("false_positive", [])),
-                        "false_negative": len(classifications.get("false_negative", []))
+                        "false_positive": len(
+                            classifications.get("false_positive", [])
+                        ),
+                        "false_negative": len(
+                            classifications.get("false_negative", [])
+                        ),
                     },
-                    "bicliques": {}
+                    "bicliques": {},
                 }
 
-            current_app.logger.debug(f"Edge classification stats: {edge_classifications['stats']}")
+            current_app.logger.debug(
+                f"Edge classification stats: {edge_classifications['stats']}"
+            )
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
@@ -712,7 +718,9 @@ def get_component_graph(timepoint_id, component_id):
             )
             current_app.logger.debug("vis_dict returned: %s", vis_dict)
             if vis_dict is None:
-                current_app.logger.error("create_component_visualization returned None!")
+                current_app.logger.error(
+                    "create_component_visualization returned None!"
+                )
                 return jsonify({"error": "Visualization generation failed"}), 500
             # Use the complete edge_classifications dictionary
             # Force conversion to a plain dict
@@ -730,14 +738,18 @@ def get_component_graph(timepoint_id, component_id):
             # Convert Plotly objects to dicts
 
             current_app.logger.debug("Processing visualization dictionary")
-            
+
             # Add edge statistics and component details
-            vis_dict["edge_stats"] = edge_classifications.get("stats", {}).get("component", {})
-            vis_dict["biclique_stats"] = edge_classifications.get("stats", {}).get("bicliques", {})
-            
+            vis_dict["edge_stats"] = edge_classifications.get("stats", {}).get(
+                "component", {}
+            )
+            vis_dict["biclique_stats"] = edge_classifications.get("stats", {}).get(
+                "bicliques", {}
+            )
+
             # Include component details
             from ..visualization.vis_components import create_component_details
-            vis_dict["component_details"] = create_component_details(component_data.model_dump(), dmr_metadata, gene_metadata)
+            # vis_dict["component_details"] = create_component_details(component_data.model_dump(), dmr_metadata, gene_metadata)
 
             # Convert and return
             converted = convert_plotly_object(vis_dict)
