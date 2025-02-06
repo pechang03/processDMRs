@@ -716,7 +716,7 @@ def create_legend_traces(biclique_colors: List[str] = None) -> Tuple[List[dict],
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['gene']['regular'],
+            'symbol': 'circle',
             'size': 10,
             'color': 'red'
         },
