@@ -19,57 +19,49 @@ from ..schemas import (
     DmrAnnotationViewSchema,
 )
 from ..database.connection import get_db_engine
-
-# from ..visualization.core import create_biclique_visualization
-# from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..visualization.vis_components import create_component_visualization
 from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 from ..utils.json_utils import convert_plotly_object
 
-
-def calculate_average(reliability_data: Dict, key: str) -> float:
-    """Calculate average value for a specific metric across all bicliques"""
-    if not reliability_data:
-        return 0.0
-
-    values = [stats.get(key, 0) for stats in reliability_data.values()]
-    if not values:
-        return 0.0
-
-    return sum(values) / len(values)
-
-
-def parse_id_string(id_str):
-    """Helper function to parse string representation of ID arrays"""
-    if not id_str:
-        return set()
-    # Remove brackets and split by comma
-    cleaned = id_str.replace("[", "").replace("]", "").strip()
-    # Split and convert to integers, filtering out empty strings
-    return {int(x.strip()) for x in cleaned.split(",") if x.strip()}
-
-
 graph_bp = Blueprint("graph_routes", __name__, url_prefix="/api/graph")
 
 
 @graph_bp.route("/<int:timepoint_id>/<int:component_id>", methods=["GET"])
 def get_component_graph(timepoint_id, component_id):
-    """Get graph visualization data for a specific component."""
+    """
+    Rewritten route to generate component graph visualization.
+    The order of execution is as follows:
+      1. Retrieve component details and verify existence.
+      2. Collect component node IDs (DMRs and Genes).
+      3. Retrieve the original and split graphs from the graph manager.
+      4. Validate the bipartite structure.
+      5. Query additional component details and build a Pydantic model.
+      6. Calculate the node biclique map, metadata, and node labels.
+      7. Calculate node positions using a layout (e.g., CircularBicliqueLayout).
+      8. Obtain edge classifications (and stats) from the graph manager.
+      9. Call create_component_visualization with the complete inputs.
+      10. Convert the Plotly figure to a plain dict and add extra stats.
+      11. Return the final JSON.
+    """
     current_app.logger.info(
         f"Fetching graph for timepoint={timepoint_id}, component={component_id}"
     )
-
     try:
-        # Get timepoint name from database
         engine = get_db_engine()
         with Session(engine) as session:
-            # Simplify to just get DMR and gene IDs for the component
-            verify_query = text("""
+            # (1) Retrieve component basic info from a view.
+            comp_query = text("""
                 SELECT 
+                    component_id,
+                    timepoint_id,
                     all_dmr_ids as dmr_ids,
-                    all_gene_ids as gene_ids
+                    all_gene_ids as gene_ids,
+                    categories,
+                    graph_type,
+                    dominating_sets,
+                    bicliques
                 FROM component_details_view
                 WHERE timepoint_id = :timepoint_id 
                 AND component_id = :component_id
