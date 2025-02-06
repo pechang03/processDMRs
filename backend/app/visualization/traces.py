@@ -303,7 +303,7 @@ def create_unified_gene_trace(
                 NODE_SHAPES["gene"]["split"]
                 if (
                     gene_metadata is not None
-                    and gene_metadata.get(str(n), {}).get("is_split", False)
+                    and gene_metadata.get(n, {}).get("is_split", False)
                 )
                 else NODE_SHAPES["gene"]["regular"]
                 for n in processed_nodes
