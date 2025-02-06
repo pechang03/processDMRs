@@ -1,0 +1,38 @@
+<instructions>
+    <step>
+        <title>Create SQL Table</title>
+        <description>Create a new SQL table named `edge_details` with the following columns: dmr_id, gene_id, timepoint_id, edge_type, edit_type, distance_from_tss, 
+and description. Set (dmr_id, gene_id, timepoint_id) as primary keys.</description>
+    </step>
+
+    <step>
+        <title>Update Database Scripts</title>
+        <action>Add the table creation code to `scripts/create_database.sql` if it is not already present.</action>
+        <action>Remove any fields from `dmr_timepoint_annotation` that are now included in `edge_details`.</action>
+    </step>
+
+    <step>
+        <title>Data Population</title>
+        <description>Populate the new `edge_details` table using data from a dataframe. Non-primary field values can be null where applicable.</description>
+        <action>Add code to `backend/app/database/populate_tables.py` to handle this data population.</action>
+    </step>
+
+    <step>
+        <title>Cleanup Integration</title>
+        <description>Integrate cleanup logic for the new table in backend scripts.</description>
+        <action>Add an entry in `backend/app/database/cleanup.py` to ensure proper cleanup of `edge_details` entries.</action>
+        <action>Call the cleanup process within `backend/app/database/process_timepoints.py`. For each edge defined by (dmr_id, gene_id) at a timepoint, check for 
+dmr_id in this table and populate genes from `Gene_Symbol_Nearby`. If not available, use `EnCODE_Enhancer_Interaction` or `ENCODE_Promotion_interaction` to create an 
+edge annotation.</action>
+    </step>
+
+    <step>
+        <title>API Route Setup</title>
+        <description>Set up a new API route for accessing the data in `edge_details`.</description>
+        <action>Create a new endpoint in `backend/app/routes/graph_routes.py` dedicated to interacting with `edge_details` information.</action>
+    </step>
+
+    <note>
+        <content>Avoid creating any frontend tables or interfaces for this feature at this stage of development.</content>
+    </note>
+</instructions>

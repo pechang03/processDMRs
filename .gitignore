@@ -1,6 +1,48 @@
-.aider*
-.env
-# Environment files
-.env
+# Python
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+
+# Environment
+.env*
 *.env
 !sample.env
+*_env/
+backend/venv/
+
+# Database
+*.db
+*.sqlite
+
+# Testing and Coverage
+.coverage
+htmlcov/
+
+# Node.js
+node_modules/
+
+# Data and Caches
+data/
+data_wip/
+data_wit/
+databack/
+cache/
+
+# Model files
+anthropic_models.sh
+deepseek_models.sh
+
+# Logs and Debug
+*.log
+
+# System and IDE
+.DS_Store
+.aider*
+.git/
+
+# Misc
+Archive.zip
+backup/
+old_config/
+references/*

@@ -12,13 +12,13 @@ cd "$SCRIPT_DIR"
 echo "Running DMR Analysis Database Tests..."
 
 # Run database-specific tests with coverage
-PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH" python -m coverage run -m pytest tests/test_database/ -v
+PYTHONPATH="$SCRIPT_DIR:$SCRIPT_DIR/backend" python -m coverage run -m pytest backend/tests/database/ -v
 
 # Generate coverage report for database modules
-coverage report --include="database/*,scripts/initialize_database.py"
+coverage report --include="backend/app/database/*,backend/app/database/management/*"
 
 # Generate HTML coverage report
-coverage html --include="database/*,scripts/initialize_database.py"
+coverage html --include="backend/app/database/*,backend/app/database/management/*"
 
 # Exit with the test suite's exit code
 exit ${PIPESTATUS[0]}

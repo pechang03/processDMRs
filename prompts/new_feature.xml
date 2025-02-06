@@ -1,0 +1,58 @@
+<instructions>
+    <instruction>Output in markdown format</instruction>
+    <instruction>Summarize into 4 sections: High level summary, Main Points, Sentiment, and 3 hot takes biased toward the author and 3 hot takes biased against the 
+author.</instruction>
+    <instruction>Write the summary in the same format as the example-output</instruction>
+</instructions>
+
+<content>
+    <purpose>
+        Create a new SQL table named `edge_details` with specific fields and primary keys. Update backend files for data population, cleanup procedures, processing 
+scripts, and API routes to integrate this feature.
+    </purpose>
+
+    <details>
+        <sql_table_creation>
+            Add an SQL script to create the `edge_details` table in `scripts/create_database.sql`.
+        </sql_table_creation>
+
+        <backend_code_adjustments>
+            Update backend files (`populate_tables.py`, `cleanup.py`, and `process_timepoints.py`) for managing new data fields, ensuring efficient cleanup, and 
+processing timepoint data.
+        </backend_code_adjustments>
+
+        <api_route_setup>
+            Define a new API route in `graph_routes.py` to handle interactions with the `edge_details` table.
+        </api_route_setup>
+    </details>
+
+    <additional_notes>
+        Ensure proper data extraction functions are implemented and integrate error handling for database operations. Manage dependencies effectively.
+    </additional_notes>
+</content>
+
+<example-output>
+### High Level Summary
+The prompt outlines steps to implement a new feature in an application by creating a SQL table, updating backend files, defining API routes, and ensuring all 
+components work seamlessly together.
+
+### Main Points
+- **SQL Table Creation**: Add `edge_details` table in the database script.
+- **Backend Adjustments**: Update files for data management and processing.
+- **API Route Setup**: Create new endpoints for interacting with the feature.
+- **Additional Considerations**: Implement error handling and manage dependencies.
+
+### Sentiment
+The instructions are clear and comprehensive, providing a structured approach to implementing the new feature. The attention to detail in ensuring all components 
+work together is commendable.
+
+### Hot Takes (Biased Toward the Author)
+1. The author demonstrates thorough planning by addressing both backend and frontend aspects.
+2. Providing detailed steps for each component shows a deep understanding of system integration.
+3. The inclusion of error handling and dependency management indicates foresight in maintaining robustness.
+
+### Hot Takes (Biased Against the Author)
+1. The instructions could be overwhelming due to the extensive detail, potentially leading to confusion.
+2. Assumptions about existing knowledge might alienate less experienced developers.
+3. The focus on technical details may overlook broader architectural considerations or user experience impacts.
+</example-output>

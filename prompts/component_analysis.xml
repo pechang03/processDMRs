@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+<purpose>
+    Analyze the structure, patterns and biological significance of a specific network component at a given timepoint, using comprehensive database views to examine DMR-gene relationships, biclique patterns, and pathway enrichment.
+</purpose>
+
+<instructions>
+    You will be provided with component data from component_details_view and component_summary_view for a specific timepoint_id and component_id. Your task is to:
+    
+    1. Analyze the basic structure and composition:
+    - Number and distribution of DMRs and genes
+    - Component density and connectivity patterns
+    - Key hub nodes and their characteristics
+    
+    2. Examine biclique patterns:
+    - Size and distribution of bicliques
+    - Common patterns across bicliques
+    - Biological significance of recurring patterns
+    
+    3. Investigate hub nodes:
+    - Identify major hub DMRs and genes
+    - Analyze their connection patterns
+    - Assess biological relevance
+    
+    4. Evaluate GO enrichment:
+    - Significant GO terms and pathways
+    - Patterns in enriched terms
+    - Biological implications
+    
+    Use the provided database views and statistical summaries to support your analysis.
+</instructions>
+
+<examples>
+    Example component analysis:
+    
+    Basic Structure:
+    SELECT * FROM component_details_view 
+    WHERE timepoint_id = {timepoint_id} 
+    AND component_id = {component_id};
+    
+    This shows:
+    - 15 DMRs and 25 genes
+    - Average density: 0.35
+    - 3 major bicliques identified
+    
+    Hub Analysis:
+    SELECT * FROM component_summary_view
+    WHERE timepoint_id = {timepoint_id}
+    AND component_id = {component_id}
+    ORDER BY degree DESC;
+    
+    Key findings:
+    - DMR_123 connects to 8 genes (hub DMR)
+    - Gene BRCA1 connects to 5 DMRs (hub gene)
+    - Biclique pattern suggests coordinated regulation
+    
+    GO Enrichment:
+    Major pathways:
+    - DNA repair (p-value: 0.001)
+    - Cell cycle regulation (p-value: 0.003)
+</examples>
+
+<content>
+    Please analyze the component (timepoint_id: {timepoint_id}, component_id: {component_id}) using the following structure:
+    
+    1. Component Structure Analysis
+    - Examine the basic statistics:
+    * Number of DMRs and genes
+    * Component density
+    * Distribution of edges
+    - Identify any structural patterns
+    - Compare to typical components at this timepoint
+    
+    2. Biclique Pattern Analysis
+    - Analyze the bicliques present:
+    * Size and composition
+    * Regulatory patterns
+    * Common elements
+    - Evaluate biological significance of patterns
+    
+    3. Hub Node Analysis
+    - Major hub DMRs:
+    * Connection patterns
+    * Methylation characteristics
+    * Regulatory implications
+    - Hub genes:
+    * Functional roles
+    * Known pathways
+    * Literature connections
+    
+    4. GO Enrichment Analysis
+    - Significant pathways:
+    * Top enriched terms
+    * Statistical significance
+    * Biological context
+    - Pattern implications:
+    * Regulatory mechanisms
+    * Temporal aspects
+    * Integration with known biology
+    
+    Integrate these aspects to provide a comprehensive understanding of the component's biological role and significance.
+</content>
+</prompt>
+

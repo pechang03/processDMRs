@@ -1,0 +1,1 @@
+../management/sql/views/create_views.sql
