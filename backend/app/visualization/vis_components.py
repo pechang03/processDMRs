@@ -62,7 +62,7 @@ def create_component_visualization(
         node_positions,
         node_labels,
         component["component"],
-        split_genes,  # Using split_genes computed above
+        split_genes=split_genes,  # Use explicit keyword argument
         edge_style={"width": 1, "color": "gray"},
     )
     traces.extend(edge_traces)
