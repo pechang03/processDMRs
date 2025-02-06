@@ -8,8 +8,9 @@ from .layout import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
 from backend.app.biclique_analysis.classifier import classify_biclique
-from .traces import create_node_traces, create_edge_traces
+from .traces import create_node_traces, create_edge_traces 
 from .layout import create_circular_layout
+from backend.app.utils.json_utils import convert_plotly_object
 
 
 def create_component_visualization(
