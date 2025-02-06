@@ -179,44 +179,44 @@ def create_node_traces(
 
     return traces
 
+
 def create_edge_trace(x, y, color, name=None):
     """Create an edge trace with lines.
-    
+
     Args:
         x: List of x coordinates
         y: List of y coordinates
         color: Color for the line
         name: Optional name for the trace
-        
+
     Returns:
         go.Scatter trace with lines
     """
     import plotly.graph_objects as go
+
     trace = go.Scatter(
-        x=x,
-        y=y,
-        mode="lines",
-        line=dict(color=color, width=1),
-        hoverinfo="none"
+        x=x, y=y, mode="lines", line=dict(color=color, width=1), hoverinfo="none"
     )
     if name is not None:
         trace.update(name=name)
     return trace
 
+
 def create_node_trace(x, y, symbol, color, text):
     """Create a node trace with markers and text labels.
-    
+
     Args:
         x: List of x coordinates
-        y: List of y coordinates 
+        y: List of y coordinates
         symbol: Marker symbol to use
         color: Color for the markers
         text: Text labels for the nodes
-        
+
     Returns:
         go.Scatter trace with markers and text
     """
     import plotly.graph_objects as go
+
     # Ensure that text is a list if given as a string
     if isinstance(text, str):
         text = [text]
@@ -228,11 +228,11 @@ def create_node_trace(x, y, symbol, color, text):
             "symbol": symbol,
             "size": 10,
             "color": color,
-            "line": {"color": "black", "width": 1}
+            "line": {"color": "black", "width": 1},
         },
         text=text,
         textposition="top center",
-        hoverinfo="text"
+        hoverinfo="text",
     )
 
 
@@ -301,7 +301,10 @@ def create_unified_gene_trace(
             color=colors,
             symbol=[
                 NODE_SHAPES["gene"]["split"]
-                if (gene_metadata is not None and gene_metadata.get(str(n), {}).get("is_split", False))
+                if (
+                    gene_metadata is not None
+                    and gene_metadata.get(str(n), {}).get("is_split", False)
+                )
                 else NODE_SHAPES["gene"]["regular"]
                 for n in processed_nodes
             ],
@@ -423,12 +426,12 @@ def create_dmr_trace(
         # Create detailed hover text
         meta = dmr_metadata.get(node_id, {}) if dmr_metadata else {}
         hover = [f"DMR {node_id}"]
-        
+
         if is_hub:
             hover.append("(Hub Node)")
-            
+
         hover.append(f"Area: {meta.get('area', 'N/A')}")
-            
+
         # Add edge details if available
         if meta.get("edge_details"):
             hover.append("<br>Edge Details:")
@@ -440,7 +443,7 @@ def create_dmr_trace(
                     f"Edit: {edge.get('edit_type', '-')}"
                 )
                 hover.append(edge_text)
-                
+
         hover_text.append("<br>".join(hover))
 
     if not x:
@@ -508,7 +511,7 @@ def create_edge_traces(
     style_map = {
         "permanent": {
             "color": get_rgb_str([119, 119, 119]),
-            "dash": "solid", 
+            "dash": "solid",
             "width": 1.5,
             "opacity": 1.0,
         },
@@ -519,7 +522,7 @@ def create_edge_traces(
             "opacity": 0.4,
         },
         "false_negative": {
-            "color": get_rgb_str([0, 0, 255]), 
+            "color": get_rgb_str([0, 0, 255]),
             "dash": "dash",
             "width": 0.75,
             "opacity": 0.4,
@@ -531,12 +534,7 @@ def create_edge_traces(
             "opacity": 0.3,
         },
         # Default style for any unrecognized edge types
-        "default": {
-            "color": "gray",
-            "dash": "solid",
-            "width": 1.0,
-            "opacity": 1.0
-        }
+        "default": {"color": "gray", "dash": "solid", "width": 1.0, "opacity": 1.0},
     }
 
     # Process each edge classification type
@@ -577,7 +575,9 @@ def create_edge_traces(
                     x=x_coords,
                     y=y_coords,
                     mode="lines",
-                    opacity=style.get("opacity", 1.0),  # Use style opacity (e.g., 0.4 for false edges)
+                    opacity=style.get(
+                        "opacity", 1.0
+                    ),  # Use style opacity (e.g., 0.4 for false edges)
                     line=line_style,
                     hoverinfo="text",
                     text=hover_texts,
@@ -634,3 +634,10 @@ def create_biclique_boxes(
             )
         )
     return traces
+
+
+def split_genes(
+    node_biclique_map: Dict[int, List[int]], gene_nodes: Set[int]
+) -> Set[int]:
+    """Identify genes that participate in multiple bicliques."""
+    return {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}

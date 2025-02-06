@@ -3,7 +3,7 @@
 from typing import Dict, List, Set, Tuple, Any
 from flask import current_app
 
-from .traces import create_edge_traces, create_dmr_trace, create_unified_gene_trace
+from .traces import create_edge_traces, create_dmr_trace, create_unified_gene_trace, split_genes
 from .layout import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
