@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Set, Tuple, Any
 from flask import current_app
+from .color_utils import get_rgba_str
 
 from .traces import (
     create_edge_traces,

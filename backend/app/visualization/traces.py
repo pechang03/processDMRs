@@ -627,22 +627,25 @@ def create_biclique_boxes(
         x_min, x_max = min(x_coords) - padding, max(x_coords) + padding
         y_min, y_max = min(y_coords) - padding, max(y_coords) + padding
         
+        # Compute a fillcolor string with low opacity
+        r, g, b, _ = biclique_colors[biclique_idx]
+        fill_color = f"rgba({int(r*255)},{int(g*255)},{int(b*255)},0.1)"
         shape = {
             "type": "rect",
             "xref": "x",
-            "yref": "y", 
+            "yref": "y",
             "x0": x_min,
             "y0": y_min,
             "x1": x_max,
             "y1": y_max,
             "line": {
-                "color": biclique_colors[biclique_idx],
+                "color": biclique_colors[biclique_idx],  # leaving border as is
                 "width": 2,
                 "dash": "dot",
             },
-            "fillcolor": biclique_colors[biclique_idx],
-            "opacity": 0.1,
-            "layer": "below",  # Ensure shapes are drawn behind other traces
+            "fillcolor": fill_color,        # Use our computed fill color
+            "opacity": 1.0,              # Let the fillcolor encode transparency, so set overall opacity to 1
+            "layer": "below",  # Ensures the shapes are rendered behind other traces
         }
         shapes.append(shape)
     return shapes
