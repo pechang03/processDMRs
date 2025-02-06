@@ -205,21 +205,25 @@ def create_component_visualization(
 
     # Process nodes
     for node_id in component['component']:
-        is_dmr = node_id in component['dmrs']
-        pos = node_positions.get(node_id, {'x': 0, 'y': 0})
+        is_dmr = node_id in component.get("dmrs", set())
+        pos = node_positions.get(node_id, (0, 0))
+        if isinstance(pos, tuple):
+            x_val, y_val = pos
+        else:
+            x_val = pos.get('x', 0)
+            y_val = pos.get('y', 0)
         
-        # Get node properties
         if is_dmr:
             info = dmr_metadata.get(node_id, {})
             is_hub = info.get('is_hub', False)
             shape = NODE_SHAPES['dmr_hub'] if is_hub else NODE_SHAPES['dmr']
-            trace = create_node_trace([pos['x']], [pos['y']], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
+            trace = create_node_trace([x_val], [y_val], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
             dmr_traces.append(trace)
         else:
             info = gene_metadata.get(node_id, {})
             is_split = info.get('is_split', False)
             shape = NODE_SHAPES['gene_split'] if is_split else NODE_SHAPES['gene']
-            trace = create_node_trace([pos['x']], [pos['y']], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
+            trace = create_node_trace([x_val], [y_val], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
             gene_traces.append(trace)
 
     # Process edges
