@@ -1,6 +1,5 @@
 import json
 import time
-import json
 from flask import jsonify, current_app, Blueprint
 from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
@@ -473,17 +472,6 @@ def get_component_graph(timepoint_id, component_id):
                 return jsonify({"error": "No bicliques found", "status": 400}), 400
 
             # Create NodeInfo object using annotated split genes
-            node_info = NodeInfo(
-                all_nodes=all_dmr_ids | all_gene_ids,
-                dmr_nodes=all_dmr_ids,
-                regular_genes=all_gene_ids - split_genes,
-                split_genes=split_genes,
-                node_degrees={
-                    int(node): split_graph_component.degree(node)
-                    for node in split_graph_component.nodes()
-                },
-                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
-            )
 
             # Initialize the circular layout
             layout = CircularBicliqueLayout()
@@ -643,8 +631,7 @@ def get_component_graph(timepoint_id, component_id):
                         bicliques,
                     )
                 )
-                # current_app.logger.info("Edge classification updates: " + str(updates))
-
+                current_app.logger.debug(f"Edge classification updates: {updates}")
             except Exception as e:
                 current_app.logger.error(
                     "Error during edge classification update: " + str(e)
@@ -700,44 +687,20 @@ def get_component_graph(timepoint_id, component_id):
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
 
-            # current_app.logger.debug(f"Point 1{component_data}")
-            current_app.logger.debug("Point 1")
-            # Add the statistics
-            # Guard against missing "stats" in edge_classifications
-            # Initialize stats if missing
-            if (
-                "stats" not in edge_classifications
-                or edge_classifications["stats"] is None
-            ):
+            current_app.logger.debug(f"Processing component data: {component_data}")
+            # Initialize or get edge classification stats
+            if not edge_classifications.get("stats"):
+                classifications = edge_classifications.get("classifications", {})
                 edge_classifications["stats"] = {
                     "component": {
-                        "permanent": len(
-                            edge_classifications.get("classifications", {}).get(
-                                "permanent", []
-                            )
-                        ),
-                        "false_positive": len(
-                            edge_classifications.get("classifications", {}).get(
-                                "false_positive", []
-                            )
-                        ),
-                        "false_negative": len(
-                            edge_classifications.get("classifications", {}).get(
-                                "false_negative", []
-                            )
-                        ),
+                        "permanent": len(classifications.get("permanent", [])),
+                        "false_positive": len(classifications.get("false_positive", [])),
+                        "false_negative": len(classifications.get("false_negative", []))
                     },
-                    "bicliques": {},  # Empty biclique stats for now
+                    "bicliques": {}
                 }
 
-            current_app.logger.debug(f'Point 2a{edge_classifications["stats"]}')
-            stats = edge_classifications.get("stats") or {
-                "component": {},
-                "bicliques": {},
-            }
-            # current_app.logger.debug(f'Point 2ai{edge_classifications]}')
-            current_app.logger.debug(f"Point 2")
-            # vis_dict["edge_stats"] = stats.get("component", {})
+            current_app.logger.debug(f"Edge classification stats: {edge_classifications['stats']}")
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
@@ -766,8 +729,7 @@ def get_component_graph(timepoint_id, component_id):
             # Return the visualization dictionary directly
             # Convert Plotly objects to dicts
 
-            # current_app.logger.debug(f"Point 3{vis_dict}")
-
+            current_app.logger.debug("Processing visualization dictionary")
             converted = convert_plotly_object(vis_dict)
             if converted is None:
                 converted = vis_dict

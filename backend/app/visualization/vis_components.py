@@ -3,12 +3,22 @@
 from typing import Dict, List, Set, Tuple, Any
 from flask import current_app
 
-from .traces import create_edge_traces, create_dmr_trace, create_unified_gene_trace, split_genes
+from .traces import (
+    create_edge_traces,
+    create_dmr_trace,
+    create_unified_gene_trace,
+    split_genes,
+)
 from .layout import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
 from backend.app.biclique_analysis.classifier import classify_biclique
-from .traces import create_node_traces, create_edge_traces, create_legend_traces, NODE_SHAPES
+from .traces import (
+    create_node_traces,
+    create_edge_traces,
+    create_legend_traces,
+    NODE_SHAPES,
+)
 from .layout import create_circular_layout
 from backend.app.utils.json_utils import convert_plotly_object
 
@@ -44,8 +54,16 @@ def create_component_visualization(
         }
 
     # Extract nodes from the component data
-    dmr_nodes = {n for n in component.get("component", set()) if n in set(component.get("dmrs", []))}
-    gene_nodes = {n for n in component.get("component", set()) if n not in set(component.get("dmrs", []))}
+    dmr_nodes = {
+        n
+        for n in component.get("component", set())
+        if n in set(component.get("dmrs", []))
+    }
+    gene_nodes = {
+        n
+        for n in component.get("component", set())
+        if n not in set(component.get("dmrs", []))
+    }
     # Define split_genes as those gene nodes that participate in more than one biclique
     split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
 
@@ -68,6 +86,12 @@ def create_component_visualization(
 
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
+
+    # Log edge_classifications structure and content for debugging
+    current_app.logger.debug("Edge Classifications Structure: %s", type(edge_classifications))
+    current_app.logger.debug("Edge Classifications Keys: %s", edge_classifications.keys())
+    current_app.logger.debug("Edge Classifications Content: %s", edge_classifications)
+    current_app.logger.debug("Classifications Content: %s", classifications)
     
     # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
@@ -141,20 +165,22 @@ def create_component_visualization(
     layout = create_circular_layout(node_info)
 
     from backend.app.utils.json_utils import convert_plotly_object
-    
+
     current_app.logger.debug("Number of traces: %d", len(traces))
     current_app.logger.debug("Layout content: %s", layout)
-    
-    final_fig = {'data': traces, 'layout': layout}
+
+    final_fig = {"data": traces, "layout": layout}
     current_app.logger.debug("Final figure before conversion: %s", final_fig)
-    
+
     # Add stats to the visualization
     final_fig["edge_stats"] = stats.get("component", {})
     final_fig["biclique_stats"] = stats.get("bicliques", {})
-    
+
     converted_fig = convert_plotly_object(final_fig)
     if converted_fig is None:
-        current_app.logger.error("convert_plotly_object returned None – falling back to unconverted final_fig")
+        current_app.logger.error(
+            "convert_plotly_object returned None – falling back to unconverted final_fig"
+        )
         converted_fig = final_fig
     current_app.logger.debug("Final converted figure: %s", converted_fig)
     return converted_fig
@@ -211,42 +237,3 @@ def create_component_details(
         "total_dmrs": len(component.get("dmrs", [])),
         "total_edges": component.get("total_edges", 0),
     }
-from typing import Dict, List, Set, Tuple, Optional
-import plotly.graph_objects as go
-from ..core.data_loader import create_bipartite_graph
-from ..visualization.traces import NODE_SHAPES, create_node_trace, create_edge_trace
-from ..visualization.colors import get_biclique_colors, get_edge_colors
-
-def create_component_visualization(
-    component: Dict,
-    node_positions: Dict,
-    node_labels: Dict,
-    node_biclique_map: Dict,
-    edge_classifications: Dict,
-    dmr_metadata: Dict,
-    gene_metadata: Dict,
-) -> Dict:
-    """Create visualization data for a component."""
-    # Get color mappings
-    biclique_colors = get_biclique_colors(len(component.get('raw_bicliques', [])))
-    edge_colors = get_edge_colors()
-
-    # Create node traces for DMRs and genes
-    dmr_traces = []
-    gene_traces = []
-    edge_traces = []
-
-    # Create edge traces
-    edge_traces = create_edge_traces(
-        edge_classifications,
-        node_positions,
-        node_labels,
-        component["component"],
-        split_genes,
-        edge_style={"width": 1, "color": "gray"}
-    )
-
-    # Get legend traces from helper function
-    from .traces import create_legend_traces
-    legend_node_traces, legend_edge_traces = create_legend_traces()
-
