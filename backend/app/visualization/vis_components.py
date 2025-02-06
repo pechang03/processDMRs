@@ -178,3 +178,161 @@ def create_component_details(
         "total_dmrs": len(component.get("dmrs", [])),
         "total_edges": component.get("total_edges", 0),
     }
+from typing import Dict, List, Set, Tuple, Optional
+import plotly.graph_objects as go
+from ..core.data_loader import create_bipartite_graph
+from ..visualization.traces import NODE_SHAPES, create_node_trace, create_edge_trace
+from ..visualization.colors import get_biclique_colors, get_edge_colors
+
+def create_component_visualization(
+    component: Dict,
+    node_positions: Dict,
+    node_labels: Dict,
+    node_biclique_map: Dict,
+    edge_classifications: Dict,
+    dmr_metadata: Dict,
+    gene_metadata: Dict,
+) -> Dict:
+    """Create visualization data for a component."""
+    # Get color mappings
+    biclique_colors = get_biclique_colors(len(component.get('raw_bicliques', [])))
+    edge_colors = get_edge_colors()
+
+    # Create node traces for DMRs and genes
+    dmr_traces = []
+    gene_traces = []
+    edge_traces = []
+
+    # Process nodes
+    for node_id in component['component']:
+        is_dmr = node_id in component['dmrs']
+        pos = node_positions.get(node_id, {'x': 0, 'y': 0})
+        
+        # Get node properties
+        if is_dmr:
+            info = dmr_metadata.get(node_id, {})
+            is_hub = info.get('is_hub', False)
+            shape = NODE_SHAPES['dmr_hub'] if is_hub else NODE_SHAPES['dmr']
+            trace = create_node_trace([pos['x']], [pos['y']], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
+            dmr_traces.append(trace)
+        else:
+            info = gene_metadata.get(node_id, {})
+            is_split = info.get('is_split', False)
+            shape = NODE_SHAPES['gene_split'] if is_split else NODE_SHAPES['gene']
+            trace = create_node_trace([pos['x']], [pos['y']], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
+            gene_traces.append(trace)
+
+    # Process edges
+    for edge_type, edges in edge_classifications.items():
+        color = edge_colors.get(edge_type, 'gray')
+        for edge in edges:
+            start_id, end_id = edge.edge
+            start_pos = node_positions.get(start_id, {'x': 0, 'y': 0})
+            end_pos = node_positions.get(end_id, {'x': 0, 'y': 0})
+            trace = create_edge_trace(
+                [start_pos['x'], end_pos['x']],
+                [start_pos['y'], end_pos['y']],
+                color
+            )
+            edge_traces.append(trace)
+
+    # Create legend-only traces
+    legend_traces = []
+    
+    # DMR legend entries
+    legend_traces.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['dmr_hub'],
+            'size': 12,
+            'color': 'blue'
+        },
+        'name': 'Hub DMRs',
+        'showlegend': True,
+        'legendgroup': 'dmr'
+    })
+    
+    legend_traces.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['dmr'],
+            'size': 10,
+            'color': 'blue'
+        },
+        'name': 'DMRs',
+        'showlegend': True,
+        'legendgroup': 'dmr'
+    })
+
+    # Gene legend entries
+    legend_traces.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['gene_split'],
+            'size': 10,
+            'color': 'red'
+        },
+        'name': 'Split Genes',
+        'showlegend': True,
+        'legendgroup': 'gene'
+    })
+
+    legend_traces.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['gene'],
+            'size': 10,
+            'color': 'red'
+        },
+        'name': 'Genes',
+        'showlegend': True,
+        'legendgroup': 'gene'
+    })
+
+    # Add biclique legend entries if there are multiple bicliques
+    if len(component.get('raw_bicliques', [])) > 1:
+        for idx, color in enumerate(biclique_colors):
+            legend_traces.append({
+                'x': [None],
+                'y': [None],
+                'mode': 'markers',
+                'marker': {
+                    'symbol': 'circle',
+                    'size': 10,
+                    'color': color
+                },
+                'name': f'Biclique {idx + 1}',
+                'showlegend': True,
+                'legendgroup': f'biclique_{idx + 1}'
+            })
+
+    # Combine all traces
+    all_traces = edge_traces + dmr_traces + gene_traces + legend_traces
+
+    return {
+        'data': all_traces,
+        'layout': {
+            'showlegend': True,
+            'hovermode': 'closest',
+            'margin': {'b': 40, 'l': 40, 'r': 40, 't': 40},
+            'xaxis': {'showgrid': False, 'zeroline': False, 'showticklabels': False},
+            'yaxis': {'showgrid': False, 'zeroline': False, 'showticklabels': False},
+            'legend': {
+                'x': 1.05,
+                'y': 0.5,
+                'xanchor': 'left',
+                'yanchor': 'middle',
+                'bgcolor': 'rgba(255,255,255,0.8)',
+                'bordercolor': 'rgba(0,0,0,0.2)',
+                'borderwidth': 1
+            }
+        }
+    }
