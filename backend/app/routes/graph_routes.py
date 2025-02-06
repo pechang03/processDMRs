@@ -730,10 +730,20 @@ def get_component_graph(timepoint_id, component_id):
             # Convert Plotly objects to dicts
 
             current_app.logger.debug("Processing visualization dictionary")
+            
+            # Add edge statistics and component details
+            vis_dict["edge_stats"] = edge_classifications.get("stats", {}).get("component", {})
+            vis_dict["biclique_stats"] = edge_classifications.get("stats", {}).get("bicliques", {})
+            
+            # Include component details
+            from ..visualization.vis_components import create_component_details
+            vis_dict["component_details"] = create_component_details(component_data.model_dump(), dmr_metadata, gene_metadata)
+
+            # Convert and return
             converted = convert_plotly_object(vis_dict)
             if converted is None:
                 converted = vis_dict
-            return jsonify(vis_dict)
+            return jsonify(converted)
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")
