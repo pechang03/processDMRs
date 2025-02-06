@@ -25,11 +25,10 @@ def create_component_visualization(
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
 
-    # Begin by extracting the nodes
+    # Extract nodes from the component data
     dmr_nodes = {n for n in component.get("component", set()) if n in set(component.get("dmrs", []))}
     gene_nodes = {n for n in component.get("component", set()) if n not in set(component.get("dmrs", []))}
-    # Now define split_genes from gene_nodes (nodes which occur in more than one biclique)
-    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
+    # Define split_genes as those gene nodes that participate in more than one biclique
     split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
 
     # Create NodeInfo object
@@ -52,11 +51,7 @@ def create_component_visualization(
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
     
-    # Compute gene_nodes and split_genes before edge traces
-    gene_nodes = {n for n in component.get("component", set()) if n not in set(component.get("dmrs", []))}
-    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
-    
-    # Add edge traces first using the computed split_genes
+    # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
         edge_classifications,
         node_positions,
