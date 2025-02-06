@@ -203,23 +203,7 @@ def create_component_visualization(
     gene_traces = []
     edge_traces = []
 
-    # Process nodes
-    for node_id in component['component']:
-        is_dmr = node_id in component.get("dmrs", set())
-        pos = node_positions.get(node_id, (0, 0))
-        if isinstance(pos, tuple):
-            x_val, y_val = pos
-        else:
-            x_val = pos.get('x', 0)
-            y_val = pos.get('y', 0)
-        
-        if is_dmr:
-            info = dmr_metadata.get(node_id, {})
-            is_hub = info.get('is_hub', False)
-            trace.showlegend = False
-            gene_traces.append(trace)
-
-    # Use centralized edge trace creation
+    # Create edge traces
     edge_traces = create_edge_traces(
         edge_classifications,
         node_positions,

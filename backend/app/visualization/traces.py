@@ -301,10 +301,7 @@ def create_unified_gene_trace(
             color=colors,
             symbol=[
                 NODE_SHAPES["gene"]["split"]
-                if (
-                    gene_metadata is not None
-                    and gene_metadata.get(n, {}).get("is_split", False)
-                )
+                if len(node_biclique_map.get(n, [])) > 1
                 else NODE_SHAPES["gene"]["regular"]
                 for n in processed_nodes
             ],
@@ -489,7 +486,7 @@ def create_dmr_trace(
         textposition="middle left",
         hoverinfo="text",
         name="DMR Nodes",
-        showlegend=True,
+        showlegend=False,  # Let legend traces handle the legend
     )
 
 
