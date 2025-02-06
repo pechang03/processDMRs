@@ -141,7 +141,12 @@ def create_component_visualization(
     layout = create_circular_layout(node_info)
 
     from backend.app.utils.json_utils import convert_plotly_object
+    
+    current_app.logger.debug("Number of traces: %d", len(traces))
+    current_app.logger.debug("Layout content: %s", layout)
+    
     final_fig = {'data': traces, 'layout': layout}
+    current_app.logger.debug("Final figure before conversion: %s", final_fig)
     
     # Add stats to the visualization
     final_fig["edge_stats"] = stats.get("component", {})
@@ -149,7 +154,9 @@ def create_component_visualization(
     
     converted_fig = convert_plotly_object(final_fig)
     if converted_fig is None:
+        current_app.logger.error("convert_plotly_object returned None – falling back to unconverted final_fig")
         converted_fig = final_fig
+    current_app.logger.debug("Final converted figure: %s", converted_fig)
     return converted_fig
 
 

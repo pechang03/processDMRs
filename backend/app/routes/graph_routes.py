@@ -747,7 +747,10 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )
-            current_app.logger.debug(f"Point 2b{vis_dict}")
+            current_app.logger.debug("vis_dict returned: %s", vis_dict)
+            if vis_dict is None:
+                current_app.logger.error("create_component_visualization returned None!")
+                return jsonify({"error": "Visualization generation failed"}), 500
             # Use the complete edge_classifications dictionary
             # Force conversion to a plain dict
             # vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
