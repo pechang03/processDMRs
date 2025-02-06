@@ -1,0 +1,21 @@
+/drop
+/add       CONVENTIONS.md
+/add       backend/app/database/__init__.py
+/add       backend/app/database/biclique_processor.py
+/add       backend/app/database/cleanup.py
+/add       backend/app/database/connection.py
+/add       backend/app/database/dominating_sets.py
+/add       backend/app/database/management/create_views.py
+/add       backend/app/database/management/initialize_database.py
+/add       backend/app/database/management/sql/views/component_details_view_broken.sql
+/add       backend/app/database/management/sql/views/create_views.sql
+/add       backend/app/database/management/sql/views/drop_views.sql
+/add       backend/app/database/management/sql/views/prompt_analysis_views.sql
+/add       backend/app/database/models.py
+/add       backend/app/database/operations.py
+/add       backend/app/database/populate_tables.py
+/add       backend/app/database/process_timepoints.py
+/add       backend/app/routes/graph_routes.py
+/add       backend/app/schemas.py
+/add       scripts/create_database.sql
+/add       setup_database.sh
