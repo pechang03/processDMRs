@@ -224,9 +224,11 @@ def create_component_visualization(
             trace = create_node_trace([x_val], [y_val], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
             gene_traces.append(trace)
 
-    # Process edges
+    # Process edges - aggregate by type
     for edge_type, edges in edge_classifications.items():
         color = edge_colors.get(edge_type, 'gray')
+        x_coords = []
+        y_coords = []
         for edge in edges:
             start_id, end_id = edge.edge
             # Get start position
@@ -243,11 +245,11 @@ def create_component_visualization(
             else:
                 end_x = end_pos.get('x', 0)
                 end_y = end_pos.get('y', 0)
-            trace = create_edge_trace(
-                [start_x, end_x],
-                [start_y, end_y], 
-                color
-            )
+            # Append coordinates with None to break line between edges
+            x_coords.extend([start_x, end_x, None])
+            y_coords.extend([start_y, end_y, None])
+        if x_coords:
+            trace = create_edge_trace(x_coords, y_coords, color)
             edge_traces.append(trace)
 
     # Create legend-only traces
