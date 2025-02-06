@@ -747,10 +747,6 @@ def get_component_graph(timepoint_id, component_id):
                 "bicliques", {}
             )
 
-            # Include component details
-            from ..visualization.vis_components import create_component_details
-            # vis_dict["component_details"] = create_component_details(component_data.model_dump(), dmr_metadata, gene_metadata)
-
             # Convert and return
             converted = convert_plotly_object(vis_dict)
             if converted is None:
