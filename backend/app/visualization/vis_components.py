@@ -25,9 +25,11 @@ def create_component_visualization(
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
 
-    # Get nodes from component
-    dmr_nodes = {n for n in component["component"] if n in component.get("dmrs", set())}
-    gene_nodes = {n for n in component["component"] if n not in dmr_nodes}
+    # Begin by extracting the nodes
+    dmr_nodes = {n for n in component.get("component", set()) if n in set(component.get("dmrs", []))}
+    gene_nodes = {n for n in component.get("component", set()) if n not in set(component.get("dmrs", []))}
+    # Now define split_genes from gene_nodes (nodes which occur in more than one biclique)
+    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
     split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
 
     # Create NodeInfo object
