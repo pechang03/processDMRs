@@ -569,7 +569,8 @@ class GraphManager:
         # Build the list of update tuples
 
         if updates:
-            current_app.logger.info("Updating edge_details with: " + str(updates))
+            # current_app.logger.info("Updating edge_details with: " + str(updates))
+            current_app.logger.info("Updating edge_details")
             try:
                 update_edge_details(timepoint_id, updates)
                 current_app.logger.info("Edge_details update succeeded.")
