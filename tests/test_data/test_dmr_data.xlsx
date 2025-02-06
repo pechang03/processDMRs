@@ -1,8 +1,0 @@
-# This file should be created manually or with a tool like openpyxl
-# Here's a representation of what the file should contain:
-
-# Sheet1:
-# DMR_No. | Area_Stat | Gene_Description | Gene_Symbol_Nearby
-# 1       | 1.23      | Test description | TEST1
-# 2       | 4.56      | Another test     | TEST2
-# 3       | 7.89      | Yet another      | TEST3
