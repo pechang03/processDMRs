@@ -1,9 +1,0 @@
-/drop
-/add       CONVENTIONS.md
-/add       backend/app/routes/component_routes.py
-/add       backend/app/visualization/core.py
-/add       backend/app/visualization/vis_components.py
-/add       frontend/src/components/BicliqueDetailView.css
-/add       frontend/src/components/BicliqueDetailView.jsx
-/add       frontend/src/components/BicliqueGraphView.jsx
-/add       frontend/src/components/ComponentSelectionView.jsx
