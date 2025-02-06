@@ -63,6 +63,14 @@ def convert_plotly_object(obj: Any) -> Any:
         return [convert_plotly_object(item) for item in obj]
     elif isinstance(obj, dict):
         return {key: convert_plotly_object(val) for key, val in obj.items()}
+    elif isinstance(obj, (np.integer, np.int_)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
     else:
         return obj
 
