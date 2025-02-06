@@ -407,7 +407,8 @@ def create_dmr_trace(
         # current_app.logger.debug(f"DMR {node_id} is_hub: {is_hub}")
 
         sizes.append(15 if is_hub else 10)
-        symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
+        symbol_type = "hub" if is_hub else "regular"
+        symbols.append(NODE_SHAPES["dmr"][symbol_type])
 
         # Create concise label for node display
         label = f"DMR_{node_id}"

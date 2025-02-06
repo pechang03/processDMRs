@@ -216,13 +216,13 @@ def create_component_visualization(
         if is_dmr:
             info = dmr_metadata.get(node_id, {})
             is_hub = info.get('is_hub', False)
-            shape = NODE_SHAPES['dmr_hub'] if is_hub else NODE_SHAPES['dmr']
+            shape = NODE_SHAPES['dmr']['hub'] if is_hub else NODE_SHAPES['dmr']['regular']
             trace = create_node_trace([x_val], [y_val], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
             dmr_traces.append(trace)
         else:
             info = gene_metadata.get(node_id, {})
             is_split = info.get('is_split', False)
-            shape = NODE_SHAPES['gene_split'] if is_split else NODE_SHAPES['gene']
+            shape = NODE_SHAPES['gene']['split'] if is_split else NODE_SHAPES['gene']['regular']
             trace = create_node_trace([x_val], [y_val], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
             gene_traces.append(trace)
 
