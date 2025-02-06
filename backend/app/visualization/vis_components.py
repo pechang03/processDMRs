@@ -18,12 +18,30 @@ def create_component_visualization(
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
-    edge_classifications: Dict[str, List],
+    edge_classifications: Dict[str, Any],
     dmr_metadata: Dict = None,
     gene_metadata: Dict = None,
 ) -> Dict:
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
+
+    # Extract classifications and stats from edge_classifications
+    if "classifications" in edge_classifications:
+        classifications = edge_classifications["classifications"]
+    else:
+        classifications = edge_classifications
+
+    # Get or compute stats
+    stats = edge_classifications.get("stats")
+    if stats is None:
+        stats = {
+            "component": {
+                "permanent": len(classifications.get("permanent", [])),
+                "false_positive": len(classifications.get("false_positive", [])),
+                "false_negative": len(classifications.get("false_negative", [])),
+            },
+            "bicliques": {},
+        }
 
     # Extract nodes from the component data
     dmr_nodes = {n for n in component.get("component", set()) if n in set(component.get("dmrs", []))}
@@ -213,7 +231,7 @@ def create_component_visualization(
 
     # Create edge traces
     edge_traces = create_edge_traces(
-        edge_classifications,
+        classifications,
         node_positions,
         node_labels,
         component["component"],
