@@ -718,7 +718,11 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add the statistics
             # Guard against missing "stats" in edge_classifications
-            stats = edge_classifications.get("stats") or {"component": {}, "bicliques": {}}
+            current_app.logger.debug(f'Point 2b{edge_classifications["stats"]}')
+            stats = edge_classifications.get("stats") or {
+                "component": {},
+                "bicliques": {},
+            }
             vis_dict["edge_stats"] = stats.get("component", {})
             current_app.logger.debug(f"Point 2b")
             vis_dict["biclique_stats"] = stats.get("bicliques", {})
