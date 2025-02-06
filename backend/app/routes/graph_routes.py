@@ -632,11 +632,13 @@ def get_component_graph(timepoint_id, component_id):
 
             try:
                 # Call the GraphManager method to get both updates and classifications
-                updates, edge_classifications = graph_manager.update_component_edge_classification(
-                    timepoint_id,
-                    original_graph_component,
-                    split_graph_component,
-                    bicliques,
+                updates, edge_classifications = (
+                    graph_manager.update_component_edge_classification(
+                        timepoint_id,
+                        original_graph_component,
+                        split_graph_component,
+                        bicliques,
+                    )
                 )
                 current_app.logger.info("Edge classification updates: " + str(updates))
 
@@ -695,7 +697,7 @@ def get_component_graph(timepoint_id, component_id):
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
 
-            current_app.logger.debug("Point 1")
+            current_app.logger.debug(f"Point 1{component_data}")
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
