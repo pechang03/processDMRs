@@ -66,6 +66,18 @@ def convert_plotly_object(obj: Any) -> Any:
         return obj
 
 # Alias for backward compatibility
+def convert_plotly_fig(fig: dict) -> dict:
+    """Convert the 'data' and 'layout' of a Plotly figure to dicts using to_plotly_json."""
+    data = fig.get("data", [])
+    layout = fig.get("layout", {})
+    converted_data = [
+        item.to_plotly_json() if hasattr(item, "to_plotly_json") else item
+        for item in data
+    ]
+    converted_layout = layout.to_plotly_json() if hasattr(layout, "to_plotly_json") else layout
+    return {"data": converted_data, "layout": converted_layout}
+
+# Aliases for backward compatibility
 convert_all_for_json = convert_for_json
 convert_stats_for_json = convert_for_json
 convert_dict_keys_to_str = convert_for_json

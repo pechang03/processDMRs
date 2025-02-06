@@ -120,10 +120,9 @@ def create_component_visualization(
     # Create layout using the unified layout function
     layout = create_circular_layout(node_info)
 
-    return convert_plotly_object({
-        'data': traces,
-        'layout': layout
-    })
+    from backend.app.utils.json_utils import convert_plotly_fig
+    final_fig = {'data': traces, 'layout': layout}
+    return convert_plotly_fig(final_fig)
 
 
 def create_component_details(
