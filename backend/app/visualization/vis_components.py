@@ -216,15 +216,6 @@ def create_component_visualization(
         if is_dmr:
             info = dmr_metadata.get(node_id, {})
             is_hub = info.get('is_hub', False)
-            shape = NODE_SHAPES['dmr']['hub'] if is_hub else NODE_SHAPES['dmr']['regular']
-            trace = create_node_trace([x_val], [y_val], shape, 'blue', node_labels.get(node_id, f'DMR_{node_id}'))
-            trace.showlegend = False
-            dmr_traces.append(trace)
-        else:
-            info = gene_metadata.get(node_id, {})
-            is_split = info.get('is_split', False)
-            shape = NODE_SHAPES['gene']['split'] if is_split else NODE_SHAPES['gene']['regular']
-            trace = create_node_trace([x_val], [y_val], shape, 'red', node_labels.get(node_id, f'Gene_{node_id}'))
             trace.showlegend = False
             gene_traces.append(trace)
 
@@ -242,46 +233,3 @@ def create_component_visualization(
     from .traces import create_legend_traces
     legend_node_traces, legend_edge_traces = create_legend_traces()
 
-    # Add biclique legend entries if there are multiple bicliques
-    biclique_legend_traces = []
-    if len(component.get('raw_bicliques', [])) > 1:
-        for idx, color in enumerate(biclique_colors):
-            biclique_legend_traces.append({
-                'x': [None],
-                'y': [None],
-                'mode': 'markers',
-                'marker': {
-                    'symbol': 'circle',
-                    'size': 10,
-                    'color': color
-                },
-                'name': f'Biclique {idx + 1}',
-                'showlegend': True,
-                'legendgroup': f'biclique_{idx + 1}'
-            })
-
-    # Get legend traces
-    legend_node_traces, legend_edge_traces = create_legend_traces()
-    
-    # Combine all traces
-    all_traces = edge_traces + dmr_traces + gene_traces + legend_node_traces + legend_edge_traces + biclique_legend_traces
-
-    return {
-        'data': all_traces,
-        'layout': {
-            'showlegend': True,
-            'hovermode': 'closest',
-            'margin': {'b': 40, 'l': 40, 'r': 40, 't': 40},
-            'xaxis': {'showgrid': False, 'zeroline': False, 'showticklabels': False},
-            'yaxis': {'showgrid': False, 'zeroline': False, 'showticklabels': False},
-            'legend': {
-                'x': 1.05,
-                'y': 0.5,
-                'xanchor': 'left',
-                'yanchor': 'middle',
-                'bgcolor': 'rgba(255,255,255,0.8)',
-                'bordercolor': 'rgba(0,0,0,0.2)',
-                'borderwidth': 1
-            }
-        }
-    }
