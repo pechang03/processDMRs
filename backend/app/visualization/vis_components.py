@@ -238,71 +238,15 @@ def create_component_visualization(
         edge_style={"width": 1, "color": "gray"}
     )
 
-    # Create legend-only traces
-    legend_traces = []
-    
-    # DMR legend entries
-    legend_traces.append({
-        'x': [None],
-        'y': [None],
-        'mode': 'markers',
-        'marker': {
-            'symbol': NODE_SHAPES['dmr']['hub'],
-            'size': 12,
-            'color': 'blue'
-        },
-        'name': 'Hub DMRs',
-        'showlegend': True,
-        'legendgroup': 'dmr'
-    })
-    
-    legend_traces.append({
-        'x': [None],
-        'y': [None],
-        'mode': 'markers',
-        'marker': {
-            'symbol': NODE_SHAPES['dmr']['regular'],
-            'size': 10,
-            'color': 'blue'
-        },
-        'name': 'DMRs',
-        'showlegend': True,
-        'legendgroup': 'dmr'
-    })
-
-    # Gene legend entries
-    legend_traces.append({
-        'x': [None],
-        'y': [None],
-        'mode': 'markers',
-        'marker': {
-            'symbol': NODE_SHAPES['gene']['split'],
-            'size': 10,
-            'color': 'red'
-        },
-        'name': 'Split Genes',
-        'showlegend': True,
-        'legendgroup': 'gene'
-    })
-
-    legend_traces.append({
-        'x': [None],
-        'y': [None],
-        'mode': 'markers',
-        'marker': {
-            'symbol': NODE_SHAPES['gene']['regular'],
-            'size': 10,
-            'color': 'red'
-        },
-        'name': 'Genes',
-        'showlegend': True,
-        'legendgroup': 'gene'
-    })
+    # Get legend traces from helper function
+    from .traces import create_legend_traces
+    legend_node_traces, legend_edge_traces = create_legend_traces()
 
     # Add biclique legend entries if there are multiple bicliques
+    biclique_legend_traces = []
     if len(component.get('raw_bicliques', [])) > 1:
         for idx, color in enumerate(biclique_colors):
-            legend_traces.append({
+            biclique_legend_traces.append({
                 'x': [None],
                 'y': [None],
                 'mode': 'markers',
@@ -316,32 +260,8 @@ def create_component_visualization(
                 'legendgroup': f'biclique_{idx + 1}'
             })
 
-    # Create dummy legend traces for edge types
-    legend_edge_traces = []
-    desired_edge_types = ['permanent', 'false_positive', 'false_negative']
-    edge_colors = {
-        'permanent': 'rgb(119,119,119)',
-        'false_positive': 'rgb(255,0,0)', 
-        'false_negative': 'rgb(0,0,255)'
-    }
-    
-    for edge_type in desired_edge_types:
-        edge_name = edge_type.replace('_', ' ').title() + " Edges"
-        legend_edge_traces.append(go.Scatter(
-            x=[None],
-            y=[None],
-            mode="lines",
-            line=dict(
-                color=edge_colors.get(edge_type, 'gray'),
-                width=1
-            ),
-            name=edge_name,
-            showlegend=True,
-            legendgroup="edges"
-        ))
-
     # Combine all traces
-    all_traces = edge_traces + dmr_traces + gene_traces + legend_traces + legend_edge_traces
+    all_traces = edge_traces + dmr_traces + gene_traces + legend_node_traces + legend_edge_traces + biclique_legend_traces
 
     return {
         'data': all_traces,

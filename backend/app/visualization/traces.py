@@ -641,3 +641,99 @@ def split_genes(
 ) -> Set[int]:
     """Identify genes that participate in multiple bicliques."""
     return {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
+
+
+def create_legend_traces() -> Tuple[List[dict], List[go.Scatter]]:
+    """
+    Create legend-only traces for nodes and edge types.
+    Node shapes use NODE_SHAPES so that:
+      - DMR hub nodes are rendered with NODE_SHAPES["dmr"]["hub"],
+      - Regular DMR nodes with NODE_SHAPES["dmr"]["regular"],
+      - Genes: uses NODE_SHAPES["gene"]["regular"],
+      - Split Genes: uses NODE_SHAPES["gene"]["split"] (which is 'diamond').
+    Also creates dummy legend traces for edge types.
+    Returns a tuple: (legend_node_traces, legend_edge_traces)
+    """
+    # Create node legend traces (as dicts for Plotly) for DMRs and Genes
+    legend_nodes = []
+
+    # DMR legend entries:
+    legend_nodes.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['dmr']['hub'],
+            'size': 12,
+            'color': 'blue'
+        },
+        'name': 'Hub DMRs',
+        'showlegend': True,
+        'legendgroup': 'dmr'
+    })
+    legend_nodes.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['dmr']['regular'],
+            'size': 10,
+            'color': 'blue'
+        },
+        'name': 'DMRs',
+        'showlegend': True,
+        'legendgroup': 'dmr'
+    })
+
+    # Gene legend entries:
+    legend_nodes.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['gene']['split'],   # Diamond for split genes
+            'size': 10,
+            'color': 'red'
+        },
+        'name': 'Split Genes',
+        'showlegend': True,
+        'legendgroup': 'gene'
+    })
+    legend_nodes.append({
+        'x': [None],
+        'y': [None],
+        'mode': 'markers',
+        'marker': {
+            'symbol': NODE_SHAPES['gene']['regular'],
+            'size': 10,
+            'color': 'red'
+        },
+        'name': 'Genes',
+        'showlegend': True,
+        'legendgroup': 'gene'
+    })
+
+    # Create dummy legend traces for edge types
+    legend_edges = []
+    # Define the colors for each edge type
+    edge_colors = {
+        'permanent': 'rgb(119,119,119)',
+        'false_positive': 'rgb(255,0,0)', 
+        'false_negative': 'rgb(0,0,255)'
+    }
+    desired_edge_types = ['permanent', 'false_positive', 'false_negative']
+    for edge_type in desired_edge_types:
+        edge_name = edge_type.replace('_', ' ').title() + " Edges"
+        legend_edges.append(go.Scatter(
+            x=[None],
+            y=[None],
+            mode="lines",
+            line=dict(
+                color=edge_colors.get(edge_type, 'gray'),
+                width=1
+            ),
+            name=edge_name,
+            showlegend=True,
+            legendgroup="edges"
+        ))
+    return legend_nodes, legend_edges
