@@ -53,6 +53,18 @@ def convert_sets_to_lists(data: Any) -> Any:
     return data
 
 
+def convert_plotly_object(obj: Any) -> Any:
+    """Recursively convert Plotly objects to JSON-serializable dicts.
+    If an object has a to_plotly_json() method, call it."""
+    if hasattr(obj, "to_plotly_json"):
+        return obj.to_plotly_json()
+    elif isinstance(obj, list):
+        return [convert_plotly_object(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: convert_plotly_object(val) for key, val in obj.items()}
+    else:
+        return obj
+
 # Alias for backward compatibility
 convert_all_for_json = convert_for_json
 convert_stats_for_json = convert_for_json

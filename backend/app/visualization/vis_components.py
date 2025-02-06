@@ -120,12 +120,10 @@ def create_component_visualization(
     # Create layout using the unified layout function
     layout = create_circular_layout(node_info)
 
-    return {
-        "data": [trace.to_plotly_json() for trace in traces],  # Convert Scatter to dict
-        "layout": layout.to_plotly_json()
-        if hasattr(layout, "to_plotly_json")
-        else layout,
-    }
+    return convert_plotly_object({
+        'data': traces,
+        'layout': layout
+    })
 
 
 def create_component_details(
