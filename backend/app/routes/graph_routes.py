@@ -1,22 +1,14 @@
-import json
-import time
-import json
 from flask import jsonify, current_app, Blueprint
-from backend.app.database.models import EdgeDetails, Gene
-from typing import Dict
-from plotly.utils import PlotlyJSONEncoder
-
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+import json
+import time
 import networkx as nx
+from plotly.utils import PlotlyJSONEncoder
 
-from pydantic import ValidationError
 from ..schemas import (
     GraphComponentSchema,
     BicliqueMemberSchema,
-    DmrComponentSchema,
-    GeneAnnotationViewSchema,
-    DmrAnnotationViewSchema,
 )
 from ..database.connection import get_db_engine
 from ..visualization.vis_components import create_component_visualization
