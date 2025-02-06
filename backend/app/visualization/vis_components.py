@@ -124,7 +124,10 @@ def create_component_visualization(
 
     from backend.app.utils.json_utils import convert_plotly_object
     final_fig = {'data': traces, 'layout': layout}
-    return convert_plotly_object(final_fig)
+    converted_fig = convert_plotly_object(final_fig)
+    if converted_fig is None:
+        converted_fig = final_fig
+    return converted_fig
 
 
 def create_component_details(
