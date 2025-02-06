@@ -24,6 +24,7 @@ from ..visualization.vis_components import create_component_visualization
 from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
+from ..utils.json_utils import convert_plotly_object
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
@@ -717,11 +718,13 @@ def get_component_graph(timepoint_id, component_id):
 
             # Add the statistics
             vis_dict["edge_stats"] = edge_classifications["stats"]["component"]
+            current_app.logger.debug(f"Point 2b")
             vis_dict["biclique_stats"] = edge_classifications["stats"]["bicliques"]
 
             # Return the visualization dictionary directly
             # Convert Plotly objects to dicts
-            from ..utils.json_utils import convert_plotly_object
+
+            current_app.logger.debug(f"Point 3{vis_dict}")
 
             converted = convert_plotly_object(vis_dict)
             if converted is None:
