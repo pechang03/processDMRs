@@ -231,11 +231,23 @@ def create_component_visualization(
         color = edge_colors.get(edge_type, 'gray')
         for edge in edges:
             start_id, end_id = edge.edge
-            start_pos = node_positions.get(start_id, {'x': 0, 'y': 0})
-            end_pos = node_positions.get(end_id, {'x': 0, 'y': 0})
+            # Get start position
+            start_pos = node_positions.get(start_id, (0, 0))
+            if isinstance(start_pos, tuple):
+                start_x, start_y = start_pos
+            else:
+                start_x = start_pos.get('x', 0)
+                start_y = start_pos.get('y', 0)
+            # Get end position  
+            end_pos = node_positions.get(end_id, (0, 0))
+            if isinstance(end_pos, tuple):
+                end_x, end_y = end_pos
+            else:
+                end_x = end_pos.get('x', 0)
+                end_y = end_pos.get('y', 0)
             trace = create_edge_trace(
-                [start_pos['x'], end_pos['x']],
-                [start_pos['y'], end_pos['y']],
+                [start_x, end_x],
+                [start_y, end_y], 
                 color
             )
             edge_traces.append(trace)
@@ -249,7 +261,7 @@ def create_component_visualization(
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['dmr_hub'],
+            'symbol': NODE_SHAPES['dmr']['hub'],
             'size': 12,
             'color': 'blue'
         },
@@ -263,7 +275,7 @@ def create_component_visualization(
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['dmr'],
+            'symbol': NODE_SHAPES['dmr']['regular'],
             'size': 10,
             'color': 'blue'
         },
@@ -278,7 +290,7 @@ def create_component_visualization(
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['gene_split'],
+            'symbol': NODE_SHAPES['gene']['split'],
             'size': 10,
             'color': 'red'
         },
@@ -292,7 +304,7 @@ def create_component_visualization(
         'y': [None],
         'mode': 'markers',
         'marker': {
-            'symbol': NODE_SHAPES['gene'],
+            'symbol': NODE_SHAPES['gene']['regular'],
             'size': 10,
             'color': 'red'
         },
