@@ -52,9 +52,9 @@ def create_component_visualization(
     # Create traces with edges first (drawn underneath), then nodes (drawn on top)
     traces = []
     
-    # Calculate split genes from node_biclique_map
-    split_genes = {n for n in component.get("genes", set()) 
-                  if len(node_biclique_map.get(n, [])) > 1}
+    # Calculate split genes from gene_nodes and node_biclique_map
+    gene_nodes = {n for n in component.get("component", set()) if n not in set(component.get("dmrs", []))}
+    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
     
     # Add edge traces first
     edge_traces = create_edge_traces(
