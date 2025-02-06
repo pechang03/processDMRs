@@ -1,8 +1,10 @@
 import json
 import time
+import json
 from flask import jsonify, current_app, Blueprint
 from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
+from plotly.utils import PlotlyJSONEncoder
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -709,6 +711,8 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )
+            # Force conversion to a plain dict
+            vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
             current_app.logger.debug("Point 2")
 
             end_time = time.time()
