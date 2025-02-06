@@ -697,7 +697,7 @@ def get_component_graph(timepoint_id, component_id):
 
             current_app.logger.debug("Point 1")
             vis_dict = create_component_visualization(
-                component=component_data.model_dump(),
+                component=component_data,
                 node_positions=node_positions,
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
