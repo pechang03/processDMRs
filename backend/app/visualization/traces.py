@@ -300,7 +300,9 @@ def create_unified_gene_trace(
             ],
             color=colors,
             symbol=[
-                "diamond" if len(node_biclique_map.get(n, [])) > 1 else "circle"
+                NODE_SHAPES["gene"]["split"]
+                if (gene_metadata is not None and gene_metadata.get(str(n), {}).get("is_split", False))
+                else NODE_SHAPES["gene"]["regular"]
                 for n in processed_nodes
             ],
             line=dict(
@@ -567,7 +569,7 @@ def create_edge_traces(
                     x=x_coords,
                     y=y_coords,
                     mode="lines",
-                    opacity=0.7,
+                    opacity=style.get("opacity", 1.0),  # Use style opacity (e.g., 0.4 for false edges)
                     line=line_style,
                     hoverinfo="text",
                     text=hover_texts,
