@@ -3,6 +3,7 @@
 import numpy as np
 import networkx as nx
 from typing import Any, Dict, List, Set, Tuple
+import plotly.graph_objects as go
 
 #  AI. 1 Keep data in native Python types throughout the business logic (biclique_analysis/*)
 #  AI. 2 Otherwise always convert to JSON-safe formats at the API boundary (routes/*.py)
