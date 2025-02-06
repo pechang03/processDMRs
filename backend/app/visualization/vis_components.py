@@ -226,34 +226,15 @@ def create_component_visualization(
             trace.showlegend = False
             gene_traces.append(trace)
 
-    # Process edges - aggregate by type
-    for edge_type, edges in edge_classifications.items():
-        color = edge_colors.get(edge_type, 'gray')
-        x_coords = []
-        y_coords = []
-        for edge in edges:
-            start_id, end_id = edge.edge
-            # Get start position
-            start_pos = node_positions.get(start_id, (0, 0))
-            if isinstance(start_pos, tuple):
-                start_x, start_y = start_pos
-            else:
-                start_x = start_pos.get('x', 0)
-                start_y = start_pos.get('y', 0)
-            # Get end position  
-            end_pos = node_positions.get(end_id, (0, 0))
-            if isinstance(end_pos, tuple):
-                end_x, end_y = end_pos
-            else:
-                end_x = end_pos.get('x', 0)
-                end_y = end_pos.get('y', 0)
-            # Append coordinates with None to break line between edges
-            x_coords.extend([start_x, end_x, None])
-            y_coords.extend([start_y, end_y, None])
-        if x_coords:
-            trace = create_edge_trace(x_coords, y_coords, color, name=f"{edge_type.replace('_', ' ').title()} Edges")
-            trace.showlegend = False
-            edge_traces.append(trace)
+    # Use centralized edge trace creation
+    edge_traces = create_edge_traces(
+        edge_classifications,
+        node_positions,
+        node_labels,
+        component["component"],
+        split_genes,
+        edge_style={"width": 1, "color": "gray"}
+    )
 
     # Create legend-only traces
     legend_traces = []

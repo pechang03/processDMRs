@@ -504,10 +504,11 @@ def create_edge_traces(
     component_nodes = component_nodes or set()
 
     # Use parameter directly instead of nested classifications
+    # Centralized edge style configuration
     style_map = {
         "permanent": {
             "color": get_rgb_str([119, 119, 119]),
-            "dash": "solid",
+            "dash": "solid", 
             "width": 1.5,
             "opacity": 1.0,
         },
@@ -518,7 +519,7 @@ def create_edge_traces(
             "opacity": 0.4,
         },
         "false_negative": {
-            "color": get_rgb_str([0, 0, 255]),
+            "color": get_rgb_str([0, 0, 255]), 
             "dash": "dash",
             "width": 0.75,
             "opacity": 0.4,
@@ -529,6 +530,13 @@ def create_edge_traces(
             "width": 0.5,
             "opacity": 0.3,
         },
+        # Default style for any unrecognized edge types
+        "default": {
+            "color": "gray",
+            "dash": "solid",
+            "width": 1.0,
+            "opacity": 1.0
+        }
     }
 
     # Process each edge classification type
