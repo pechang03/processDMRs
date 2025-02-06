@@ -702,12 +702,13 @@ def get_component_graph(timepoint_id, component_id):
 
             # current_app.logger.debug(f"Point 1{component_data}")
             current_app.logger.debug("Point 1")
+            # Use the complete edge_classifications dictionary
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
-                edge_classifications=edge_classifications["classifications"],
+                edge_classifications=edge_classifications,
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )
