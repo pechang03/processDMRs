@@ -612,47 +612,40 @@ def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_positions: Dict[int, Tuple[float, float]],
     biclique_colors: List[str],
-) -> List[go.Scatter]:
-    """Create box traces around bicliques."""
-    traces = []
+) -> List[Dict]:
+    """Create border shapes (rectangles) around bicliques."""
+    shapes = []
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         nodes = dmr_nodes | gene_nodes
         if not nodes:
             continue
-
-        positions = []
-        for node in nodes:
-            if node in node_positions:
-                positions.append(node_positions[node])
-            else:
-                continue  # Skip nodes without positions
-
+        positions = [node_positions[node] for node in nodes if node in node_positions]
         if not positions:
-            continue  # Skip if no positions are found
+            continue
         x_coords, y_coords = zip(*positions)
-
         padding = 0.05
         x_min, x_max = min(x_coords) - padding, max(x_coords) + padding
         y_min, y_max = min(y_coords) - padding, max(y_coords) + padding
-
-        traces.append(
-            go.Scatter(
-                x=[x_min, x_max, x_max, x_min, x_min],
-                y=[y_min, y_min, y_max, y_max, y_min],
-                mode="lines",
-                line=dict(
-                    color=biclique_colors[biclique_idx],  # Now using CSS string
-                    width=2,
-                    dash="dot",
-                ),
-                fill="toself",
-                fillcolor=biclique_colors[biclique_idx],  # Now using CSS string
-                opacity=0.1,  # Keep only this opacity
-                name=f"Biclique {biclique_idx + 1}",
-                showlegend=True,
-            )
-        )
-    return traces
+        
+        shape = {
+            "type": "rect",
+            "xref": "x",
+            "yref": "y", 
+            "x0": x_min,
+            "y0": y_min,
+            "x1": x_max,
+            "y1": y_max,
+            "line": {
+                "color": biclique_colors[biclique_idx],
+                "width": 2,
+                "dash": "dot",
+            },
+            "fillcolor": biclique_colors[biclique_idx],
+            "opacity": 0.1,
+            "layer": "below",  # Ensure shapes are drawn behind other traces
+        }
+        shapes.append(shape)
+    return shapes
 
 
 def split_genes(

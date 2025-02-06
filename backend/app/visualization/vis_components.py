@@ -84,8 +84,13 @@ def create_component_visualization(
     biclique_colors = generate_biclique_colors(len(component.get("raw_bicliques", [])))
     # current_app.logger.debug("Point 3")
 
-    # Create traces with edges first (drawn underneath), then nodes (drawn on top)
+    # Create traces list and get biclique shapes
     traces = []
+    biclique_shapes = create_biclique_boxes(
+        component.get("raw_bicliques", []),
+        node_positions,
+        biclique_colors
+    )
     
     # Add legend traces
     legend_nodes, legend_edges = create_legend_traces(biclique_colors)
@@ -166,8 +171,9 @@ def create_component_visualization(
     #     traces.append(split_gene_trace)
 
     # current_app.logger.debug("Point 5")
-    # Create layout using the unified layout function
+    # Create layout using the unified layout function and add biclique shapes
     layout = create_circular_layout(node_info)
+    layout["shapes"] = biclique_shapes
 
     from backend.app.utils.json_utils import convert_plotly_object
 
