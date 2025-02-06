@@ -717,9 +717,11 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Add the statistics
-            vis_dict["edge_stats"] = edge_classifications["stats"]["component"]
+            # Guard against missing "stats" in edge_classifications
+            stats = edge_classifications.get("stats") or {"component": {}, "bicliques": {}}
+            vis_dict["edge_stats"] = stats.get("component", {})
             current_app.logger.debug(f"Point 2b")
-            vis_dict["biclique_stats"] = edge_classifications["stats"]["bicliques"]
+            vis_dict["biclique_stats"] = stats.get("bicliques", {})
 
             # Return the visualization dictionary directly
             # Convert Plotly objects to dicts
