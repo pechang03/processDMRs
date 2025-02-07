@@ -279,6 +279,8 @@ class GeneDetails(Base):
     )  # Either 'mouse' or 'human'
     NCBI_id = Column(String(50))
     annotations = Column(JSON)  # SQLite will store this as TEXT
+    go_bp = Column(JSON)  # GO biological process terms
+    go_mf = Column(JSON)  # GO molecular function terms
 
     # Relationship
     gene = relationship("Gene", backref="details")
@@ -346,6 +348,19 @@ class TopGOProcessesBiclique(Base):
     termId = Column(String(50), primary_key=True)
     pValue = Column(Float)
     enrichmentScore = Column(Float)
+
+
+class GeneReference(Base):
+    __tablename__ = "gene_references"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    gene_id = Column(Integer, ForeignKey("genes.id"), nullable=False)
+    gene_symbol = Column(String(255))  # Store gene symbol for quick access
+    title = Column(String(255), nullable=False)
+    doi = Column(String(255))
+    local_filename = Column(String(255))  # Store local file path if needed
+    bibtex_entry = Column(Text)  # Store full BibTeX entry
+    
+    gene = relationship("Gene", backref="references")
 
 
 class DominatingSet(Base):
