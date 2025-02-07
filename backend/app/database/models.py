@@ -364,6 +364,31 @@ class DominatingSet(Base):
     dmr = relationship("DMR", back_populates="dominating_set_entries")
 
 
+class EnsemblGene(Base):
+    __tablename__ = "ensembl_genes"
+
+    # This column is added to link to our internal Genes table and gene_details.
+    gene_id = Column(Integer, primary_key=True)
+
+    # Columns from the external sqlite3 genes table; note that we rename the external
+    # "gene_id" column to external_gene_id to avoid conflict.
+    chr = Column(Text)
+    source = Column(Text)
+    type = Column(Text)
+    start = Column(Integer)
+    stop = Column(Integer)
+    score = Column(Integer)
+    strand = Column(Text)
+    phase = Column(Integer)
+    ensembl_id = Column(String(50))  # corresponds to external "ID"
+    name_external = Column(String(50))  # corresponds to external "Name"
+    parent = Column(Integer)  # from the external "Parent"
+    dbxref = Column(Integer)  # from the external "Dbxref"
+    external_gene_id = Column(String(50))  # corresponds to external "gene_id"
+    mgi_type = Column(String(50))
+    description = Column(Text)
+
+
 def create_tables(engine):
     """Create all tables in the database."""
     Base.metadata.create_all(engine)
