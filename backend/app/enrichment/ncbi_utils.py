@@ -349,6 +349,16 @@ def fetch_ncbi_gene_ids(db: Session, gene_ids: List[int]) -> Dict[int, str]:
         # Add newly fetched NCBI IDs to result dict
         for gene_id, symbol in id_to_symbol.items():
             if symbol in symbol_to_ncbi:
-                gene_id_to_ncbi[gene_id] = symbol_to_ncbi[symbol]
+                new_ncbi = symbol_to_ncbi[symbol]
+                gene_id_to_ncbi[gene_id] = new_ncbi
+                # Update or create GeneDetails record with the new NCBI_id
+                gene_details = db.query(GeneDetails).filter(GeneDetails.gene_id == gene_id).first()
+                if gene_details:
+                    gene_details.NCBI_id = new_ncbi
+                else:
+                    new_details = GeneDetails(gene_id=gene_id, NCBI_id=new_ncbi)
+                    db.add(new_details)
+        
+        db.commit()
 
     return gene_id_to_ncbi
