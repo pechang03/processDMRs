@@ -15,14 +15,27 @@ from typing import Optional
 # Import models; note we need both EnsemblGene and Gene (for matching)
 from backend.app.database.models import Base, EnsemblGene, Gene
 
-# Load environment variables so that DATABASE_URL and DATABASE_SECONDARY_URL are available.
-load_dotenv()
+# Load environment variables from project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+env_path = os.path.join(project_root, "processDMR.env")
+print(f"Loading environment from: {env_path}")
 
+if not os.path.exists(env_path):
+    raise FileNotFoundError(f"Environment file not found at: {env_path}")
+
+load_dotenv(env_path)
+
+# Get and verify database URLs
 PRIMARY_DB_URL = os.environ.get("DATABASE_URL")
 SECONDARY_DB_URL = os.environ.get("DATABASE_SECONDARY_URL")
 
-if not PRIMARY_DB_URL or not SECONDARY_DB_URL:
-    raise ValueError("Both DATABASE_URL and DATABASE_SECONDARY_URL must be set.")
+print(f"Primary DB URL: {PRIMARY_DB_URL}")
+print(f"Secondary DB URL: {SECONDARY_DB_URL}")
+
+if not PRIMARY_DB_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+if not SECONDARY_DB_URL:
+    raise ValueError("DATABASE_SECONDARY_URL environment variable is not set")
 
 # Create engines for both databases.
 primary_engine = create_engine(PRIMARY_DB_URL)
