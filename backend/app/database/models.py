@@ -25,7 +25,6 @@ from sqlalchemy.sql import func
 Base = declarative_base()
 
 
-
 class ArrayType(TypeDecorator):
     """Convert between Python list and string stored in database."""
 
@@ -359,7 +358,7 @@ class GeneReference(Base):
     doi = Column(String(255))
     local_filename = Column(String(255))  # Store local file path if needed
     bibtex_entry = Column(Text)  # Store full BibTeX entry
-    
+
     gene = relationship("Gene", backref="references")
 
 
@@ -377,19 +376,6 @@ class DominatingSet(Base):
     # Relationships
     timepoint = relationship("Timepoint", back_populates="dominating_set_dmrs")
     dmr = relationship("DMR", back_populates="dominating_set_entries")
-
-
-class GeneReference(Base):
-    __tablename__ = "gene_references"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    gene_id = Column(Integer, ForeignKey("genes.id"), nullable=False)
-    gene_symbol = Column(String(255))  # Store gene symbol for quick access
-    title = Column(String(255), nullable=False)
-    doi = Column(String(255))
-    local_filename = Column(String(255))  # Store local file path if needed
-    bibtex_entry = Column(Text)  # Store full BibTeX entry
-    
-    gene = relationship("Gene", backref="references")
 
 
 def create_tables(engine):
