@@ -93,7 +93,7 @@ with secondary_engine.connect() as secondary_conn:
     migrated = 0
     for row in result:
         # Build a dict from row; keys match our Pydantic schema
-        data = dict(row)
+        data = dict(row._mapping)
         try:
             # Validate and parse the row using Pydantic.
             sec_gene = SecondaryGene(**data)
