@@ -16,8 +16,8 @@ from typing import Optional
 from backend.app.database.models import Base, EnsemblGene, Gene
 
 # Load environment variables from project root
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-env_path = os.path.join(project_root, "processDMR.env")
+from backend.app.config import get_project_root
+env_path = os.path.join(get_project_root(), "processDMR.env")
 print(f"Loading environment from: {env_path}")
 
 if not os.path.exists(env_path):
