@@ -21,9 +21,9 @@ from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy import DateTime
 
 Base = declarative_base()
-
 
 
 class ArrayType(TypeDecorator):
@@ -247,9 +247,6 @@ class Relationship(Base):
     target_entity_type = Column(String(50))
     target_entity_id = Column(Integer)
     relationship_type = Column(String(50))
-
-
-from sqlalchemy import DateTime
 
 
 class EdgeDetails(Base):
