@@ -378,6 +378,31 @@ class DominatingSet(Base):
     dmr = relationship("DMR", back_populates="dominating_set_entries")
 
 
+from typing import Optional
+from pydantic import BaseModel
+
+class EnsemblGenes(BaseModel):
+    gene_id: int
+    chr: Optional[str] = None
+    source: Optional[str] = None
+    type: Optional[str] = None
+    start: Optional[int] = None
+    stop: Optional[int] = None
+    score: Optional[int] = None
+    strand: Optional[str] = None
+    phase: Optional[int] = None
+    ensembl_id: Optional[str] = None
+    name_external: Optional[str] = None
+    parent: Optional[int] = None
+    dbxref: Optional[int] = None
+    external_gene_id: Optional[str] = None
+    mgi_type: Optional[str] = None
+    description: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
 def create_tables(engine):
     """Create all tables in the database."""
     Base.metadata.create_all(engine)
