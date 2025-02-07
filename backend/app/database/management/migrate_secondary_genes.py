@@ -6,7 +6,7 @@ each record and merges based on matching the Genes.symbol field with the seconda
 """
 
 import os
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text, func, inspect
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -41,8 +41,11 @@ if not SECONDARY_DB_URL:
 primary_engine = create_engine(PRIMARY_DB_URL)
 secondary_engine = create_engine(SECONDARY_DB_URL)
 
-# Ensure the target table exists.
-Base.metadata.create_all(primary_engine, tables=[EnsemblGene.__table__])
+# Check if ensembl_genes table exists and create if needed
+inspector = inspect(primary_engine)
+if not inspector.has_table("ensembl_genes"):
+    Base.metadata.create_all(primary_engine, tables=[EnsemblGene.__table__])
+    print("Created missing ensembl_genes table.")
 
 PrimarySession = sessionmaker(bind=primary_engine)
 primary_session = PrimarySession()
