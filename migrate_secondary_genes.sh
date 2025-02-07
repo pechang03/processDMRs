@@ -1,7 +1,4 @@
 #!/bin/bash
-# Exit on any error
-set -e
-
 # Get the directory containing this script (project root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -13,6 +10,8 @@ if [ -f "processDMR.env" ]; then
 else
   echo "Warning: processDMR.env not found. Make sure your environment variables are set."
 fi
+echo $DATABASE_URL
+echo $DATABASE_SECONDARY_URL
 
 echo "Migrating secondary gene data..."
 python -m backend.app.database.management.migrate_secondary_genes

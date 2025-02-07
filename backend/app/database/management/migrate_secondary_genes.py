@@ -34,6 +34,7 @@ Base.metadata.create_all(primary_engine, tables=[EnsemblGene.__table__])
 PrimarySession = sessionmaker(bind=primary_engine)
 primary_session = PrimarySession()
 
+
 # Define a Pydantic model for the secondary genes table.
 class SecondaryGene(BaseModel):
     chr: str
@@ -51,6 +52,7 @@ class SecondaryGene(BaseModel):
     gene_id: str
     mgi_type: Optional[str] = None
     description: Optional[str] = None
+
 
 # Open a connection to the secondary database.
 with secondary_engine.connect() as secondary_conn:
@@ -74,7 +76,7 @@ with secondary_engine.connect() as secondary_conn:
         FROM genes
     """)
     result = secondary_conn.execute(query)
-    
+
     migrated = 0
     for row in result:
         # Build a dict from row; keys match our Pydantic schema
@@ -88,31 +90,35 @@ with secondary_engine.connect() as secondary_conn:
 
         # Find the matching gene record in the primary database.
         # The Genes.symbol field should match sec_gene.Name (case-insensitive).
-        primary_gene = primary_session.query(Gene).filter(
-            func.lower(Gene.symbol) == sec_gene.Name.lower()
-        ).first()
+        primary_gene = (
+            primary_session.query(Gene)
+            .filter(func.lower(Gene.symbol) == sec_gene.Name.lower())
+            .first()
+        )
         if not primary_gene:
-            print(f"Warning: No gene found in primary DB matching '{sec_gene.Name}'. Skipping record.")
+            print(
+                f"Warning: No gene found in primary DB matching '{sec_gene.Name}'. Skipping record."
+            )
             continue
 
         # Create an EnsemblGene record; use the found primary_gene.id as the linking gene_id.
         record = EnsemblGene(
-            gene_id = primary_gene.id,                      # linking field from Genes
-            chr = sec_gene.chr,
-            source = sec_gene.source,
-            type = sec_gene.type,
-            start = sec_gene.start,
-            stop = sec_gene.stop,
-            score = sec_gene.score,
-            strand = sec_gene.strand,
-            phase = sec_gene.phase,
-            ensembl_id = sec_gene.ID,                       # external ID
-            name_external = sec_gene.Name,                  # comes from secondary "Name"
-            parent = sec_gene.Parent,
-            dbxref = sec_gene.Dbxref,
-            external_gene_id = sec_gene.gene_id,
-            mgi_type = sec_gene.mgi_type,
-            description = sec_gene.description
+            gene_id=primary_gene.id,  # linking field from Genes
+            chr=sec_gene.chr,
+            source=sec_gene.source,
+            type=sec_gene.type,
+            start=sec_gene.start,
+            stop=sec_gene.stop,
+            score=sec_gene.score,
+            strand=sec_gene.strand,
+            phase=sec_gene.phase,
+            ensembl_id=sec_gene.ID,  # external ID
+            name_external=sec_gene.Name,  # comes from secondary "Name"
+            parent=sec_gene.Parent,
+            dbxref=sec_gene.Dbxref,
+            external_gene_id=sec_gene.gene_id,
+            mgi_type=sec_gene.mgi_type,
+            description=sec_gene.description,
         )
         primary_session.merge(record)
         migrated += 1
