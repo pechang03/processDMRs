@@ -469,6 +469,7 @@ def populate_gene_annotations(
     graph: nx.Graph,
     df: pd.DataFrame,
     is_original: bool,
+    *,  # Force remaining args to be keyword-only
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> None:
     """Populate gene annotations for a component."""
@@ -520,6 +521,7 @@ def populate_dmr_annotations(
     graph: nx.Graph,
     df: pd.DataFrame,
     is_original: bool,
+    *,  # Force remaining args to be keyword-only
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> None:
     """Populate DMR annotations for a component."""

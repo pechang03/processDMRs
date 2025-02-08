@@ -10,6 +10,7 @@ def analyze_bicliques(
     original_graph: nx.Graph,
     bicliques: List[Tuple[Set[int], Set[int]]],
     timepoint_id: int,
+    *,  # Force remaining args to be keyword-only
     split_graph: nx.Graph = None,
 ) -> Dict:
     """Analyze bicliques and components without database operations."""
