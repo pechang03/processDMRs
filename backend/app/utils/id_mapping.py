@@ -1,6 +1,19 @@
 from typing import Set, Dict
 from backend.app.utils.constants import START_GENE_ID
 
+# Preloaded dictionary of DMR_ID_OFFSET values from the Timepoint table;
+# keys are timepoint IDs and values are the offsets.
+TIMEPOINT_OFFSETS = {
+    1: 0,
+    2: 10000,
+    3: 20000,
+    4: 30000,
+    5: 40000,
+    6: 50000,
+    7: 60000,
+    8: 70000,
+}
+
 # Cache for timepoint offsets
 def convert_dmr_id(dmr_num: int, timepoint: int or str, is_original: bool = True, first_gene_id: int = 0) -> int:
     """Convert a DMR node ID to its final form based on graph type and timepoint.
@@ -14,9 +27,7 @@ def convert_dmr_id(dmr_num: int, timepoint: int or str, is_original: bool = True
     Returns:
         Converted DMR ID with proper offset and adjustment
     """
-    # Add 1 to DMR number for original graphs to match 1-based indexing
-    adjusted_num = dmr_num + 1 if is_original else dmr_num
-    return create_dmr_id(adjusted_num, timepoint, first_gene_id)
+    return create_dmr_id(dmr_num, timepoint, first_gene_id)
 
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint.
@@ -27,7 +38,11 @@ def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -
     if not isinstance(timepoint, (int, str)):
         raise TypeError(f"create_dmr_id: Expected timepoint to be int or str, got {type(timepoint)}: {timepoint}")
     if isinstance(timepoint, int):
-        offset = timepoint
+        # Look up offset by timepoint_id in the preloaded dictionary
+        try:
+            offset = TIMEPOINT_OFFSETS[timepoint]
+        except KeyError:
+            raise ValueError(f"Unknown timepoint_id {timepoint} in TIMEPOINT_OFFSETS")
     else:
         # Define fixed offsets for each timepoint
         timepoint_offsets = {
