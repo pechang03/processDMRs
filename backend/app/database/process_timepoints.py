@@ -285,7 +285,7 @@ def process_triconnected_components(
         tri_subgraph = original_graph.subgraph(nodes)
 
         # Calculate basic metrics
-        dmr_nodes = {create_dmr_id(n + 1, timepoint_id) for n in nodes if original_graph.nodes[n]["bipartite"] == 0}
+        dmr_nodes = {convert_dmr_id(n, timepoint_id, is_original=True) for n in nodes if original_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in nodes if original_graph.nodes[n]["bipartite"] == 1}
 
         # Find separation pairs and convert to list format

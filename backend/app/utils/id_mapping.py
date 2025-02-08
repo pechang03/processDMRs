@@ -2,6 +2,22 @@ from typing import Set, Dict
 from backend.app.utils.constants import START_GENE_ID
 
 # Cache for timepoint offsets
+def convert_dmr_id(dmr_num: int, timepoint: int or str, is_original: bool = True, first_gene_id: int = 0) -> int:
+    """Convert a DMR node ID to its final form based on graph type and timepoint.
+    
+    Args:
+        dmr_num: Raw DMR number from graph
+        timepoint: Timepoint ID (int) or name (str)
+        is_original: Whether this is from original graph (needs +1) or split graph
+        first_gene_id: Optional upper bound for DMR IDs
+        
+    Returns:
+        Converted DMR ID with proper offset and adjustment
+    """
+    # Add 1 to DMR number for original graphs to match 1-based indexing
+    adjusted_num = dmr_num + 1 if is_original else dmr_num
+    return create_dmr_id(adjusted_num, timepoint, first_gene_id)
+
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint.
     

@@ -533,7 +533,7 @@ def populate_dmr_annotations(
         if d["bipartite"] == 0:
             # For original graphs add 1 to match 1-based indexing
             # For split graphs use direct conversion to match biclique processing
-            converted = create_dmr_id(n + 1, timepoint_id) if is_original else create_dmr_id(n, timepoint_id)
+            converted = convert_dmr_id(n, timepoint_id, is_original=is_original)
             degree = graph.degree(n)
             is_isolate = degree == 0
 
