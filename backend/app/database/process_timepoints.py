@@ -340,7 +340,7 @@ def process_triconnected_components(
                 upsert_dmr_timepoint_annotation(
                     session=session,
                     timepoint_id=timepoint_id,
-                    dmr_id=node,
+                    dmr_id=convert_dmr_id(node, timepoint_id, is_original=True),
                     triconnected_id=tri_id,
                 )
             else:
