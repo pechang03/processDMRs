@@ -54,7 +54,7 @@ def analyze_bicliques(
 
         # Get bicliques for this component and convert DMR IDs
         comp_bicliques = [
-            ({create_dmr_id(n + 1, timepoint) for n in dmrs}, genes)
+            ({create_dmr_id(n + 1, timepoint_id) for n in dmrs}, genes)
             for (dmrs, genes) in bicliques if any(n in component for n in (dmrs | genes))
         ]
         category = classify_component(dmr_nodes, gene_nodes, comp_bicliques)
