@@ -4,13 +4,13 @@ from collections import defaultdict
 from types import NoneType
 import networkx as nx
 from typing import Dict, List, Set, Tuple
-from backend.app.utils.id_mapping import create_dmr_id
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from .models import EdgeDetails
 from backend.app.database.cleanup import clean_edge_details
-from backend.app.utils.id_mapping import create_dmr_id
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 
 from collections import defaultdict
 from .operations import (

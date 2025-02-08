@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set, Tuple
 import networkx as nx
-from backend.app.utils.id_mapping import create_dmr_id
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 from .classifier import classify_component
 
 
