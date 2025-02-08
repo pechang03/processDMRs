@@ -527,31 +527,30 @@ def populate_dmr_annotations(
 ) -> None:
     """Populate DMR annotations for a component."""
 
-    dmr_nodes = {create_dmr_id(n + 1, timepoint_id) for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+    for n, d in graph.nodes(data=True):
+        if d["bipartite"] == 0:
+            converted = create_dmr_id(n + 1, timepoint_id)
+            degree = graph.degree(n)
+            is_isolate = (degree == 0)
+            
+            # Get biclique participation if this is split graph
+            biclique_ids = None
+            if not is_original and bicliques:
+                participating_bicliques = [
+                    idx for idx, (dmrs, _) in enumerate(bicliques) if n in dmrs
+                ]
+                biclique_ids = ",".join(map(str, participating_bicliques))
 
-    for dmr in dmr_nodes:
-        # Basic properties
-        degree = graph.degree(dmr)
-        is_isolate = degree == 0
-
-        # Get biclique participation if this is split graph
-        biclique_ids = None
-        if not is_original and bicliques:
-            participating_bicliques = [
-                idx for idx, (dmrs, _) in enumerate(bicliques) if dmr in dmrs
-            ]
-            biclique_ids = ",".join(map(str, participating_bicliques))
-
-        upsert_dmr_timepoint_annotation(
-            session=session,
-            timepoint_id=timepoint_id,
-            dmr_id=dmr,
-            component_id=component_id,
-            degree=degree,
-            node_type="isolated" if is_isolate else "regular",
-            is_isolate=is_isolate,
-            biclique_ids=biclique_ids,
-        )
+            upsert_dmr_timepoint_annotation(
+                session=session,
+                timepoint_id=timepoint_id,
+                dmr_id=converted,
+                component_id=component_id,
+                degree=degree,
+                node_type="isolated" if is_isolate else "regular",
+                is_isolate=is_isolate,
+                biclique_ids=biclique_ids,
+            )
 
 
 def populate_statistics(session: Session, statistics: dict):
