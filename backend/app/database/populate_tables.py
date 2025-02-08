@@ -4,6 +4,7 @@ from collections import defaultdict
 from types import NoneType
 import networkx as nx
 from typing import Dict, List, Set, Tuple
+from backend.app.utils.id_mapping import create_dmr_id
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
