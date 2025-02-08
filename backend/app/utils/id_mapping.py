@@ -8,6 +8,8 @@ def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -
     If timepoint is an integer, it is assumed to be the dmr_id_offset.
     If it is a string, the offset is looked up from a fixed dictionary.
     """
+    if not isinstance(timepoint, (int, str)):
+        raise TypeError(f"create_dmr_id: Expected timepoint to be int or str, got {type(timepoint)}: {timepoint}")
     if isinstance(timepoint, int):
         offset = timepoint
     else:

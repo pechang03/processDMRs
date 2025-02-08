@@ -13,6 +13,7 @@ def analyze_bicliques(
     split_graph: nx.Graph = None,
 ) -> Dict:
     """Analyze bicliques and components without database operations."""
+    print(f"[DEBUG] analyze_bicliques: timepoint_id = {timepoint_id} (type: {type(timepoint_id)})")
     if split_graph is None:
         split_graph = nx.Graph()
 
