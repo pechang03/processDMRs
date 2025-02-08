@@ -14,29 +14,38 @@ TIMEPOINT_OFFSETS = {
     8: 70000,
 }
 
+
 # Cache for timepoint offsets
-def convert_dmr_id(dmr_num: int, timepoint: int or str, is_original: bool = True, first_gene_id: int = 0) -> int:
+def convert_dmr_id(
+    dmr_num: int,
+    timepoint: int or str,
+    is_original: bool = True,
+    first_gene_id: int = 0,
+) -> int:
     """Convert a DMR node ID to its final form based on graph type and timepoint.
-    
+
     Args:
         dmr_num: Raw DMR number from graph
         timepoint: Timepoint ID (int) or name (str)
         is_original: Whether this is from original graph (needs +1) or split graph
         first_gene_id: Optional upper bound for DMR IDs
-        
+
     Returns:
         Converted DMR ID with proper offset and adjustment
     """
-    return create_dmr_id(dmr_num, timepoint, first_gene_id)
+    return create_dmr_id(dmr_num + 1, timepoint, first_gene_id)
+
 
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint.
-    
+
     If timepoint is an integer, it is assumed to be the dmr_id_offset.
     If it is a string, the offset is looked up from a fixed dictionary.
     """
     if not isinstance(timepoint, (int, str)):
-        raise TypeError(f"create_dmr_id: Expected timepoint to be int or str, got {type(timepoint)}: {timepoint}")
+        raise TypeError(
+            f"create_dmr_id: Expected timepoint to be int or str, got {type(timepoint)}: {timepoint}"
+        )
     if isinstance(timepoint, int):
         # Look up offset by timepoint_id in the preloaded dictionary
         try:
@@ -53,13 +62,15 @@ def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -
             "P21-P180": 40000,
             "TP28-TP180": 50000,
             "TP40-TP180": 60000,
-            "TP60-TP180": 70000
+            "TP60-TP180": 70000,
         }
         # Remove _TSS suffix if present for matching
         timepoint_clean = timepoint.replace("_TSS", "")
         # Get offset for this timepoint
-        offset = timepoint_offsets.get(timepoint_clean, 80000)  # Default offset for unknown timepoints
-    
+        offset = timepoint_offsets.get(
+            timepoint_clean, 80000
+        )  # Default offset for unknown timepoints
+
     # Calculate DMR ID with offset
     dmr_id = offset + dmr_num
 
@@ -80,13 +91,15 @@ def create_gene_mapping(genes: Set[str], max_dmr_id: int = None) -> Dict[str, in
     # Convert all gene names to lowercase and remove any empty strings or invalid values
     cleaned_genes = set()
     seen_genes = set()  # Track genes we've already processed
-    
+
     for gene in genes:
         if gene and isinstance(gene, str):
             gene_lower = gene.strip().lower()
-            if (gene_lower not in seen_genes and 
-                gene_lower not in {".", "n/a", ""} and
-                not gene_lower.startswith("unnamed:")):
+            if (
+                gene_lower not in seen_genes
+                and gene_lower not in {".", "n/a", ""}
+                and not gene_lower.startswith("unnamed:")
+            ):
                 cleaned_genes.add(gene_lower)
                 seen_genes.add(gene_lower)
 
