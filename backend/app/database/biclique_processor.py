@@ -41,7 +41,10 @@ def process_bicliques_db(
     # Create split graph and analyze
     split_graph = nx.Graph()
     analysis_results = analyze_bicliques(
-        original_graph, bicliques_result["bicliques"], split_graph
+        original_graph,
+        bicliques_result["bicliques"],
+        timepoint_id,             # pass the integer timepoint_id here
+        split_graph=split_graph
     )
 
     # Process original components
