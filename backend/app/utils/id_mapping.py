@@ -2,25 +2,30 @@ from typing import Set, Dict
 from backend.app.utils.constants import START_GENE_ID
 
 # Cache for timepoint offsets
-def create_dmr_id(dmr_num: int, timepoint: str, first_gene_id: int = 0) -> int:
-    """Create a unique DMR ID for a specific timepoint."""
-    # Define fixed offsets for each timepoint
-    timepoint_offsets = {
-        "DSStimeseries": 0,
-        "P21-P28": 10000,
-        "P21-P40": 20000,
-        "P21-P60": 30000,
-        "P21-P180": 40000,
-        "TP28-TP180": 50000,
-        "TP40-TP180": 60000,
-        "TP60-TP180": 70000
-    }
+def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
+    """Create a unique DMR ID for a specific timepoint.
     
-    # Remove _TSS suffix if present for matching
-    timepoint_clean = timepoint.replace("_TSS", "")
-    
-    # Get offset for this timepoint
-    offset = timepoint_offsets.get(timepoint_clean, 80000)  # Default offset for unknown timepoints
+    If timepoint is an integer, it is assumed to be the dmr_id_offset.
+    If it is a string, the offset is looked up from a fixed dictionary.
+    """
+    if isinstance(timepoint, int):
+        offset = timepoint
+    else:
+        # Define fixed offsets for each timepoint
+        timepoint_offsets = {
+            "DSStimeseries": 0,
+            "P21-P28": 10000,
+            "P21-P40": 20000,
+            "P21-P60": 30000,
+            "P21-P180": 40000,
+            "TP28-TP180": 50000,
+            "TP40-TP180": 60000,
+            "TP60-TP180": 70000
+        }
+        # Remove _TSS suffix if present for matching
+        timepoint_clean = timepoint.replace("_TSS", "")
+        # Get offset for this timepoint
+        offset = timepoint_offsets.get(timepoint_clean, 80000)  # Default offset for unknown timepoints
     
     # Calculate DMR ID with offset
     dmr_id = offset + dmr_num

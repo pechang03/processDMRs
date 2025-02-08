@@ -9,7 +9,7 @@ from .classifier import classify_component
 def analyze_bicliques(
     original_graph: nx.Graph,
     bicliques: List[Tuple[Set[int], Set[int]]],
-    timepoint: str,
+    timepoint_id: int,
     split_graph: nx.Graph = None,
 ) -> Dict:
     """Analyze bicliques and components without database operations."""
@@ -26,7 +26,7 @@ def analyze_bicliques(
     original_components = []
     for component in nx.connected_components(original_graph):
         comp_subgraph = original_graph.subgraph(component)
-        dmr_nodes = {create_dmr_id(n + 1, timepoint) for n in component if original_graph.nodes[n]["bipartite"] == 0}
+        dmr_nodes = {create_dmr_id(n + 1, timepoint_id) for n in component if original_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if original_graph.nodes[n]["bipartite"] == 1}
 
         category = classify_component(dmr_nodes, gene_nodes, [])
@@ -49,7 +49,7 @@ def analyze_bicliques(
     split_components = []
     for component in nx.connected_components(split_graph):
         comp_subgraph = split_graph.subgraph(component)
-        dmr_nodes = {create_dmr_id(n + 1, timepoint) for n in component if split_graph.nodes[n]["bipartite"] == 0}
+        dmr_nodes = {create_dmr_id(n + 1, timepoint_id) for n in component if split_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if split_graph.nodes[n]["bipartite"] == 1}
 
         # Get bicliques for this component and convert DMR IDs
@@ -76,7 +76,7 @@ def analyze_bicliques(
 
     # Convert DMR IDs in the final bicliques list
     converted_bicliques = [
-        ({create_dmr_id(n + 1, timepoint) for n in dmrs}, genes)
+        ({create_dmr_id(n + 1, timepoint_id) for n in dmrs}, genes)
         for (dmrs, genes) in bicliques
     ]
 
