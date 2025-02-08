@@ -529,10 +529,10 @@ def populate_dmr_annotations(
 
     for n, d in graph.nodes(data=True):
         if d["bipartite"] == 0:
-            converted = create_dmr_id(n + 2, timepoint_id)
+            converted = create_dmr_id(n + 1, timepoint_id)
             degree = graph.degree(n)
-            is_isolate = (degree == 0)
-            
+            is_isolate = degree == 0
+
             # Get biclique participation if this is split graph
             biclique_ids = None
             if not is_original and bicliques:
