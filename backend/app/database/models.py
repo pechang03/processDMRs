@@ -21,7 +21,6 @@ from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy import DateTime
 
 Base = declarative_base()
 
@@ -249,6 +248,9 @@ class Relationship(Base):
     relationship_type = Column(String(50))
 
 
+from sqlalchemy import DateTime
+
+
 class EdgeDetails(Base):
     __tablename__ = "edge_details"
 
@@ -276,6 +278,8 @@ class GeneDetails(Base):
     )  # Either 'mouse' or 'human'
     NCBI_id = Column(String(50))
     annotations = Column(JSON)  # SQLite will store this as TEXT
+    go_bp = Column(JSON)  # GO biological process terms
+    go_mf = Column(JSON)  # GO molecular function terms
 
     # Relationship
     gene = relationship("Gene", backref="details")
@@ -345,6 +349,19 @@ class TopGOProcessesBiclique(Base):
     enrichmentScore = Column(Float)
 
 
+class GeneReference(Base):
+    __tablename__ = "gene_references"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    gene_id = Column(Integer, ForeignKey("genes.id"), nullable=False)
+    gene_symbol = Column(String(255))  # Store gene symbol for quick access
+    title = Column(String(255), nullable=False)
+    doi = Column(String(255))
+    local_filename = Column(String(255))  # Store local file path if needed
+    bibtex_entry = Column(Text)  # Store full BibTeX entry
+
+    gene = relationship("Gene", backref="references")
+
+
 class DominatingSet(Base):
     __tablename__ = "dominating_sets"
     timepoint_id = Column(Integer, ForeignKey("timepoints.id"), primary_key=True)
@@ -361,29 +378,29 @@ class DominatingSet(Base):
     dmr = relationship("DMR", back_populates="dominating_set_entries")
 
 
-class EnsemblGene(Base):
-    __tablename__ = "ensembl_genes"
+from typing import Optional
+from pydantic import BaseModel
 
-    # This column is added to link to our internal Genes table and gene_details.
-    gene_id = Column(Integer, primary_key=True)
+class EnsemblGenes(BaseModel):
+    gene_id: int
+    chr: Optional[str] = None
+    source: Optional[str] = None
+    type: Optional[str] = None
+    start: Optional[int] = None
+    stop: Optional[int] = None
+    score: Optional[int] = None
+    strand: Optional[str] = None
+    phase: Optional[int] = None
+    ensembl_id: Optional[str] = None
+    name_external: Optional[str] = None
+    parent: Optional[int] = None
+    dbxref: Optional[int] = None
+    external_gene_id: Optional[str] = None
+    mgi_type: Optional[str] = None
+    description: Optional[str] = None
 
-    # Columns from the external sqlite3 genes table; note that we rename the external
-    # "gene_id" column to external_gene_id to avoid conflict.
-    chr = Column(Text)
-    source = Column(Text)
-    type = Column(Text)
-    start = Column(Integer)
-    stop = Column(Integer)
-    score = Column(Integer)
-    strand = Column(Text)
-    phase = Column(Integer)
-    ensembl_id = Column(String(50))  # corresponds to external "ID"
-    name_external = Column(String(50))  # corresponds to external "Name"
-    parent = Column(Integer)  # from the external "Parent"
-    dbxref = Column(Integer)  # from the external "Dbxref"
-    external_gene_id = Column(String(50))  # corresponds to external "gene_id"
-    mgi_type = Column(String(50))
-    description = Column(Text)
+    class Config:
+        orm_mode = True
 
 
 def create_tables(engine):

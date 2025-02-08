@@ -531,9 +531,9 @@ def populate_dmr_annotations(
 
     for n, d in graph.nodes(data=True):
         if d["bipartite"] == 0:
-            # For original graphs add 1 to match 1-based indexing
-            # For split graphs use direct conversion to match biclique processing
-            converted = convert_dmr_id(n, timepoint_id, is_original=is_original)
+            # For split and original graphs add 1 to node_id to get the eqiv table_id
+            # The graph need to index from 0 to avoid issue, the tables need to index from something >0
+            converted_id = convert_dmr_id(n, timepoint_id, is_original=is_original)
             degree = graph.degree(n)
             is_isolate = degree == 0
 
@@ -548,7 +548,7 @@ def populate_dmr_annotations(
             upsert_dmr_timepoint_annotation(
                 session=session,
                 timepoint_id=timepoint_id,
-                dmr_id=converted,
+                dmr_id=converted_id,
                 component_id=component_id,
                 degree=degree,
                 node_type="isolated" if is_isolate else "regular",
