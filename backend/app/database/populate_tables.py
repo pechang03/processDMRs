@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from .models import EdgeDetails
 from backend.app.database.cleanup import clean_edge_details
+from backend.app.utils.id_mapping import create_dmr_id
 
 from collections import defaultdict
 from .operations import (
@@ -526,7 +527,7 @@ def populate_dmr_annotations(
 ) -> None:
     """Populate DMR annotations for a component."""
 
-    dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+    dmr_nodes = {create_dmr_id(n + 1, timepoint_id) for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
 
     for dmr in dmr_nodes:
         # Basic properties
