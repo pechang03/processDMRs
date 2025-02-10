@@ -131,8 +131,14 @@ def _process_split_component(
         density=comp_info["density"],
     )
 
-    # Populate bicliques and annotations
-    for biclique in comp_info["bicliques"]:
+    # Pre-convert each biclique's DMR node set
+    converted_bicliques = []
+    for dmrs, genes in comp_info["bicliques"]:
+        converted_dmrs = {create_dmr_id(n, timepoint_id) for n in dmrs}
+        converted_bicliques.append((converted_dmrs, genes))
+
+    # Populate bicliques and annotations using pre-converted DMR IDs
+    for biclique in converted_bicliques:
         biclique_id = populate_bicliques(
             session,
             timepoint_id=timepoint_id,
@@ -148,7 +154,7 @@ def _process_split_component(
             graph=comp_subgraph,
             df=df,
             is_original=False,
-            bicliques=comp_info["bicliques"],
+            bicliques=converted_bicliques,
         )
 
         populate_gene_annotations(
@@ -158,7 +164,7 @@ def _process_split_component(
             graph=comp_subgraph,
             df=df,
             is_original=False,
-            bicliques=comp_info["bicliques"],
+            bicliques=converted_bicliques,
         )
 
     return comp_id
