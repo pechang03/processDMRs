@@ -20,6 +20,7 @@ from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
 from backend.app.biclique_analysis.edge_classification import classify_edges
 from backend.app.database.operations import update_edge_details
+from backend.app.utils.id_mapping import convert_dmr_id
 
 
 import logging
