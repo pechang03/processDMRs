@@ -300,25 +300,47 @@ def get_component_details(timepoint_id, component_id):
             # Calculate edge statistics for this specific component
             edge_sources = {}  # Initialize empty edge sources dictionary
 
-            # Parse bicliques JSON string first
+            # Parse bicliques JSON string to get table format
             bicliques_data = json.loads(result.bicliques) if result.bicliques else []
-            # Convert to the format needed for classify_edges
-            bicliques = [(set(parse_array_string(b['dmr_ids'])), set(parse_array_string(b['gene_ids']))) 
-                    for b in bicliques_data]
+            table_bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
 
-            # Create component data
+            # Convert table bicliques to raw networkx format
+            raw_bicliques = []
+            edge_sources = {}
+            for b in table_bicliques:
+                # Convert DMR IDs from table format to raw networkx IDs
+                table_dmr_ids = set(int(x) for x in parse_array_string(b.dmr_ids))
+                raw_dmr_ids = {reverse_create_dmr_id(cid, timepoint_id, is_original=True) 
+                              for cid in table_dmr_ids}
+                gene_ids = set(int(x) for x in parse_array_string(b.gene_ids))
+                
+                # Add to raw bicliques list
+                raw_bicliques.append((raw_dmr_ids, gene_ids))
+
+                # Build edge sources mapping
+                for dmr in raw_dmr_ids:
+                    for gene in gene_ids:
+                        edge = (min(dmr, gene), max(dmr, gene))
+                        edge_sources.setdefault(edge, set()).add(f"biclique_{len(raw_bicliques)-1}")
+
+            # Convert DMR IDs to raw networkx format for component data
+            raw_dmr_ids = {reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True) 
+                          for dmr_id in parse_array_string(result.all_dmr_ids)}
+            gene_ids = set(int(x) for x in parse_array_string(result.all_gene_ids))
+
+            # Create component data with raw DMR IDs
             component_data = {
-                "component": set(component_nodes),
-                "dmrs": set(parse_array_string(result.all_dmr_ids)),
-                "genes": set(parse_array_string(result.all_gene_ids))
+                "component": raw_dmr_ids | gene_ids,
+                "dmrs": raw_dmr_ids,
+                "genes": gene_ids
             }
 
-            # Call classify_edges with all required parameters
+            # Call classify_edges with raw networkx IDs
             classification_result = classify_edges(
                 original_component,
                 split_component,
                 edge_sources,
-                bicliques=bicliques,
+                bicliques=raw_bicliques,
                 component=component_data
             )
 
