@@ -541,7 +541,10 @@ def populate_dmr_annotations(
             biclique_ids = None
             if not is_original and bicliques:
                 participating_bicliques = [
-                    idx for idx, (dmrs, _) in enumerate(bicliques) if n in dmrs
+                    # idx for idx, (dmrs, _) in enumerate(bicliques) if n in dmrs
+                    idx
+                    for idx, (dmrs, _) in enumerate(bicliques)
+                    if converted_id in dmrs
                 ]
                 biclique_ids = ",".join(map(str, participating_bicliques))
 
