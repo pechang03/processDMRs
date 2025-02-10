@@ -5,6 +5,7 @@ import networkx as nx
 import pandas as pd
 from sqlalchemy.orm import Session
 from backend.app.biclique_analysis.analyzer import analyze_bicliques
+from backend.app.utils.id_mapping import create_dmr_id
 from .operations import insert_component
 from .populate_tables import (
     populate_dmr_annotations,
