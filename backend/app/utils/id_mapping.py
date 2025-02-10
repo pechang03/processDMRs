@@ -36,6 +36,21 @@ def convert_dmr_id(
     return create_dmr_id(dmr_num + 1, timepoint, first_gene_id)
 
 
+def reverse_create_dmr_id(converted_id: int, timepoint: int, is_original: bool = True) -> int:
+    """Convert a table DMR ID back to the raw (0-indexed) node ID.
+    For original graphs, subtract the timepoint offset and 1; for split graphs, subtract the offset only.
+    """
+    if not isinstance(timepoint, int):
+        raise TypeError("Expected timepoint to be an int")
+    try:
+        offset = TIMEPOINT_OFFSETS[timepoint]
+    except KeyError:
+        raise ValueError(f"Unknown timepoint_id {timepoint} in TIMEPOINT_OFFSETS")
+    if is_original:
+        return converted_id - offset - 1
+    else:
+        return converted_id - offset
+
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID for a specific timepoint.
 
