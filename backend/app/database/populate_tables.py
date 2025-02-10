@@ -43,7 +43,7 @@ from .models import (
 from backend.app.core.data_loader import create_bipartite_graph
 from backend.app.database.dominating_sets import calculate_dominating_sets
 from backend.app.utils.data_processing import process_enhancer_info
-from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id, reverse_create_dmr_id
 from backend.app.biclique_analysis.classifier import (
     classify_biclique,
     BicliqueSizeCategory,
