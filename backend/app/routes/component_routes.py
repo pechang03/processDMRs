@@ -2,6 +2,7 @@ import json
 from flask import Blueprint, jsonify, request, current_app
 from ..biclique_analysis.edge_classification import classify_edges
 from pydantic import ValidationError
+from ..utils.id_mapping import reverse_create_dmr_id
 from ..schemas import (
     ComponentSummarySchema,
     ComponentDetailsSchema,
