@@ -436,6 +436,7 @@ class GraphManager:
                         # Only process DMR nodes (assuming DMR IDs < gene IDs)
                         if node < min_gene_id:
                             degree = split_graph.degree(node)
+                            converted_dmr = convert_dmr_id(node, timepoint_id, is_original=True)
                             session.execute(
                                 text(
                                     """
@@ -447,7 +448,7 @@ class GraphManager:
                                 ),
                                 {
                                     "degree": degree,
-                                    "dmr_id": node,
+                                    "dmr_id": converted_dmr,
                                     "timepoint_id": timepoint_id,
                                 },
                             )

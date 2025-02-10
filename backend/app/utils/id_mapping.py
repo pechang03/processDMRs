@@ -22,47 +22,31 @@ def convert_dmr_id(
     is_original: bool = True,
     first_gene_id: int = 0,
 ) -> int:
-    """Convert a DMR node ID to its final form based on graph type and timepoint.
-
-    Args:
-        dmr_num: Raw DMR number from graph
-        timepoint: Timepoint ID (int) or name (str)
-        is_original: Whether this is from original graph (needs +1) or split graph
-        first_gene_id: Optional upper bound for DMR IDs
-
-    Returns:
-        Converted DMR ID with proper offset and adjustment
+    """Wrapper to convert a raw node ID to a table DMR ID.
+    We assume that for both original and split graphs the raw node value is converted as offset + node.
     """
-    return create_dmr_id(dmr_num + 1, timepoint, first_gene_id)
+    return create_dmr_id(dmr_num, timepoint, first_gene_id)
 
 
 def reverse_create_dmr_id(converted_id: int, timepoint: int, is_original: bool = True) -> int:
-    """Convert a table DMR ID back to the raw (0-indexed) node ID.
-    For original graphs, subtract the timepoint offset and 1; for split graphs, subtract the offset only.
-    """
+    """Convert a table DMR ID back to the raw (0-indexed) node ID by subtracting the timepoint offset."""
     if not isinstance(timepoint, int):
         raise TypeError("Expected timepoint to be an int")
     try:
         offset = TIMEPOINT_OFFSETS[timepoint]
     except KeyError:
         raise ValueError(f"Unknown timepoint_id {timepoint} in TIMEPOINT_OFFSETS")
-    if is_original:
-        return converted_id - offset - 1
-    else:
-        return converted_id - offset
+    return converted_id - offset
 
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
-    """Create a unique DMR ID for a specific timepoint.
-
-    If timepoint is an integer, it is assumed to be the dmr_id_offset.
-    If it is a string, the offset is looked up from a fixed dictionary.
+    """Create a unique DMR ID by adding the timepoint offset to the raw node ID.
+    No extra increment is applied.
     """
     if not isinstance(timepoint, (int, str)):
         raise TypeError(
             f"create_dmr_id: Expected timepoint to be int or str, got {type(timepoint)}: {timepoint}"
         )
     if isinstance(timepoint, int):
-        # Look up offset by timepoint_id in the preloaded dictionary
         try:
             offset = TIMEPOINT_OFFSETS[timepoint]
         except KeyError:
@@ -79,22 +63,16 @@ def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -
             "TP40-TP180": 60000,
             "TP60-TP180": 70000,
         }
-        # Remove _TSS suffix if present for matching
         timepoint_clean = timepoint.replace("_TSS", "")
-        # Get offset for this timepoint
-        offset = timepoint_offsets.get(
-            timepoint_clean, 80000
-        )  # Default offset for unknown timepoints
+        offset = timepoint_offsets.get(timepoint_clean, 80000)
 
-    # Calculate DMR ID with offset
     dmr_id = offset + dmr_num
 
-    # Ensure DMR ID is below first gene ID
     if first_gene_id > 0 and dmr_id >= first_gene_id:
         print(
             f"Warning: DMR ID {dmr_id} would exceed first gene ID {first_gene_id}, using original numbering"
         )
-        dmr_id = dmr_num  # Fall back to original numbering
+        dmr_id = dmr_num
 
     return dmr_id
 
