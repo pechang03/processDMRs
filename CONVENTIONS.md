@@ -189,22 +189,23 @@ CREATE INDEX idx_component_dmr ON component(dmr_id);
 
 - Runtime configuration is injected via `window.__RUNTIME_CONFIG__` in `index.html`
 - Configuration values are exported from `config.js`
-- API base URL is configured using `REACT_APP_API_URL` 
+- API base URL is configured using `REACT_APP_API_URL`
 - Default API endpoint is '/api' if no runtime config is present
 
 Example configuration:
+
 ```html
 <!-- index.html -->
 <script>
-    window.__RUNTIME_CONFIG__ = {
-        REACT_APP_API_URL: 'http://localhost:5555/api'
-    };
+  window.__RUNTIME_CONFIG__ = {
+    REACT_APP_API_URL: "http://localhost:5555/api",
+  };
 </script>
 ```
 
 ```javascript
 // config.js
-const apiBaseUrl = window.__RUNTIME_CONFIG__?.REACT_APP_API_URL || '/api';
+const apiBaseUrl = window.__RUNTIME_CONFIG__?.REACT_APP_API_URL || "/api";
 export const API_BASE_URL = apiBaseUrl;
 ```
 
@@ -212,12 +213,13 @@ export const API_BASE_URL = apiBaseUrl;
 
 In this project, we use two different numbering schemes for DMR nodes:
 
-1. **Database DMR IDs (Table Format):**  
+1. **Database DMR IDs (Table Format):**
+
    - These IDs are designed to match external spreadsheets and other data sources.
    - They must be 1-indexed (or otherwise start from a positive number greater than 0) because these sources do not use 0 as a valid index.
    - Additionally, a timepoint-specific offset (stored in the Timepoint table's `dmr_id_offset` column) is applied so that DMR IDs are unique across timepoints.
 
-2. **Graph Node IDs (NetworkX Graph):**  
+2. **Graph Node IDs (NetworkX Graph):**
    - In-memory graph representations (created using NetworkX) require node IDs to start at 0.
    - Many graph algorithms assume 0-indexed nodes, so it is essential to maintain this numbering internally.
    - As a result, raw node IDs in the graphs are 0-indexed and do not include the timepoint offset.
@@ -231,10 +233,11 @@ Key functions include:
 
 - **create_dmr_id:**  
   Converts a raw (0-indexed) node ID into its final table ID by adding the appropriate timepoint offset.  
-  For example, if the raw node ID is 0 and the timepoint offset is 78, then `create_dmr_id(0, timepoint_id)` returns 78.
+  For example, if the raw node ID is 79 and the timepoint offset is 10000, then `create_dmr_id(0, timepoint_id)` returns 79.
 
-- **convert_dmr_id:**  
-  A convenience wrapper that applies additional adjustments as needed (such as ensuring a +1 shift, when required), typically used when populating the database.
+- **convert_dmr_id:**
+  The purpose of this function is to shift the index between the networkx index range which starts at 0 (also the external C code) and the table id for DMR_id which must start at 1 (0 is a reserved index for sqlite)
+  A convenience wrapper that applies additional adjustments as needed of +1 shift, when required), typically used when populating the database. Care needs to be taken to not double apply this.
 
 - **reverse_create_dmr_id:**  
   Inverse conversion function used when reading DMR IDs from the database. It converts the table's 1-indexed (and offset) DMR ID back to the 0-indexed graph node ID, so that the two systems stay in sync.
