@@ -343,11 +343,12 @@ def get_component_graph(timepoint_id, component_id):
                 final_dmrs = raw_dmr_ids
             final_genes = all_gene_ids.union(collected_biclique_genes)
 
-            # Update component_data to use raw (0-indexed) DMR IDs consistently
-            component_data.dmr_ids = list(final_dmrs)  # Already in raw form
-            component_data.gene_ids = list(final_genes)
-            # Ensure component field uses raw DMR IDs
-            component_data.component = list(final_dmrs | final_genes)
+            # Convert the Pydantic model to a dict and create new dict with component
+            comp_dict = component_data.model_dump()
+            new_comp = {
+                **comp_dict, 
+                "component": list(set(comp_dict.get("dmr_ids", [])) | set(comp_dict.get("gene_ids", [])))
+            }
 
             # Get node metadata
             dmr_query = text("""
