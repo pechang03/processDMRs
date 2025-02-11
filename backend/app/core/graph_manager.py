@@ -567,11 +567,7 @@ class GraphManager:
         for cls_type in ["permanent", "false_positive", "false_negative"]:
             for edge_info in classification_result["classifications"].get(cls_type, []):
                 raw_dmr, gene_id = edge_info.edge
-                # Check if the source node is DMR using the original_graph_component node attributes
-                if raw_dmr in original_graph_component.nodes() and original_graph_component.nodes[raw_dmr].get("bipartite") == 0:
-                    converted_dmr = convert_dmr_id(raw_dmr, timepoint_id, is_original=True)
-                else:
-                    converted_dmr = raw_dmr
+                converted_dmr = convert_dmr_id(raw_dmr, timepoint_id, is_original=True)
                 updates.append((converted_dmr, gene_id, cls_type))
         # Build the list of update tuples
 
