@@ -643,22 +643,12 @@ class GraphManager:
                 f"Full split graph has {len(split_graph.nodes())} nodes and {len(split_graph.edges())} edges"
             )
 
-            # Create subgraph of the component nodes
-            subgraph = split_graph.subgraph(component_nodes)
+            # Create subgraph directly from component nodes (already in raw format)
+            component_graph = split_graph.subgraph(component_nodes).copy()
 
-            # Log subgraph stats
+            # Log component graph stats
             logger.info(
-                f"Subgraph has {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges"
-            )
-
-            # Create a new graph and copy both nodes AND edges
-            component_graph = nx.Graph()
-            component_graph.add_nodes_from(subgraph.nodes())
-            component_graph.add_edges_from(subgraph.edges())
-
-            # Log final component graph stats
-            logger.info(
-                f"Final component graph has {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges"
+                f"Split graph component has {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges"
             )
 
             return component_graph

@@ -292,7 +292,7 @@ def get_component_details(timepoint_id, component_id):
                     }
                 ), 500
 
-            # Parse arrays and JSON first, converting DMR IDs to raw graph IDs immediately
+            # Parse arrays and JSON first
             def parse_array_string(arr_str):
                 if not arr_str:
                     return []
@@ -304,11 +304,11 @@ def get_component_details(timepoint_id, component_id):
                 reverse_create_dmr_id(dmr_id, timepoint_id, is_original=True)
                 for dmr_id in parse_array_string(result.all_dmr_ids)
             }
-            all_dmr_ids = set(parse_array_string(result.all_dmr_ids))
             gene_ids = set(parse_array_string(result.all_gene_ids))
+            # Use raw_dmr_ids directly for component_nodes
             component_nodes = raw_dmr_ids | gene_ids
 
-            # Now get the component subgraphs using the actual node IDs
+            # Get the component subgraphs using raw node IDs
             original_component = graph_manager.get_original_graph_component(
                 timepoint_id, component_nodes
             )
@@ -326,6 +326,11 @@ def get_component_details(timepoint_id, component_id):
                         "message": "Failed to load required component graphs",
                     }
                 ), 500
+
+            # Store the split_component for reuse
+            app.logger.info(
+                f"Split graph component has {len(split_component.nodes())} nodes and {len(split_component.edges())} edges"
+            )
 
             # Calculate edge statistics for this specific component
             edge_sources = {}  # Initialize empty edge sources dictionary
