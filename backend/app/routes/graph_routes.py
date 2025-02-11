@@ -663,16 +663,22 @@ def get_component_graph(timepoint_id, component_id):
                 
                 # Convert edge endpoints from table to raw IDs
                 min_gene_id = min(all_gene_ids) if all_gene_ids else 0
+                current_app.logger.debug("Starting edge endpoint conversion")
                 for edge_type, edges_list in edge_classifications.get("classifications", {}).items():
+                    current_app.logger.debug(f"Processing edges of type: {edge_type}")
                     for edge_info in edges_list:
                         u, v = edge_info.edge
+                        current_app.logger.debug(f"Original edge: ({u}, {v})")
                         # If an endpoint isn't found in node_positions, assume it's in table indexing and convert it
                         if u not in node_positions:
                             u_conv = reverse_create_dmr_id(u, timepoint_id, is_original=True)
                             edge_info.edge = (u_conv, v)
+                            current_app.logger.debug(f"Converted u from {u} to {u_conv}")
                         if v not in node_positions:
                             v_conv = reverse_create_dmr_id(v, timepoint_id, is_original=True)
                             edge_info.edge = (edge_info.edge[0], v_conv)
+                            current_app.logger.debug(f"Converted v from {v} to {v_conv}")
+                        current_app.logger.debug(f"Final edge: {edge_info.edge}")
                 current_app.logger.debug(f"Post-conversion edge classifications: {edge_classifications}")
                 
             except Exception as e:
