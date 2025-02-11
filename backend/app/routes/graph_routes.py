@@ -508,8 +508,13 @@ def get_component_graph(timepoint_id, component_id):
             # Create node-to-biclique mapping from database annotations
             node_biclique_map = {}
 
-            # Process DMR annotations
+            # Process DMR annotations - convert to raw graph IDs
+            converted_dmr_metadata = {}
             for dmr_id, info in dmr_metadata.items():
+                # Convert the DMR ID to raw graph ID
+                raw_dmr_id = reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+                converted_dmr_metadata[raw_dmr_id] = info
+                
                 if info.get("biclique_ids"):
                     try:
                         raw_value = info["biclique_ids"]
@@ -526,7 +531,8 @@ def get_component_graph(timepoint_id, component_id):
                             # Handle case where it might already be a list
                             biclique_ids = [int(bid) for bid in raw_value]
 
-                        node_biclique_map[int(dmr_id)] = biclique_ids
+                        # Store with raw graph ID
+                        node_biclique_map[raw_dmr_id] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
                             f"Error processing DMR {dmr_id} biclique IDs: {e}\n"
@@ -727,7 +733,7 @@ def get_component_graph(timepoint_id, component_id):
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
                 edge_classifications=edge_classifications,
-                dmr_metadata=dmr_metadata,
+                dmr_metadata=converted_dmr_metadata,
                 gene_metadata=gene_metadata,
             )
             current_app.logger.debug("Point 2di")
