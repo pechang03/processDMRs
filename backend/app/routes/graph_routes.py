@@ -718,8 +718,12 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(
                 f"Edge classification stats: {edge_classifications['stats']}"
             )
+            # Convert the Pydantic model to a dict and add component key
+            comp_dict = component_data.model_dump()
+            comp_dict["component"] = set(comp_dict.get("dmr_ids", [])) | set(comp_dict.get("gene_ids", []))
+
             vis_dict = create_component_visualization(
-                component=component_data,
+                component=comp_dict,
                 node_positions=node_positions,
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
