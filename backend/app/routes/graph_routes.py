@@ -464,7 +464,7 @@ def get_component_graph(timepoint_id, component_id):
             node_labels = {}
             for dmr_id in raw_dmr_ids:
                 node_labels[dmr_id] = (
-                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=False)}"
+                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=True)}"
                 )
             # for gene_id in final_genes:
             for gene_id in all_gene_ids:
@@ -660,6 +660,21 @@ def get_component_graph(timepoint_id, component_id):
                     )
                 )
                 current_app.logger.debug(f"Edge classification updates: {updates}")
+                
+                # Convert edge endpoints from table to raw IDs
+                min_gene_id = min(all_gene_ids) if all_gene_ids else 0
+                for edge_type, edges_list in edge_classifications.get("classifications", {}).items():
+                    for edge_info in edges_list:
+                        u, v = edge_info.edge
+                        # If an endpoint isn't found in node_positions, assume it's in table indexing and convert it
+                        if u not in node_positions:
+                            u_conv = reverse_create_dmr_id(u, timepoint_id, is_original=True)
+                            edge_info.edge = (u_conv, v)
+                        if v not in node_positions:
+                            v_conv = reverse_create_dmr_id(v, timepoint_id, is_original=True)
+                            edge_info.edge = (edge_info.edge[0], v_conv)
+                current_app.logger.debug(f"Post-conversion edge classifications: {edge_classifications}")
+                
             except Exception as e:
                 current_app.logger.error(
                     "Error during edge classification update: " + str(e)
