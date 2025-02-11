@@ -464,7 +464,7 @@ def get_component_graph(timepoint_id, component_id):
             node_labels = {}
             for dmr_id in final_dmrs:
                 node_labels[dmr_id] = (
-                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=True)}"
+                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=False)}"
                 )
             # for gene_id in final_genes:
             for gene_id in all_gene_ids:
