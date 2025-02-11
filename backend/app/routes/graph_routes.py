@@ -336,8 +336,11 @@ def get_component_graph(timepoint_id, component_id):
             current_app.logger.debug(f"Collected biclique raw DMR IDs: {collected_biclique_dmrs}")
             current_app.logger.debug(f"Collected biclique gene IDs: {collected_biclique_genes}")
 
-            # Combine with the raw IDs obtained from the DB earlier
-            final_dmrs = raw_dmr_ids.union(collected_biclique_dmrs)
+            # Prefer biclique-derived DMR set when available, otherwise use raw IDs
+            if collected_biclique_dmrs:
+                final_dmrs = collected_biclique_dmrs
+            else:
+                final_dmrs = raw_dmr_ids
             final_genes = all_gene_ids.union(collected_biclique_genes)
 
             # Update component_data to use the consistent raw (0-indexed) ID sets
