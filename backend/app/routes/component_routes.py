@@ -387,7 +387,7 @@ def get_component_details(timepoint_id, component_id):
             }
 
             # Call classify_edges with raw networkx IDs
-            component_union = set(component_data.dmrs) | set(component_data.genes)
+            component_union = set(component_data["dmrs"]) | set(component_data["genes"])
             classification_result = classify_edges(
                 original_component,
                 split_component,
@@ -395,8 +395,8 @@ def get_component_details(timepoint_id, component_id):
                 bicliques=raw_bicliques,
                 component={
                     "component": component_union,
-                    "dmrs": set(component_data.dmrs),
-                    "genes": set(component_data.genes),
+                    "dmrs": set(component_data["dmrs"]),
+                    "genes": set(component_data["genes"]),
                 },
             )
 
