@@ -557,17 +557,16 @@ def get_component_edge_stats(timepoint_id, component_id):
                     }
                 ), 500
 
-            # component_nodes = parse_array_string(
-            # result.all_dmr_ids
-            # ) + parse_array_string(result.all_gene_ids)
+            # Create component nodes set from query results
+            component_nodes = set(parse_array_string(result.all_dmr_ids)) | set(parse_array_string(result.all_gene_ids))
 
-            # Get the component subgraphs using the actual node IDs
-            # original_component = graph_manager.get_original_graph_component(
-            #    timepoint_id, component_nodes
-            # )
-            # split_component = graph_manager.get_split_graph_component(
-            #    timepoint_id, component_nodes
-            # )
+            # Get the component subgraphs using the node set
+            original_component = graph_manager.get_original_graph_component(
+                timepoint_id, component_nodes
+            )
+            split_component = graph_manager.get_split_graph_component(
+                timepoint_id, component_nodes
+            )
 
             if not original_component or not split_component:
                 app.logger.error(
@@ -605,9 +604,9 @@ def get_component_edge_stats(timepoint_id, component_id):
                 for b in bicliques_results
             ]
 
-            # Create component data
+            # Create component data using the already created component_nodes set
             component_data = {
-                "component": set(component_nodes),
+                "component": component_nodes,
                 "dmrs": set(parse_array_string(result.all_dmr_ids)),
                 "genes": set(parse_array_string(result.all_gene_ids)),
             }
