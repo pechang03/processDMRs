@@ -343,9 +343,11 @@ def get_component_graph(timepoint_id, component_id):
                 final_dmrs = raw_dmr_ids
             final_genes = all_gene_ids.union(collected_biclique_genes)
 
-            # Update component_data to use the consistent raw (0-indexed) ID sets
-            component_data.dmr_ids = list(final_dmrs)
+            # Update component_data to use raw (0-indexed) DMR IDs consistently
+            component_data.dmr_ids = list(final_dmrs)  # Already in raw form
             component_data.gene_ids = list(final_genes)
+            # Ensure component field uses raw DMR IDs
+            component_data.component = list(final_dmrs | final_genes)
 
             # Get node metadata
             dmr_query = text("""
