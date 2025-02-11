@@ -26,6 +26,7 @@ from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 from ..utils.json_utils import convert_plotly_object
+from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
@@ -88,7 +89,10 @@ def get_component_graph(timepoint_id, component_id):
             # Parse converted DMR IDs from the view
             converted_dmr_ids = {int(x) for x in parse_id_string(result.dmr_ids)}
             # Convert them back to raw node IDs for original graph lookup
-            raw_dmr_ids = {reverse_create_dmr_id(cid, timepoint_id, is_original=True) for cid in converted_dmr_ids}
+            raw_dmr_ids = {
+                reverse_create_dmr_id(cid, timepoint_id, is_original=True)
+                for cid in converted_dmr_ids
+            }
             all_gene_ids = {int(x) for x in parse_id_string(result.gene_ids)}
             all_component_nodes = raw_dmr_ids.union(all_gene_ids)
 
