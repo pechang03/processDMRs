@@ -451,9 +451,9 @@ def get_component_graph(timepoint_id, component_id):
 
             # Create node labels
             node_labels = {}
-            for dmr_id in all_dmr_ids:
+            for dmr_id in final_dmrs:
                 node_labels[dmr_id] = f"DMR_{dmr_id}"
-            for gene_id in all_gene_ids:
+            for gene_id in final_genes:
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
@@ -487,11 +487,11 @@ def get_component_graph(timepoint_id, component_id):
                 f"Using CircularBicliqueLayout for graph visualization"
             )
             current_app.logger.debug(
-                f"Number of nodes to position: {len(all_dmr_ids | all_gene_ids)}"
+                f"Number of nodes to position: {len(final_dmrs | final_genes)}"
             )
-            current_app.logger.debug(f"DMR nodes: {len(all_dmr_ids)}")
+            current_app.logger.debug(f"DMR nodes: {len(final_dmrs)}")
             current_app.logger.debug(
-                f"Regular genes: {len(all_gene_ids - split_genes)}"
+                f"Regular genes: {len(final_genes - split_genes)}"
             )
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
@@ -557,9 +557,9 @@ def get_component_graph(timepoint_id, component_id):
 
             # Create NodeInfo object
             node_info = NodeInfo(
-                all_nodes=all_dmr_ids | all_gene_ids,
-                dmr_nodes=all_dmr_ids,
-                regular_genes=all_gene_ids - split_genes,
+                all_nodes=final_dmrs | final_genes,
+                dmr_nodes=final_dmrs,
+                regular_genes=final_genes - split_genes,
                 split_genes=split_genes,
                 node_degrees={
                     int(node): split_graph_component.degree(node)
@@ -602,7 +602,7 @@ def get_component_graph(timepoint_id, component_id):
                 """)
 
                 # Get the DMR IDs as a JSON array string
-                dmr_ids_json = json.dumps(list(all_dmr_ids))
+                dmr_ids_json = json.dumps(list(final_dmrs))
 
                 dominating_set_results = session.execute(
                     dominating_set_query,
@@ -679,16 +679,16 @@ def get_component_graph(timepoint_id, component_id):
             # Create component info dictionary specifically for classify_edges
             component_info = {
                 "component": set(all_component_nodes),
-                "dmrs": set(all_dmr_ids),
-                "genes": set(all_gene_ids),
+                "dmrs": set(final_dmrs),
+                "genes": set(final_genes),
             }
 
             # Create full component data structure with additional info
             component_data = {
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
-                "dmrs": all_dmr_ids,
-                "genes": all_gene_ids,
+                "dmrs": final_dmrs,
+                "genes": final_genes,
                 "total_edges": len(original_graph_component.edges()),
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
