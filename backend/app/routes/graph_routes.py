@@ -462,7 +462,7 @@ def get_component_graph(timepoint_id, component_id):
 
             # Create node labels
             node_labels = {}
-            for dmr_id in final_dmrs:
+            for dmr_id in raw_dmr_ids:
                 node_labels[dmr_id] = (
                     f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=False)}"
                 )
