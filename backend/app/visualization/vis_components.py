@@ -58,11 +58,7 @@ def create_component_visualization(
         }
 
     # Extract nodes from the component data
-    dmr_nodes = {
-        n
-        for n in component.get("component", set())
-        if n in set(component.get("dmrs", []))
-    }
+    dmr_nodes = set(component.get("dmrs", []))
     gene_nodes = {
         n
         for n in component.get("component", set())
