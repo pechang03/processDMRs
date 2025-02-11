@@ -343,8 +343,11 @@ def get_component_graph(timepoint_id, component_id):
                 final_dmrs = raw_dmr_ids
             final_genes = all_gene_ids.union(collected_biclique_genes)
 
-            # Convert the Pydantic model to a dict and create new dict with component
-            comp_dict = component_data.model_dump()
+            # Convert to dict if needed and create new dict with component
+            if hasattr(component_data, "model_dump"):
+                comp_dict = component_data.model_dump()
+            else:
+                comp_dict = component_data
             new_comp = {
                 **comp_dict, 
                 "component": list(set(comp_dict.get("dmr_ids", [])) | set(comp_dict.get("gene_ids", [])))
