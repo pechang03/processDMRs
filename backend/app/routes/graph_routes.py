@@ -26,7 +26,7 @@ from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 from ..utils.json_utils import convert_plotly_object
-from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id
+from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id, convert_dmr_id
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
