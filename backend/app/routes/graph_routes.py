@@ -324,26 +324,25 @@ def get_component_graph(timepoint_id, component_id):
                     current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # Collect all DMR and gene IDs from all bicliques, converting DMR IDs immediately
-            all_dmr_ids = set()
-            all_gene_ids = set()
+            # Accumulate biclique DMR and gene IDs (converted to raw, 0-indexed form)
+            collected_biclique_dmrs = set()
+            collected_biclique_genes = set()
             for b in component_data.bicliques:
-                # Convert each table DMR id to raw graph id using reverse_create_dmr_id immediately
-                dmr_set = {reverse_create_dmr_id(int(x), timepoint_id, is_original=True) for x in parse_id_string(b.dmr_ids)} if b.dmr_ids else set()
-                gene_set = parse_id_string(b.gene_ids)
-                all_dmr_ids.update(dmr_set)
-                all_gene_ids.update(gene_set)
+                biclique_raw_dmr_ids = {reverse_create_dmr_id(int(x), timepoint_id, is_original=True)
+                    for x in parse_id_string(b.dmr_ids)} if b.dmr_ids else set()
+                biclique_gene_ids = parse_id_string(b.gene_ids) if b.gene_ids else set()
+                collected_biclique_dmrs.update(biclique_raw_dmr_ids)
+                collected_biclique_genes.update(biclique_gene_ids)
+            current_app.logger.debug(f"Collected biclique raw DMR IDs: {collected_biclique_dmrs}")
+            current_app.logger.debug(f"Collected biclique gene IDs: {collected_biclique_genes}")
 
-            current_app.logger.debug(
-                f"Collected raw graph DMR IDs from all bicliques: {all_dmr_ids}"
-            )
-            current_app.logger.debug(
-                f"Collected gene IDs from all bicliques: {all_gene_ids}"
-            )
+            # Combine with the raw IDs obtained from the DB earlier
+            final_dmrs = raw_dmr_ids.union(collected_biclique_dmrs)
+            final_genes = all_gene_ids.union(collected_biclique_genes)
 
-            # Store the already-converted raw DMR IDs
-            component_data.dmr_ids = list(all_dmr_ids)
-            component_data.gene_ids = list(all_gene_ids)
+            # Update component_data to use the consistent raw (0-indexed) ID sets
+            component_data.dmr_ids = list(final_dmrs)
+            component_data.gene_ids = list(final_genes)
 
             # Get node metadata
             dmr_query = text("""
