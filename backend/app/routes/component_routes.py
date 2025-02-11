@@ -333,10 +333,11 @@ def get_component_details(timepoint_id, component_id):
                           for dmr_id in parse_array_string(result.all_dmr_ids)}
             gene_ids = set(int(x) for x in parse_array_string(result.all_gene_ids))
 
-            # Create component data with raw DMR IDs
+            # DMR IDs are already in raw format from earlier conversion
+            # Just create the component data structure
             component_data = {
-                "component": raw_dmr_ids | gene_ids,
-                "dmrs": raw_dmr_ids,
+                "component": all_dmr_ids | gene_ids,
+                "dmrs": all_dmr_ids,
                 "genes": gene_ids
             }
 
