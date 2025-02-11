@@ -25,6 +25,14 @@ from typing import List, Dict, Any
 component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
 
 
+# Parse arrays and JSON first
+def parse_array_string(arr_str):
+    if not arr_str:
+        return []
+    cleaned = arr_str.replace("[", "").replace("]", "").strip()
+    return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
+
+
 @component_bp.route("/components/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
@@ -292,22 +300,21 @@ def get_component_details(timepoint_id, component_id):
                     }
                 ), 500
 
-            # Parse arrays and JSON first
-            def parse_array_string(arr_str):
-                if not arr_str:
-                    return []
-                cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
-
             # Convert DMR IDs to raw graph IDs immediately when parsing
             raw_dmr_ids = {
                 reverse_create_dmr_id(dmr_id, timepoint_id, is_original=True)
                 for dmr_id in parse_array_string(result.all_dmr_ids)
             }
+            all_dmr_ids = set(parse_array_string(result.all_dmr_ids))
+            app.logger.info(f"all_dmr_ids{all_dmr_ids}")
             gene_ids = set(parse_array_string(result.all_gene_ids))
             # Use raw_dmr_ids directly for component_nodes
-            component_nodes = raw_dmr_ids | gene_ids
 
+            component_nodes = raw_dmr_ids | gene_ids  ## THIS IS right
+            # component_nodes = parse_array_string(   ## THIS IS WRONG because get_original_graph_componetns expects 0 indexed ids
+            #    result.all_dmr_ids
+            # ) + parse_array_string(result.all_gene_ids)
+            # component_nodes = all_dmr_ids | gene_ids  ## THIS IS wrong
             # Get the component subgraphs using raw node IDs
             original_component = graph_manager.get_original_graph_component(
                 timepoint_id, component_nodes
@@ -329,7 +336,8 @@ def get_component_details(timepoint_id, component_id):
 
             # Store the split_component for reuse
             app.logger.info(
-                f"Split graph component has {len(split_component.nodes())} nodes and {len(split_component.edges())} edges"
+                # f"Split graph component has {len(split_component.nodes())} nodes and {len(split_component.edges())} edges"
+                f"Split graph component (CR) has {split_component.nodes()} nodes and {len(split_component.edges())} edges"
             )
 
             # Calculate edge statistics for this specific component
@@ -345,14 +353,14 @@ def get_component_details(timepoint_id, component_id):
             for b in table_bicliques:
                 # Convert DMR IDs from table format to raw networkx IDs
                 table_dmr_ids = set(int(x) for x in parse_array_string(b.dmr_ids))
-                raw_dmr_ids = {
+                bicliques_raw_dmr_ids = {
                     reverse_create_dmr_id(cid, timepoint_id, is_original=True)
                     for cid in table_dmr_ids
                 }
-                gene_ids = set(int(x) for x in parse_array_string(b.gene_ids))
+                biclique_gene_ids = set(int(x) for x in parse_array_string(b.gene_ids))
 
                 # Add to raw bicliques list
-                raw_bicliques.append((raw_dmr_ids, gene_ids))
+                raw_bicliques.append((bicliques_raw_dmr_ids, biclique_gene_ids))
 
                 # Build edge sources mapping
                 for dmr in raw_dmr_ids:
@@ -363,22 +371,23 @@ def get_component_details(timepoint_id, component_id):
                         )
 
             # Convert DMR IDs to raw networkx format for component data
-            raw_dmr_ids = {
-                reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
-                for dmr_id in parse_array_string(result.all_dmr_ids)
-            }
-            gene_ids = set(int(x) for x in parse_array_string(result.all_gene_ids))
+            # raw_dmr_ids = {
+            # reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+            # for dmr_id in parse_array_string(result.all_dmr_ids)
+            # }
+            # gene_ids = set(int(x) for x in parse_array_string(result.all_gene_ids))
 
             # DMR IDs are already in raw format from earlier conversion
             # Just create the component data structure
             component_data = {
                 "component": all_dmr_ids | gene_ids,
-                "dmrs": all_dmr_ids,
+                # "dmrs": all_dmr_ids,
+                "dmrs": raw_dmr_ids,
                 "genes": gene_ids,
             }
 
             # Call classify_edges with raw networkx IDs
-            component_union = set(component_data.dmr_ids) | set(component_data.gene_ids)
+            component_union = set(component_data.dmrs) | set(component_data.genes)
             classification_result = classify_edges(
                 original_component,
                 split_component,
@@ -386,8 +395,8 @@ def get_component_details(timepoint_id, component_id):
                 bicliques=raw_bicliques,
                 component={
                     "component": component_union,
-                    "dmrs": set(component_data.dmr_ids),
-                    "genes": set(component_data.gene_ids),
+                    "dmrs": set(component_data.dmrs),
+                    "genes": set(component_data.genes),
                 },
             )
 
@@ -548,24 +557,17 @@ def get_component_edge_stats(timepoint_id, component_id):
                     }
                 ), 500
 
-            # Parse arrays first
-            def parse_array_string(arr_str):
-                if not arr_str:
-                    return []
-                cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
-
-            component_nodes = parse_array_string(
-                result.all_dmr_ids
-            ) + parse_array_string(result.all_gene_ids)
+            # component_nodes = parse_array_string(
+            # result.all_dmr_ids
+            # ) + parse_array_string(result.all_gene_ids)
 
             # Get the component subgraphs using the actual node IDs
-            original_component = graph_manager.get_original_graph_component(
-                timepoint_id, component_nodes
-            )
-            split_component = graph_manager.get_split_graph_component(
-                timepoint_id, component_nodes
-            )
+            # original_component = graph_manager.get_original_graph_component(
+            #    timepoint_id, component_nodes
+            # )
+            # split_component = graph_manager.get_split_graph_component(
+            #    timepoint_id, component_nodes
+            # )
 
             if not original_component or not split_component:
                 app.logger.error(
