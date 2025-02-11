@@ -1,7 +1,8 @@
 import json
 import time
 from flask import jsonify, current_app, Blueprint
-from backend.app.database.models import EdgeDetails, Gene
+
+# from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
 from plotly.utils import PlotlyJSONEncoder
 
@@ -15,18 +16,19 @@ from ..schemas import (
     BicliqueMemberSchema,
     DmrComponentSchema,
     GeneAnnotationViewSchema,
-    DmrAnnotationViewSchema,
+    #    DmrAnnotationViewSchema,
 )
 from ..database.connection import get_db_engine
 
 # from ..visualization.core import create_biclique_visualization
 # from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..visualization.vis_components import create_component_visualization
-from ..biclique_analysis.edge_classification import classify_edges
+
+# from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 from ..utils.json_utils import convert_plotly_object
-from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id, convert_dmr_id
+from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
@@ -461,7 +463,9 @@ def get_component_graph(timepoint_id, component_id):
             # Create node labels
             node_labels = {}
             for dmr_id in final_dmrs:
-                node_labels[dmr_id] = f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=True)}"
+                node_labels[dmr_id] = (
+                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=True)}"
+                )
             # for gene_id in final_genes:
             for gene_id in all_gene_ids:
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
@@ -512,9 +516,11 @@ def get_component_graph(timepoint_id, component_id):
             converted_dmr_metadata = {}
             for dmr_id, info in dmr_metadata.items():
                 # Convert the DMR ID to raw graph ID
-                raw_dmr_id = reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+                raw_dmr_id = reverse_create_dmr_id(
+                    int(dmr_id), timepoint_id, is_original=True
+                )
                 converted_dmr_metadata[raw_dmr_id] = info
-                
+
                 if info.get("biclique_ids"):
                     try:
                         raw_value = info["biclique_ids"]
