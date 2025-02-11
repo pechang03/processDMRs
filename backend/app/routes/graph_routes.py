@@ -328,30 +328,30 @@ def get_component_graph(timepoint_id, component_id):
             collected_biclique_dmrs = set()
             collected_biclique_genes = set()
             for b in component_data.bicliques:
-                biclique_raw_dmr_ids = {reverse_create_dmr_id(int(x), timepoint_id, is_original=True)
-                    for x in parse_id_string(b.dmr_ids)} if b.dmr_ids else set()
+                biclique_raw_dmr_ids = (
+                    {
+                        reverse_create_dmr_id(int(x), timepoint_id, is_original=True)
+                        for x in parse_id_string(b.dmr_ids)
+                    }
+                    if b.dmr_ids
+                    else set()
+                )
                 biclique_gene_ids = parse_id_string(b.gene_ids) if b.gene_ids else set()
                 collected_biclique_dmrs.update(biclique_raw_dmr_ids)
                 collected_biclique_genes.update(biclique_gene_ids)
-            current_app.logger.debug(f"Collected biclique raw DMR IDs: {collected_biclique_dmrs}")
-            current_app.logger.debug(f"Collected biclique gene IDs: {collected_biclique_genes}")
+            current_app.logger.debug(
+                f"Collected biclique raw DMR IDs: {collected_biclique_dmrs}"
+            )
+            current_app.logger.debug(
+                f"Collected biclique gene IDs: {collected_biclique_genes}"
+            )
 
             # Prefer biclique-derived DMR set when available, otherwise use raw IDs
             if collected_biclique_dmrs:
                 final_dmrs = collected_biclique_dmrs
             else:
                 final_dmrs = raw_dmr_ids
-            final_genes = all_gene_ids.union(collected_biclique_genes)
-
-            # Convert to dict if needed and create new dict with component
-            if hasattr(component_data, "model_dump"):
-                comp_dict = component_data.model_dump()
-            else:
-                comp_dict = component_data
-            new_comp = {
-                **comp_dict, 
-                "component": list(set(comp_dict.get("dmr_ids", [])) | set(comp_dict.get("gene_ids", [])))
-            }
+            # final_nodes = all_gene_ids.union(collected_biclique_genes)
 
             # Get node metadata
             dmr_query = text("""
@@ -462,7 +462,8 @@ def get_component_graph(timepoint_id, component_id):
             node_labels = {}
             for dmr_id in final_dmrs:
                 node_labels[dmr_id] = f"DMR_{dmr_id}"
-            for gene_id in final_genes:
+            # for gene_id in final_genes:
+            for gene_id in all_gene_ids:
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
 
@@ -496,11 +497,11 @@ def get_component_graph(timepoint_id, component_id):
                 f"Using CircularBicliqueLayout for graph visualization"
             )
             current_app.logger.debug(
-                f"Number of nodes to position: {len(final_dmrs | final_genes)}"
+                f"Number of nodes to position: {len(final_dmrs | all_gene_ids)}"
             )
             current_app.logger.debug(f"DMR nodes: {len(final_dmrs)}")
             current_app.logger.debug(
-                f"Regular genes: {len(final_genes - split_genes)}"
+                f"Regular genes: {len(all_gene_ids - split_genes)}"
             )
             current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
@@ -566,9 +567,9 @@ def get_component_graph(timepoint_id, component_id):
 
             # Create NodeInfo object
             node_info = NodeInfo(
-                all_nodes=final_dmrs | final_genes,
+                all_nodes=final_dmrs | all_gene_ids,
                 dmr_nodes=final_dmrs,
-                regular_genes=final_genes - split_genes,
+                regular_genes=all_gene_ids - split_genes,
                 split_genes=split_genes,
                 node_degrees={
                     int(node): split_graph_component.degree(node)
@@ -686,18 +687,18 @@ def get_component_graph(timepoint_id, component_id):
             start_time = time.time()
 
             # Create component info dictionary specifically for classify_edges
-            component_info = {
-                "component": set(all_component_nodes),
-                "dmrs": set(final_dmrs),
-                "genes": set(final_genes),
-            }
+            # component_info = {
+            #    "component": set(all_component_nodes),
+            #    "dmrs": set(final_dmrs),
+            #    "genes": set(final_genes),
+            # }
 
             # Create full component data structure with additional info
             component_data = {
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
-                "dmrs": final_dmrs,
-                "genes": final_genes,
+                "dmrs": dmr_ids_json,  # final_dmrs,
+                "genes": all_gene_ids,
                 "total_edges": len(original_graph_component.edges()),
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
@@ -719,21 +720,9 @@ def get_component_graph(timepoint_id, component_id):
                     "bicliques": {},
                 }
 
-            current_app.logger.debug(
-                f"Edge classification stats: {edge_classifications['stats']}"
-            )
-            # Convert to dict if needed and create new dict with component
-            if isinstance(component_data, dict):
-                comp_dict = component_data
-            else:
-                comp_dict = component_data.model_dump()
-            new_comp = {
-                **comp_dict,
-                "component": list(set(comp_dict.get("dmr_ids", [])) | set(comp_dict.get("gene_ids", [])))
-            }
-
+            current_app.logger.debug("Point 2d")
             vis_dict = create_component_visualization(
-                component=new_comp,
+                component=component_data,
                 node_positions=node_positions,
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
@@ -741,16 +730,17 @@ def get_component_graph(timepoint_id, component_id):
                 dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
             )
-            current_app.logger.debug("vis_dict returned: %s", vis_dict)
+            current_app.logger.debug("Point 2di")
             if vis_dict is None:
                 current_app.logger.error(
                     "create_component_visualization returned None!"
                 )
                 return jsonify({"error": "Visualization generation failed"}), 500
+            current_app.logger.debug("vis_dict returned: %s", vis_dict)
             # Use the complete edge_classifications dictionary
             # Force conversion to a plain dict
             # vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
-            # current_app.logger.debug("Point 2c")
+            current_app.logger.debug("Point 2e")
 
             end_time = time.time()
             current_app.logger.info(
