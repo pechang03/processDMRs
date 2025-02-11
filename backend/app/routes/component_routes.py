@@ -278,14 +278,18 @@ def get_component_details(timepoint_id, component_id):
                         "message": "Failed to retrieve component details",
                     }
                 ), 500
-            # Parse arrays and JSON first
+            # Parse arrays and JSON first, converting DMR IDs to raw graph IDs immediately
             def parse_array_string(arr_str):
                 if not arr_str:
                     return []
                 cleaned = arr_str.replace("[", "").replace("]", "").strip()
                 return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
             
-            component_nodes = parse_array_string(result.all_dmr_ids) + parse_array_string(result.all_gene_ids)
+            # Convert DMR IDs to raw graph IDs immediately when parsing
+            raw_dmr_ids = {reverse_create_dmr_id(dmr_id, timepoint_id, is_original=True) 
+                          for dmr_id in parse_array_string(result.all_dmr_ids)}
+            gene_ids = set(parse_array_string(result.all_gene_ids))
+            component_nodes = raw_dmr_ids | gene_ids
             
             # Now get the component subgraphs using the actual node IDs
             original_component = graph_manager.get_original_graph_component(timepoint_id, component_nodes)

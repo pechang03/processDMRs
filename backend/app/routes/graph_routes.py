@@ -324,24 +324,25 @@ def get_component_graph(timepoint_id, component_id):
                     current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # Collect all DMR and gene IDs from all bicliques
+            # Collect all DMR and gene IDs from all bicliques, converting DMR IDs immediately
             all_dmr_ids = set()
             all_gene_ids = set()
             for b in component_data.bicliques:
-                dmr_set = parse_id_string(b.dmr_ids)
+                # Convert each table DMR id to raw graph id using reverse_create_dmr_id immediately
+                dmr_set = {reverse_create_dmr_id(int(x), timepoint_id, is_original=True) for x in parse_id_string(b.dmr_ids)} if b.dmr_ids else set()
                 gene_set = parse_id_string(b.gene_ids)
                 all_dmr_ids.update(dmr_set)
                 all_gene_ids.update(gene_set)
 
             current_app.logger.debug(
-                f"Collected DMR IDs from all bicliques: {all_dmr_ids}"
+                f"Collected raw graph DMR IDs from all bicliques: {all_dmr_ids}"
             )
             current_app.logger.debug(
                 f"Collected gene IDs from all bicliques: {all_gene_ids}"
             )
 
-            # Update component_data with converted DMR IDs
-            component_data.dmr_ids = [reverse_create_dmr_id(int(dmr), timepoint_id, is_original=True) for dmr in all_dmr_ids]
+            # Store the already-converted raw DMR IDs
+            component_data.dmr_ids = list(all_dmr_ids)
             component_data.gene_ids = list(all_gene_ids)
 
             # Get node metadata
