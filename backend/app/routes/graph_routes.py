@@ -693,17 +693,6 @@ def get_component_graph(timepoint_id, component_id):
             #    "genes": set(final_genes),
             # }
 
-            # Create full component data structure with additional info
-            component_data = {
-                "component": all_component_nodes,
-                "raw_bicliques": bicliques,
-                "dmrs": list(raw_dmr_ids),  # Use raw_dmr_ids instead of final_dmrs
-                "genes": list(all_gene_ids),
-                "total_edges": len(original_graph_component.edges()),
-                "dominating_sets": list(dominating_set),  # Add explicit dominating set
-            }
-
-            current_app.logger.debug(f"Processing component data: {component_data}")
             # Initialize or get edge classification stats
             if not edge_classifications.get("stats"):
                 classifications = edge_classifications.get("classifications", {})
@@ -720,7 +709,18 @@ def get_component_graph(timepoint_id, component_id):
                     "bicliques": {},
                 }
 
+            # Create full component data structure with additional info
+            component_data = {
+                "component": all_component_nodes,
+                "raw_bicliques": bicliques,
+                "dmrs": list(raw_dmr_ids),  # Use raw_dmr_ids instead of final_dmrs
+                "genes": list(all_gene_ids),
+                "total_edges": len(original_graph_component.edges()),
+                "dominating_sets": list(dominating_set),  # Add explicit dominating set
+            }
             current_app.logger.debug("Point 2d")
+            current_app.logger.debug(f"Processing component data: {component_data}")
+
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
