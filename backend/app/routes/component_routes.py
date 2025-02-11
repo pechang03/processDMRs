@@ -337,12 +337,13 @@ def get_component_details(timepoint_id, component_id):
             }
 
             # Call classify_edges with raw networkx IDs
+            component_union = set(component_data.dmr_ids) | set(component_data.gene_ids)
             classification_result = classify_edges(
                 original_component,
                 split_component,
                 edge_sources,
                 bicliques=raw_bicliques,
-                component=component_data
+                component={"component": component_union, "dmrs": set(component_data.dmr_ids), "genes": set(component_data.gene_ids)}
             )
 
             # Create edge stats using the Pydantic model

@@ -343,7 +343,6 @@ def get_component_graph(timepoint_id, component_id):
             # Update component_data with converted DMR IDs
             component_data.dmr_ids = [reverse_create_dmr_id(int(dmr), timepoint_id, is_original=True) for dmr in all_dmr_ids]
             component_data.gene_ids = list(all_gene_ids)
-            component_data.component = [reverse_create_dmr_id(int(node), timepoint_id, is_original=True) if str(node) in {str(x) for x in all_dmr_ids} else node for node in all_component_nodes]
 
             # Get node metadata
             dmr_query = text("""
