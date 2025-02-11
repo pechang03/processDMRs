@@ -21,6 +21,8 @@ from .database.models import (
     TopGOProcessesBiclique,
     EdgeDetails,
     GeneDetails,
+    GeneReference,
+    EnsemblGenes,
 )
 from datetime import datetime
 from enum import Enum
@@ -49,6 +51,8 @@ __all__ = [
     "TopGOProcessesBiclique",
     "EdgeDetails",
     "GeneDetails",
+    "EnsemblGenes",
+    "GeneReference",
     # Add Pydantic schemas as well
     "TopGOProcessBase",
     "DmrAnnotationViewSchema",
@@ -370,8 +374,10 @@ class DmrAnnotationViewSchema(BaseModel):
         from_attributes = True
         allow_population_by_field_name = True
 
+
 class ProcessStatusEnum(str, Enum):
     """Enum for process status values"""
+
     INITIATED = "INITIATED"
     FETCHING_GENES = "FETCHING_GENES"
     FETCHING_NCBI_IDS = "FETCHING_NCBI_IDS"
@@ -383,6 +389,7 @@ class ProcessStatusEnum(str, Enum):
 
 class ProcessStatus(BaseModel):
     """Schema for tracking enrichment process status"""
+
     id: int
     process_type: str
     entity_id: int
