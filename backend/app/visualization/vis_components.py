@@ -8,7 +8,7 @@ from .traces import (
     create_edge_traces,
     create_dmr_trace,
     create_unified_gene_trace,
-    split_genes,
+    # split_genes,
     create_biclique_boxes,
 )
 from .layout import create_circular_layout
@@ -37,20 +37,22 @@ def create_component_visualization(
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
 
-    # Extract classifications and stats from edge_classifications 
+    # Extract classifications and stats from edge_classifications
     if "classifications" in edge_classifications:
         classifications = edge_classifications["classifications"]
     else:
         classifications = edge_classifications
+        current_app.logger.debug("Using edge_classifications directly")
 
     # Get or compute stats
     stats = edge_classifications.get("stats")
     if stats is None:
+        current_app.logger.debug("Stats was None")
         stats = {
             "component": {
-                "permanent": len(classifications.get("permanent", [])),
-                "false_positive": len(classifications.get("false_positive", [])),
-                "false_negative": len(classifications.get("false_negative", [])),
+                "permanent VC": len(classifications.get("permanent", [])),
+                "false_positive VC": len(classifications.get("false_positive", [])),
+                "false_negative VC": len(classifications.get("false_negative", [])),
             },
             "bicliques": {},
         }
@@ -67,14 +69,17 @@ def create_component_visualization(
         if n not in set(component.get("dmrs", []))
     }
     # Define split_genes as those gene nodes that participate in more than one biclique
-    split_genes = {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
-
+    split_genes_ids = set(
+        {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
+    )
+    regular_gene_ids = gene_nodes - split_genes_ids
+    current_app.logger.debug(f"CV point 1 dmrs {dmr_nodes}")
     # Create NodeInfo object
     node_info = NodeInfo(
         all_nodes=dmr_nodes | gene_nodes,
         dmr_nodes=dmr_nodes,
-        regular_genes=gene_nodes - split_genes,
-        split_genes=split_genes,
+        regular_genes=regular_gene_ids,
+        split_genes=split_genes_ids,
         node_degrees={
             node: len(node_biclique_map.get(node, []))
             for node in (dmr_nodes | gene_nodes)
@@ -82,6 +87,7 @@ def create_component_visualization(
         min_gene_id=min(gene_nodes) if gene_nodes else 0,
     )
 
+    current_app.logger.debug("CV point 2")
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(component.get("raw_bicliques", [])))
     # current_app.logger.debug("Point 3")
@@ -89,33 +95,37 @@ def create_component_visualization(
     # Create traces list and get biclique shapes
     traces = []
     biclique_shapes = create_biclique_boxes(
-        component.get("raw_bicliques", []),
-        node_positions,
-        biclique_colors
+        component.get("raw_bicliques", []), node_positions, biclique_colors
     )
-    
+
+    current_app.logger.debug("CV point 3")
     # Add legend traces
     legend_nodes, legend_edges = create_legend_traces(biclique_colors)
     traces.extend(legend_nodes)
     traces.extend(legend_edges)
 
     # Log edge_classifications structure and content for debugging
-    current_app.logger.debug("Edge Classifications Structure: %s", type(edge_classifications))
-    current_app.logger.debug("Edge Classifications Keys: %s", edge_classifications.keys())
+    current_app.logger.debug(
+        "Edge Classifications Structure: %s", type(edge_classifications)
+    )
+    current_app.logger.debug(
+        "Edge Classifications Keys: %s", edge_classifications.keys()
+    )
     current_app.logger.debug("Edge Classifications Content: %s", edge_classifications)
     current_app.logger.debug("Classifications Content: %s", classifications)
-    
+
     # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
-        classifications,    # Use the extracted 'classifications' dict
-        node_positions,
-        node_labels,
-        component["component"],
-        split_genes=split_genes,
+        edge_classifications=edge_classifications,  # Use the extracted 'classifications' dict
+        node_positions=node_positions,
+        node_labels=node_labels,
+        component_nodes=dmr_nodes | gene_nodes,  # expects a set component["component"],
+        split_genes=split_genes_ids,  # expects a set
         edge_style={"width": 1, "color": "gray"},
     )
     traces.extend(edge_traces)
 
+    current_app.logger.debug("CV point 4")
     # Get dominating set from explicit data or metadata
     dominating_set = set()
     if dmr_metadata and "dominating_sets" in component:
@@ -190,4 +200,3 @@ def create_component_visualization(
         converted_fig = final_fig
     current_app.logger.debug("Final converted figure: %s", converted_fig)
     return converted_fig
-
