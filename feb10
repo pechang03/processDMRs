@@ -1,0 +1,13 @@
+/drop
+/add       CONVENTIONS.md
+/add       backend/app/biclique_analysis/analyzer.py
+/add       backend/app/biclique_analysis/edge_classification.py
+/add       backend/app/core/graph_manager.py
+/add       backend/app/database/biclique_processor.py
+/add       backend/app/database/operations.py
+/add       backend/app/database/populate_tables.py
+/add       backend/app/database/process_timepoints.py
+/add       backend/app/routes/component_routes.py
+/add       backend/app/routes/graph_routes.py
+/add       backend/app/utils/edge_info.py
+/add       backend/app/utils/id_mapping.py

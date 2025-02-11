@@ -14,15 +14,12 @@ from .traces import (
 from .layout import create_circular_layout
 from .core import generate_biclique_colors
 from backend.app.utils.node_info import NodeInfo
+from backend.app.utils.json_utils import convert_plotly_object
 from backend.app.biclique_analysis.classifier import classify_biclique
 from .traces import (
-    create_node_traces,
     create_edge_traces,
     create_legend_traces,
-    NODE_SHAPES,
 )
-from .layout import create_circular_layout
-from backend.app.utils.json_utils import convert_plotly_object
 
 
 def create_component_visualization(
@@ -59,17 +56,15 @@ def create_component_visualization(
 
     # Extract nodes from the component data
     dmr_nodes = set(component.get("dmrs", []))
-    gene_nodes = {
-        n
-        for n in component.get("component", set())
-        if n not in set(component.get("dmrs", []))
-    }
+    gene_nodes = set(component.get("genes", []))
+
     # Define split_genes as those gene nodes that participate in more than one biclique
     split_genes_ids = set(
         {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
     )
     regular_gene_ids = gene_nodes - split_genes_ids
     current_app.logger.debug(f"CV point 1 dmrs {dmr_nodes}")
+    current_app.logger.debug(f"CV point 1 genes {gene_nodes}")
     # Create NodeInfo object
     node_info = NodeInfo(
         all_nodes=dmr_nodes | gene_nodes,
@@ -112,11 +107,11 @@ def create_component_visualization(
 
     # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
-        edge_classifications=edge_classifications,  # Use the extracted 'classifications' dict
+        edge_classifications=classifications,  # Use the extracted classifications dict
         node_positions=node_positions,
         node_labels=node_labels,
-        component_nodes=dmr_nodes | gene_nodes,  # expects a set component["component"],
-        split_genes=split_genes_ids,  # expects a set
+        component_nodes=dmr_nodes | gene_nodes,
+        split_genes=split_genes_ids,
         edge_style={"width": 1, "color": "gray"},
     )
     traces.extend(edge_traces)
@@ -182,8 +177,6 @@ def create_component_visualization(
     # Create layout using the unified layout function and add biclique shapes
     layout = create_circular_layout(node_info)
     layout["shapes"] = biclique_shapes
-
-    from backend.app.utils.json_utils import convert_plotly_object
 
     current_app.logger.debug("Number of traces: %d", len(traces))
     current_app.logger.debug("Layout content: %s", layout)

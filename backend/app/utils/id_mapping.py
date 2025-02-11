@@ -25,10 +25,12 @@ def convert_dmr_id(
     """Wrapper to convert a raw node ID to a table DMR ID.
     We assume that for both original and split graphs the raw node value is converted as offset + node.
     """
-    return create_dmr_id(dmr_num, timepoint, first_gene_id)
+    return create_dmr_id(dmr_num + 1, timepoint, first_gene_id)
 
 
-def reverse_create_dmr_id(converted_id: int, timepoint: int, is_original: bool = True) -> int:
+def reverse_create_dmr_id(
+    converted_id: int, timepoint: int, is_original: bool = True
+) -> int:
     """Convert a table DMR ID back to the raw (0-indexed) node ID by subtracting the timepoint offset."""
     if not isinstance(timepoint, int):
         raise TypeError("Expected timepoint to be an int")
@@ -36,7 +38,8 @@ def reverse_create_dmr_id(converted_id: int, timepoint: int, is_original: bool =
         offset = TIMEPOINT_OFFSETS[timepoint]
     except KeyError:
         raise ValueError(f"Unknown timepoint_id {timepoint} in TIMEPOINT_OFFSETS")
-    return converted_id - offset
+    return converted_id - offset - 1
+
 
 def create_dmr_id(dmr_num: int, timepoint: int or str, first_gene_id: int = 0) -> int:
     """Create a unique DMR ID by adding the timepoint offset to the raw node ID.

@@ -15,6 +15,7 @@ To set up:
 
 import os
 import time
+import re
 from typing import Dict, List, Optional, Union
 from urllib.error import HTTPError
 from ..database.models import Gene, GeneDetails
@@ -25,6 +26,25 @@ import logging
 from dataclasses import dataclass
 from flask import current_app
 from werkzeug.exceptions import HTTPException
+from sqlalchemy import text
+def fetch_gene_id_from_ensembl(session, gene_id: int) -> Optional[str]:
+    """
+    Given a gene's internal ID, query the ensembl_genes table and 
+    return an identifier: prefer external_gene_id if available,
+    otherwise extract the MGI id from the description.
+    """
+    query = text("SELECT external_gene_id, description FROM ensembl_genes WHERE gene_id = :gene_id")
+    result = session.execute(query, {"gene_id": gene_id}).fetchone()
+    if result:
+        ext_id = result["external_gene_id"]
+        if ext_id:
+            return ext_id
+        desc = result["description"] or ""
+        match = re.search(r"Acc:MGI:(\d+)", desc)
+        if match:
+            return match.group(1)
+    return None
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -136,7 +156,7 @@ def rate_limit():
 
 
 @lru_cache(maxsize=CACHE_SIZE)
-def fetch_gene_id(gene_symbol: str, organism: str = "mouse") -> Optional[str]:
+def fetch_gene_id(gene_symbol: str, organism: str = "mouse", session: Optional[Session] = None, gene_id: Optional[int] = None) -> Optional[str]:
     """
     Fetch NCBI Gene ID for a given gene symbol.
 
@@ -151,6 +171,11 @@ def fetch_gene_id(gene_symbol: str, organism: str = "mouse") -> Optional[str]:
         NCBIError: If there's an error communicating with NCBI
     """
     try:
+        if session and gene_id:
+            ncbi = fetch_gene_id_from_ensembl(session, gene_id)
+            if ncbi:
+                return ncbi
+
         configure_entrez()
         organism_term = "Mus musculus" if organism == "mouse" else "Homo sapiens"
         rate_limit()
@@ -324,6 +349,16 @@ def fetch_ncbi_gene_ids(db: Session, gene_ids: List[int]) -> Dict[int, str]:
         # Add newly fetched NCBI IDs to result dict
         for gene_id, symbol in id_to_symbol.items():
             if symbol in symbol_to_ncbi:
-                gene_id_to_ncbi[gene_id] = symbol_to_ncbi[symbol]
+                new_ncbi = symbol_to_ncbi[symbol]
+                gene_id_to_ncbi[gene_id] = new_ncbi
+                # Update or create GeneDetails record with the new NCBI_id
+                gene_details = db.query(GeneDetails).filter(GeneDetails.gene_id == gene_id).first()
+                if gene_details:
+                    gene_details.NCBI_id = new_ncbi
+                else:
+                    new_details = GeneDetails(gene_id=gene_id, NCBI_id=new_ncbi)
+                    db.add(new_details)
+        
+        db.commit()
 
     return gene_id_to_ncbi
