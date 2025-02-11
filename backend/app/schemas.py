@@ -285,6 +285,12 @@ class GraphComponentSchema(BaseModel):
     categories: str  # Changed back to categories to match the view
     bicliques: List[BicliqueMemberSchema]
 
+    @property
+    def component(self) -> List[int]:
+        dmr_list = [int(x.strip()) for x in self.dmr_ids.split(",") if x.strip()]
+        gene_list = [int(x.strip()) for x in self.gene_ids.split(",") if x.strip()]
+        return list(set(dmr_list) | set(gene_list))
+
 
 class NodeSymbolRequest(BaseModel):
     """Schema for node symbol request"""
