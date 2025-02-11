@@ -698,7 +698,7 @@ def get_component_graph(timepoint_id, component_id):
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
                 "dmrs": list(final_dmrs),
-                "genes": all_gene_ids,
+                "genes": list(all_gene_ids),
                 "total_edges": len(original_graph_component.edges()),
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
