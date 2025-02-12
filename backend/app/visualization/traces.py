@@ -313,9 +313,11 @@ def create_unified_gene_trace(
             ],
             color=colors,
             symbol=[
-                NODE_SHAPES["gene"]["split"]
-                if len(node_biclique_map.get(n, [])) > 1
-                else NODE_SHAPES["gene"]["regular"]
+                (
+                    NODE_SHAPES["gene"]["split"]
+                    if len(node_biclique_map.get(n, [])) > 1
+                    else NODE_SHAPES["gene"]["regular"]
+                )
                 for n in processed_nodes
             ],
             line=dict(
@@ -348,7 +350,7 @@ def create_dmr_trace(
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
-    timepoint: int,                   # New parameter
+    timepoint_id: int,  # New parameter
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     node_shapes: Dict[str, str] = None,  # Add shape config parameter
@@ -419,10 +421,12 @@ def create_dmr_trace(
         # otherwise, fall back to adjusting the raw node id using convert_dmr_id.
         info = dmr_metadata.get(str(node_id)) if dmr_metadata else None
         if info and "dmr_name" in info and info["dmr_name"]:
-            label = info["dmr_name"]
+            label = f"dd {info["dmr_name"]}"
         else:
             from backend.app.utils.id_mapping import convert_dmr_id
-            label = f"DMR_{convert_dmr_id(node_id, timepoint)}"
+
+            label = f"DMMR_{node_id+1}"
+            #label = f"DMMR_{(convert_dmr_id(dmr_num=node_id, timepoint=timepoint_id))}"
         text.append(label)
 
         # Create detailed hover text

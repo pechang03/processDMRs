@@ -68,14 +68,16 @@ def get_component_graph(timepoint_id, component_id):
         engine = get_db_engine()
         with Session(engine) as session:
             # Simplify to just get DMR and gene IDs for the component
-            verify_query = text("""
+            verify_query = text(
+                """
                 SELECT 
                     all_dmr_ids as dmr_ids,
                     all_gene_ids as gene_ids
                 FROM component_details_view
                 WHERE timepoint_id = :timepoint_id 
                 AND component_id = :component_id
-            """)
+            """
+            )
 
             result = session.execute(
                 verify_query,
@@ -112,9 +114,12 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(
                     f"Failed to load graphs for component {component_id}"
                 )
-                return jsonify(
-                    {"error": "Failed to load component graphs", "status": 404}
-                ), 404
+                return (
+                    jsonify(
+                        {"error": "Failed to load component graphs", "status": 404}
+                    ),
+                    404,
+                )
 
             # Add debug logging for graph properties
             current_app.logger.info(
@@ -127,15 +132,19 @@ def get_component_graph(timepoint_id, component_id):
             # Validate that both graphs have edges
             if len(original_graph_component.edges()) == 0:
                 current_app.logger.error("Original graph component has no edges!")
-                return jsonify(
-                    {"error": "Invalid original graph component", "status": 400}
-                ), 400
+                return (
+                    jsonify(
+                        {"error": "Invalid original graph component", "status": 400}
+                    ),
+                    400,
+                )
 
             if len(split_graph_component.edges()) == 0:
                 current_app.logger.error("Split graph component has no edges!")
-                return jsonify(
-                    {"error": "Invalid split graph component", "status": 400}
-                ), 400
+                return (
+                    jsonify({"error": "Invalid split graph component", "status": 400}),
+                    400,
+                )
 
             # Validate bipartite graph structure
             def validate_bipartite_graphs(
@@ -196,19 +205,23 @@ def get_component_graph(timepoint_id, component_id):
             if not validate_bipartite_graphs(
                 original_graph_component, split_graph_component
             ):
-                return jsonify(
-                    {
-                        "error": "Invalid graph structure - bipartite property violation",
-                        "status": 400,
-                    }
-                ), 400
+                return (
+                    jsonify(
+                        {
+                            "error": "Invalid graph structure - bipartite property violation",
+                            "status": 400,
+                        }
+                    ),
+                    400,
+                )
 
             current_app.logger.info(
                 "Graph validation passed - bipartite structure maintained"
             )
 
             # Get component data
-            query = text("""
+            query = text(
+                """
                 SELECT 
                     c.component_id,
                     c.timepoint_id,
@@ -232,7 +245,8 @@ def get_component_graph(timepoint_id, component_id):
                 FROM component_details_view c
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.component_id = :component_id
-            """)
+            """
+            )
 
             result = session.execute(
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
@@ -241,9 +255,12 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(
                     "Query returned no results after verifying existence"
                 )
-                return jsonify(
-                    {"error": "Failed to retrieve component data", "status": 500}
-                ), 500
+                return (
+                    jsonify(
+                        {"error": "Failed to retrieve component data", "status": 500}
+                    ),
+                    500,
+                )
 
             # Validate with Pydantic
             try:
@@ -260,13 +277,16 @@ def get_component_graph(timepoint_id, component_id):
                 )
             except ValidationError as e:
                 current_app.logger.error(f"Validation error: {e}")
-                return jsonify(
-                    {
-                        "error": "Invalid component data",
-                        "details": e.errors(),
-                        "status": 500,
-                    }
-                ), 500
+                return (
+                    jsonify(
+                        {
+                            "error": "Invalid component data",
+                            "details": e.errors(),
+                            "status": 500,
+                        }
+                    ),
+                    500,
+                )
 
             current_app.logger.debug(f"Validated component data: {component_data}")
 
@@ -356,7 +376,8 @@ def get_component_graph(timepoint_id, component_id):
             # final_nodes = all_gene_ids.union(collected_biclique_genes)
 
             # Get node metadata
-            dmr_query = text("""
+            dmr_query = text(
+                """
                 SELECT 
                     dmr_id as id,
                     area_stat as area,
@@ -368,10 +389,12 @@ def get_component_graph(timepoint_id, component_id):
                 FROM dmr_annotations_view
                 WHERE timepoint_id = :timepoint_id
                 AND component_id = :component_id
-            """)
+            """
+            )
 
             # Get gene annotations including split gene information
-            gene_query = text("""
+            gene_query = text(
+                """
                 SELECT 
                     gene_id,
                     symbol,
@@ -383,7 +406,8 @@ def get_component_graph(timepoint_id, component_id):
                 FROM gene_annotations_view
                 WHERE timepoint_id = :timepoint_id
                 AND component_id = :component_id
-            """)
+            """
+            )
 
             # Get metadata
             dmr_metadata = {}
@@ -433,15 +457,21 @@ def get_component_graph(timepoint_id, component_id):
                     gene_dict = gene_data.model_dump()
                     gene_dict.update(
                         {
-                            "is_split": gene_data.gene_type == "split"
-                            if gene_data.gene_type
-                            else False,
-                            "is_hub": gene_data.node_type == "hub"
-                            if gene_data.node_type
-                            else False,
-                            "biclique_count": len(gene_data.biclique_ids.split(","))
-                            if gene_data.biclique_ids
-                            else 0,
+                            "is_split": (
+                                gene_data.gene_type == "split"
+                                if gene_data.gene_type
+                                else False
+                            ),
+                            "is_hub": (
+                                gene_data.node_type == "hub"
+                                if gene_data.node_type
+                                else False
+                            ),
+                            "biclique_count": (
+                                len(gene_data.biclique_ids.split(","))
+                                if gene_data.biclique_ids
+                                else 0
+                            ),
                         }
                     )
 
@@ -609,7 +639,8 @@ def get_component_graph(timepoint_id, component_id):
 
             # Get dominating set for this timepoint's DMRs
             try:
-                dominating_set_query = text("""
+                dominating_set_query = text(
+                    """
                     SELECT ds.dmr_id
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
@@ -623,7 +654,8 @@ def get_component_graph(timepoint_id, component_id):
                             END
                         )
                     )
-                """)
+                """
+                )
 
                 # Get the DMR IDs as a JSON array string
                 dmr_ids_json = json.dumps(list(final_dmrs))
@@ -699,9 +731,12 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(
                     "Error during edge classification update: " + str(e)
                 )
-                return jsonify(
-                    {"error": "Edge classification update failed", "status": 500}
-                ), 500
+                return (
+                    jsonify(
+                        {"error": "Edge classification update failed", "status": 500}
+                    ),
+                    500,
+                )
 
             # Add detailed logging for edge classification
             total_edges = len(original_graph_component.edges())
@@ -726,9 +761,10 @@ def get_component_graph(timepoint_id, component_id):
                     f"Invalid edge classification: Connected component with {total_edges} edges "
                     f"but no permanent edges detected!"
                 )
-                return jsonify(
-                    {"error": "Invalid edge classification", "status": 400}
-                ), 400
+                return (
+                    jsonify({"error": "Invalid edge classification", "status": 400}),
+                    400,
+                )
 
             # Add timing for performance monitoring
             start_time = time.time()
@@ -776,6 +812,7 @@ def get_component_graph(timepoint_id, component_id):
                 edge_classifications=edge_classifications,
                 dmr_metadata=converted_dmr_metadata,
                 gene_metadata=gene_metadata,
+                timepoint_id=timepoint_id,
             )
             current_app.logger.debug("Point 2di")
             if vis_dict is None:

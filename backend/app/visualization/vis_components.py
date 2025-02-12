@@ -30,6 +30,7 @@ def create_component_visualization(
     edge_classifications: Dict[str, Any],
     dmr_metadata: Dict = None,
     gene_metadata: Dict = None,
+    timepoint_id: int = 1,
 ) -> Dict:
     """Create visualization data for a component with centralized shape configuration."""
     """Create visualization data for a component."""
@@ -140,7 +141,7 @@ def create_component_visualization(
         node_labels=node_labels,
         node_biclique_map=node_biclique_map,
         biclique_colors=biclique_colors,
-        timepoint=component.get('timepoint_id'),  # Pass timepoint from component data
+        timepoint_id=timepoint_id,
         dominating_set=dominating_set,
         dmr_metadata=dmr_metadata,
     )
