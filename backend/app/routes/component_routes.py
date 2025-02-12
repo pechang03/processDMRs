@@ -399,7 +399,7 @@ def get_component_details(timepoint_id, component_id):
             )
 
             def convert_edge_list(edge_list, timepoint_id):
-                return [(create_dmr_id(edge[0], timepoint_id), edge[1]) for edge in edge_list]
+                return [(create_dmr_id(e.edge[0], timepoint_id), e.edge[1]) for e in edge_list]
 
             classification_result["classifications"]["permanent"] = convert_edge_list(
                 classification_result["classifications"]["permanent"], timepoint_id
@@ -456,14 +456,13 @@ def get_component_details(timepoint_id, component_id):
                         # Update dmr_metadata edge_type based on classifications
             updates = []
             for cls_type in ["permanent", "false_positive", "false_negative"]:
-                for edge_info in classification_result["classifications"].get(cls_type, []):
-                    # edge_info.edge is the tuple (dmr_id, gene_id)
-                    dmr_id, gene_id = edge_info.edge
+                for edge_tuple in classification_result["classifications"].get(cls_type, []):
+                    dmr_id, gene_id = edge_tuple
                     updates.append((dmr_id, gene_id, cls_type))
                     if dmr_id in dmr_metadata:
                         for rec in dmr_metadata[dmr_id]["edge_details"]:
                             if rec.get("gene_id") == gene_id:
-                                rec["edge_type"] = cls_type 
+                                rec["edge_type"] = cls_type
 
             # Update edge details in database
             from backend.app.database.operations import update_edge_details
@@ -641,7 +640,7 @@ def get_component_edge_stats(timepoint_id, component_id):
             )
 
             def convert_edge_list(edge_list, timepoint_id):
-                return [(create_dmr_id(edge[0], timepoint_id), edge[1]) for edge in edge_list]
+                return [(create_dmr_id(e.edge[0], timepoint_id), e.edge[1]) for e in edge_list]
 
             classification_result["classifications"]["permanent"] = convert_edge_list(
                 classification_result["classifications"]["permanent"], timepoint_id
