@@ -64,8 +64,8 @@ def create_component_visualization(
         {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
     )
     regular_gene_ids = gene_nodes - split_genes_ids
-    current_app.logger.debug(f"CV point 1 dmrs {dmr_nodes}")
-    current_app.logger.debug(f"CV point 1 genes {gene_nodes}")
+    #current_app.logger.debug(f"CV point 1 dmrs {dmr_nodes}")
+    #current_app.logger.debug(f"CV point 1 genes {gene_nodes}")
     # Create NodeInfo object
     node_info = NodeInfo(
         all_nodes=dmr_nodes | gene_nodes,
@@ -79,7 +79,7 @@ def create_component_visualization(
         min_gene_id=min(gene_nodes) if gene_nodes else 0,
     )
 
-    current_app.logger.debug("CV point 2")
+    #current_app.logger.debug("CV point 2")
     # Generate colors for bicliques
     biclique_colors = generate_biclique_colors(len(component.get("raw_bicliques", [])))
     # current_app.logger.debug("Point 3")
@@ -90,21 +90,21 @@ def create_component_visualization(
         component.get("raw_bicliques", []), node_positions, biclique_colors
     )
 
-    current_app.logger.debug("CV point 3")
+    #current_app.logger.debug("CV point 3")
     # Add legend traces
     legend_nodes, legend_edges = create_legend_traces(biclique_colors)
     traces.extend(legend_nodes)
     traces.extend(legend_edges)
 
     # Log edge_classifications structure and content for debugging
-    current_app.logger.debug(
-        "Edge Classifications Structure: %s", type(edge_classifications)
-    )
-    current_app.logger.debug(
-        "Edge Classifications Keys: %s", edge_classifications.keys()
-    )
-    current_app.logger.debug("Edge Classifications Content: %s", edge_classifications)
-    current_app.logger.debug("Classifications Content: %s", classifications)
+    #current_app.logger.debug(
+    #    "Edge Classifications Structure: %s", type(edge_classifications)
+    #)
+    #current_app.logger.debug(
+    #    "Edge Classifications Keys: %s", edge_classifications.keys()
+    #)
+    #current_app.logger.debug("Edge Classifications Content: %s", edge_classifications)
+    #current_app.logger.debug("Classifications Content: %s", classifications)
 
     # Add edge traces using the previously computed split_genes
     edge_traces = create_edge_traces(
@@ -117,7 +117,7 @@ def create_component_visualization(
     )
     traces.extend(edge_traces)
 
-    current_app.logger.debug("CV point 4")
+    #current_app.logger.debug("CV point 4")
     # Get dominating set from explicit data or metadata
     dominating_set = set()
     if dmr_metadata and "dominating_sets" in component:
@@ -132,7 +132,7 @@ def create_component_visualization(
                 if info.get("node_type", "").lower() == "hub"
             }
 
-    current_app.logger.debug(f"Final dominating set: {dominating_set}")
+    #current_app.logger.debug(f"Final dominating set: {dominating_set}")
 
     # Add DMR trace
     dmr_trace = create_dmr_trace(
@@ -161,27 +161,12 @@ def create_component_visualization(
     if gene_trace:
         traces.append(gene_trace)
 
-    # current_app.logger.debug("Point 4")
-    # Unified gene trace now handles both regular and split genes
-    # split_gene_trace = create_unified_gene_trace(
-    #     node_info.split_genes,
-    #     node_positions,
-    #     node_labels,
-    #     node_biclique_map,
-    #     biclique_colors,
-    #     gene_metadata,
-    #     is_split=True,
-    # )
-    # if split_gene_trace:
-    #     traces.append(split_gene_trace)
-
-    # current_app.logger.debug("Point 5")
     # Create layout using the unified layout function and add biclique shapes
     layout = create_circular_layout(node_info)
     layout["shapes"] = biclique_shapes
 
     current_app.logger.debug("Number of traces: %d", len(traces))
-    current_app.logger.debug("Layout content: %s", layout)
+    #current_app.logger.debug("Layout content: %s", layout)
 
     final_fig = {"data": traces, "layout": layout}
     final_fig["edge_stats"] = stats.get("component", {})
@@ -189,5 +174,5 @@ def create_component_visualization(
     converted_fig = convert_plotly_object(final_fig)
     if converted_fig is None:
         converted_fig = final_fig
-    current_app.logger.debug("Final converted figure: %s", converted_fig)
+    #current_app.logger.debug("Final converted figure: %s", converted_fig)
     return converted_fig

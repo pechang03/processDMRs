@@ -60,7 +60,7 @@ def convert_plotly_object(obj: Any) -> Any:
     If an object has a to_plotly_json() method, call it."""
     if hasattr(obj, "to_plotly_json"):
         result = obj.to_plotly_json()
-        current_app.logger.debug("Converting object %s, result: %s", obj, result)
+        #current_app.logger.debug("Converting object %s, result: %s", obj, result)
         if result is None:
             current_app.logger.error("to_plotly_json returned None for object: %s", obj)
             return obj

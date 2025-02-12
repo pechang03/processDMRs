@@ -529,17 +529,17 @@ def get_component_graph(timepoint_id, component_id):
             layout = CircularBicliqueLayout()
 
             # Debug logging
-            current_app.logger.debug(
-                f"Using CircularBicliqueLayout for graph visualization"
-            )
-            current_app.logger.debug(
-                f"Number of nodes to position: {len(final_dmrs | all_gene_ids)}"
-            )
+            #current_app.logger.debug(
+            #    f"Using CircularBicliqueLayout for graph visualization"
+            #)
+            #current_app.logger.debug(
+            #    f"Number of nodes to position: {len(final_dmrs | all_gene_ids)}"
+            #)
             current_app.logger.debug(f"DMR nodes: {len(final_dmrs)}")
-            current_app.logger.debug(
-                f"Regular genes: {len(all_gene_ids - split_genes)}"
-            )
-            current_app.logger.debug(f"Split genes: {len(split_genes)}")
+            #current_app.logger.debug(
+            #    f"Regular genes: {len(all_gene_ids - split_genes)}"
+            #)
+            #current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
             # Create node-to-biclique mapping from database annotations
             node_biclique_map = {}
@@ -602,12 +602,12 @@ def get_component_graph(timepoint_id, component_id):
                             f"Raw value: {info['biclique_ids']}"
                         )
 
-            current_app.logger.debug(
-                f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes"
-            )
-            current_app.logger.debug(
-                f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}"
-            )
+            #current_app.logger.debug(
+            #    f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes"
+            #)
+            #current_app.logger.debug(
+            #    f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}"
+            #)
 
             # Create NodeInfo object
             node_info = NodeInfo(
@@ -630,12 +630,12 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Debug the positions
-            current_app.logger.debug(
-                f"Generated positions for {len(node_positions)} nodes"
-            )
-            current_app.logger.debug(
-                f"Sample positions: {list(node_positions.items())[:5]}"
-            )
+            #current_app.logger.debug(
+            #    f"Generated positions for {len(node_positions)} nodes"
+            #)
+            #current_app.logger.debug(
+            #    f"Sample positions: {list(node_positions.items())[:5]}"
+            #)
 
             # Get dominating set for this timepoint's DMRs
             try:
@@ -666,7 +666,7 @@ def get_component_graph(timepoint_id, component_id):
                 ).fetchall()
 
                 dominating_set = {int(row.dmr_id) for row in dominating_set_results}
-                current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
+                #current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
 
                 # Validate that each biclique has at most one dominating set DMR
                 for dmr_nodes, _ in bicliques:
@@ -701,10 +701,10 @@ def get_component_graph(timepoint_id, component_id):
                 for edge_type, edges_list in edge_classifications.get(
                     "classifications", {}
                 ).items():
-                    current_app.logger.debug(f"Processing edges of type: {edge_type}")
+                    #current_app.logger.debug(f"Processing edges of type: {edge_type}")
                     for edge_info in edges_list:
                         u, v = edge_info.edge
-                        current_app.logger.debug(f"Original edge: ({u}, {v})")
+                        #current_app.logger.debug(f"Original edge: ({u}, {v})")
                         # If an endpoint isn't found in node_positions, assume it's in table indexing and convert it
                         if u not in node_positions:
                             u_conv = reverse_create_dmr_id(
@@ -722,10 +722,10 @@ def get_component_graph(timepoint_id, component_id):
                             current_app.logger.debug(
                                 f"Converted v from {v} to {v_conv}"
                             )
-                        current_app.logger.debug(f"Final edge: {edge_info.edge}")
-                current_app.logger.debug(
-                    f"Post-conversion edge classifications: {edge_classifications}"
-                )
+                        #current_app.logger.debug(f"Final edge: {edge_info.edge}")
+                #current_app.logger.debug(
+                  #f"Post-conversion edge classifications: {edge_classifications}"
+                #)
 
             except Exception as e:
                 current_app.logger.error(
@@ -801,8 +801,8 @@ def get_component_graph(timepoint_id, component_id):
                 "total_edges": len(original_graph_component.edges()),
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
-            current_app.logger.debug("Point 2d")
-            current_app.logger.debug(f"Processing component data: {component_data}")
+            #current_app.logger.debug("Point 2d")
+            #current_app.logger.debug(f"Processing component data: {component_data}")
 
             vis_dict = create_component_visualization(
                 component=component_data,
@@ -814,17 +814,17 @@ def get_component_graph(timepoint_id, component_id):
                 gene_metadata=gene_metadata,
                 timepoint_id=timepoint_id,
             )
-            current_app.logger.debug("Point 2di")
+            #current_app.logger.debug("Point 2di")
             if vis_dict is None:
                 current_app.logger.error(
                     "create_component_visualization returned None!"
                 )
                 return jsonify({"error": "Visualization generation failed"}), 500
-            current_app.logger.debug("vis_dict returned: %s", vis_dict)
+            #current_app.logger.debug("vis_dict returned: %s", vis_dict)
             # Use the complete edge_classifications dictionary
             # Force conversion to a plain dict
             # vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
-            current_app.logger.debug("Point 2e")
+            #current_app.logger.debug("Point 2e")
 
             end_time = time.time()
             current_app.logger.info(

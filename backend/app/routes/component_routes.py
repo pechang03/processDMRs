@@ -675,7 +675,7 @@ def get_component_edge_stats(timepoint_id, component_id):
             }
 
             app.logger.info(
-                f"Edge statistics for component {component_id}: {edge_stats}"
+                f"Edge statistics 2 for component {component_id}: {edge_stats}"
             )
             return jsonify({"status": "success", "data": edge_stats})
 
@@ -758,7 +758,7 @@ def get_gene_symbols():
                     else [],
                 }
 
-            app.logger.info(f"Processed gene info: {gene_info}")
+            #app.logger.info(f"Processed gene info: {gene_info}")
             return jsonify(
                 {
                     "status": "success",

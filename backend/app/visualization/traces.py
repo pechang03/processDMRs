@@ -456,6 +456,7 @@ def create_dmr_trace(
         return None
 
     # Add debug logging
+    """
     current_app.logger.debug(
         "DMR trace marker configuration: %s",
         {
@@ -468,16 +469,7 @@ def create_dmr_trace(
             },
         },
     )
-    print("Symbols:", symbols)
-    print(
-        "Marker configuration:",
-        {
-            "size": sizes,
-            "color": colors,
-            "symbol": symbols,
-            "line": dict(color="black", width=1),
-        },
-    )
+    """
 
     return go.Scatter(
         x=x,
