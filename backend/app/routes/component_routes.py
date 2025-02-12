@@ -576,7 +576,11 @@ def get_component_edge_stats(timepoint_id, component_id):
                 ), 500
 
             # Create component nodes set from query results
-            component_nodes = set(parse_array_string(result.all_dmr_ids)) | set(parse_array_string(result.all_gene_ids))
+            raw_dmr_ids = {
+                reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+                for dmr_id in parse_array_string(result.all_dmr_ids)
+            }
+            component_nodes = raw_dmr_ids | set(parse_array_string(result.all_gene_ids))
 
             # Get the component subgraphs using the node set
             original_component = graph_manager.get_original_graph_component(
@@ -625,7 +629,10 @@ def get_component_edge_stats(timepoint_id, component_id):
             # Create component data using the already created component_nodes set
             component_data = {
                 "component": component_nodes,
-                "dmrs": set(parse_array_string(result.all_dmr_ids)),
+                "dmrs": {
+                    reverse_create_dmr_id(int(did), timepoint_id, is_original=True)
+                    for did in parse_array_string(result.all_dmr_ids)
+                },
                 "genes": set(parse_array_string(result.all_gene_ids)),
             }
 
