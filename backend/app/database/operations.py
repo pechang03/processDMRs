@@ -744,9 +744,10 @@ def update_edge_details(timepoint_id: int, updates: List[Tuple[int, int, str]]) 
             session.query(EdgeDetails).filter(
                 EdgeDetails.timepoint_id == timepoint_id,
                 EdgeDetails.dmr_id == dmr_id,
-                EdgeDetails.gene_id == gene_id
-            ).update({"edge_type": new_edge_type})
+                EdgeDetails.gene_id == gene_id,
+            ).update({"edit_type": new_edge_type})
         session.commit()
+
 
 def update_gene_source_metadata(
     session: Session,
@@ -830,7 +831,13 @@ def store_dominating_set(
     session.commit()
 
 
-def update_component_edge_classification(self, timepoint_id: int, original_graph_component: nx.Graph, split_graph_component: nx.Graph, bicliques: List[Tuple[Set[int], Set[int]]]) -> List[Tuple[int, int, str]]:
+def update_component_edge_classification(
+    self,
+    timepoint_id: int,
+    original_graph_component: nx.Graph,
+    split_graph_component: nx.Graph,
+    bicliques: List[Tuple[Set[int], Set[int]]],
+) -> List[Tuple[int, int, str]]:
     """
     Compute edge classifications from the provided graphs and bicliques,
     build a list of updates as tuples (dmr_id, gene_id, edge_type),
@@ -839,7 +846,7 @@ def update_component_edge_classification(self, timepoint_id: int, original_graph
     """
     from backend.app.biclique_analysis.edge_classification import classify_edges
     from backend.app.database.operations import update_edge_details
-        
+
     # Build component data from bicliques: union of all nodes, and separate sets for DMRs and genes.
     component_nodes = set()
     dmrs = set()
@@ -850,22 +857,28 @@ def update_component_edge_classification(self, timepoint_id: int, original_graph
         dmrs.update(dmrs_set)
         genes.update(genes_set)
     component_data = {"component": component_nodes, "dmrs": dmrs, "genes": genes}
-        
+
     # Classify edges using the provided graphs and bicliques.
     classification_result = classify_edges(
         original_graph_component,
         split_graph_component,
-        edge_sources={}, 
+        edge_sources={},
         bicliques=bicliques,
-        component=component_data
+        component=component_data,
     )
-        
+
+    # Convert Pydantic model to dict if necessary
+    if hasattr(classification_result, "model_dump"):
+        classification_result = classification_result.model_dump()
+
     updates = []
     for cls_type in ["permanent", "false_positive", "false_negative"]:
         for edge_info in classification_result["classifications"].get(cls_type, []):
-            dmr_id, gene_id = edge_info.edge
+            dmr_id, gene_id = (
+                edge_info["edge"] if isinstance(edge_info, dict) else edge_info.edge
+            )
             updates.append((dmr_id, gene_id, cls_type))
-        
+
     if updates:
         current_app.logger.info("Updating edge_details with: " + str(updates))
         try:
@@ -876,8 +889,9 @@ def update_component_edge_classification(self, timepoint_id: int, original_graph
             raise
     else:
         current_app.logger.info("No edge_updates to perform.")
-        
+
     return updates
+
 
 def get_dominating_set(
     session: Session, timepoint_id: int

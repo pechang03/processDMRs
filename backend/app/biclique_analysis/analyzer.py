@@ -2,15 +2,19 @@
 
 from typing import Dict, List, Set, Tuple
 import networkx as nx
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 from .classifier import classify_component
 
 
 def analyze_bicliques(
     original_graph: nx.Graph,
     bicliques: List[Tuple[Set[int], Set[int]]],
+    timepoint_id: int,
+    *,  # Force remaining args to be keyword-only
     split_graph: nx.Graph = None,
 ) -> Dict:
     """Analyze bicliques and components without database operations."""
+    print(f"[DEBUG] analyze_bicliques: timepoint_id = {timepoint_id} (type: {type(timepoint_id)})")
     if split_graph is None:
         split_graph = nx.Graph()
 
@@ -24,7 +28,7 @@ def analyze_bicliques(
     original_components = []
     for component in nx.connected_components(original_graph):
         comp_subgraph = original_graph.subgraph(component)
-        dmr_nodes = {n for n in component if original_graph.nodes[n]["bipartite"] == 0}
+        dmr_nodes = {convert_dmr_id(n, timepoint_id, is_original=True) for n in component if original_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if original_graph.nodes[n]["bipartite"] == 1}
 
         category = classify_component(dmr_nodes, gene_nodes, [])
@@ -47,12 +51,13 @@ def analyze_bicliques(
     split_components = []
     for component in nx.connected_components(split_graph):
         comp_subgraph = split_graph.subgraph(component)
-        dmr_nodes = {n for n in component if split_graph.nodes[n]["bipartite"] == 0}
+        dmr_nodes = {convert_dmr_id(n, timepoint_id, is_original=False) for n in component if split_graph.nodes[n]["bipartite"] == 0}
         gene_nodes = {n for n in component if split_graph.nodes[n]["bipartite"] == 1}
 
-        # Get bicliques for this component
+        # Get bicliques for this component and convert DMR IDs
         comp_bicliques = [
-            b for b in bicliques if any(n in component for n in b[0] | b[1])
+            ({create_dmr_id(n, timepoint_id) for n in dmrs}, genes)
+            for (dmrs, genes) in bicliques if any(n in component for n in (dmrs | genes))
         ]
         category = classify_component(dmr_nodes, gene_nodes, comp_bicliques)
 
@@ -71,8 +76,14 @@ def analyze_bicliques(
             }
         )
 
+    # Convert DMR IDs in the final bicliques list
+    converted_bicliques = [
+        ({create_dmr_id(n, timepoint_id) for n in dmrs}, genes)
+        for (dmrs, genes) in bicliques
+    ]
+
     return {
         "original_components": original_components,
         "split_components": split_components,
-        "bicliques": bicliques,
+        "bicliques": converted_bicliques,
     }

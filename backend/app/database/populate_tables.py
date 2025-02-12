@@ -4,11 +4,13 @@ from collections import defaultdict
 from types import NoneType
 import networkx as nx
 from typing import Dict, List, Set, Tuple
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from .models import EdgeDetails
 from backend.app.database.cleanup import clean_edge_details
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id, reverse_create_dmr_id 
 
 from collections import defaultdict
 from .operations import (
@@ -41,6 +43,7 @@ from .models import (
 from backend.app.core.data_loader import create_bipartite_graph
 from backend.app.database.dominating_sets import calculate_dominating_sets
 from backend.app.utils.data_processing import process_enhancer_info
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id, reverse_create_dmr_id
 from backend.app.biclique_analysis.classifier import (
     classify_biclique,
     BicliqueSizeCategory,
@@ -469,6 +472,7 @@ def populate_gene_annotations(
     graph: nx.Graph,
     df: pd.DataFrame,
     is_original: bool,
+    *,  # Force remaining args to be keyword-only
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> None:
     """Populate gene annotations for a component."""
@@ -520,35 +524,40 @@ def populate_dmr_annotations(
     graph: nx.Graph,
     df: pd.DataFrame,
     is_original: bool,
+    *,  # Force remaining args to be keyword-only
     bicliques: List[Tuple[Set[int], Set[int]]] = None,
 ) -> None:
     """Populate DMR annotations for a component."""
 
-    dmr_nodes = {n for n, d in graph.nodes(data=True) if d["bipartite"] == 0}
+    for n, d in graph.nodes(data=True):
+        if d["bipartite"] == 0:
+            # For split and original graphs add 1 to node_id to get the eqiv table_id
+            # The graph need to index from 0 to avoid issue, the tables need to index from something >0
+            converted_id = convert_dmr_id(n, timepoint_id, is_original=is_original)
+            degree = graph.degree(n)
+            is_isolate = degree == 0
 
-    for dmr in dmr_nodes:
-        # Basic properties
-        degree = graph.degree(dmr)
-        is_isolate = degree == 0
+            # Get biclique participation if this is split graph
+            biclique_ids = None
+            if not is_original and bicliques:
+                participating_bicliques = [
+                    # idx for idx, (dmrs, _) in enumerate(bicliques) if n in dmrs
+                    idx
+                    for idx, (dmrs, _) in enumerate(bicliques)
+                    if converted_id in dmrs
+                ]
+                biclique_ids = ",".join(map(str, participating_bicliques))
 
-        # Get biclique participation if this is split graph
-        biclique_ids = None
-        if not is_original and bicliques:
-            participating_bicliques = [
-                idx for idx, (dmrs, _) in enumerate(bicliques) if dmr in dmrs
-            ]
-            biclique_ids = ",".join(map(str, participating_bicliques))
-
-        upsert_dmr_timepoint_annotation(
-            session=session,
-            timepoint_id=timepoint_id,
-            dmr_id=dmr,
-            component_id=component_id,
-            degree=degree,
-            node_type="isolated" if is_isolate else "regular",
-            is_isolate=is_isolate,
-            biclique_ids=biclique_ids,
-        )
+            upsert_dmr_timepoint_annotation(
+                session=session,
+                timepoint_id=timepoint_id,
+                dmr_id=converted_id,
+                component_id=component_id,
+                degree=degree,
+                node_type="isolated" if is_isolate else "regular",
+                is_isolate=is_isolate,
+                biclique_ids=biclique_ids,
+            )
 
 
 def populate_statistics(session: Session, statistics: dict):

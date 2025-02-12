@@ -129,7 +129,7 @@ def register_routes(app):
     app.register_blueprint(component_bp)
     app.register_blueprint(llm_bp)
     app.register_blueprint(enrichment_bp)
-    app.register_blueprint(edge_bp, url_prefix="/api/graph/edge-details")
+    app.register_blueprint(edge_bp, url_prefix="/api/edge-details")
 
     @app.route("/api/health")
     def health_check():

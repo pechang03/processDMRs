@@ -1,0 +1,31 @@
+# Ignore everything
+*
+
+# Allow specific directories and their contents
+!backend/app.py
+#!baz/
+
+# Allow nested files under these directories
+!backend/app/**
+!frontend/src/**
+
+# But not these files/directories
+!*/
+!*.py
+!CONVENTIONS.md
+!./backend/requirements.txt
+!./docs/*.md
+!./docs/*.txt
+!./docs/*.tex
+!./scripts/setup.py
+!./scripts/create_database.sql
+
+# Still ignore these patterns
+.DS_Store
+__pycache__/
+*.pyc
+.env*
+.git/
+*.swp
+.idea/
+.vscode/

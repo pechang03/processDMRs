@@ -47,6 +47,11 @@ ln -s ../management/sql/views/create_views.sql "$VIEWS_FILE"
 echo "Creating database views..."
 python -m backend.app.database.management.create_views
 
+# Migrate secondary gene data
+echo "Migrating secondary gene data..."
+python -m backend.app.database.management.migrate_secondary_genes
+echo "Secondary gene data migration complete!"
+
 echo "Database setup complete!"
 
 # Exit with the last command's exit code

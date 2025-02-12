@@ -1,8 +1,8 @@
 import json
 import time
+import json
 from flask import jsonify, current_app, Blueprint
-
-# from backend.app.database.models import EdgeDetails, Gene
+from backend.app.database.models import EdgeDetails, Gene
 from typing import Dict
 from plotly.utils import PlotlyJSONEncoder
 
@@ -16,19 +16,17 @@ from ..schemas import (
     BicliqueMemberSchema,
     DmrComponentSchema,
     GeneAnnotationViewSchema,
-    #    DmrAnnotationViewSchema,
+    DmrAnnotationViewSchema,
 )
 from ..database.connection import get_db_engine
 
 # from ..visualization.core import create_biclique_visualization
 # from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..visualization.vis_components import create_component_visualization
-
-# from ..biclique_analysis.edge_classification import classify_edges
+from ..biclique_analysis.edge_classification import classify_edges
 from ..visualization.graph_layout_biclique import CircularBicliqueLayout
 from ..utils.node_info import NodeInfo
 from ..utils.json_utils import convert_plotly_object
-from ..utils.id_mapping import reverse_create_dmr_id, convert_dmr_id
 
 
 def calculate_average(reliability_data: Dict, key: str) -> float:
@@ -68,16 +66,14 @@ def get_component_graph(timepoint_id, component_id):
         engine = get_db_engine()
         with Session(engine) as session:
             # Simplify to just get DMR and gene IDs for the component
-            verify_query = text(
-                """
+            verify_query = text("""
                 SELECT 
                     all_dmr_ids as dmr_ids,
                     all_gene_ids as gene_ids
                 FROM component_details_view
                 WHERE timepoint_id = :timepoint_id 
                 AND component_id = :component_id
-            """
-            )
+            """)
 
             result = session.execute(
                 verify_query,
@@ -90,15 +86,10 @@ def get_component_graph(timepoint_id, component_id):
                 )
                 return jsonify({"error": "Component not found", "status": 404}), 404
 
-            # Parse converted DMR IDs from the view
-            converted_dmr_ids = {int(x) for x in parse_id_string(result.dmr_ids)}
-            # Convert them back to raw node IDs for original graph lookup
-            raw_dmr_ids = {
-                reverse_create_dmr_id(cid, timepoint_id, is_original=True)
-                for cid in converted_dmr_ids
-            }
+            # Get component nodes
+            all_dmr_ids = {int(x) for x in parse_id_string(result.dmr_ids)}
             all_gene_ids = {int(x) for x in parse_id_string(result.gene_ids)}
-            all_component_nodes = raw_dmr_ids.union(all_gene_ids)
+            all_component_nodes = set(all_dmr_ids).union(set(all_gene_ids))
 
             # Get component subgraphs directly from graph manager
             graph_manager = current_app.graph_manager
@@ -114,12 +105,9 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(
                     f"Failed to load graphs for component {component_id}"
                 )
-                return (
-                    jsonify(
-                        {"error": "Failed to load component graphs", "status": 404}
-                    ),
-                    404,
-                )
+                return jsonify(
+                    {"error": "Failed to load component graphs", "status": 404}
+                ), 404
 
             # Add debug logging for graph properties
             current_app.logger.info(
@@ -132,19 +120,15 @@ def get_component_graph(timepoint_id, component_id):
             # Validate that both graphs have edges
             if len(original_graph_component.edges()) == 0:
                 current_app.logger.error("Original graph component has no edges!")
-                return (
-                    jsonify(
-                        {"error": "Invalid original graph component", "status": 400}
-                    ),
-                    400,
-                )
+                return jsonify(
+                    {"error": "Invalid original graph component", "status": 400}
+                ), 400
 
             if len(split_graph_component.edges()) == 0:
                 current_app.logger.error("Split graph component has no edges!")
-                return (
-                    jsonify({"error": "Invalid split graph component", "status": 400}),
-                    400,
-                )
+                return jsonify(
+                    {"error": "Invalid split graph component", "status": 400}
+                ), 400
 
             # Validate bipartite graph structure
             def validate_bipartite_graphs(
@@ -205,23 +189,19 @@ def get_component_graph(timepoint_id, component_id):
             if not validate_bipartite_graphs(
                 original_graph_component, split_graph_component
             ):
-                return (
-                    jsonify(
-                        {
-                            "error": "Invalid graph structure - bipartite property violation",
-                            "status": 400,
-                        }
-                    ),
-                    400,
-                )
+                return jsonify(
+                    {
+                        "error": "Invalid graph structure - bipartite property violation",
+                        "status": 400,
+                    }
+                ), 400
 
             current_app.logger.info(
                 "Graph validation passed - bipartite structure maintained"
             )
 
             # Get component data
-            query = text(
-                """
+            query = text("""
                 SELECT 
                     c.component_id,
                     c.timepoint_id,
@@ -245,8 +225,7 @@ def get_component_graph(timepoint_id, component_id):
                 FROM component_details_view c
                 WHERE c.timepoint_id = :timepoint_id 
                 AND c.component_id = :component_id
-            """
-            )
+            """)
 
             result = session.execute(
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
@@ -255,12 +234,9 @@ def get_component_graph(timepoint_id, component_id):
                 current_app.logger.error(
                     "Query returned no results after verifying existence"
                 )
-                return (
-                    jsonify(
-                        {"error": "Failed to retrieve component data", "status": 500}
-                    ),
-                    500,
-                )
+                return jsonify(
+                    {"error": "Failed to retrieve component data", "status": 500}
+                ), 500
 
             # Validate with Pydantic
             try:
@@ -277,16 +253,13 @@ def get_component_graph(timepoint_id, component_id):
                 )
             except ValidationError as e:
                 current_app.logger.error(f"Validation error: {e}")
-                return (
-                    jsonify(
-                        {
-                            "error": "Invalid component data",
-                            "details": e.errors(),
-                            "status": 500,
-                        }
-                    ),
-                    500,
-                )
+                return jsonify(
+                    {
+                        "error": "Invalid component data",
+                        "details": e.errors(),
+                        "status": 500,
+                    }
+                ), 500
 
             current_app.logger.debug(f"Validated component data: {component_data}")
 
@@ -346,38 +319,28 @@ def get_component_graph(timepoint_id, component_id):
                     current_app.logger.error(f"Gene IDs: {b.gene_ids}")
                     continue
 
-            # Accumulate biclique DMR and gene IDs (converted to raw, 0-indexed form)
-            collected_biclique_dmrs = set()
-            collected_biclique_genes = set()
+            # Collect all DMR and gene IDs from all bicliques
+            all_dmr_ids = set()
+            all_gene_ids = set()
             for b in component_data.bicliques:
-                biclique_raw_dmr_ids = (
-                    {
-                        reverse_create_dmr_id(int(x), timepoint_id, is_original=True)
-                        for x in parse_id_string(b.dmr_ids)
-                    }
-                    if b.dmr_ids
-                    else set()
-                )
-                biclique_gene_ids = parse_id_string(b.gene_ids) if b.gene_ids else set()
-                collected_biclique_dmrs.update(biclique_raw_dmr_ids)
-                collected_biclique_genes.update(biclique_gene_ids)
+                dmr_set = parse_id_string(b.dmr_ids)
+                gene_set = parse_id_string(b.gene_ids)
+                all_dmr_ids.update(dmr_set)
+                all_gene_ids.update(gene_set)
+
             current_app.logger.debug(
-                f"Collected biclique raw DMR IDs: {collected_biclique_dmrs}"
+                f"Collected DMR IDs from all bicliques: {all_dmr_ids}"
             )
             current_app.logger.debug(
-                f"Collected biclique gene IDs: {collected_biclique_genes}"
+                f"Collected gene IDs from all bicliques: {all_gene_ids}"
             )
 
-            # Prefer biclique-derived DMR set when available, otherwise use raw IDs
-            if collected_biclique_dmrs:
-                final_dmrs = collected_biclique_dmrs
-            else:
-                final_dmrs = raw_dmr_ids
-            # final_nodes = all_gene_ids.union(collected_biclique_genes)
+            # Update component_data with the complete sets
+            component_data.dmr_ids = list(all_dmr_ids)
+            component_data.gene_ids = list(all_gene_ids)
 
             # Get node metadata
-            dmr_query = text(
-                """
+            dmr_query = text("""
                 SELECT 
                     dmr_id as id,
                     area_stat as area,
@@ -389,12 +352,10 @@ def get_component_graph(timepoint_id, component_id):
                 FROM dmr_annotations_view
                 WHERE timepoint_id = :timepoint_id
                 AND component_id = :component_id
-            """
-            )
+            """)
 
             # Get gene annotations including split gene information
-            gene_query = text(
-                """
+            gene_query = text("""
                 SELECT 
                     gene_id,
                     symbol,
@@ -406,8 +367,7 @@ def get_component_graph(timepoint_id, component_id):
                 FROM gene_annotations_view
                 WHERE timepoint_id = :timepoint_id
                 AND component_id = :component_id
-            """
-            )
+            """)
 
             # Get metadata
             dmr_metadata = {}
@@ -457,21 +417,15 @@ def get_component_graph(timepoint_id, component_id):
                     gene_dict = gene_data.model_dump()
                     gene_dict.update(
                         {
-                            "is_split": (
-                                gene_data.gene_type == "split"
-                                if gene_data.gene_type
-                                else False
-                            ),
-                            "is_hub": (
-                                gene_data.node_type == "hub"
-                                if gene_data.node_type
-                                else False
-                            ),
-                            "biclique_count": (
-                                len(gene_data.biclique_ids.split(","))
-                                if gene_data.biclique_ids
-                                else 0
-                            ),
+                            "is_split": gene_data.gene_type == "split"
+                            if gene_data.gene_type
+                            else False,
+                            "is_hub": gene_data.node_type == "hub"
+                            if gene_data.node_type
+                            else False,
+                            "biclique_count": len(gene_data.biclique_ids.split(","))
+                            if gene_data.biclique_ids
+                            else 0,
                         }
                     )
 
@@ -492,13 +446,8 @@ def get_component_graph(timepoint_id, component_id):
 
             # Create node labels
             node_labels = {}
-            for dmr_id in raw_dmr_ids:
-                node_labels[dmr_id] = (
-                    # This is set but not used as create_dmr_trace is
-                    f"DMR_{convert_dmr_id(dmr_id, timepoint_id, is_original=True)}"
-                )
-
-            # for gene_id in final_genes:
+            for dmr_id in all_dmr_ids:
+                node_labels[dmr_id] = f"DMR_{dmr_id}"
             for gene_id in all_gene_ids:
                 symbol = gene_metadata.get(gene_id, {}).get("symbol")
                 node_labels[gene_id] = symbol if symbol else f"Gene_{gene_id}"
@@ -524,35 +473,39 @@ def get_component_graph(timepoint_id, component_id):
                 return jsonify({"error": "No bicliques found", "status": 400}), 400
 
             # Create NodeInfo object using annotated split genes
+            node_info = NodeInfo(
+                all_nodes=all_dmr_ids | all_gene_ids,
+                dmr_nodes=all_dmr_ids,
+                regular_genes=all_gene_ids - split_genes,
+                split_genes=split_genes,
+                node_degrees={
+                    int(node): split_graph_component.degree(node)
+                    for node in split_graph_component.nodes()
+                },
+                min_gene_id=min(all_gene_ids) if all_gene_ids else 0,
+            )
 
             # Initialize the circular layout
             layout = CircularBicliqueLayout()
 
             # Debug logging
-            #current_app.logger.debug(
-            #    f"Using CircularBicliqueLayout for graph visualization"
-            #)
-            #current_app.logger.debug(
-            #    f"Number of nodes to position: {len(final_dmrs | all_gene_ids)}"
-            #)
-            current_app.logger.debug(f"DMR nodes: {len(final_dmrs)}")
-            #current_app.logger.debug(
-            #    f"Regular genes: {len(all_gene_ids - split_genes)}"
-            #)
-            #current_app.logger.debug(f"Split genes: {len(split_genes)}")
+            current_app.logger.debug(
+                f"Using CircularBicliqueLayout for graph visualization"
+            )
+            current_app.logger.debug(
+                f"Number of nodes to position: {len(all_dmr_ids | all_gene_ids)}"
+            )
+            current_app.logger.debug(f"DMR nodes: {len(all_dmr_ids)}")
+            current_app.logger.debug(
+                f"Regular genes: {len(all_gene_ids - split_genes)}"
+            )
+            current_app.logger.debug(f"Split genes: {len(split_genes)}")
 
             # Create node-to-biclique mapping from database annotations
             node_biclique_map = {}
 
-            # Process DMR annotations - convert to raw graph IDs
-            converted_dmr_metadata = {}
+            # Process DMR annotations
             for dmr_id, info in dmr_metadata.items():
-                # Convert the DMR ID to raw graph ID
-                raw_dmr_id = reverse_create_dmr_id(
-                    int(dmr_id), timepoint_id, is_original=True
-                )
-                converted_dmr_metadata[raw_dmr_id] = info
-
                 if info.get("biclique_ids"):
                     try:
                         raw_value = info["biclique_ids"]
@@ -569,8 +522,7 @@ def get_component_graph(timepoint_id, component_id):
                             # Handle case where it might already be a list
                             biclique_ids = [int(bid) for bid in raw_value]
 
-                        # Store with raw graph ID
-                        node_biclique_map[raw_dmr_id] = biclique_ids
+                        node_biclique_map[int(dmr_id)] = biclique_ids
                     except Exception as e:
                         current_app.logger.error(
                             f"Error processing DMR {dmr_id} biclique IDs: {e}\n"
@@ -602,17 +554,17 @@ def get_component_graph(timepoint_id, component_id):
                             f"Raw value: {info['biclique_ids']}"
                         )
 
-            #current_app.logger.debug(
-            #    f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes"
-            #)
-            #current_app.logger.debug(
-            #    f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}"
-            #)
+            current_app.logger.debug(
+                f"Created node-to-biclique mapping for {len(node_biclique_map)} nodes"
+            )
+            current_app.logger.debug(
+                f"Sample node_biclique_map: {dict(list(node_biclique_map.items())[:5])}"
+            )
 
             # Create NodeInfo object
             node_info = NodeInfo(
-                all_nodes=final_dmrs | all_gene_ids,
-                dmr_nodes=final_dmrs,
+                all_nodes=all_dmr_ids | all_gene_ids,
+                dmr_nodes=all_dmr_ids,
                 regular_genes=all_gene_ids - split_genes,
                 split_genes=split_genes,
                 node_degrees={
@@ -630,17 +582,16 @@ def get_component_graph(timepoint_id, component_id):
             )
 
             # Debug the positions
-            #current_app.logger.debug(
-            #    f"Generated positions for {len(node_positions)} nodes"
-            #)
-            #current_app.logger.debug(
-            #    f"Sample positions: {list(node_positions.items())[:5]}"
-            #)
+            current_app.logger.debug(
+                f"Generated positions for {len(node_positions)} nodes"
+            )
+            current_app.logger.debug(
+                f"Sample positions: {list(node_positions.items())[:5]}"
+            )
 
             # Get dominating set for this timepoint's DMRs
             try:
-                dominating_set_query = text(
-                    """
+                dominating_set_query = text("""
                     SELECT ds.dmr_id
                     FROM dominating_sets ds
                     WHERE ds.timepoint_id = :timepoint_id
@@ -654,11 +605,10 @@ def get_component_graph(timepoint_id, component_id):
                             END
                         )
                     )
-                """
-                )
+                """)
 
                 # Get the DMR IDs as a JSON array string
-                dmr_ids_json = json.dumps(list(final_dmrs))
+                dmr_ids_json = json.dumps(list(all_dmr_ids))
 
                 dominating_set_results = session.execute(
                     dominating_set_query,
@@ -666,7 +616,7 @@ def get_component_graph(timepoint_id, component_id):
                 ).fetchall()
 
                 dominating_set = {int(row.dmr_id) for row in dominating_set_results}
-                #current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
+                current_app.logger.debug(f"Found dominating set DMRs: {dominating_set}")
 
                 # Validate that each biclique has at most one dominating set DMR
                 for dmr_nodes, _ in bicliques:
@@ -693,50 +643,15 @@ def get_component_graph(timepoint_id, component_id):
                         bicliques,
                     )
                 )
-                current_app.logger.debug(f"Edge classification updates: {updates}")
-
-                # Convert edge endpoints from table to raw IDs
-                min_gene_id = min(all_gene_ids) if all_gene_ids else 0
-                current_app.logger.debug("Starting edge endpoint conversion")
-                for edge_type, edges_list in edge_classifications.get(
-                    "classifications", {}
-                ).items():
-                    #current_app.logger.debug(f"Processing edges of type: {edge_type}")
-                    for edge_info in edges_list:
-                        u, v = edge_info.edge
-                        #current_app.logger.debug(f"Original edge: ({u}, {v})")
-                        # If an endpoint isn't found in node_positions, assume it's in table indexing and convert it
-                        if u not in node_positions:
-                            u_conv = reverse_create_dmr_id(
-                                u, timepoint_id, is_original=True
-                            )
-                            edge_info.edge = (u_conv, v)
-                            current_app.logger.debug(
-                                f"Converted u from {u} to {u_conv}"
-                            )
-                        if v not in node_positions:
-                            v_conv = reverse_create_dmr_id(
-                                v, timepoint_id, is_original=True
-                            )
-                            edge_info.edge = (edge_info.edge[0], v_conv)
-                            current_app.logger.debug(
-                                f"Converted v from {v} to {v_conv}"
-                            )
-                        #current_app.logger.debug(f"Final edge: {edge_info.edge}")
-                #current_app.logger.debug(
-                  #f"Post-conversion edge classifications: {edge_classifications}"
-                #)
+                # current_app.logger.info("Edge classification updates: " + str(updates))
 
             except Exception as e:
                 current_app.logger.error(
                     "Error during edge classification update: " + str(e)
                 )
-                return (
-                    jsonify(
-                        {"error": "Edge classification update failed", "status": 500}
-                    ),
-                    500,
-                )
+                return jsonify(
+                    {"error": "Edge classification update failed", "status": 500}
+                ), 500
 
             # Add detailed logging for edge classification
             total_edges = len(original_graph_component.edges())
@@ -761,103 +676,103 @@ def get_component_graph(timepoint_id, component_id):
                     f"Invalid edge classification: Connected component with {total_edges} edges "
                     f"but no permanent edges detected!"
                 )
-                return (
-                    jsonify({"error": "Invalid edge classification", "status": 400}),
-                    400,
-                )
+                return jsonify(
+                    {"error": "Invalid edge classification", "status": 400}
+                ), 400
 
             # Add timing for performance monitoring
             start_time = time.time()
 
             # Create component info dictionary specifically for classify_edges
-            # component_info = {
-            #    "component": set(all_component_nodes),
-            #    "dmrs": set(final_dmrs),
-            #    "genes": set(final_genes),
-            # }
-
-            # Initialize or get edge classification stats
-            if not edge_classifications.get("stats"):
-                classifications = edge_classifications.get("classifications", {})
-                edge_classifications["stats"] = {
-                    "component": {
-                        "permanent": len(classifications.get("permanent", [])),
-                        "false_positive": len(
-                            classifications.get("false_positive", [])
-                        ),
-                        "false_negative": len(
-                            classifications.get("false_negative", [])
-                        ),
-                    },
-                    "bicliques": {},
-                }
+            component_info = {
+                "component": set(all_component_nodes),
+                "dmrs": set(all_dmr_ids),
+                "genes": set(all_gene_ids),
+            }
 
             # Create full component data structure with additional info
             component_data = {
                 "component": all_component_nodes,
                 "raw_bicliques": bicliques,
-                "dmrs": list(raw_dmr_ids),  # Use raw_dmr_ids instead of final_dmrs
-                "genes": list(all_gene_ids),
+                "dmrs": all_dmr_ids,
+                "genes": all_gene_ids,
                 "total_edges": len(original_graph_component.edges()),
                 "dominating_sets": list(dominating_set),  # Add explicit dominating set
             }
-            #current_app.logger.debug("Point 2d")
-            #current_app.logger.debug(f"Processing component data: {component_data}")
 
+            # current_app.logger.debug(f"Point 1{component_data}")
+            current_app.logger.debug("Point 1")
+            # Use the complete edge_classifications dictionary
             vis_dict = create_component_visualization(
                 component=component_data,
                 node_positions=node_positions,
                 node_labels=node_labels,
                 node_biclique_map=node_biclique_map,
                 edge_classifications=edge_classifications,
-                dmr_metadata=converted_dmr_metadata,
+                dmr_metadata=dmr_metadata,
                 gene_metadata=gene_metadata,
-                timepoint_id=timepoint_id,
             )
-            #current_app.logger.debug("Point 2di")
-            if vis_dict is None:
-                current_app.logger.error(
-                    "create_component_visualization returned None!"
-                )
-                return jsonify({"error": "Visualization generation failed"}), 500
-            #current_app.logger.debug("vis_dict returned: %s", vis_dict)
-            # Use the complete edge_classifications dictionary
             # Force conversion to a plain dict
-            # vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
-            #current_app.logger.debug("Point 2e")
+            vis_dict = json.loads(json.dumps(vis_dict, cls=PlotlyJSONEncoder))
+            current_app.logger.debug("Point 2")
 
             end_time = time.time()
             current_app.logger.info(
                 f"Visualization created in {end_time - start_time:.2f} seconds"
             )
 
+            # Add the statistics
+            # Guard against missing "stats" in edge_classifications
+            # Initialize stats if missing
+            if (
+                "stats" not in edge_classifications
+                or edge_classifications["stats"] is None
+            ):
+                edge_classifications["stats"] = {
+                    "component": {
+                        "permanent": len(
+                            edge_classifications.get("classifications", {}).get(
+                                "permanent", []
+                            )
+                        ),
+                        "false_positive": len(
+                            edge_classifications.get("classifications", {}).get(
+                                "false_positive", []
+                            )
+                        ),
+                        "false_negative": len(
+                            edge_classifications.get("classifications", {}).get(
+                                "false_negative", []
+                            )
+                        ),
+                    },
+                    "bicliques": {},  # Empty biclique stats for now
+                }
+
+            current_app.logger.debug(f'Point 2b{edge_classifications["stats"]}')
+            stats = edge_classifications.get("stats") or {
+                "component": {},
+                "bicliques": {},
+            }
+            current_app.logger.debug(f"Point 2c")
+            # vis_dict["edge_stats"] = stats.get("component", {})
+            current_app.logger.debug(f"Point 2d")
             # vis_dict["biclique_stats"] = stats.get("bicliques", {})
 
             # Return the visualization dictionary directly
             # Convert Plotly objects to dicts
 
-            current_app.logger.debug("Processing visualization dictionary")
+            current_app.logger.debug(f"Point 3{vis_dict}")
 
-            # Add edge statistics and component details
-            vis_dict["edge_stats"] = edge_classifications.get("stats", {}).get(
-                "component", {}
-            )
-            vis_dict["biclique_stats"] = edge_classifications.get("stats", {}).get(
-                "bicliques", {}
-            )
-
-            # Convert and return
             converted = convert_plotly_object(vis_dict)
             if converted is None:
                 converted = vis_dict
-            return jsonify(converted)
+            return converted
 
     except Exception as e:
         current_app.logger.error(f"Error generating graph visualization: {str(e)}")
-        return jsonify(
-            {
-                "error": "Failed to generate graph visualization",
-                "details": str(e) if current_app.debug else "Internal server error",
-                "status": 500,
-            }
-        )
+        return {
+            "error": "Failed to generate graph visualization",
+            "details": str(e) if current_app.debug else "Internal server error",
+            "status": 500,
+        }

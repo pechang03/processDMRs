@@ -1,0 +1,13 @@
+/drop
+/add       backend/app/biclique_analysis/edge_classification.py
+/add       backend/app/database/management/sql/views/create_views.sql
+/add       backend/app/routes/component_routes.py
+/add       backend/app/routes/graph_routes.py
+/add       backend/app/schemas.py
+/add       backend/app/visualization/base_layout.py
+/add       backend/app/visualization/graph_layout_biclique.py
+/add       backend/app/visualization/traces.py
+/add       backend/app/visualization/vis_components.py
+/add       frontend/src/components/BicliqueDetailView.jsx
+/add       frontend/src/components/BicliqueGraphView.jsx
+/read-only CONVENTIONS.md

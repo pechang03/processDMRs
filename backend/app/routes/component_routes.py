@@ -2,6 +2,7 @@ import json
 from flask import Blueprint, jsonify, request, current_app
 from ..biclique_analysis.edge_classification import classify_edges
 from pydantic import ValidationError
+from ..utils.id_mapping import reverse_create_dmr_id
 from ..schemas import (
     ComponentSummarySchema,
     ComponentDetailsSchema,
@@ -13,6 +14,7 @@ from ..schemas import (
     DominatingSetSchema,
     EdgeStatsSchema,
 )
+from ..utils.id_mapping import create_dmr_id
 from flask_cors import CORS
 from ..utils.extensions import app
 from ..database import get_db_engine, get_db_session
@@ -24,40 +26,59 @@ from typing import List, Dict, Any
 component_bp = Blueprint("component_routes", __name__, url_prefix="/api/component")
 
 
+# Parse arrays and JSON first
+def parse_array_string(arr_str):
+    if not arr_str:
+        return []
+    cleaned = arr_str.replace("[", "").replace("]", "").strip()
+    return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
+
+
 @component_bp.route("/components/<int:timepoint_id>/summary", methods=["GET"])
 def get_component_summary_by_timepoint(timepoint_id):
     app.logger.info(f"Processing summary request for timepoint_id={timepoint_id}")
     try:
         # Get graph manager and initialize mapping
         graph_manager = current_app.graph_manager
-        
+
         # Load and validate graphs first
         original_graph = graph_manager.get_original_graph(timepoint_id)
         split_graph = graph_manager.get_split_graph(timepoint_id)
-        
+
         if not original_graph or not split_graph:
             app.logger.error(f"Failed to load graphs for timepoint {timepoint_id}")
-            return jsonify({
-                "status": "error",
-                "message": "Failed to load required graphs"
-            }), 500
+            return jsonify(
+                {"status": "error", "message": "Failed to load required graphs"}
+            ), 500
 
         # Log graph sizes for debugging
-        app.logger.info(f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges")
-        app.logger.info(f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges")
+        app.logger.info(
+            f"Original graph: {len(original_graph.nodes())} nodes, {len(original_graph.edges())} edges"
+        )
+        app.logger.info(
+            f"Split graph: {len(split_graph.nodes())} nodes, {len(split_graph.edges())} edges"
+        )
 
         # Initialize component mapping
         try:
             component_mapping = graph_manager.initialize_timepoint_mapping(timepoint_id)
-            app.logger.info(f"Successfully initialized component mapping for timepoint {timepoint_id}")
-            app.logger.info(f"Found {len(component_mapping.original_components)} original components")
-            app.logger.info(f"Found {len(component_mapping.split_components)} split components")
+            app.logger.info(
+                f"Successfully initialized component mapping for timepoint {timepoint_id}"
+            )
+            app.logger.info(
+                f"Found {len(component_mapping.original_components)} original components"
+            )
+            app.logger.info(
+                f"Found {len(component_mapping.split_components)} split components"
+            )
         except Exception as e:
             app.logger.error(f"Error initializing component mapping: {str(e)}")
-            return jsonify({
-                "status": "error",
-                "message": f"Failed to initialize component mapping: {str(e)}"
-            }), 500
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": f"Failed to initialize component mapping: {str(e)}",
+                }
+            ), 500
 
         engine = get_db_engine()
         with Session(engine) as session:
@@ -166,11 +187,13 @@ def get_component_summary_by_timepoint(timepoint_id):
                 "mapping_info": {
                     "original_components": len(component_mapping.original_components),
                     "split_components": len(component_mapping.split_components),
-                    "mapped_components": len(component_mapping.split_to_original)
-                }
+                    "mapped_components": len(component_mapping.split_to_original),
+                },
             }
 
-            app.logger.info(f"Successfully processed {len(components)} components with mapping")
+            app.logger.info(
+                f"Successfully processed {len(components)} components with mapping"
+            )
             return jsonify(response_data)
 
     except Exception as e:
@@ -277,49 +300,115 @@ def get_component_details(timepoint_id, component_id):
                         "message": "Failed to retrieve component details",
                     }
                 ), 500
-            # Parse arrays and JSON first
-            def parse_array_string(arr_str):
-                if not arr_str:
-                    return []
-                cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
-            
-            component_nodes = parse_array_string(result.all_dmr_ids) + parse_array_string(result.all_gene_ids)
-            
-            # Now get the component subgraphs using the actual node IDs
-            original_component = graph_manager.get_original_graph_component(timepoint_id, component_nodes)
-            split_component = graph_manager.get_split_graph_component(timepoint_id, component_nodes)
+
+            # Convert DMR IDs to raw graph IDs immediately when parsing
+            raw_dmr_ids = {
+                reverse_create_dmr_id(dmr_id, timepoint_id, is_original=True)
+                for dmr_id in parse_array_string(result.all_dmr_ids)
+            }
+            all_dmr_ids = set(parse_array_string(result.all_dmr_ids))
+            app.logger.info(f"all_dmr_ids{all_dmr_ids}")
+            gene_ids = set(parse_array_string(result.all_gene_ids))
+            # Use raw_dmr_ids directly for component_nodes
+
+            component_nodes = raw_dmr_ids | gene_ids  ## THIS IS right
+            # component_nodes = parse_array_string(   ## THIS IS WRONG because get_original_graph_componetns expects 0 indexed ids
+            #    result.all_dmr_ids
+            # ) + parse_array_string(result.all_gene_ids)
+            # component_nodes = all_dmr_ids | gene_ids  ## THIS IS wrong
+            # Get the component subgraphs using raw node IDs
+            original_component = graph_manager.get_original_graph_component(
+                timepoint_id, component_nodes
+            )
+            split_component = graph_manager.get_split_graph_component(
+                timepoint_id, component_nodes
+            )
 
             if not original_component or not split_component:
-                app.logger.error(f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}")
-                return jsonify({
-                    "status": "error",
-                    "message": "Failed to load required component graphs" 
-                }), 500
+                app.logger.error(
+                    f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}"
+                )
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": "Failed to load required component graphs",
+                    }
+                ), 500
+
+            # Store the split_component for reuse
+            app.logger.info(
+                # f"Split graph component has {len(split_component.nodes())} nodes and {len(split_component.edges())} edges"
+                f"Split graph component (CR) has {split_component.nodes()} nodes and {len(split_component.edges())} edges"
+            )
 
             # Calculate edge statistics for this specific component
             edge_sources = {}  # Initialize empty edge sources dictionary
 
-            # Parse bicliques JSON string first
+            # Parse bicliques JSON string to get table format
             bicliques_data = json.loads(result.bicliques) if result.bicliques else []
-            # Convert to the format needed for classify_edges
-            bicliques = [(set(parse_array_string(b['dmr_ids'])), set(parse_array_string(b['gene_ids']))) 
-                    for b in bicliques_data]
+            table_bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
 
-            # Create component data
+            # Convert table bicliques to raw networkx format
+            raw_bicliques = []
+            edge_sources = {}
+            for b in table_bicliques:
+                # Convert DMR IDs from table format to raw networkx IDs
+                table_dmr_ids = set(int(x) for x in parse_array_string(b.dmr_ids))
+                bicliques_raw_dmr_ids = {
+                    reverse_create_dmr_id(cid, timepoint_id, is_original=True)
+                    for cid in table_dmr_ids
+                }
+                biclique_gene_ids = set(int(x) for x in parse_array_string(b.gene_ids))
+
+                # Add to raw bicliques list
+                # Build edge sources mapping and track biclique participation
+                biclique_idx = len(raw_bicliques)-1
+                current_dmrs = {reverse_create_dmr_id(int(did), timepoint_id, True) for did in parse_array_string(b.dmr_ids)}
+                current_genes = set(parse_array_string(b.gene_ids))
+                
+                for dmr in current_dmrs:
+                    for gene in current_genes:
+                        edge = (min(dmr, gene), max(dmr, gene))
+            # Convert DMR IDs to raw networkx format for component data
+            # raw_dmr_ids = {
+            # reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+            # for dmr_id in parse_array_string(result.all_dmr_ids)
+            # }
+            # gene_ids = set(int(x) for x in parse_array_string(result.all_gene_ids))
+
+            # DMR IDs are already in raw format from earlier conversion
+            # Just create the component data structure
             component_data = {
-                "component": set(component_nodes),
-                "dmrs": set(parse_array_string(result.all_dmr_ids)),
-                "genes": set(parse_array_string(result.all_gene_ids))
+                "component": raw_dmr_ids | gene_ids,  # Use raw DMR IDs for component
+                "dmrs": raw_dmr_ids,
+                "genes": gene_ids,
             }
 
-            # Call classify_edges with all required parameters
+            # Call classify_edges with raw networkx IDs
+            component_union = set(component_data["dmrs"]) | set(component_data["genes"])
             classification_result = classify_edges(
                 original_component,
                 split_component,
                 edge_sources,
-                bicliques=bicliques,
-                component=component_data
+                bicliques=raw_bicliques,
+                component={
+                    "component": component_union,
+                    "dmrs": set(component_data["dmrs"]),
+                    "genes": set(component_data["genes"]),
+                },
+            )
+
+            def convert_edge_list(edge_list, timepoint_id):
+                return [(create_dmr_id(e.edge[0], timepoint_id), e.edge[1]) for e in edge_list]
+
+            classification_result["classifications"]["permanent"] = convert_edge_list(
+                classification_result["classifications"]["permanent"], timepoint_id
+            )
+            classification_result["classifications"]["false_positive"] = convert_edge_list(
+                classification_result["classifications"]["false_positive"], timepoint_id
+            )
+            classification_result["classifications"]["false_negative"] = convert_edge_list(
+                classification_result["classifications"]["false_negative"], timepoint_id
             )
 
             # Create edge stats using the Pydantic model
@@ -327,27 +416,48 @@ def get_component_details(timepoint_id, component_id):
             reliability_stats = classification_result["stats"]["component"]
             # Create edge stats matching frontend expectations
             edge_stats = {
-                "permanent_edges": len(classification_result["classifications"]["permanent"]),
-                "false_positives": len(classification_result["classifications"]["false_positive"]),
-                "false_negatives": len(classification_result["classifications"]["false_negative"]),
+                "permanent_edges": len(
+                    classification_result["classifications"]["permanent"]
+                ),
+                "false_positives": len(
+                    classification_result["classifications"]["false_positive"]
+                ),
+                "false_negatives": len(
+                    classification_result["classifications"]["false_negative"]
+                ),
                 # Include reliability metrics at top level
                 "accuracy": reliability_stats.get("accuracy", 0.0),
                 "noise_percentage": reliability_stats.get("noise_percentage", 0.0),
-                "false_positive_rate": reliability_stats.get("false_positive_rate", 0.0),
-                "false_negative_rate": reliability_stats.get("false_negative_rate", 0.0)
+                "false_positive_rate": reliability_stats.get(
+                    "false_positive_rate", 0.0
+                ),
+                "false_negative_rate": reliability_stats.get(
+                    "false_negative_rate", 0.0
+                ),
             }
 
-            app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
+            app.logger.info(
+                f"Edge statistics for component {component_id}: {edge_stats}"
+            )
 
             # Get DMR metadata from graph manager
             dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
 
-            # Update dmr_metadata edge_type based on classifications
+            # Calculate edge statistics for this specific component
+            edge_sources = {}  # Initialize empty edge sources dictionary
+            
+            # Parse bicliques JSON string to get table format
+            bicliques_data = json.loads(result.bicliques) if result.bicliques else []
+            table_bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
+            
+            # Convert table bicliques to raw networkx format and track biclique IDs
+            raw_bicliques = []
+            biclique_edge_stats = []
+                        # Update dmr_metadata edge_type based on classifications
             updates = []
             for cls_type in ["permanent", "false_positive", "false_negative"]:
-                for edge_info in classification_result["classifications"].get(cls_type, []):
-                    # edge_info.edge is the tuple (dmr_id, gene_id)
-                    dmr_id, gene_id = edge_info.edge
+                for edge_tuple in classification_result["classifications"].get(cls_type, []):
+                    dmr_id, gene_id = edge_tuple
                     updates.append((dmr_id, gene_id, cls_type))
                     if dmr_id in dmr_metadata:
                         for rec in dmr_metadata[dmr_id]["edge_details"]:
@@ -356,6 +466,7 @@ def get_component_details(timepoint_id, component_id):
 
             # Update edge details in database
             from backend.app.database.operations import update_edge_details
+
             update_edge_details(timepoint_id, updates)
 
             try:
@@ -395,16 +506,18 @@ def get_component_details(timepoint_id, component_id):
                 app.logger.info(
                     f"Successfully processed component {component_id} details"
                 )
-                
+
                 # Add DMR details summary
                 graph_manager = current_app.graph_manager
                 dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
                 summary_lines = []
                 for dmr_id, meta in dmr_metadata.items():
                     count = len(meta.get("edge_details", []))
-                    summary_lines.append(f"DMR_{dmr_id}: {count} edge{'s' if count != 1 else ''}")
+                    summary_lines.append(
+                        f"DMR_{dmr_id}: {count} edge{'s' if count != 1 else ''}"
+                    )
                 summary_string = "; ".join(summary_lines)
-                
+
                 # Convert the Pydantic model to a dict and add the summary field
                 component_dict = component_details.model_dump()
                 component_dict["dmr_details_summary"] = summary_string
@@ -425,7 +538,9 @@ def get_component_details(timepoint_id, component_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/<int:timepoint_id>/<int:component_id>/edge_stats", methods=["GET"])
+@component_bp.route(
+    "/<int:timepoint_id>/<int:component_id>/edge_stats", methods=["GET"]
+)
 def get_component_edge_stats(timepoint_id, component_id):
     app.logger.info(
         f"Getting edge statistics for timepoint {timepoint_id}, component {component_id}"
@@ -446,11 +561,11 @@ def get_component_edge_stats(timepoint_id, component_id):
                 AND cd.component_id = :component_id
                 AND LOWER(cd.graph_type) = 'split'
             """)
-            
+
             result = session.execute(
                 query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).first()
-            
+
             if not result:
                 app.logger.error("Query returned no results")
                 return jsonify(
@@ -460,25 +575,31 @@ def get_component_edge_stats(timepoint_id, component_id):
                     }
                 ), 500
 
-            # Parse arrays first
-            def parse_array_string(arr_str):
-                if not arr_str:
-                    return []
-                cleaned = arr_str.replace("[", "").replace("]", "").strip()
-                return [int(x.strip()) for x in cleaned.split(",") if x.strip()]
-            
-            component_nodes = parse_array_string(result.all_dmr_ids) + parse_array_string(result.all_gene_ids)
-            
-            # Get the component subgraphs using the actual node IDs
-            original_component = graph_manager.get_original_graph_component(timepoint_id, component_nodes)
-            split_component = graph_manager.get_split_graph_component(timepoint_id, component_nodes)
+            # Create component nodes set from query results
+            raw_dmr_ids = {
+                reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
+                for dmr_id in parse_array_string(result.all_dmr_ids)
+            }
+            component_nodes = raw_dmr_ids | set(parse_array_string(result.all_gene_ids))
+
+            # Get the component subgraphs using the node set
+            original_component = graph_manager.get_original_graph_component(
+                timepoint_id, component_nodes
+            )
+            split_component = graph_manager.get_split_graph_component(
+                timepoint_id, component_nodes
+            )
 
             if not original_component or not split_component:
-                app.logger.error(f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}")
-                return jsonify({
-                    "status": "error",
-                    "message": "Failed to load required component graphs" 
-                }), 500
+                app.logger.error(
+                    f"Failed to load component graphs for timepoint {timepoint_id}, component {component_id}"
+                )
+                return jsonify(
+                    {
+                        "status": "error",
+                        "message": "Failed to load required component graphs",
+                    }
+                ), 500
 
             # Query bicliques for this component
             query = text("""
@@ -491,21 +612,28 @@ def get_component_edge_stats(timepoint_id, component_id):
                 WHERE cb.component_id = :component_id
                 AND cb.timepoint_id = :timepoint_id
             """)
-            
-            bicliques_results = session.execute(query, {
-                "timepoint_id": timepoint_id, 
-                "component_id": component_id
-            }).fetchall()
+
+            bicliques_results = session.execute(
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
+            ).fetchall()
 
             # Convert bicliques to the format needed for classify_edges
-            bicliques = [(set(parse_array_string(b.dmr_ids)), set(parse_array_string(b.gene_ids))) 
-                    for b in bicliques_results]
+            bicliques = [
+                (
+                    set(parse_array_string(b.dmr_ids)),
+                    set(parse_array_string(b.gene_ids)),
+                )
+                for b in bicliques_results
+            ]
 
-            # Create component data
+            # Create component data using the already created component_nodes set
             component_data = {
-                "component": set(component_nodes),
-                "dmrs": set(parse_array_string(result.all_dmr_ids)),
-                "genes": set(parse_array_string(result.all_gene_ids))
+                "component": component_nodes,
+                "dmrs": {
+                    reverse_create_dmr_id(int(did), timepoint_id, is_original=True)
+                    for did in parse_array_string(result.all_dmr_ids)
+                },
+                "genes": set(parse_array_string(result.all_gene_ids)),
             }
 
             edge_sources = {}  # Initialize empty edge sources dictionary
@@ -515,22 +643,47 @@ def get_component_edge_stats(timepoint_id, component_id):
                 split_component,
                 edge_sources,
                 bicliques=bicliques,
-                component=component_data
+                component=component_data,
+            )
+
+            def convert_edge_list(edge_list, timepoint_id):
+                return [(create_dmr_id(e.edge[0], timepoint_id), e.edge[1]) for e in edge_list]
+
+            classification_result["classifications"]["permanent"] = convert_edge_list(
+                classification_result["classifications"]["permanent"], timepoint_id
+            )
+            classification_result["classifications"]["false_positive"] = convert_edge_list(
+                classification_result["classifications"]["false_positive"], timepoint_id
+            )
+            classification_result["classifications"]["false_negative"] = convert_edge_list(
+                classification_result["classifications"]["false_negative"], timepoint_id
             )
 
             # Create edge stats using the Pydantic model
             reliability_stats = classification_result["stats"]["component"]
             edge_stats = {
-                "permanent_edges": len(classification_result["classifications"]["permanent"]),
-                "false_positives": len(classification_result["classifications"]["false_positive"]),
-                "false_negatives": len(classification_result["classifications"]["false_negative"]),
+                "permanent_edges": len(
+                    classification_result["classifications"]["permanent"]
+                ),
+                "false_positives": len(
+                    classification_result["classifications"]["false_positive"]
+                ),
+                "false_negatives": len(
+                    classification_result["classifications"]["false_negative"]
+                ),
                 "accuracy": reliability_stats.get("accuracy", 0.0),
                 "noise_percentage": reliability_stats.get("noise_percentage", 0.0),
-                "false_positive_rate": reliability_stats.get("false_positive_rate", 0.0),
-                "false_negative_rate": reliability_stats.get("false_negative_rate", 0.0)
+                "false_positive_rate": reliability_stats.get(
+                    "false_positive_rate", 0.0
+                ),
+                "false_negative_rate": reliability_stats.get(
+                    "false_negative_rate", 0.0
+                ),
             }
 
-            app.logger.info(f"Edge statistics for component {component_id}: {edge_stats}")
+            app.logger.info(
+                f"Edge statistics 2 for component {component_id}: {edge_stats}"
+            )
             return jsonify({"status": "success", "data": edge_stats})
 
     except Exception as e:
@@ -612,7 +765,7 @@ def get_gene_symbols():
                     else [],
                 }
 
-            app.logger.info(f"Processed gene info: {gene_info}")
+            #app.logger.info(f"Processed gene info: {gene_info}")
             return jsonify(
                 {
                     "status": "success",
@@ -764,7 +917,9 @@ def get_dmr_status():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@component_bp.route("/<int:timepoint_id>/<int:component_id>/dmr_details", methods=["GET"])
+@component_bp.route(
+    "/<int:timepoint_id>/<int:component_id>/dmr_details", methods=["GET"]
+)
 def get_component_dmr_details(timepoint_id, component_id):
     """Get detailed DMR information for a specific component."""
     try:
@@ -792,32 +947,36 @@ def get_component_dmr_details(timepoint_id, component_id):
             """)
 
             results = session.execute(
-                query, 
-                {"timepoint_id": timepoint_id, "component_id": component_id}
+                query, {"timepoint_id": timepoint_id, "component_id": component_id}
             ).fetchall()
 
             dmrs = []
             for row in results:
-                dmrs.append({
-                    "dmr_id": row.dmr_id,
-                    "chromosome": row.chromosome,
-                    "start": row.start_position,
-                    "end": row.end_position,
-                    "methylation_diff": row.methylation_diff,  # Changed from methylation_difference
-                    "p_value": row.p_value,
-                    "q_value": row.q_value,
-                    "node_type": row.node_type,
-                    "degree": row.degree,
-                    "is_isolate": row.is_isolate,
-                    "biclique_count": len(row.biclique_ids.split(",")) if row.biclique_ids else 0,
-                    "timepoint": row.timepoint
-                })
+                dmrs.append(
+                    {
+                        "dmr_id": row.dmr_id,
+                        "chromosome": row.chromosome,
+                        "start": row.start_position,
+                        "end": row.end_position,
+                        "methylation_diff": row.methylation_diff,  # Changed from methylation_difference
+                        "p_value": row.p_value,
+                        "q_value": row.q_value,
+                        "node_type": row.node_type,
+                        "degree": row.degree,
+                        "is_isolate": row.is_isolate,
+                        "biclique_count": len(row.biclique_ids.split(","))
+                        if row.biclique_ids
+                        else 0,
+                        "timepoint": row.timepoint,
+                    }
+                )
 
             return jsonify({"status": "success", "data": dmrs})
 
     except Exception as e:
         current_app.logger.error(f"Error getting DMR details: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @component_bp.route("/<int:timepoint_id>/details", methods=["GET"])
 def get_component_details_by_timepoint(timepoint_id):

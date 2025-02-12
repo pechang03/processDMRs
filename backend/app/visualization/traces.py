@@ -15,6 +15,21 @@ from flask import current_app
 
 # logger = logging.getLogger(__name__)
 
+"""
+Node trace creation functionality.
+Node shapes are centrally defined in NODE_SHAPES dictionary.
+All node shape assignments should reference this dictionary.
+"""
+
+# Centralized node shape configuration
+NODE_SHAPES = {
+    "dmr": {
+        "regular": "hexagon",  # Changed from octagon
+        "hub": "star",
+    },
+    "gene": {"regular": "circle", "split": "diamond"},
+}
+
 
 def get_text_position(x: float, y: float) -> str:
     """Determine text position based on node's quadrant with vertical offset."""
@@ -99,7 +114,7 @@ def create_node_traces(
                 marker=dict(
                     size=12,
                     color=dmr_colors,
-                    symbol="circle",
+                    symbol=NODE_SHAPES["dmr"]["regular"],
                     line=dict(color="black", width=1),
                 ),
                 text=[
@@ -179,6 +194,60 @@ def create_node_traces(
 
     return traces
 
+    # def create_edge_trace(x, y, color, name=None):
+    """Create an edge trace with lines.
+
+    Args:
+        x: List of x coordinates
+        y: List of y coordinates
+        color: Color for the line
+        name: Optional name for the trace
+
+    Returns:
+        go.Scatter trace with lines
+    """
+    """
+    trace = go.Scatter(
+        x=x, y=y, mode="lines", line=dict(color=color, width=1), hoverinfo="none"
+    )
+    if name is not None:
+        trace.update(name=name)
+    return trace
+    """
+
+    # def create_node_trace(x, y, symbol, color, text):
+    """Create a node trace with markers and text labels.
+    Args:
+        x: List of x coordinates
+        y: List of y coordinates
+        symbol: Marker symbol to use
+        color: Color for the markers
+        text: Text labels for the nodes
+
+    Returns:
+        go.Scatter trace with markers and text
+    """
+
+    # Ensure that text is a list if given as a string
+    """
+    if isinstance(text, str):
+        text = [text]
+    return go.Scatter(
+        x=x,
+        y=y,
+        mode="markers+text",
+        marker={
+            "symbol": symbol,
+            "size": 10,
+            "color": color,
+            "line": {"color": "black", "width": 1},
+        },
+        text=text,
+        textposition="top center",
+        hoverinfo="text",
+    )
+    """
+
 
 def create_unified_gene_trace(
     gene_nodes: Set[int],
@@ -244,7 +313,11 @@ def create_unified_gene_trace(
             ],
             color=colors,
             symbol=[
-                "diamond" if len(node_biclique_map.get(n, [])) > 1 else "circle"
+                (
+                    NODE_SHAPES["gene"]["split"]
+                    if len(node_biclique_map.get(n, [])) > 1
+                    else NODE_SHAPES["gene"]["regular"]
+                )
                 for n in processed_nodes
             ],
             line=dict(
@@ -271,28 +344,13 @@ def create_unified_gene_trace(
     )
 
 
-"""
-Node trace creation functionality.
-Node shapes are centrally defined in NODE_SHAPES dictionary.
-All node shape assignments should reference this dictionary.
-"""
-
-# Centralized node shape configuration
-NODE_SHAPES = {
-    "dmr": {
-        "regular": "hexagon",  # Changed from octagon
-        "hub": "star",
-    },
-    "gene": {"regular": "circle", "split": "diamond"},
-}
-
-
 def create_dmr_trace(
     dmr_nodes: Set[int],
     node_positions: Dict[int, Tuple[float, float]],
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
+    timepoint_id: int,  # New parameter
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     node_shapes: Dict[str, str] = None,  # Add shape config parameter
@@ -355,21 +413,31 @@ def create_dmr_trace(
         # current_app.logger.debug(f"DMR {node_id} is_hub: {is_hub}")
 
         sizes.append(15 if is_hub else 10)
-        symbols.append(NODE_SHAPES["dmr"]["hub" if is_hub else "regular"])
+        symbol_type = "hub" if is_hub else "regular"
+        symbols.append(NODE_SHAPES["dmr"][symbol_type])
 
         # Create concise label for node display
-        label = f"DMR_{node_id}"
+        # If dmr_metadata is provided and contains a 'dmr_name', use it;
+        # otherwise, fall back to adjusting the raw node id using convert_dmr_id.
+        info = dmr_metadata.get(str(node_id)) if dmr_metadata else None
+        if info and "dmr_name" in info and info["dmr_name"]:
+            label = f'dd {info["dmr_name"]}'
+        else:
+            from backend.app.utils.id_mapping import convert_dmr_id
+
+            #label = f"DMR_{node_id+1}"
+            label = f"DMR_{(convert_dmr_id(dmr_num=node_id, timepoint=timepoint_id))}"
         text.append(label)
 
         # Create detailed hover text
         meta = dmr_metadata.get(node_id, {}) if dmr_metadata else {}
         hover = [f"DMR {node_id}"]
-        
+
         if is_hub:
             hover.append("(Hub Node)")
-            
+
         hover.append(f"Area: {meta.get('area', 'N/A')}")
-            
+
         # Add edge details if available
         if meta.get("edge_details"):
             hover.append("<br>Edge Details:")
@@ -381,13 +449,14 @@ def create_dmr_trace(
                     f"Edit: {edge.get('edit_type', '-')}"
                 )
                 hover.append(edge_text)
-                
+
         hover_text.append("<br>".join(hover))
 
     if not x:
         return None
 
     # Add debug logging
+    """
     current_app.logger.debug(
         "DMR trace marker configuration: %s",
         {
@@ -400,16 +469,7 @@ def create_dmr_trace(
             },
         },
     )
-    print("Symbols:", symbols)
-    print(
-        "Marker configuration:",
-        {
-            "size": sizes,
-            "color": colors,
-            "symbol": symbols,
-            "line": dict(color="black", width=1),
-        },
-    )
+    """
 
     return go.Scatter(
         x=x,
@@ -427,7 +487,7 @@ def create_dmr_trace(
         textposition="middle left",
         hoverinfo="text",
         name="DMR Nodes",
-        showlegend=True,
+        showlegend=False,  # Let legend traces handle the legend
     )
 
 
@@ -445,6 +505,7 @@ def create_edge_traces(
     component_nodes = component_nodes or set()
 
     # Use parameter directly instead of nested classifications
+    # Centralized edge style configuration
     style_map = {
         "permanent": {
             "color": get_rgb_str([119, 119, 119]),
@@ -470,52 +531,82 @@ def create_edge_traces(
             "width": 0.5,
             "opacity": 0.3,
         },
+        # Default style for any unrecognized edge types
+        "default": {"color": "gray", "dash": "solid", "width": 1.0, "opacity": 1.0},
     }
 
     # Process each edge classification type
     for edge_type, edges in edge_classifications.items():
-        x_coords = []
-        y_coords = []
-        hover_texts = []
-
         # Get style for this edge type
-        style = style_map.get(edge_type, {"color": "gray", "dash": "solid"})
+        style = style_map.get(
+            edge_type, {"color": "gray", "dash": "solid", "opacity": 1.0, "width": 1.0}
+        )
+        # Initialize separate lists for normal and split-incident edges
+        normal_x_coords, normal_y_coords, normal_hover_texts = [], [], []
+        split_x_coords, split_y_coords, split_hover_texts = [], [], []
 
         for edge_info in edges:
             if not isinstance(edge_info, EdgeInfo):
                 continue
-
             u, v = edge_info.edge
             if u not in component_nodes or v not in component_nodes:
-                continue  # Skip edges not in current component
-
+                continue
             x0, y0 = node_positions[u]
             x1, y1 = node_positions[v]
-            x_coords.extend([x0, x1, None])
-            y_coords.extend([y0, y1, None])
-
             sources = ", ".join(edge_info.sources) if edge_info.sources else "Unknown"
             hover_text = f"Edge: {node_labels.get(u, u)} - {node_labels.get(v, v)}<br>Type: {edge_type}<br>Sources: {sources}"
-            hover_texts.extend([hover_text, hover_text, None])
 
-        if x_coords:
-            line_style = dict(
-                color=style["color"],
-                width=edge_style.get("width", 1),
-                dash=style["dash"],
-            )
+            if (u in split_genes) or (v in split_genes):
+                split_x_coords.extend([x0, x1, None])
+                split_y_coords.extend([y0, y1, None])
+                split_hover_texts.extend([hover_text, hover_text, None])
+            else:
+                normal_x_coords.extend([x0, x1, None])
+                normal_y_coords.extend([y0, y1, None])
+                normal_hover_texts.extend([hover_text, hover_text, None])
 
+        # Create a trace for normal edges (if any)
+        if normal_x_coords:
             traces.append(
                 go.Scatter(
-                    x=x_coords,
-                    y=y_coords,
+                    x=normal_x_coords,
+                    y=normal_y_coords,
                     mode="lines",
-                    opacity=0.7,
-                    line=line_style,
+                    opacity=style.get("opacity", 1.0),  # use base opacity
+                    line=dict(
+                        color=style["color"],
+                        width=edge_style.get("width", style.get("width", 1)),
+                        dash=style["dash"],
+                    ),
                     hoverinfo="text",
-                    text=hover_texts,
+                    text=normal_hover_texts,
                     name=f"{edge_type.replace('_', ' ').title()} Edges",
-                    legendgroup="edges",  # Add this line
+                    legendgroup="edges",
+                    showlegend=False,
+                )
+            )
+
+        # Create a trace for edges incident to split nodes (if any) with reduced opacity
+        if split_x_coords:
+            reduced_opacity = (
+                style.get("opacity", 1.0) * 0.5
+            )  # adjust factor as desired
+            traces.append(
+                go.Scatter(
+                    x=split_x_coords,
+                    y=split_y_coords,
+                    mode="lines",
+                    opacity=reduced_opacity,
+                    line=dict(
+                        color=style["color"],
+                        width=edge_style.get("width", style.get("width", 1)),
+                        dash=style["dash"],
+                    ),
+                    hoverinfo="text",
+                    text=split_hover_texts,
+                    name=f"{edge_type.replace('_', ' ').title()} Edges",
+                    legendgroup="edges",
+                    showlegend=False,
                 )
             )
 
@@ -526,44 +617,158 @@ def create_biclique_boxes(
     bicliques: List[Tuple[Set[int], Set[int]]],
     node_positions: Dict[int, Tuple[float, float]],
     biclique_colors: List[str],
-) -> List[go.Scatter]:
-    """Create box traces around bicliques."""
-    traces = []
+) -> List[Dict]:
+    """Create border shapes (rectangles) around bicliques."""
+    shapes = []
     for biclique_idx, (dmr_nodes, gene_nodes) in enumerate(bicliques):
         nodes = dmr_nodes | gene_nodes
         if not nodes:
             continue
-
-        positions = []
-        for node in nodes:
-            if node in node_positions:
-                positions.append(node_positions[node])
-            else:
-                continue  # Skip nodes without positions
-
+        positions = [node_positions[node] for node in nodes if node in node_positions]
         if not positions:
-            continue  # Skip if no positions are found
+            continue
         x_coords, y_coords = zip(*positions)
-
         padding = 0.05
         x_min, x_max = min(x_coords) - padding, max(x_coords) + padding
         y_min, y_max = min(y_coords) - padding, max(y_coords) + padding
 
-        traces.append(
+        # Compute a fillcolor string with low opacity
+        r, g, b, _ = biclique_colors[biclique_idx]
+        fill_color = f"rgba({int(r*255)},{int(g*255)},{int(b*255)},0.1)"
+        shape = {
+            "type": "rect",
+            "xref": "x",
+            "yref": "y",
+            "x0": x_min,
+            "y0": y_min,
+            "x1": x_max,
+            "y1": y_max,
+            "line": {
+                "color": biclique_colors[biclique_idx],  # leaving border as is
+                "width": 0,
+                "dash": "dot",
+            },
+            "fillcolor": fill_color,  # Use our computed fill color
+            "opacity": 1.0,  # Let the fillcolor encode transparency, so set overall opacity to 1
+            "layer": "below",  # Ensures the shapes are rendered behind other traces
+        }
+        shapes.append(shape)
+    return shapes
+
+
+def split_genes(
+    node_biclique_map: Dict[int, List[int]], gene_nodes: Set[int]
+) -> Set[int]:
+    """Identify genes that participate in multiple bicliques."""
+    return {n for n in gene_nodes if len(node_biclique_map.get(n, [])) > 1}
+
+
+def create_legend_traces(
+    biclique_colors: List[str] = None,
+) -> Tuple[List[dict], List[go.Scatter]]:
+    """
+    Create legend-only traces for nodes and edge types.
+    Node shapes for DMRs and genes are taken from NODE_SHAPES.
+    """
+    legend_nodes = []
+
+    # DMR legend entries:
+    legend_nodes.append(
+        {
+            "x": [None],
+            "y": [None],
+            "mode": "markers",
+            "marker": {
+                "symbol": NODE_SHAPES["dmr"]["hub"],
+                "size": 13,
+                "color": "blue",
+            },
+            "name": "Hub DMRs",
+            "showlegend": True,
+            "legendgroup": "dmr",
+        }
+    )
+    legend_nodes.append(
+        {
+            "x": [None],
+            "y": [None],
+            "mode": "markers",
+            "marker": {
+                "symbol": NODE_SHAPES["dmr"]["regular"],
+                "size": 12,
+                "color": "blue",
+            },
+            "name": "DMRs",
+            "showlegend": True,
+            "legendgroup": "dmr",
+        }
+    )
+
+    # Gene legend entries:
+    legend_nodes.append(
+        {
+            "x": [None],
+            "y": [None],
+            "mode": "markers",
+            "marker": {
+                "symbol": NODE_SHAPES["gene"]["split"],
+                "size": 12,
+                "color": "red",
+            },
+            "name": "Split Genes",
+            "showlegend": True,
+            "legendgroup": "gene",
+        }
+    )
+    legend_nodes.append(
+        {
+            "x": [None],
+            "y": [None],
+            "mode": "markers",
+            "marker": {"symbol": "circle", "size": 10, "color": "red"},
+            "name": "Gene Nodes",
+            "showlegend": True,
+            "legendgroup": "gene",
+        }
+    )
+
+    # Add biclique legend entries if colors provided
+    if biclique_colors:
+        for idx, color in enumerate(biclique_colors):
+            legend_nodes.append(
+                {
+                    "x": [None],
+                    "y": [None],
+                    "mode": "markers",
+                    "marker": {
+                        "symbol": "circle",
+                        "size": 12,
+                        "color": color,
+                    },
+                    "name": f"Biclique {idx + 1}",
+                    "showlegend": True,
+                    "legendgroup": "biclique",
+                }
+            )
+
+    # Legend for edge types
+    legend_edges = []
+    edge_colors = {
+        "permanent": "rgb(119,119,119)",
+        "false_positive": "rgb(255,0,0)",
+        "false_negative": "rgb(0,0,255)",
+    }
+    for edge_type in ["permanent", "false_positive", "false_negative"]:
+        edge_name = edge_type.replace("_", " ").title() + " Edges"
+        legend_edges.append(
             go.Scatter(
-                x=[x_min, x_max, x_max, x_min, x_min],
-                y=[y_min, y_min, y_max, y_max, y_min],
+                x=[None],
+                y=[None],
                 mode="lines",
-                line=dict(
-                    color=biclique_colors[biclique_idx],  # Now using CSS string
-                    width=2,
-                    dash="dot",
-                ),
-                fill="toself",
-                fillcolor=biclique_colors[biclique_idx],  # Now using CSS string
-                opacity=0.1,  # Keep only this opacity
-                name=f"Biclique {biclique_idx + 1}",
+                line=dict(color=edge_colors.get(edge_type, "gray"), width=1),
+                name=edge_name,
                 showlegend=True,
+                legendgroup="edges",
             )
         )
-    return traces
+    return legend_nodes, legend_edges

@@ -867,7 +867,7 @@ return (
                             <TableCell align="right">{noise}%</TableCell>
                             </TableRow>
                         );
-                        })}\n
+                        })}
                         </TableBody>
                       </Table>
                     </TableContainer>

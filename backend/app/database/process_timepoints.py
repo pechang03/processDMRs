@@ -16,7 +16,7 @@ from backend.app.database.operations import insert_component
 from backend.app.utils.graph_io import read_bipartite_graph, write_gene_mappings
 from backend.app.core.data_loader import create_bipartite_graph, process_enhancer_info
 from backend.app.biclique_analysis.reader import read_bicliques_file
-
+from backend.app.utils.id_mapping import create_dmr_id, convert_dmr_id
 from backend.app.biclique_analysis.component_analyzer import ComponentAnalyzer
 from backend.app.biclique_analysis.classifier import classify_component
 from backend.app.biclique_analysis.triconnected import (
@@ -284,8 +284,15 @@ def process_triconnected_components(
         # Get component subgraph
         tri_subgraph = original_graph.subgraph(nodes)
 
-        # Calculate basic metrics
-        dmr_nodes = {n for n in nodes if original_graph.nodes[n]["bipartite"] == 0}
+        # Create mapping of raw nodes to converted IDs
+        converted_ids = {
+            n: convert_dmr_id(n, timepoint_id, is_original=True)
+            for n in nodes
+            if original_graph.nodes[n]["bipartite"] == 0
+        }
+        
+        # Use converted IDs for DMR nodes set
+        dmr_nodes = set(converted_ids.values())
         gene_nodes = {n for n in nodes if original_graph.nodes[n]["bipartite"] == 1}
 
         # Find separation pairs and convert to list format
@@ -336,7 +343,7 @@ def process_triconnected_components(
                 upsert_dmr_timepoint_annotation(
                     session=session,
                     timepoint_id=timepoint_id,
-                    dmr_id=node,
+                    dmr_id=converted_ids[node],
                     triconnected_id=tri_id,
                 )
             else:

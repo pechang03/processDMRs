@@ -20,6 +20,7 @@ from backend.app.database.models import Timepoint
 from backend.app.schemas import TimePointSchema
 from backend.app.biclique_analysis.edge_classification import classify_edges
 from backend.app.database.operations import update_edge_details
+from backend.app.utils.id_mapping import convert_dmr_id
 
 
 import logging
@@ -436,6 +437,9 @@ class GraphManager:
                         # Only process DMR nodes (assuming DMR IDs < gene IDs)
                         if node < min_gene_id:
                             degree = split_graph.degree(node)
+                            converted_dmr = convert_dmr_id(
+                                node, timepoint_id, is_original=True
+                            )
                             session.execute(
                                 text(
                                     """
@@ -447,7 +451,7 @@ class GraphManager:
                                 ),
                                 {
                                     "degree": degree,
-                                    "dmr_id": node,
+                                    "dmr_id": converted_dmr,
                                     "timepoint_id": timepoint_id,
                                 },
                             )
@@ -564,12 +568,14 @@ class GraphManager:
         updates = []
         for cls_type in ["permanent", "false_positive", "false_negative"]:
             for edge_info in classification_result["classifications"].get(cls_type, []):
-                dmr_id, gene_id = edge_info.edge
-                updates.append((dmr_id, gene_id, cls_type))
+                raw_dmr, gene_id = edge_info.edge
+                converted_dmr = convert_dmr_id(raw_dmr, timepoint_id, is_original=True)
+                updates.append((converted_dmr, gene_id, cls_type))
         # Build the list of update tuples
 
         if updates:
-            current_app.logger.info("Updating edge_details with: " + str(updates))
+            # current_app.logger.info("Updating edge_details with: " + str(updates))
+            current_app.logger.info("Updating edge_details")
             try:
                 update_edge_details(timepoint_id, updates)
                 current_app.logger.info("Edge_details update succeeded.")
@@ -637,22 +643,12 @@ class GraphManager:
                 f"Full split graph has {len(split_graph.nodes())} nodes and {len(split_graph.edges())} edges"
             )
 
-            # Create subgraph of the component nodes
-            subgraph = split_graph.subgraph(component_nodes)
+            # Create subgraph directly from component nodes (already in raw format)
+            component_graph = split_graph.subgraph(component_nodes).copy()
 
-            # Log subgraph stats
+            # Log component graph stats
             logger.info(
-                f"Subgraph has {len(subgraph.nodes())} nodes and {len(subgraph.edges())} edges"
-            )
-
-            # Create a new graph and copy both nodes AND edges
-            component_graph = nx.Graph()
-            component_graph.add_nodes_from(subgraph.nodes())
-            component_graph.add_edges_from(subgraph.edges())
-
-            # Log final component graph stats
-            logger.info(
-                f"Final component graph has {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges"
+                f"Split graph component has {len(component_graph.nodes())} nodes and {len(component_graph.edges())} edges"
             )
 
             return component_graph
