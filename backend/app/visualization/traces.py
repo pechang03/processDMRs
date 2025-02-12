@@ -348,6 +348,7 @@ def create_dmr_trace(
     node_labels: Dict[int, str],
     node_biclique_map: Dict[int, List[int]],
     biclique_colors: List[str],
+    timepoint: int,                   # New parameter
     dominating_set: Set[int] = None,
     dmr_metadata: Dict[str, Dict] = None,
     node_shapes: Dict[str, str] = None,  # Add shape config parameter
