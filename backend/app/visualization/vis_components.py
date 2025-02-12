@@ -140,6 +140,7 @@ def create_component_visualization(
         node_labels=node_labels,
         node_biclique_map=node_biclique_map,
         biclique_colors=biclique_colors,
+        timepoint=component.get('timepoint_id'),  # Pass timepoint from component data
         dominating_set=dominating_set,
         dmr_metadata=dmr_metadata,
     )
