@@ -14,6 +14,7 @@ from ..schemas import (
     DominatingSetSchema,
     EdgeStatsSchema,
 )
+from ..utils.id_mapping import create_dmr_id
 from flask_cors import CORS
 from ..utils.extensions import app
 from ..database import get_db_engine, get_db_session
@@ -397,6 +398,19 @@ def get_component_details(timepoint_id, component_id):
                 },
             )
 
+            def convert_edge_list(edge_list, timepoint_id):
+                return [(create_dmr_id(edge[0], timepoint_id), edge[1]) for edge in edge_list]
+
+            classification_result["classifications"]["permanent"] = convert_edge_list(
+                classification_result["classifications"]["permanent"], timepoint_id
+            )
+            classification_result["classifications"]["false_positive"] = convert_edge_list(
+                classification_result["classifications"]["false_positive"], timepoint_id
+            )
+            classification_result["classifications"]["false_negative"] = convert_edge_list(
+                classification_result["classifications"]["false_negative"], timepoint_id
+            )
+
             # Create edge stats using the Pydantic model
             # Extract reliability metrics from the stats
             reliability_stats = classification_result["stats"]["component"]
@@ -624,6 +638,19 @@ def get_component_edge_stats(timepoint_id, component_id):
                 edge_sources,
                 bicliques=bicliques,
                 component=component_data,
+            )
+
+            def convert_edge_list(edge_list, timepoint_id):
+                return [(create_dmr_id(edge[0], timepoint_id), edge[1]) for edge in edge_list]
+
+            classification_result["classifications"]["permanent"] = convert_edge_list(
+                classification_result["classifications"]["permanent"], timepoint_id
+            )
+            classification_result["classifications"]["false_positive"] = convert_edge_list(
+                classification_result["classifications"]["false_positive"], timepoint_id
+            )
+            classification_result["classifications"]["false_negative"] = convert_edge_list(
+                classification_result["classifications"]["false_negative"], timepoint_id
             )
 
             # Create edge stats using the Pydantic model
