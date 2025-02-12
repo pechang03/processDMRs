@@ -421,12 +421,12 @@ def create_dmr_trace(
         # otherwise, fall back to adjusting the raw node id using convert_dmr_id.
         info = dmr_metadata.get(str(node_id)) if dmr_metadata else None
         if info and "dmr_name" in info and info["dmr_name"]:
-            label = f"dd {info["dmr_name"]}"
+            label = f'dd {info["dmr_name"]}'
         else:
             from backend.app.utils.id_mapping import convert_dmr_id
 
-            label = f"DMMR_{node_id+1}"
-            #label = f"DMMR_{(convert_dmr_id(dmr_num=node_id, timepoint=timepoint_id))}"
+            #label = f"DMR_{node_id+1}"
+            label = f"DMR_{(convert_dmr_id(dmr_num=node_id, timepoint=timepoint_id))}"
         text.append(label)
 
         # Create detailed hover text
