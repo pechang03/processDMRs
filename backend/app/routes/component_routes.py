@@ -360,16 +360,14 @@ def get_component_details(timepoint_id, component_id):
                 biclique_gene_ids = set(int(x) for x in parse_array_string(b.gene_ids))
 
                 # Add to raw bicliques list
-                raw_bicliques.append((bicliques_raw_dmr_ids, biclique_gene_ids))
-
-                # Build edge sources mapping
-                for dmr in raw_dmr_ids:
-                    for gene in gene_ids:
+                # Build edge sources mapping and track biclique participation
+                biclique_idx = len(raw_bicliques)-1
+                current_dmrs = {reverse_create_dmr_id(int(did), timepoint_id, True) for did in parse_array_string(b.dmr_ids)}
+                current_genes = set(parse_array_string(b.gene_ids))
+                
+                for dmr in current_dmrs:
+                    for gene in current_genes:
                         edge = (min(dmr, gene), max(dmr, gene))
-                        edge_sources.setdefault(edge, set()).add(
-                            f"biclique_{len(raw_bicliques)-1}"
-                        )
-
             # Convert DMR IDs to raw networkx format for component data
             # raw_dmr_ids = {
             # reverse_create_dmr_id(int(dmr_id), timepoint_id, is_original=True)
@@ -431,19 +429,27 @@ def get_component_details(timepoint_id, component_id):
             # Get DMR metadata from graph manager
             dmr_metadata = graph_manager.get_dmr_metadata(timepoint_id)
 
-            # Update dmr_metadata edge_type based on classifications
+            # Calculate edge statistics for this specific component
+            edge_sources = {}  # Initialize empty edge sources dictionary
+            
+            # Parse bicliques JSON string to get table format
+            bicliques_data = json.loads(result.bicliques) if result.bicliques else []
+            table_bicliques = [BicliqueMemberSchema(**b) for b in bicliques_data]
+            
+            # Convert table bicliques to raw networkx format and track biclique IDs
+            raw_bicliques = []
+            biclique_edge_stats = []
+                        # Update dmr_metadata edge_type based on classifications
             updates = []
             for cls_type in ["permanent", "false_positive", "false_negative"]:
-                for edge_info in classification_result["classifications"].get(
-                    cls_type, []
-                ):
+                for edge_info in classification_result["classifications"].get(cls_type, []):
                     # edge_info.edge is the tuple (dmr_id, gene_id)
                     dmr_id, gene_id = edge_info.edge
                     updates.append((dmr_id, gene_id, cls_type))
                     if dmr_id in dmr_metadata:
                         for rec in dmr_metadata[dmr_id]["edge_details"]:
                             if rec.get("gene_id") == gene_id:
-                                rec["edge_type"] = cls_type
+                                rec["edge_type"] = cls_type 
 
             # Update edge details in database
             from backend.app.database.operations import update_edge_details
